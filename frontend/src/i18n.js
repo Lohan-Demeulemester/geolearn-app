@@ -110,10 +110,10 @@ const messages = {
       connecting: 'Connexion...',
       create_btn: 'Créer mon compte',
       creating: 'Création...',
-      or_continue: 'Ou continuer avec'
-      code_sent: 'Code de vérification envoyé !',
-      welcome_back: 'Heureux de vous revoir !',
-      new_code_sent: 'Un nouveau code a été envoyé !',
+      or_continue: 'Ou continuer avec',
+      code_sent: 'Verification code sent!',
+      welcome_back: 'Welcome back!',
+      new_code_sent: 'A new code has been sent!'
     }
   },
   en: {
@@ -225,10 +225,10 @@ const messages = {
       connecting: 'Logging in...',
       create_btn: 'Create my account',
       creating: 'Creating...',
-      or_continue: 'Or continue with'
+      or_continue: 'Or continue with',
       code_sent: 'Verification code sent!',
       welcome_back: 'Welcome back!',
-      new_code_sent: 'A new code has been sent!',
+      new_code_sent: 'A new code has been sent!'
     }
   }
 }
