@@ -189,9 +189,12 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { GoogleLogin } from 'vue3-google-login';
-import { useI18n } from 'vue-i18n'; // <-- On importe t ici
+import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+
+// Ton URL Render exacte (Plus de problème de localhost !)
+const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 const isLoggedIn = ref(false);
 const showLoginForm = ref(true);
@@ -202,14 +205,7 @@ const showVerificationForm = ref(false);
 const verificationCode = ref('');
 const registeredEmail = ref('');
 
-const user = ref({
-  id: null,
-  name: '',
-  email: '',
-  joinDate: '',
-  avatar: ''
-});
-
+const user = ref({ id: null, name: '', email: '', joinDate: '', avatar: '' });
 const loginForm = ref({ email: '', password: '' });
 const registerForm = ref({ username: '', email: '', password: '' });
 
@@ -227,29 +223,37 @@ onMounted(() => {
   }
 });
 
+// --- BOUCLIER DE SÉCURITÉ POUR LES APPELS API ---
+const apiCall = async (endpoint, payload, method = 'POST') => {
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  
+  // On lit la réponse en texte brut d'abord pour éviter le crash JSON
+  const text = await res.text();
+  let data = {};
+  
+  if (text) {
+    try { 
+      data = JSON.parse(text); 
+    } catch (e) { 
+      throw new Error('Le serveur a rencontré un problème inattendu.'); 
+    }
+  }
+  
+  if (!res.ok) throw new Error(data.error || 'Erreur du serveur.');
+  return data;
+};
+
+// --- FONCTIONS D'AUTHENTIFICATION ---
 const handleGoogleLogin = async (response) => {
   errorMessage.value = '';
   isLoading.value = true;
   try {
-    const res = await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/google-login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential: response.credential })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Erreur Google');
-    
-    user.value = {
-      id: data.user.id,
-      name: data.user.username,
-      email: data.user.email,
-      joinDate: new Date(data.user.createdAt).toLocaleDateString('fr-FR'),
-      avatar: `https://ui-avatars.com/api/?name=${data.user.username}&background=E0F2FE&color=2563EB&size=128`
-    };
-    
-    isLoggedIn.value = true;
-    localStorage.setItem('geolearn_user', JSON.stringify(user.value));
-    window.dispatchEvent(new Event('auth-change'));
+    const data = await apiCall('/api/google-login', { credential: response.credential });
+    connectUser(data.user);
     showToast(t('common.success'), 'success');
   } catch (error) {
     errorMessage.value = error.message;
@@ -262,17 +266,10 @@ const register = async () => {
   errorMessage.value = '';
   isLoading.value = true;
   try {
-    const response = await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(registerForm.value)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Erreur inscription');
-    
+    await apiCall('/api/register', registerForm.value);
     registeredEmail.value = registerForm.value.email;
     showVerificationForm.value = true;
-    showToast(t('common.success'), 'success');
+    showToast('Code envoyé !', 'success');
     registerForm.value.password = '';
   } catch (error) {
     errorMessage.value = error.message;
@@ -285,14 +282,7 @@ const verifyCode = async () => {
   errorMessage.value = '';
   isLoading.value = true;
   try {
-    const response = await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/verify-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: registeredEmail.value, code: verificationCode.value })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Code invalide');
-
+    await apiCall('/api/verify-code', { email: registeredEmail.value, code: verificationCode.value });
     showToast(t('common.success'), 'success');
     showVerificationForm.value = false;
     showLoginForm.value = true;
@@ -307,14 +297,8 @@ const verifyCode = async () => {
 
 const resendCode = async () => {
   try {
-    const response = await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/resend-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: registeredEmail.value })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error);
-    showToast(t('common.success'), 'success');
+    await apiCall('/api/resend-code', { email: registeredEmail.value });
+    showToast('Nouveau code envoyé !', 'success');
   } catch (error) {
     errorMessage.value = error.message;
   }
@@ -324,30 +308,39 @@ const login = async () => {
   errorMessage.value = '';
   isLoading.value = true;
   try {
-    const response = await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(loginForm.value)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error);
-    
-    user.value = {
-      id: data.user.id,
-      name: data.user.username,
-      email: data.user.email,
-      joinDate: new Date(data.user.createdAt).toLocaleDateString('fr-FR'),
-      avatar: `https://ui-avatars.com/api/?name=${data.user.username}&background=E0F2FE&color=2563EB&size=128`
-    };
-    isLoggedIn.value = true;
-    localStorage.setItem('geolearn_user', JSON.stringify(user.value));
-    window.dispatchEvent(new Event('auth-change'));
-    showToast(t('common.success'), 'success');
+    const data = await apiCall('/api/login', loginForm.value);
+    connectUser(data.user);
+    showToast('Heureux de vous revoir !', 'success');
   } catch (error) {
     errorMessage.value = error.message;
   } finally {
     isLoading.value = false;
   }
+};
+
+const updateProfile = async () => {
+  try {
+    await apiCall(`/api/users/${user.value.id}`, { name: user.value.name, email: user.value.email }, 'PUT');
+    user.value.avatar = `https://ui-avatars.com/api/?name=${user.value.name}&background=E0F2FE&color=2563EB&size=128`;
+    localStorage.setItem('geolearn_user', JSON.stringify(user.value));
+    window.dispatchEvent(new Event('auth-change'));
+    showToast(t('common.success'), 'success');
+  } catch (error) {
+    showToast(error.message, 'error');
+  }
+};
+
+const connectUser = (userData) => {
+  user.value = {
+    id: userData.id,
+    name: userData.username,
+    email: userData.email,
+    joinDate: new Date(userData.createdAt).toLocaleDateString('fr-FR'),
+    avatar: `https://ui-avatars.com/api/?name=${userData.username}&background=E0F2FE&color=2563EB&size=128`
+  };
+  isLoggedIn.value = true;
+  localStorage.setItem('geolearn_user', JSON.stringify(user.value));
+  window.dispatchEvent(new Event('auth-change'));
 };
 
 const logout = () => {
@@ -356,25 +349,6 @@ const logout = () => {
   user.value = { id: null, name: '', email: '', joinDate: '', avatar: '' };
   localStorage.removeItem('geolearn_user');
   window.dispatchEvent(new Event('auth-change'));
-};
-
-const updateProfile = async () => {
-  try {
-    const response = await fetch(`[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/users/${user.value.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: user.value.name, email: user.value.email })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error);
-    
-    user.value.avatar = `https://ui-avatars.com/api/?name=${user.value.name}&background=E0F2FE&color=2563EB&size=128`;
-    localStorage.setItem('geolearn_user', JSON.stringify(user.value));
-    window.dispatchEvent(new Event('auth-change'));
-    showToast(t('common.success'), 'success');
-  } catch (error) {
-    showToast(error.message, 'error');
-  }
 };
 </script>
 

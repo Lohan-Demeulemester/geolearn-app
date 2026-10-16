@@ -23,23 +23,28 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const db = mysql.createConnection({
+// --- LE CORRECTIF EST ICI : createPool au lieu de createConnection ---
+const db = mysql.createPool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-db.connect((err) => {
+// Test de la connexion du Pool
+db.getConnection((err, connection) => {
   if (err) {
     console.error('Erreur de connexion à MySQL :', err.message);
     return;
   }
-  console.log('Connexion à la base de données MySQL réussie ! 🗄️');
+  console.log('Connexion à la base de données MySQL réussie (Pool activé) ! 🗄️');
+  connection.release();
 });
-
 // --- OUTILS ---
 const generateVerificationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -128,9 +133,14 @@ app.post('/api/login', (req, res) => {
   });
 });
 
-// 5. CONNEXION GOOGLE (Le correctif est ici !)
+// 5. CONNEXION GOOGLE
 app.post('/api/google-login', async (req, res) => {
   const { credential } = req.body;
+  
+  if (!credential) {
+    return res.status(400).json({ error: 'Jeton manquant.' });
+  }
+
   try {
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
@@ -140,35 +150,49 @@ app.post('/api/google-login', async (req, res) => {
     const { email, name } = ticket.getPayload();
 
     db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
-      if (err) return res.status(500).json({ error: 'Erreur de base de données.' });
+      if (err) {
+        console.error("Erreur SQL lors de la recherche Google:", err);
+        return res.status(500).json({ error: 'Erreur de base de données.' });
+      }
 
       if (results.length > 0) {
         const user = results[0];
-        // On force la validation si le compte existait sans être validé
         if (!user.is_verified) {
           db.query('UPDATE users SET is_verified = true WHERE id = ?', [user.id]);
         }
         return res.json({ message: 'Connexion Google réussie !', user: { id: user.id, username: user.username, email: user.email, createdAt: user.created_at } });
       } else {
-        const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-12), 10);
-        db.query('INSERT INTO users (username, email, password, is_verified) VALUES (?, ?, ?, true)', [name, email, randomPassword], (err, insertResult) => {
-          if (err) return res.status(500).json({ error: 'Erreur de création de compte.' });
+        try {
+          const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-12), 10);
           
-          const mailOptions = {
-            from: `"L'équipe GeoLearn" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Bienvenue sur GeoLearn ! 🌍',
-            html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2 style="color: #2563eb;">Bonjour ${name} !</h2><p>Ton compte a été créé avec succès via Google.</p></div>`
-          };
-          transporter.sendMail(mailOptions, (e) => { if (e) console.error("Erreur email Google :", e); });
+          db.query('INSERT INTO users (username, email, password, is_verified) VALUES (?, ?, ?, true)', [name, email, randomPassword], (insertErr, insertResult) => {
+            if (insertErr) {
+               console.error("Erreur SQL lors de l'insertion Google:", insertErr);
+               return res.status(500).json({ error: 'Erreur de création de compte.' });
+            }
+            
+            const mailOptions = {
+              from: `"L'équipe GeoLearn" <${process.env.EMAIL_USER}>`,
+              to: email,
+              subject: 'Bienvenue sur GeoLearn ! 🌍',
+              html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2 style="color: #2563eb;">Bonjour ${name} !</h2><p>Ton compte a été créé avec succès via Google.</p></div>`
+            };
+            
+            transporter.sendMail(mailOptions, (mailErr) => { 
+                if (mailErr) console.error("Erreur email Google :", mailErr); 
+            });
 
-          res.status(201).json({ message: 'Compte Google créé !', user: { id: insertResult.insertId, username: name, email: email, createdAt: new Date() } });
-        });
+            return res.status(201).json({ message: 'Compte Google créé !', user: { id: insertResult.insertId, username: name, email: email, createdAt: new Date() } });
+          });
+        } catch (hashError) {
+           console.error("Erreur Bcrypt:", hashError);
+           return res.status(500).json({ error: 'Erreur lors de la sécurisation du compte.' });
+        }
       }
     });
   } catch (error) {
-    console.error("Erreur de validation Google :", error);
-    res.status(401).json({ error: 'Jeton Google invalide ou expiré.' });
+    console.error("Erreur globale Google Login :", error);
+    return res.status(401).json({ error: 'Jeton Google invalide ou expiré.' });
   }
 });
 
