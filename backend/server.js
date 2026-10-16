@@ -23,11 +23,16 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Configuration de la connexion MySQL
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
+  port: process.env.DB_PORT, // <-- NOUVEAU : Le port spécifique d'Aiven
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
+  database: process.env.DB_NAME,
+  ssl: {
+    rejectUnauthorized: false // <-- NOUVEAU : Obligatoire pour se connecter à Aiven en toute sécurité
+  }
 });
 
 db.connect((err) => {
