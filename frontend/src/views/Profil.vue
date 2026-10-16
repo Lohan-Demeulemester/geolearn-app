@@ -191,7 +191,7 @@ import { ref, onMounted } from 'vue';
 import { GoogleLogin } from 'vue3-google-login';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
+const { t, locale } = useI18n(); // <-- On importe locale ici !
 
 // Ton URL Render exacte
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
