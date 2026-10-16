@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const { OAuth2Client } = require('google-auth-library');
 
 const app = express();
@@ -14,14 +14,7 @@ app.use(express.json());
 
 // --- CONFIGURATIONS ---
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const db = mysql.createPool({
   host: process.env.DB_HOST,
@@ -40,11 +33,10 @@ db.getConnection((err, connection) => {
     console.error('❌ Erreur de connexion à MySQL :', err.message);
     return;
   }
-  console.log('✅ Connexion à la base de données MySQL réussie (Pool activé) ! 🗄️');
+  console.log('✅ Connexion à la base de données MySQL réussie ! 🗄️');
   connection.release();
 });
 
-// --- OUTILS ---
 const generateVerificationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 // ==========================================
@@ -65,20 +57,22 @@ app.post('/api/register', async (req, res) => {
         return res.status(500).json({ error: 'Erreur lors de la création du compte.' });
       }
 
-      const mailOptions = {
-        from: `"L'équipe GeoLearn" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Ton code de vérification GeoLearn 🌍',
-        html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2>Bienvenue ${username} !</h2><p>Ton code de vérification :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${verificationCode}</h1></div>`
-      };
-
       try {
-        // LE AWAIT EST CRUCIAL ICI POUR RENDER : On attend que Gmail valide l'envoi
-        await transporter.sendMail(mailOptions);
-        console.log(`✅ [REGISTER] Code envoyé avec succès à ${email}`);
+        const { data, error } = await resend.emails.send({
+          from: 'GeoLearn <onboarding@resend.dev>',
+          to: email, // Doit être ton email validé sur Resend
+          subject: 'Ton code de vérification GeoLearn 🌍',
+          html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2>Bienvenue ${username} !</h2><p>Ton code de vérification :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${verificationCode}</h1></div>`
+        });
+
+        if (error) {
+          console.error("❌ [REGISTER] Erreur API Resend :", error);
+        } else {
+          console.log(`✅ [REGISTER] Code envoyé via Resend à ${email}`);
+        }
         res.status(201).json({ message: 'Compte créé avec succès !', email: email });
       } catch (mailError) {
-        console.error("❌ [REGISTER] Erreur critique Nodemailer :", mailError);
+        console.error("❌ [REGISTER] Crash Resend :", mailError);
         res.status(500).json({ error: "Le compte est créé, mais l'envoi de l'e-mail a échoué." });
       }
     });
@@ -109,19 +103,20 @@ app.post('/api/resend-code', (req, res) => {
   db.query('UPDATE users SET verification_code = ? WHERE email = ? AND is_verified = false', [newCode, email], async (err, results) => {
     if (err || results.affectedRows === 0) return res.status(400).json({ error: 'Impossible de renvoyer le code.' });
     
-    const mailOptions = {
-      from: `"L'équipe GeoLearn" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Nouveau code GeoLearn 🌍',
-      html: `<div style="text-align: center; font-family: Arial, sans-serif;"><p>Ton nouveau code :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${newCode}</h1></div>`
-    };
-
     try {
-      await transporter.sendMail(mailOptions);
-      console.log(`✅ [RESEND] Nouveau code envoyé avec succès à ${email}`);
+      const { data, error } = await resend.emails.send({
+        from: 'GeoLearn <onboarding@resend.dev>',
+        to: email,
+        subject: 'Nouveau code GeoLearn 🌍',
+        html: `<div style="text-align: center; font-family: Arial, sans-serif;"><p>Ton nouveau code :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${newCode}</h1></div>`
+      });
+
+      if (error) console.error("❌ [RESEND] Erreur API Resend :", error);
+      else console.log(`✅ [RESEND] Nouveau code envoyé à ${email}`);
+      
       res.json({ message: 'Nouveau code envoyé.' });
     } catch (mailError) {
-      console.error("❌ [RESEND] Erreur critique Nodemailer :", mailError);
+      console.error("❌ [RESEND] Crash Resend :", mailError);
       res.status(500).json({ error: "L'envoi de l'e-mail a échoué." });
     }
   });
@@ -171,18 +166,17 @@ app.post('/api/google-login', async (req, res) => {
         db.query('INSERT INTO users (username, email, password, is_verified) VALUES (?, ?, ?, true)', [name, email, randomPassword], async (insertErr, insertResult) => {
           if (insertErr) return res.status(500).json({ error: 'Erreur de création de compte.' });
           
-          const mailOptions = {
-            from: `"L'équipe GeoLearn" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Bienvenue sur GeoLearn ! 🌍',
-            html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2 style="color: #2563eb;">Bonjour ${name} !</h2><p>Ton compte a été créé avec succès via Google.</p></div>`
-          };
-
           try {
-            await transporter.sendMail(mailOptions);
-            console.log(`✅ [GOOGLE] Email de bienvenue envoyé avec succès à ${email}`);
+            const { data, error } = await resend.emails.send({
+              from: 'GeoLearn <onboarding@resend.dev>',
+              to: email,
+              subject: 'Bienvenue sur GeoLearn ! 🌍',
+              html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2 style="color: #2563eb;">Bonjour ${name} !</h2><p>Ton compte a été créé avec succès via Google.</p></div>`
+            });
+            if (error) console.error("❌ [GOOGLE] Erreur API Resend :", error);
+            else console.log(`✅ [GOOGLE] Email de bienvenue envoyé à ${email}`);
           } catch (mailError) {
-            console.error("❌ [GOOGLE] Erreur critique Nodemailer :", mailError);
+            console.error("❌ [GOOGLE] Crash Resend :", mailError);
           }
 
           return res.status(201).json({ message: 'Compte Google créé !', user: { id: insertResult.insertId, username: name, email: email, createdAt: new Date() } });
