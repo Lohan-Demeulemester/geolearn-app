@@ -59,7 +59,7 @@ app.post('/api/register', async (req, res) => {
 
       try {
         const { data, error } = await resend.emails.send({
-          from: 'GeoLearn <onboarding@resend.dev>',
+          from: 'GeoLearn <contact@geolearn.fun>',
           to: email, // Doit être ton email validé sur Resend
           subject: 'Ton code de vérification GeoLearn 🌍',
           html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2>Bienvenue ${username} !</h2><p>Ton code de vérification :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${verificationCode}</h1></div>`
@@ -105,7 +105,7 @@ app.post('/api/resend-code', (req, res) => {
     
     try {
       const { data, error } = await resend.emails.send({
-        from: 'GeoLearn <onboarding@resend.dev>',
+        from: 'GeoLearn <contact@geolearn.fun>',
         to: email,
         subject: 'Nouveau code GeoLearn 🌍',
         html: `<div style="text-align: center; font-family: Arial, sans-serif;"><p>Ton nouveau code :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${newCode}</h1></div>`
@@ -168,7 +168,7 @@ app.post('/api/google-login', async (req, res) => {
           
           try {
             const { data, error } = await resend.emails.send({
-              from: 'GeoLearn <onboarding@resend.dev>',
+              from: 'GeoLearn <contact@geolearn.fun>',
               to: email,
               subject: 'Bienvenue sur GeoLearn ! 🌍',
               html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2 style="color: #2563eb;">Bonjour ${name} !</h2><p>Ton compte a été créé avec succès via Google.</p></div>`
