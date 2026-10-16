@@ -111,6 +111,9 @@ const messages = {
       create_btn: 'Créer mon compte',
       creating: 'Création...',
       or_continue: 'Ou continuer avec'
+      code_sent: 'Code de vérification envoyé !',
+      welcome_back: 'Heureux de vous revoir !',
+      new_code_sent: 'Un nouveau code a été envoyé !',
     }
   },
   en: {
@@ -223,6 +226,9 @@ const messages = {
       create_btn: 'Create my account',
       creating: 'Creating...',
       or_continue: 'Or continue with'
+      code_sent: 'Verification code sent!',
+      welcome_back: 'Welcome back!',
+      new_code_sent: 'A new code has been sent!',
     }
   }
 }

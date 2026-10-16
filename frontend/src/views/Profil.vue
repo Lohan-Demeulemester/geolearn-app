@@ -193,7 +193,7 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-// Ton URL Render exacte (Plus de problème de localhost !)
+// Ton URL Render exacte
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 const isLoggedIn = ref(false);
@@ -231,7 +231,6 @@ const apiCall = async (endpoint, payload, method = 'POST') => {
     body: JSON.stringify(payload)
   });
   
-  // On lit la réponse en texte brut d'abord pour éviter le crash JSON
   const text = await res.text();
   let data = {};
   
@@ -239,11 +238,11 @@ const apiCall = async (endpoint, payload, method = 'POST') => {
     try { 
       data = JSON.parse(text); 
     } catch (e) { 
-      throw new Error('Le serveur a rencontré un problème inattendu.'); 
+      throw new Error(t('common.error')); 
     }
   }
   
-  if (!res.ok) throw new Error(data.error || 'Erreur du serveur.');
+  if (!res.ok) throw new Error(data.error || t('common.error'));
   return data;
 };
 
@@ -269,7 +268,7 @@ const register = async () => {
     await apiCall('/api/register', registerForm.value);
     registeredEmail.value = registerForm.value.email;
     showVerificationForm.value = true;
-    showToast('Code envoyé !', 'success');
+    showToast(t('profil.code_sent'), 'success');
     registerForm.value.password = '';
   } catch (error) {
     errorMessage.value = error.message;
@@ -298,7 +297,7 @@ const verifyCode = async () => {
 const resendCode = async () => {
   try {
     await apiCall('/api/resend-code', { email: registeredEmail.value });
-    showToast('Nouveau code envoyé !', 'success');
+    showToast(t('profil.new_code_sent'), 'success');
   } catch (error) {
     errorMessage.value = error.message;
   }
@@ -310,7 +309,7 @@ const login = async () => {
   try {
     const data = await apiCall('/api/login', loginForm.value);
     connectUser(data.user);
-    showToast('Heureux de vous revoir !', 'success');
+    showToast(t('profil.welcome_back'), 'success');
   } catch (error) {
     errorMessage.value = error.message;
   } finally {
@@ -335,7 +334,7 @@ const connectUser = (userData) => {
     id: userData.id,
     name: userData.username,
     email: userData.email,
-    joinDate: new Date(userData.createdAt).toLocaleDateString('fr-FR'),
+    joinDate: new Date(userData.createdAt).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'fr-FR'),
     avatar: `https://ui-avatars.com/api/?name=${userData.username}&background=E0F2FE&color=2563EB&size=128`
   };
   isLoggedIn.value = true;

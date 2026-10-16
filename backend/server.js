@@ -23,7 +23,6 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// --- LE CORRECTIF EST ICI : createPool au lieu de createConnection ---
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -36,15 +35,15 @@ const db = mysql.createPool({
   queueLimit: 0
 });
 
-// Test de la connexion du Pool
 db.getConnection((err, connection) => {
   if (err) {
-    console.error('Erreur de connexion à MySQL :', err.message);
+    console.error('❌ Erreur de connexion à MySQL :', err.message);
     return;
   }
-  console.log('Connexion à la base de données MySQL réussie (Pool activé) ! 🗄️');
+  console.log('✅ Connexion à la base de données MySQL réussie (Pool activé) ! 🗄️');
   connection.release();
 });
+
 // --- OUTILS ---
 const generateVerificationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -60,7 +59,7 @@ app.post('/api/register', async (req, res) => {
     const verificationCode = generateVerificationCode();
 
     const query = 'INSERT INTO users (username, email, password, verification_code, is_verified) VALUES (?, ?, ?, ?, false)';
-    db.query(query, [username, email, hashedPassword, verificationCode], (err) => {
+    db.query(query, [username, email, hashedPassword, verificationCode], async (err) => {
       if (err) {
         if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Ce nom d\'utilisateur ou cet email est déjà utilisé.' });
         return res.status(500).json({ error: 'Erreur lors de la création du compte.' });
@@ -72,11 +71,16 @@ app.post('/api/register', async (req, res) => {
         subject: 'Ton code de vérification GeoLearn 🌍',
         html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2>Bienvenue ${username} !</h2><p>Ton code de vérification :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${verificationCode}</h1></div>`
       };
-      transporter.sendMail(mailOptions, (error) => {
-        if (error) console.error("Erreur email:", error);
-      });
 
-      res.status(201).json({ message: 'Compte créé avec succès !', email: email });
+      try {
+        // LE AWAIT EST CRUCIAL ICI POUR RENDER : On attend que Gmail valide l'envoi
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ [REGISTER] Code envoyé avec succès à ${email}`);
+        res.status(201).json({ message: 'Compte créé avec succès !', email: email });
+      } catch (mailError) {
+        console.error("❌ [REGISTER] Erreur critique Nodemailer :", mailError);
+        res.status(500).json({ error: "Le compte est créé, mais l'envoi de l'e-mail a échoué." });
+      }
     });
   } catch (error) {
     console.error(error);
@@ -102,7 +106,7 @@ app.post('/api/verify-code', (req, res) => {
 app.post('/api/resend-code', (req, res) => {
   const { email } = req.body;
   const newCode = generateVerificationCode();
-  db.query('UPDATE users SET verification_code = ? WHERE email = ? AND is_verified = false', [newCode, email], (err, results) => {
+  db.query('UPDATE users SET verification_code = ? WHERE email = ? AND is_verified = false', [newCode, email], async (err, results) => {
     if (err || results.affectedRows === 0) return res.status(400).json({ error: 'Impossible de renvoyer le code.' });
     
     const mailOptions = {
@@ -111,8 +115,15 @@ app.post('/api/resend-code', (req, res) => {
       subject: 'Nouveau code GeoLearn 🌍',
       html: `<div style="text-align: center; font-family: Arial, sans-serif;"><p>Ton nouveau code :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${newCode}</h1></div>`
     };
-    transporter.sendMail(mailOptions);
-    res.json({ message: 'Nouveau code envoyé.' });
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ [RESEND] Nouveau code envoyé avec succès à ${email}`);
+      res.json({ message: 'Nouveau code envoyé.' });
+    } catch (mailError) {
+      console.error("❌ [RESEND] Erreur critique Nodemailer :", mailError);
+      res.status(500).json({ error: "L'envoi de l'e-mail a échoué." });
+    }
   });
 });
 
@@ -136,10 +147,7 @@ app.post('/api/login', (req, res) => {
 // 5. CONNEXION GOOGLE
 app.post('/api/google-login', async (req, res) => {
   const { credential } = req.body;
-  
-  if (!credential) {
-    return res.status(400).json({ error: 'Jeton manquant.' });
-  }
+  if (!credential) return res.status(400).json({ error: 'Jeton manquant.' });
 
   try {
     const ticket = await googleClient.verifyIdToken({
@@ -150,10 +158,7 @@ app.post('/api/google-login', async (req, res) => {
     const { email, name } = ticket.getPayload();
 
     db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
-      if (err) {
-        console.error("Erreur SQL lors de la recherche Google:", err);
-        return res.status(500).json({ error: 'Erreur de base de données.' });
-      }
+      if (err) return res.status(500).json({ error: 'Erreur de base de données.' });
 
       if (results.length > 0) {
         const user = results[0];
@@ -162,36 +167,30 @@ app.post('/api/google-login', async (req, res) => {
         }
         return res.json({ message: 'Connexion Google réussie !', user: { id: user.id, username: user.username, email: user.email, createdAt: user.created_at } });
       } else {
-        try {
-          const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-12), 10);
+        const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-12), 10);
+        db.query('INSERT INTO users (username, email, password, is_verified) VALUES (?, ?, ?, true)', [name, email, randomPassword], async (insertErr, insertResult) => {
+          if (insertErr) return res.status(500).json({ error: 'Erreur de création de compte.' });
           
-          db.query('INSERT INTO users (username, email, password, is_verified) VALUES (?, ?, ?, true)', [name, email, randomPassword], (insertErr, insertResult) => {
-            if (insertErr) {
-               console.error("Erreur SQL lors de l'insertion Google:", insertErr);
-               return res.status(500).json({ error: 'Erreur de création de compte.' });
-            }
-            
-            const mailOptions = {
-              from: `"L'équipe GeoLearn" <${process.env.EMAIL_USER}>`,
-              to: email,
-              subject: 'Bienvenue sur GeoLearn ! 🌍',
-              html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2 style="color: #2563eb;">Bonjour ${name} !</h2><p>Ton compte a été créé avec succès via Google.</p></div>`
-            };
-            
-            transporter.sendMail(mailOptions, (mailErr) => { 
-                if (mailErr) console.error("Erreur email Google :", mailErr); 
-            });
+          const mailOptions = {
+            from: `"L'équipe GeoLearn" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Bienvenue sur GeoLearn ! 🌍',
+            html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2 style="color: #2563eb;">Bonjour ${name} !</h2><p>Ton compte a été créé avec succès via Google.</p></div>`
+          };
 
-            return res.status(201).json({ message: 'Compte Google créé !', user: { id: insertResult.insertId, username: name, email: email, createdAt: new Date() } });
-          });
-        } catch (hashError) {
-           console.error("Erreur Bcrypt:", hashError);
-           return res.status(500).json({ error: 'Erreur lors de la sécurisation du compte.' });
-        }
+          try {
+            await transporter.sendMail(mailOptions);
+            console.log(`✅ [GOOGLE] Email de bienvenue envoyé avec succès à ${email}`);
+          } catch (mailError) {
+            console.error("❌ [GOOGLE] Erreur critique Nodemailer :", mailError);
+          }
+
+          return res.status(201).json({ message: 'Compte Google créé !', user: { id: insertResult.insertId, username: name, email: email, createdAt: new Date() } });
+        });
       }
     });
   } catch (error) {
-    console.error("Erreur globale Google Login :", error);
+    console.error("Erreur globale Google :", error);
     return res.status(401).json({ error: 'Jeton Google invalide ou expiré.' });
   }
 });
@@ -227,7 +226,6 @@ app.get('/api/scores/:user_id', (req, res) => {
   });
 });
 
-// --- DÉMARRAGE DU SERVEUR ---
 app.listen(PORT, () => {
   console.log(`Serveur Backend démarré sur le port ${PORT}`);
 });
