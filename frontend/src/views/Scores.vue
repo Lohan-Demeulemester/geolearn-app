@@ -165,7 +165,7 @@ const fetchScores = async () => {
   const user = JSON.parse(savedUser);
 
   try {
-    const response = await fetch(`http://localhost:3000/api/scores/${user.id}`);
+    const response = await fetch(`[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/scores/${user.id}`);
     if (response.ok) {
       historique.value = await response.json();
       calculerStats();

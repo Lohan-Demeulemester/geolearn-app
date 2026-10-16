@@ -231,7 +231,7 @@ const handleGoogleLogin = async (response) => {
   errorMessage.value = '';
   isLoading.value = true;
   try {
-    const res = await fetch('http://localhost:3000/api/google-login', {
+    const res = await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/google-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ credential: response.credential })
@@ -262,7 +262,7 @@ const register = async () => {
   errorMessage.value = '';
   isLoading.value = true;
   try {
-    const response = await fetch('http://localhost:3000/api/register', {
+    const response = await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(registerForm.value)
@@ -285,7 +285,7 @@ const verifyCode = async () => {
   errorMessage.value = '';
   isLoading.value = true;
   try {
-    const response = await fetch('http://localhost:3000/api/verify-code', {
+    const response = await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/verify-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: registeredEmail.value, code: verificationCode.value })
@@ -307,7 +307,7 @@ const verifyCode = async () => {
 
 const resendCode = async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/resend-code', {
+    const response = await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/resend-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: registeredEmail.value })
@@ -324,7 +324,7 @@ const login = async () => {
   errorMessage.value = '';
   isLoading.value = true;
   try {
-    const response = await fetch('http://localhost:3000/api/login', {
+    const response = await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(loginForm.value)
@@ -360,7 +360,7 @@ const logout = () => {
 
 const updateProfile = async () => {
   try {
-    const response = await fetch(`http://localhost:3000/api/users/${user.value.id}`, {
+    const response = await fetch(`[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/users/${user.value.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: user.value.name, email: user.value.email })

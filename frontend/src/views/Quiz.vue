@@ -273,7 +273,7 @@ const sauvegarderScore = async (mode, score, maxScore) => {
   if (!savedUser) return; 
   const user = JSON.parse(savedUser);
   try {
-    await fetch('http://localhost:3000/api/scores', {
+    await fetch('[https://geolearn-backend-bj65.onrender.com](https://geolearn-backend-bj65.onrender.com)/api/scores', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: user.id, mode: mode, score: score, max_score: maxScore })
