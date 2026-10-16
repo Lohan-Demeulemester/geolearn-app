@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* Cette ligne force Tailwind à n'utiliser le mode sombre que si la classe .dark est présente */
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brandBlue: #2563eb;
+  --color-darkBg: #0f172a;
+  --color-darkSidebar: #1e293b;
+}

@@ -1,0 +1,27 @@
+doctype html
+html(lang="fr")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title= title
+    //- Intégration de Tailwind CSS (en production, pointer vers le fichier compilé)
+    script(src="https://cdn.tailwindcss.com")
+    //- Configuration Tailwind pour correspondre aux couleurs de la maquette
+    script.
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brandBlue: '#2563eb',
+              darkBg: '#0f172a',
+              darkSidebar: '#1e293b'
+            }
+          }
+        }
+      }
+  body(class="bg-gray-50 text-gray-800")
+    //- Le div où l'application Vue sera montée
+    div#app
+    
+    //- Chargement du script principal de Vue (à adapter selon le bundler, ex: Vite)
+    script(type="module" src="/src/main.js")
