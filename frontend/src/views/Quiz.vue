@@ -15,7 +15,7 @@
       </button>
     </div>
 
-    <!-- MENU PRINCIPAL DES MODES DE JEU -->
+<!-- MENU PRINCIPAL DES MODES DE JEU -->
     <div v-if="currentMode === 'menu'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
       <div @click="lancerMode('qcm', 'capital')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
         <div class="w-14 h-14 bg-blue-100 dark:bg-gray-700 text-brandBlue dark:text-blue-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏛️</div>
@@ -35,10 +35,15 @@
         <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_flash_desc') }}</p>
       </div>
 
+      <!-- CARTE CHRONO GÉNÉRALE SUR LE MENU -->
       <div @click="lancerMode('chrono')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
         <div class="w-14 h-14 bg-red-100 dark:bg-gray-700 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">⏱️</div>
-        <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_chrono_title') }}</h3>
-        <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_chrono_desc') }}</p>
+        <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
+          {{ locale === 'fr' ? 'Défis Chronométrés' : 'Timed Challenges' }}
+        </h3>
+        <p class="text-gray-500 dark:text-gray-400 text-xs">
+          {{ locale === 'fr' ? 'Testez votre rapidité sur la carte interactive : Europe ou Monde entier.' : 'Test your speed on the interactive map: Europe or World.' }}
+        </p>
       </div>
     </div>
 
