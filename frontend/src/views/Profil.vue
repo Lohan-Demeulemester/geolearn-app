@@ -824,5 +824,4 @@ const logout = () => {
     width: 100%;
   }
 }
-
 </style>

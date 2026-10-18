@@ -4,10 +4,21 @@ import Explorer from '../views/Explorer.vue'
 import Quiz from '../views/Quiz.vue'
 import Scores from '../views/Scores.vue'
 import Profil from '../views/Profil.vue'
+import Confidentialite from '../views/Confidentialite.vue'
+import APropos from '../views/APropos.vue'
+import Feedback from '../views/Feedback.vue'
+import Admin from '../views/Admin.vue'
+
+const ADMIN_EMAILS = [
+  'lohan.dtr@gmail.com',
+  'lohan.dtr.muscu@gmail.com',
+  'lohan.demeulemester@efrei.net'
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // --- ROUTES PUBLIQUES ---
     {
       path: '/',
       name: 'accueil',
@@ -18,12 +29,28 @@ const router = createRouter({
       name: 'profil',
       component: Profil
     },
+    {
+      path: '/confidentialite',
+      name: 'confidentialite',
+      component: Confidentialite
+    },
+    {
+      path: '/a-propos',
+      name: 'a-propos',
+      component: APropos
+    },
+    {
+      path: '/feedback',
+      name: 'feedback',
+      component: Feedback
+    },
+
     // --- ROUTES PROTÉGÉES ---
     {
       path: '/explorer',
       name: 'explorer',
       component: Explorer,
-      meta: { requiresAuth: true } // Cette ligne marque la route comme "protégée"
+      meta: { requiresAuth: true }
     },
     {
       path: '/quiz',
@@ -36,27 +63,53 @@ const router = createRouter({
       name: 'scores',
       component: Scores,
       meta: { requiresAuth: true }
+    },
+
+    // --- ROUTE ADMINISTRATEUR ---
+    {
+      path: '/admin',
+      name: 'admin',
+      component: Admin,
+      meta: { requiresAuth: true, requiresAdmin: true }
     }
-  ]
+  ],
+  scrollBehavior(to) {
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' }
+    }
+    return { top: 0, behavior: 'smooth' }
+  }
 })
 
 // ==========================================
 // LE GARDIEN DE SÉCURITÉ (ROUTE GUARD)
 // ==========================================
 router.beforeEach((to, from, next) => {
-  // On regarde si la page où l'on veut aller possède le badge "requiresAuth"
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-  
-  // On vérifie si notre utilisateur est dans le localStorage
-  const isAuthenticated = localStorage.getItem('geolearn_user');
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin)
+  const savedUser = localStorage.getItem('geolearn_user')
 
-  if (requiresAuth && !isAuthenticated) {
-    // Si la page est protégée et qu'il n'est pas connecté -> Retour au Profil !
-    next('/profil');
-  } else {
-    // Sinon, la voie est libre, on le laisse passer
-    next();
+  let currentUser = null
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser)
+    } catch (e) {
+      currentUser = null
+    }
   }
-});
+
+  if (requiresAuth && !currentUser) {
+    next('/profil')
+  } else if (requiresAdmin) {
+    const email = (currentUser?.email || '').toLowerCase()
+    if (!ADMIN_EMAILS.includes(email)) {
+      next('/')
+    } else {
+      next()
+    }
+  } else {
+    next()
+  }
+})
 
 export default router

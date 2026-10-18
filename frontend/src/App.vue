@@ -110,8 +110,8 @@
           <p class="footer-desc">
             {{ t('footer.desc') }}
           </p>
-          <a href="mailto:contact@geolearn.fun" class="footer-mail">
-            contact@geolearn.fun
+          <a href="mailto:geolearn-webapp@gmail.com" class="footer-mail">
+            geolearn-webapp@gmail.com
           </a>
         </div>
 
@@ -373,16 +373,20 @@ body.dark-mode textarea {
 
 .navbar-container {
   width: 100%;
-  max-width: 100%; /* S'étend bien jusqu'aux bords gauche et droit */
-  padding: 0.9rem 2.5rem;
-  display: flex;
+  max-width: 100%; 
+  margin: 0 auto; /* Centre la navbar sur l'écran */
+  padding: 0.9rem 2rem;
+  
+  /* Le secret pour un centrage absolu : la Grille ! */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
 }
 
 .brand-logo {
   display: flex;
   align-items: center;
+  justify-self: start;
   gap: 0.6rem;
   text-decoration: none;
   font-size: 1.45rem;
@@ -402,6 +406,7 @@ body.dark-mode textarea {
 .nav-links {
   display: flex;
   align-items: center;
+  justify-self: center;
   gap: 0.5rem;
 }
 
@@ -433,6 +438,7 @@ body.dark-mode textarea {
 
 .nav-actions {
   display: flex;
+  justify-self: end;
   align-items: center;
   gap: 0.75rem;
 }
@@ -634,6 +640,8 @@ body.dark-mode .profile-btn {
 
 @media (max-width: 768px) {
   .navbar-container {
+    display: flex; 
+    justify-content: space-between;
     padding: 0.75rem 1rem;
     gap: 0.3rem;
   }

@@ -96,7 +96,7 @@ app.post('/api/register', async (req, res) => {
 
       try {
         const { data, error } = await resend.emails.send({
-          from: 'GeoLearn <contact@geolearn.fun>',
+          from: 'GeoLearn <geolearn-webapp@gmail.com>',
           to: email, // Doit être ton email validé sur Resend
           subject: 'Ton code de vérification GeoLearn 🌍',
           html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2>Bienvenue ${username} !</h2><p>Ton code de vérification :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${verificationCode}</h1></div>`
@@ -142,7 +142,7 @@ app.post('/api/resend-code', (req, res) => {
     
     try {
       const { data, error } = await resend.emails.send({
-        from: 'GeoLearn <contact@geolearn.fun>',
+        from: 'GeoLearn <geolearn-webapp@gmail.com>',
         to: email,
         subject: 'Nouveau code GeoLearn 🌍',
         html: `<div style="text-align: center; font-family: Arial, sans-serif;"><p>Ton nouveau code :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${newCode}</h1></div>`
@@ -205,7 +205,7 @@ app.post('/api/google-login', async (req, res) => {
           
           try {
             const { data, error } = await resend.emails.send({
-              from: 'GeoLearn <contact@geolearn.fun>',
+              from: 'GeoLearn <geolearn-webapp@gmail.com>',
               to: email,
               subject: 'Bienvenue sur GeoLearn ! 🌍',
               html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2 style="color: #2563eb;">Bonjour ${name} !</h2><p>Ton compte a été créé avec succès via Google.</p></div>`
@@ -259,6 +259,99 @@ app.get('/api/scores/:user_id', (req, res) => {
     if (err) return res.status(500).json({ error: 'Erreur de lecture.' });
     res.json(results);
   });
+});
+
+// =========================================================
+// GESTION DES RETOURS COMMUNAUTAIRES & ADMIN (FEEDBACKS)
+// =========================================================
+const ADMIN_EMAILS = [
+  'lohan.dtr@gmail.com',
+  'lohan.dtr.muscu@gmail.com',
+  'lohan.demeulemester@efrei.net'
+];
+
+// Création automatique de la table feedbacks si elle n'existe pas
+pool.query(`
+  CREATE TABLE IF NOT EXISTS feedbacks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    username VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    type VARCHAR(30) DEFAULT 'suggestion',
+    subject VARCHAR(150) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(30) DEFAULT 'nouveau',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`).catch(err => console.error('Erreur initialisation table feedbacks:', err));
+
+// 1. Envoyer un retour (Accessible à tous les utilisateurs)
+app.post('/api/feedbacks', async (req, res) => {
+  try {
+    const { userId, username, email, type, subject, message } = req.body;
+    if (!username || !email || !subject || !message) {
+      return res.status(400).json({ error: 'Tous les champs sont obligatoires.' });
+    }
+
+    await pool.query(
+      'INSERT INTO feedbacks (user_id, username, email, type, subject, message) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId || null, username, email, type || 'suggestion', subject, message]
+    );
+
+    res.status(201).json({ message: 'Retour enregistré avec succès !' });
+  } catch (error) {
+    console.error('Erreur POST /api/feedbacks:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de l\'enregistrement.' });
+  }
+});
+
+// 2. Récupérer tous les retours (Réservé à l'Admin)
+app.get('/api/admin/feedbacks', async (req, res) => {
+  try {
+    const adminEmail = (req.query.email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(adminEmail)) {
+      return res.status(403).json({ error: 'Accès réservé à l\'administrateur.' });
+    }
+
+    const [rows] = await pool.query('SELECT * FROM feedbacks ORDER BY created_at DESC');
+    res.json({ feedbacks: rows });
+  } catch (error) {
+    console.error('Erreur GET /api/admin/feedbacks:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des retours.' });
+  }
+});
+
+// 3. Mettre à jour le statut d'un retour (Réservé à l'Admin)
+app.put('/api/admin/feedbacks/:id', async (req, res) => {
+  try {
+    const adminEmail = (req.body.email || '').toLowerCase();
+    const { status } = req.body;
+    if (!ADMIN_EMAILS.includes(adminEmail)) {
+      return res.status(403).json({ error: 'Accès refusé.' });
+    }
+
+    await pool.query('UPDATE feedbacks SET status = ? WHERE id = ?', [status, req.params.id]);
+    res.json({ message: 'Statut mis à jour.' });
+  } catch (error) {
+    console.error('Erreur PUT /api/admin/feedbacks:', error);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour.' });
+  }
+});
+
+// 4. Supprimer un retour (Réservé à l'Admin)
+app.delete('/api/admin/feedbacks/:id', async (req, res) => {
+  try {
+    const adminEmail = (req.query.email || '').toLowerCase();
+    if (!ADMIN_EMAILS.includes(adminEmail)) {
+      return res.status(403).json({ error: 'Accès refusé.' });
+    }
+
+    await pool.query('DELETE FROM feedbacks WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Retour supprimé.' });
+  } catch (error) {
+    console.error('Erreur DELETE /api/admin/feedbacks:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression.' });
+  }
 });
 
 app.listen(PORT, () => {
