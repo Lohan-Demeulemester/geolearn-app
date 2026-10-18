@@ -632,7 +632,18 @@ body.dark-mode .profile-btn {
 
 @media (max-width: 768px) {
   .navbar-container {
-    padding: 0.85rem 1.25rem;
+    padding: 0.75rem 1rem;
+    gap: 0.3rem;
+  }
+  .nav-actions {
+    gap: 0.4rem;
+  }
+  .profile-name {
+    display: none;
+  }
+  .profile-btn {
+    padding: 0.35rem;
+    border-radius: 50%;
   }
   .mobile-menu-btn {
     display: inline-flex !important;

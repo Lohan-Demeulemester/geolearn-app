@@ -794,4 +794,35 @@ const logout = () => {
 .toast-notification.error {
   background: #ef4444;
 }
+
+@media (max-width: 768px) {
+  .profil-container {
+    padding: 1rem 0.75rem;
+    width: 100%;
+  }
+
+  .profile-card, .auth-card {
+    padding: 1.5rem 1.rem;
+    width: 100%;
+    border-radius: 16px;
+  }
+
+  /* Centrer et empiler la partie avatar/infos sur mobile */
+  .profile-top {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  /* Mettre les boutons d'action l'un sous l'autre sur mobile pour éviter qu'ils se compressent */
+  .profile-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .btn-save, .btn-logout {
+    width: 100%;
+  }
+}
+
 </style>
