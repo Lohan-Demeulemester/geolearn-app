@@ -47,7 +47,7 @@
             :title="isDarkMode ? (locale === 'fr' ? 'Passer en mode clair' : 'Switch to light mode') : (locale === 'fr' ? 'Passer en mode sombre' : 'Switch to dark mode')"
           >
             <!-- En mode sombre (isDarkMode = true) : on affiche le SOLEIL pour passer au clair -->
-            <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <svg v-if="!isDarkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="5"></circle>
               <line x1="12" y1="1" x2="12" y2="3"></line>
               <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -283,6 +283,14 @@ body.dark,
   --input-bg: #0f172a;
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 20px 35px -5px rgba(0, 0, 0, 0.45);
+}
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem; /* Redonne de l'air en haut et sur les côtés */
 }
 
 * {
