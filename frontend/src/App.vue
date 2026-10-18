@@ -196,6 +196,14 @@ body {
 
 .app-layout { min-height: 100vh; display: flex; flex-direction: column; }
 
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem; /* Redonne de l'air en haut et sur les côtés */
+}
+
 /* CONTENEUR NAVBAR ÉLARGI */
 .navbar {
   background: var(--bg-nav);
