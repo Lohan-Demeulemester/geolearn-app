@@ -21,7 +21,7 @@
     <!-- CARTE INTERACTIVE LEAFLET (VERROUILLÉE SUR LE MONDE SANS RÉPÉTITION) -->
     <div class="h-[500px] w-full rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 relative z-0 bg-[#aad3df] dark:bg-[#1e293b]">
       <l-map
-        ref="map"
+        ref="mapRef"
         v-model:zoom="zoom"
         v-model:center="center"
         :min-zoom="2"
@@ -166,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n'; 
 import CountryCard from '../components/CountryCard.vue';
 import ALL_COUNTRIES from '../data/countries.js';
@@ -199,20 +199,32 @@ const currentPage = ref(1);
 const countriesData = ref(ALL_COUNTRIES);
 
 // Recentre automatiquement la carte quand l'utilisateur filtre par continent
+const mapRef = ref(null);
+
+// Recentre parfaitement la carte et force le rafraîchissement Leaflet
 const CONTINENT_VIEWS = {
   '': { center: [20.0, 10.0], zoom: 2 },
   'Europe': { center: [52.0, 15.0], zoom: 4 },
-  'Asia': { center: [28.0, 90.0], zoom: 3 },
+  'Asia': { center: [34.0, 90.0], zoom: 3 },
   'Africa': { center: [2.0, 20.0], zoom: 3 },
-  'North America': { center: [38.0, -95.0], zoom: 3 },
-  'South America': { center: [-18.0, -60.0], zoom: 3 },
-  'Oceania': { center: [-22.0, 145.0], zoom: 3 }
+  'North America': { center: [40.0, -100.0], zoom: 3 },
+  'South America': { center: [-15.0, -60.0], zoom: 3 },
+  'Oceania': { center: [-25.0, 135.0], zoom: 3 }
 };
 
-const onContinentChange = () => {
+const onContinentChange = async () => {
   const view = CONTINENT_VIEWS[selectedContinent.value] || CONTINENT_VIEWS[''];
+  
+  // Applique les nouvelles coordonnées
   center.value = [...view.center];
   zoom.value = view.zoom;
+
+  // Force Leaflet à recalculer l'affichage pour éviter tout bug de rendu visuel
+  await nextTick();
+  if (mapRef.value && mapRef.value.leafletObject) {
+    mapRef.value.leafletObject.invalidateSize();
+    mapRef.value.leafletObject.setView(view.center, view.zoom);
+  }
 };
 
 // Remettre à la page 1 dès qu'on tape une recherche ou qu'on change de filtre
