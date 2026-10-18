@@ -149,6 +149,7 @@ const { t } = useI18n();
 
 .highlight {
   background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

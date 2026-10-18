@@ -1,6 +1,6 @@
 <template>
-  <div class="app-layout">
-    <!-- NAVBAR -->
+  <div :class="['app-layout', { 'dark-mode': isDarkMode }]">
+    <!-- NAVBAR (Écartée sur les bords) -->
     <header class="navbar">
       <div class="navbar-container">
         <router-link to="/" class="brand-logo">
@@ -23,25 +23,27 @@
           <router-link to="/quiz" class="nav-item" @click="mobileMenuOpen = false">
             {{ t ? t('nav.quiz', 'Quiz & Flashcards') : 'Quiz & Flashcards' }}
           </router-link>
-          <router-link to="/progression" class="nav-item" @click="mobileMenuOpen = false">
-            {{ t ? t('nav.progress', 'Progression') : 'Progression' }}
+          <router-link to="/scores" class="nav-item" @click="mobileMenuOpen = false">
+            {{ locale === 'fr' ? 'Scores' : 'Scores' }}
           </router-link>
 
-          <router-link
-            v-if="isAdmin"
-            to="/admin"
-            class="nav-item admin-badge"
-            @click="mobileMenuOpen = false"
-          >
+          <router-link v-if="isAdmin" to="/admin" class="nav-item admin-badge" @click="mobileMenuOpen = false">
             Admin
           </router-link>
         </nav>
 
         <div class="nav-actions">
-          <button class="lang-switch" @click="toggleLanguage">
-            {{ locale === 'fr' ? '🇫🇷 FR' : '🇬🇧 EN' }}
+          <!-- BOUTON MODE SOMBRE -->
+          <button class="action-btn theme-toggle" @click="toggleDarkMode" :title="isDarkMode ? 'Passer en mode clair' : 'Passer en mode sombre'">
+            {{ isDarkMode ? '☀️' : '🌙' }}
           </button>
 
+          <!-- BOUTON LANGUE -->
+          <button class="action-btn lang-switch" @click="toggleLanguage">
+            {{ locale === 'fr' ? 'FR' : 'EN' }}
+          </button>
+
+          <!-- PROFIL -->
           <router-link to="/profil" class="profile-btn" @click="mobileMenuOpen = false">
             <img v-if="currentUser && currentUser.avatar" :src="currentUser.avatar" alt="Avatar" class="nav-avatar" />
             <span v-else class="user-icon">👤</span>
@@ -53,12 +55,11 @@
       </div>
     </header>
 
-    <!-- CONTENU PRINCIPAL (Centré et aéré comme avant) -->
     <main class="main-content">
       <router-view />
     </main>
 
-    <!-- FOOTER (Sans emojis) -->
+    <!-- FOOTER -->
     <footer class="site-footer">
       <div class="footer-container">
         <div class="footer-col brand-col">
@@ -82,7 +83,6 @@
             <li><router-link to="/">{{ locale === 'fr' ? 'Accueil' : 'Home' }}</router-link></li>
             <li><router-link to="/explorer">{{ locale === 'fr' ? 'Carte du Monde' : 'World Map' }}</router-link></li>
             <li><router-link to="/quiz">{{ locale === 'fr' ? 'Quiz & Défis' : 'Quizzes & Challenges' }}</router-link></li>
-            <li><router-link to="/progression">{{ locale === 'fr' ? 'Ma Progression' : 'My Progress' }}</router-link></li>
             <li><router-link to="/profil">{{ locale === 'fr' ? 'Mon Compte' : 'My Account' }}</router-link></li>
           </ul>
         </div>
@@ -90,49 +90,21 @@
         <div class="footer-col">
           <h4>{{ locale === 'fr' ? 'Communauté' : 'Community' }}</h4>
           <ul class="footer-links">
-            <li>
-              <router-link to="/feedback" class="highlight-link">
-                {{ locale === 'fr' ? 'Suggérer une idée / Signaler un bug' : 'Suggest an idea / Report a bug' }}
-              </router-link>
-            </li>
-            <li>
-              <router-link to="/a-propos">
-                {{ locale === 'fr' ? 'Qui sommes-nous ?' : 'About Us' }}
-              </router-link>
-            </li>
-            <li v-if="isAdmin">
-              <router-link to="/admin" class="admin-footer-link">
-                {{ locale === 'fr' ? 'Panneau Administrateur' : 'Admin Dashboard' }}
-              </router-link>
-            </li>
+            <li><router-link to="/feedback" class="highlight-link">{{ locale === 'fr' ? 'Signaler un bug' : 'Report a bug' }}</router-link></li>
+            <li><router-link to="/a-propos">{{ locale === 'fr' ? 'Qui sommes-nous ?' : 'About Us' }}</router-link></li>
           </ul>
         </div>
 
         <div class="footer-col">
-          <h4>{{ locale === 'fr' ? 'Légal & RGPD' : 'Legal & Privacy' }}</h4>
+          <h4>{{ locale === 'fr' ? 'Légal' : 'Legal' }}</h4>
           <ul class="footer-links">
-            <li>
-              <router-link to="/confidentialite">
-                {{ locale === 'fr' ? 'Politique de confidentialité (RGPD)' : 'Privacy Policy (GDPR)' }}
-              </router-link>
-            </li>
-            <li>
-              <router-link to="/a-propos#contact">
-                {{ locale === 'fr' ? 'Nous contacter' : 'Contact Us' }}
-              </router-link>
-            </li>
+            <li><router-link to="/confidentialite">RGPD & Confidentialité</router-link></li>
           </ul>
         </div>
       </div>
-
       <div class="footer-bottom">
         <div class="footer-bottom-content">
-          <p>© {{ new Date().getFullYear() }} GeoLearn (geolearn.fun). {{ locale === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.' }}</p>
-          <div class="footer-bottom-right">
-            <button class="footer-lang-btn" @click="toggleLanguage">
-              {{ locale === 'fr' ? 'Français (FR)' : 'English (EN)' }}
-            </button>
-          </div>
+          <p>© {{ new Date().getFullYear() }} GeoLearn.fun</p>
         </div>
       </div>
     </footer>
@@ -146,11 +118,9 @@ import { useI18n } from 'vue-i18n';
 const { t, locale } = useI18n();
 const mobileMenuOpen = ref(false);
 const currentUser = ref(null);
+const isDarkMode = ref(false);
 
-const ADMIN_EMAILS = [
-  'lohan.dtr@gmail.com',
-  'lohan.demeulemester@efrei.net'
-];
+const ADMIN_EMAILS = ['lohan.dtr@gmail.com', 'lohan.demeulemester@efrei.net'];
 
 const isAdmin = computed(() => {
   if (!currentUser.value || !currentUser.value.email) return false;
@@ -160,14 +130,8 @@ const isAdmin = computed(() => {
 const loadUserFromStorage = () => {
   const saved = localStorage.getItem('geolearn_user');
   if (saved) {
-    try {
-      currentUser.value = JSON.parse(saved);
-    } catch (e) {
-      currentUser.value = null;
-    }
-  } else {
-    currentUser.value = null;
-  }
+    try { currentUser.value = JSON.parse(saved); } catch (e) { currentUser.value = null; }
+  } else { currentUser.value = null; }
 };
 
 const toggleLanguage = () => {
@@ -175,11 +139,22 @@ const toggleLanguage = () => {
   localStorage.setItem('geolearn_lang', locale.value);
 };
 
+const toggleDarkMode = () => {
+  isDarkMode.value = !isDarkMode.value;
+  localStorage.setItem('geolearn_theme', isDarkMode.value ? 'dark' : 'light');
+  document.body.classList.toggle('dark-theme-active', isDarkMode.value);
+};
+
 onMounted(() => {
   const savedLang = localStorage.getItem('geolearn_lang');
-  if (savedLang) {
-    locale.value = savedLang;
+  if (savedLang) locale.value = savedLang;
+  
+  const savedTheme = localStorage.getItem('geolearn_theme');
+  if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    isDarkMode.value = true;
+    document.body.classList.add('dark-theme-active');
   }
+
   loadUserFromStorage();
   window.addEventListener('auth-change', loadUserFromStorage);
 });
@@ -190,308 +165,77 @@ onUnmounted(() => {
 </script>
 
 <style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* CSS VARIABLES POUR LE THEME */
+:root {
+  --bg-main: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --bg-nav: #ffffff;
+  --border-color: #e2e8f0;
+  --card-bg: #ffffff;
+  --card-hover: #f1f5f9;
+}
+
+.dark-theme-active {
+  --bg-main: #0f172a;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --bg-nav: #1e293b;
+  --border-color: #334155;
+  --card-bg: #1e293b;
+  --card-hover: #334155;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: #f8fafc;
-  color: #0f172a;
-  line-height: 1.5;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
 }
 
-.app-layout {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+.app-layout { min-height: 100vh; display: flex; flex-direction: column; }
 
-.main-content {
-  flex: 1;
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-}
-
+/* CONTENEUR NAVBAR ÉLARGI */
 .navbar {
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--bg-nav);
+  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
-  width: 100%;
+  transition: background-color 0.3s;
 }
 
 .navbar-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0.85rem 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.brand-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  text-decoration: none;
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #1e293b;
-}
-
-.logo-icon {
-  font-size: 1.5rem;
-}
-
-.logo-text {
-  background: linear-gradient(135deg, #2563eb, #0ea5e9);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.nav-item {
-  text-decoration: none;
-  color: #475569;
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0.5rem 0.9rem;
-  border-radius: 10px;
-  transition: all 0.2s ease;
-}
-
-.nav-item:hover {
-  color: #2563eb;
-  background: #f1f5f9;
-}
-
-.nav-item.router-link-exact-active {
-  color: #2563eb;
-  background: #eff6ff;
-}
-
-.admin-badge {
-  background: #fef3c7;
-  color: #d97706 !important;
-  border: 1px solid #fde68a;
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.lang-switch {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  padding: 0.45rem 0.75rem;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #334155;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.lang-switch:hover {
-  background: #e2e8f0;
-}
-
-.profile-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  background: #0f172a;
-  color: #ffffff;
-  padding: 0.45rem 0.95rem;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: background 0.2s;
-}
-
-.profile-btn:hover {
-  background: #1e293b;
-}
-
-.nav-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.mobile-menu-btn {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #334155;
-}
-
-.site-footer {
-  background: #0f172a;
-  color: #cbd5e1;
-  margin-top: 4rem;
-  border-top: 1px solid #1e293b;
   width: 100%;
-}
-
-.footer-container {
-  max-width: 1280px;
+  max-width: 1600px; /* Beaucoup plus large */
   margin: 0 auto;
-  padding: 3.5rem 1.5rem 2.5rem;
-  display: grid;
-  grid-template-columns: 1.6fr 1fr 1.2fr 1fr;
-  gap: 2.5rem;
-}
-
-.footer-logo {
-  font-size: 1.4rem;
-  font-weight: 800;
-  margin-bottom: 0.8rem;
-  color: #ffffff;
-}
-
-.footer-desc {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  line-height: 1.6;
-  margin-bottom: 1.2rem;
-}
-
-.footer-mail {
-  display: inline-block;
-  color: #38bdf8;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.92rem;
-  background: rgba(56, 189, 248, 0.1);
-  padding: 0.45rem 0.85rem;
-  border-radius: 8px;
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  transition: all 0.2s;
-}
-
-.footer-mail:hover {
-  background: rgba(56, 189, 248, 0.2);
-}
-
-.footer-col h4 {
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 1.1rem;
-}
-
-.footer-links {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.footer-links a {
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s;
-}
-
-.footer-links a:hover {
-  color: #ffffff;
-}
-
-.highlight-link {
-  color: #60a5fa !important;
-  font-weight: 600;
-}
-
-.admin-footer-link {
-  color: #fbbf24 !important;
-  font-weight: 600;
-}
-
-.footer-bottom {
-  border-top: 1px solid #1e293b;
-  background: #090e1a;
-}
-
-.footer-bottom-content {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 1.25rem 1.5rem;
+  padding: 0.85rem 3%; /* Espace sur les bords */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.85rem;
-  color: #64748b;
 }
 
-.footer-lang-btn {
-  background: #1e293b;
-  color: #cbd5e1;
-  border: 1px solid #334155;
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  cursor: pointer;
-}
+.brand-logo { text-decoration: none; font-size: 1.35rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;}
+.logo-text { background: linear-gradient(135deg, #2563eb, #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-.footer-lang-btn:hover {
-  color: #ffffff;
-  border-color: #475569;
-}
+.nav-links { display: flex; gap: 0.5rem; }
+.nav-item { text-decoration: none; color: var(--text-muted); font-weight: 600; padding: 0.5rem 0.9rem; border-radius: 10px; transition: 0.2s; }
+.nav-item:hover { color: #2563eb; background: var(--card-hover); }
+.nav-item.router-link-exact-active { color: #2563eb; background: rgba(37, 99, 235, 0.1); }
 
-@media (max-width: 900px) {
-  .footer-container {
-    grid-template-columns: 1fr 1fr;
-  }
-}
+.nav-actions { display: flex; align-items: center; gap: 0.8rem; }
+.action-btn { background: var(--card-hover); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.45rem 0.75rem; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.action-btn:hover { filter: brightness(0.95); }
 
-@media (max-width: 640px) {
-  .mobile-menu-btn {
-    display: block;
-  }
-  .nav-links {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #ffffff;
-    flex-direction: column;
-    padding: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-    box-shadow: 0 10px 15px rgba(0,0,0,0.05);
-  }
-  .nav-links.nav-open {
-    display: flex;
-  }
-  .footer-container {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-  .footer-bottom-content {
-    flex-direction: column;
-    gap: 0.75rem;
-    text-align: center;
-  }
-}
+.profile-btn { display: flex; align-items: center; gap: 0.5rem; background: #2563eb; color: #fff; text-decoration: none; padding: 0.45rem 1rem; border-radius: 999px; font-weight: 600; transition: 0.2s; }
+.profile-btn:hover { background: #1d4ed8; }
+.nav-avatar { width: 24px; height: 24px; border-radius: 50%; }
+
+.site-footer { background: #0b1120; color: #cbd5e1; margin-top: auto; }
+.footer-container { max-width: 1400px; margin: 0 auto; padding: 3rem 3%; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2rem; }
+.footer-links { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.footer-links a { color: #94a3b8; text-decoration: none; }
+.footer-links a:hover { color: white; }
+.footer-bottom { border-top: 1px solid #1e293b; padding: 1.5rem 3%; text-align: center; }
 </style>
