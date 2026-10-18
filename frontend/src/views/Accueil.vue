@@ -1,387 +1,522 @@
 <template>
-  <div class="home-container">
-    
-    <!-- HEADER HERO SECTION -->
-    <section class="hero slide-up">
-      <div class="badge-version">
+  <div class="home-wrapper">
+    <!-- ========================================== -->
+    <!-- SECTION 1 : HERO                           -->
+    <!-- ========================================== -->
+    <section class="hero-section fade-in-up">
+      <div class="version-pill">
         <span class="pulse-dot"></span>
-        {{ t ? t('home.new_version', 'Nouvelle version disponible') : 'Nouvelle version disponible' }}
+        <span>{{ t('home.new_version') }}</span>
       </div>
-      
-      <h1 class="hero-title">
-        Maîtrisez la géographie <br />
-        avec <span class="highlight">GeoLearn</span>
+
+      <h1 class="hero-heading">
+        {{ t('home.title_1') }} <span class="brand-gradient">GeoLearn</span>
       </h1>
-      
-      <p class="hero-subtitle">
-        Découvrez le monde à travers des quiz interactifs, des défis chronométrés et des cartes dynamiques. Apprendre n'a jamais été aussi amusant.
+
+      <p class="hero-description">
+        {{ t('home.desc') }}
       </p>
-      
-      <div class="hero-actions">
-        <router-link to="/quiz" class="btn btn-primary shadow-hover">
-          Lancer une partie ➔
+
+      <div class="hero-buttons">
+        <router-link to="/quiz" class="btn-main">
+          <span>{{ t('home.play_btn') }}</span>
+          <span class="arrow">→</span>
         </router-link>
-        <router-link to="/explorer" class="btn btn-secondary shadow-hover">
-          🌍 Explorer la carte
+        <router-link to="/explorer" class="btn-outline">
+          <span>🌍</span>
+          <span>{{ t('home.explore_btn') }}</span>
         </router-link>
       </div>
     </section>
 
-    <!-- SECTION DES FONCTIONNALITÉS -->
-    <section class="features slide-up delay-1">
-      <div class="section-header">
-        <h2>4 façons d'apprendre</h2>
-        <p>Que vous soyez débutant ou expert, nos différents modes de jeu s'adaptent à votre niveau pour une progression optimale.</p>
+    <!-- ========================================== -->
+    <!-- SECTION 2 : LES 4 FAÇONS D'APPRENDRE       -->
+    <!-- ========================================== -->
+    <section class="modes-section fade-in-up delay-1">
+      <div class="modes-header">
+        <h2>{{ t('home.ways_title') }}</h2>
+        <p>{{ t('home.ways_desc') }}</p>
       </div>
 
-      <div class="features-grid">
-        <!-- Carte 1 -->
-        <div class="feature-card">
-          <div class="feature-icon bg-red">⏱️</div>
-          <h3>Défi Europe</h3>
-          <p>Le test ultime. Vous avez 3 minutes pour retrouver sur la carte interactive les 47 pays qui composent le continent européen.</p>
-          <router-link to="/quiz" class="feature-link text-red">Essayer ce mode ▸</router-link>
-        </div>
-        
-        <!-- Carte 2 -->
-        <div class="feature-card">
-          <div class="feature-icon bg-blue">🏛️</div>
-          <h3>Quiz des Capitales</h3>
-          <p>Testez vos connaissances à travers des séries de 15 questions générées aléatoirement sur les capitales du monde entier.</p>
-          <router-link to="/quiz" class="feature-link text-blue">Essayer ce mode ▸</router-link>
-        </div>
-        
-        <!-- Carte 3 -->
-        <div class="feature-card">
-          <div class="feature-icon bg-orange">🚩</div>
-          <h3>Reconnaissance de Drapeaux</h3>
-          <p>Associez visuellement les drapeaux à leurs pays respectifs. Des images haute définition pour ne rater aucun détail.</p>
-          <router-link to="/quiz" class="feature-link text-orange">Essayer ce mode ▸</router-link>
-        </div>
-        
-        <!-- Carte 4 -->
-        <div class="feature-card">
-          <div class="feature-icon bg-green">🃏</div>
-          <h3>Flashcards (Révision)</h3>
-          <p>Apprenez sans pression. Un mode révision pur avec des cartes mémorielles recto-verso pour vous entraîner avant les quiz.</p>
-          <router-link to="/quiz" class="feature-link text-green">Essayer ce mode ▸</router-link>
-        </div>
+      <div class="modes-grid">
+        <!-- Carte 1 : Défi Europe -->
+        <router-link to="/quiz" class="mode-card card-red">
+          <div class="mode-icon-box icon-red">⏱️</div>
+          <h3>{{ t('home.mode_chrono_title') }}</h3>
+          <p>{{ t('home.mode_chrono_desc') }}</p>
+          <span class="mode-cta cta-red">{{ t('home.try_mode') }} ▸</span>
+          <div class="watermark-icon">⏱️</div>
+        </router-link>
+
+        <!-- Carte 2 : Quiz des Capitales -->
+        <router-link to="/quiz" class="mode-card card-blue">
+          <div class="mode-icon-box icon-blue">🏛️</div>
+          <h3>{{ t('home.mode_caps_title') }}</h3>
+          <p>{{ t('home.mode_caps_desc') }}</p>
+          <span class="mode-cta cta-blue">{{ t('home.try_mode') }} ▸</span>
+          <div class="watermark-icon">🏛️</div>
+        </router-link>
+
+        <!-- Carte 3 : Reconnaissance de Drapeaux -->
+        <router-link to="/quiz" class="mode-card card-orange">
+          <div class="mode-icon-box icon-orange">🚩</div>
+          <h3>{{ t('home.mode_flags_title') }}</h3>
+          <p>{{ t('home.mode_flags_desc') }}</p>
+          <span class="mode-cta cta-orange">{{ t('home.try_mode') }} ▸</span>
+          <div class="watermark-icon">🚩</div>
+        </router-link>
+
+        <!-- Carte 4 : Flashcards -->
+        <router-link to="/quiz" class="mode-card card-green">
+          <div class="mode-icon-box icon-green">🃏</div>
+          <h3>{{ t('home.mode_flash_title') }}</h3>
+          <p>{{ t('home.mode_flash_desc') }}</p>
+          <span class="mode-cta cta-green">{{ t('home.try_mode') }} ▸</span>
+          <div class="watermark-icon">🃏</div>
+        </router-link>
       </div>
     </section>
 
-    <!-- BANNIÈRE STATISTIQUES -->
-    <section class="stats-banner slide-up delay-2">
-      <div class="stat-item">
-        <span class="stat-number">190+</span>
-        <span class="stat-label">Pays intégrés</span>
+    <!-- ========================================== -->
+    <!-- SECTION 3 : BANNIÈRE STATISTIQUES          -->
+    <!-- ========================================== -->
+    <section class="stats-bar fade-in-up delay-2">
+      <div class="stat-col">
+        <span class="stat-val">190+</span>
+        <span class="stat-lbl">{{ t('home.stat_countries') }}</span>
       </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <span class="stat-number">100%</span>
-        <span class="stat-label">Gratuit & Sans pub</span>
+
+      <div class="stat-sep"></div>
+
+      <div class="stat-col">
+        <span class="stat-val">100%</span>
+        <span class="stat-lbl">{{ t('home.stat_free') }}</span>
       </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <span class="stat-icon">📈</span>
-        <span class="stat-label">Suivi de progression en direct</span>
+
+      <div class="stat-sep"></div>
+
+      <div class="stat-col">
+        <span class="stat-val stat-chart">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+            <polyline points="16 7 22 7 22 13"></polyline>
+          </svg>
+        </span>
+        <span class="stat-lbl">{{ t('home.stat_tracking') }}</span>
       </div>
     </section>
 
+    <!-- ========================================== -->
+    <!-- SECTION 4 : APPEL À L'ACTION (CTA)         -->
+    <!-- ========================================== -->
+    <section v-if="!isLoggedIn" class="cta-section fade-in-up delay-2">
+      <h2>{{ t('home.cta_title') }}</h2>
+      <router-link to="/profil" class="btn-main">
+        {{ t('home.cta_btn') }} →
+      </router-link>
+    </section>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+
 const { t } = useI18n();
+const isLoggedIn = ref(false);
+
+onMounted(() => {
+  isLoggedIn.value = !!localStorage.getItem('geolearn_user');
+});
 </script>
 
 <style scoped>
-/* CONTENEUR PRINCIPAL */
-.home-container {
-  max-width: 1100px;
+.home-wrapper {
+  max-width: 1140px;
   margin: 0 auto;
-  padding: 4rem 1.5rem 6rem; /* Beaucoup plus d'espace en haut et en bas */
+  padding: 1.5rem 0 2.5rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 5.5rem;
 }
 
-/* ================= HERO SECTION ================= */
-.hero {
+/* HERO SECTION */
+.hero-section {
   text-align: center;
-  margin-bottom: 7rem; /* Sépare massivement le hero du reste */
+  max-width: 820px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 800px;
 }
 
-.badge-version {
+.version-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #eff6ff;
+  gap: 0.55rem;
+  background: rgba(37, 99, 235, 0.1);
   color: #2563eb;
-  padding: 0.4rem 1rem;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  padding: 0.45rem 1.1rem;
   border-radius: 999px;
   font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.8rem;
 }
 
 .pulse-dot {
   width: 8px;
   height: 8px;
-  background-color: #3b82f6;
+  background: #2563eb;
   border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-  animation: pulse 2s infinite;
+  animation: pulseDot 2s infinite;
 }
 
-.hero-title {
-  font-size: 3.8rem;
+.hero-heading {
+  font-size: clamp(2.6rem, 5vw, 4.1rem);
   font-weight: 900;
-  color: #0f172a;
-  line-height: 1.15;
+  color: var(--text-main);
+  line-height: 1.14;
+  letter-spacing: -0.025em;
   margin-bottom: 1.5rem;
-  letter-spacing: -0.02em;
 }
 
-.highlight {
-  background: linear-gradient(135deg, #2563eb, #0ea5e9);
-  background-clip: text;
+.brand-gradient {
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.hero-subtitle {
-  font-size: 1.2rem;
-  color: #64748b;
-  line-height: 1.6;
-  margin-bottom: 2.5rem;
-  padding: 0 1rem;
+.hero-description {
+  font-size: 1.18rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  max-width: 680px;
+  margin-bottom: 2.4rem;
 }
 
-.hero-actions {
+.hero-buttons {
   display: flex;
-  gap: 1.2rem;
+  align-items: center;
   justify-content: center;
+  gap: 1.15rem;
+  flex-wrap: wrap;
 }
 
-.btn {
-  padding: 0.95rem 1.8rem;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1.05rem;
-  text-decoration: none;
-  transition: all 0.3s ease;
+.btn-main {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-primary {
+  gap: 0.6rem;
   background: #2563eb;
-  color: white;
-  border: 2px solid #2563eb;
+  color: #ffffff !important;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 0.95rem 1.9rem;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+  transition: all 0.25s ease;
 }
 
-.btn-primary:hover {
+.btn-main:hover {
   background: #1d4ed8;
-  border-color: #1d4ed8;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.5);
 }
 
-.btn-secondary {
-  background: #ffffff;
-  color: #0f172a;
-  border: 2px solid #e2e8f0;
+.btn-main .arrow {
+  transition: transform 0.25s ease;
 }
 
-.btn-secondary:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
-  transform: translateY(-2px);
+.btn-main:hover .arrow {
+  transform: translateX(4px);
 }
 
-.shadow-hover:hover {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 0.95rem 1.8rem;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
 }
 
-/* ================= FEATURES SECTION ================= */
-.features {
+.btn-outline:hover {
+  border-color: #2563eb;
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* SECTION DES 4 MODES */
+.modes-section {
   width: 100%;
-  margin-bottom: 6rem;
 }
 
-.section-header {
+.modes-header {
   text-align: center;
-  margin-bottom: 4rem; /* Éloigne le titre des cartes */
+  margin-bottom: 3.2rem;
 }
 
-.section-header h2 {
+.modes-header h2 {
   font-size: 2.2rem;
   font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 1rem;
+  color: var(--text-main);
+  margin-bottom: 0.75rem;
 }
 
-.section-header p {
-  color: #64748b;
-  font-size: 1.1rem;
-  max-width: 600px;
+.modes-header p {
+  font-size: 1.08rem;
+  color: var(--text-muted);
+  max-width: 620px;
   margin: 0 auto;
 }
 
-.features-grid {
+.modes-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 2.5rem; /* Aère massivement les cartes entre elles */
+  gap: 2rem;
 }
 
-.feature-card {
-  background: #ffffff;
-  border: 1px solid #f1f5f9;
-  border-radius: 24px;
-  padding: 2.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.mode-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 2.2rem;
+  text-decoration: none;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  border-color: #e2e8f0;
+.card-red {
+  background: linear-gradient(145deg, var(--card-bg) 40%, rgba(254, 226, 226, 0.35) 100%);
+  border-color: rgba(254, 202, 202, 0.6);
+}
+.card-blue {
+  background: linear-gradient(145deg, var(--card-bg) 40%, rgba(219, 234, 254, 0.35) 100%);
+  border-color: rgba(191, 219, 254, 0.6);
+}
+.card-orange {
+  background: linear-gradient(145deg, var(--card-bg) 40%, rgba(255, 237, 213, 0.35) 100%);
+  border-color: rgba(254, 215, 170, 0.6);
+}
+.card-green {
+  background: linear-gradient(145deg, var(--card-bg) 40%, rgba(220, 252, 231, 0.35) 100%);
+  border-color: rgba(187, 247, 208, 0.6);
 }
 
-.feature-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
+:global(body.dark-mode) .card-red {
+  background: linear-gradient(145deg, #1e293b 40%, rgba(239, 68, 68, 0.12) 100%);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+:global(body.dark-mode) .card-blue {
+  background: linear-gradient(145deg, #1e293b 40%, rgba(59, 130, 246, 0.12) 100%);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+:global(body.dark-mode) .card-orange {
+  background: linear-gradient(145deg, #1e293b 40%, rgba(249, 115, 22, 0.12) 100%);
+  border-color: rgba(249, 115, 22, 0.25);
+}
+:global(body.dark-mode) .card-green {
+  background: linear-gradient(145deg, #1e293b 40%, rgba(16, 185, 129, 0.12) 100%);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.mode-card:hover {
+  transform: translateY(-7px);
+  box-shadow: var(--shadow-lg);
+}
+
+.mode-icon-box {
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
+  font-size: 1.55rem;
+  margin-bottom: 1.35rem;
+  z-index: 1;
 }
 
-/* Couleurs douces pour les icônes */
-.bg-red { background: #fee2e2; }
-.bg-blue { background: #dbeafe; }
-.bg-orange { background: #ffedd5; }
-.bg-green { background: #dcfce7; }
+.icon-red { background: rgba(239, 68, 68, 0.15); }
+.icon-blue { background: rgba(59, 130, 246, 0.15); }
+.icon-orange { background: rgba(249, 115, 22, 0.15); }
+.icon-green { background: rgba(16, 185, 129, 0.15); }
 
-.text-red { color: #dc2626; }
-.text-blue { color: #2563eb; }
-.text-orange { color: #ea580c; }
-.text-green { color: #16a34a; }
-
-.feature-card h3 {
+.mode-card h3 {
   font-size: 1.35rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 0.8rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 0.65rem;
+  z-index: 1;
 }
 
-.feature-card p {
-  color: #64748b;
-  font-size: 0.95rem;
+.mode-card p {
+  color: var(--text-muted);
+  font-size: 0.96rem;
   line-height: 1.6;
-  flex-grow: 1;
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.6rem;
+  flex: 1;
+  z-index: 1;
 }
 
-.feature-link {
+.mode-cta {
   font-weight: 700;
-  font-size: 0.95rem;
-  text-decoration: none;
-  transition: opacity 0.2s;
-}
-
-.feature-link:hover {
-  opacity: 0.7;
-}
-
-/* ================= STATS BANNER ================= */
-.stats-banner {
-  background: #0f172a;
-  width: 100%;
-  border-radius: 20px;
-  padding: 3rem 2rem;
-  display: flex;
-  justify-content: space-evenly;
+  font-size: 0.92rem;
+  display: inline-flex;
   align-items: center;
-  color: white;
-  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.3);
+  gap: 0.3rem;
+  z-index: 1;
+  transition: transform 0.2s ease;
 }
 
-.stat-item {
+.mode-card:hover .mode-cta {
+  transform: translateX(5px);
+}
+
+.cta-red { color: #ef4444; }
+.cta-blue { color: #3b82f6; }
+.cta-orange { color: #f97316; }
+.cta-green { color: #10b981; }
+
+.watermark-icon {
+  position: absolute;
+  right: -10px;
+  bottom: -18px;
+  font-size: 6.5rem;
+  opacity: 0.06;
+  pointer-events: none;
+  transform: rotate(-12deg);
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+
+.mode-card:hover .watermark-icon {
+  transform: rotate(0deg) scale(1.08);
+  opacity: 0.11;
+}
+
+/* BANNIÈRE STATISTIQUES */
+.stats-bar {
+  background: linear-gradient(135deg, #091e3a 0%, #0f172a 100%);
+  border-radius: 22px;
+  padding: 2.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  color: #ffffff;
+  box-shadow: 0 20px 35px -10px rgba(9, 30, 58, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
   text-align: center;
+  gap: 0.4rem;
 }
 
-.stat-number {
-  font-size: 2.5rem;
+.stat-val {
+  font-size: 2.4rem;
   font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #ffffff;
 }
 
-.stat-icon {
-  font-size: 2.2rem;
-  margin-bottom: 0.3rem;
+.stat-chart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  color: #38bdf8;
 }
 
-.stat-label {
+.stat-lbl {
+  font-size: 0.92rem;
   color: #94a3b8;
-  font-size: 1rem;
   font-weight: 500;
 }
 
-.stat-divider {
+.stat-sep {
   width: 1px;
-  height: 60px;
-  background: #334155;
+  height: 54px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
-/* ================= ANIMATIONS ================= */
-@keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+/* SECTION CTA */
+.cta-section {
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 22px;
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: var(--shadow-sm);
 }
 
-.slide-up {
-  animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
-  transform: translateY(30px);
+.cta-section h2 {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-main);
 }
 
-.delay-1 { animation-delay: 0.2s; }
-.delay-2 { animation-delay: 0.4s; }
+/* ANIMATIONS */
+@keyframes pulseDot {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6); }
+  70% { box-shadow: 0 0 0 7px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
 
-@keyframes slideUpFade {
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* RESPONSIVE */
-@media (max-width: 900px) {
-  .hero-title { font-size: 2.8rem; }
-  .features-grid { grid-template-columns: 1fr; }
-  .stats-banner { flex-direction: column; gap: 2rem; padding: 2.5rem 1.5rem; }
-  .stat-divider { width: 100%; height: 1px; }
+.fade-in-up {
+  animation: fadeInUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@media (max-width: 600px) {
-  .hero-actions { flex-direction: column; }
-  .hero-title { font-size: 2.3rem; }
-  .home-container { padding: 2rem 1rem 4rem; }
+.delay-1 {
+  animation-delay: 0.12s;
+  opacity: 0;
+}
+
+.delay-2 {
+  animation-delay: 0.24s;
+  opacity: 0;
+}
+
+@media (max-width: 860px) {
+  .modes-grid {
+    grid-template-columns: 1fr;
+  }
+  .stats-bar {
+    flex-direction: column;
+    gap: 1.8rem;
+  }
+  .stat-sep {
+    width: 60%;
+    height: 1px;
+  }
 }
 </style>

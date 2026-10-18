@@ -113,7 +113,21 @@ const messages = {
       or_continue: 'Ou continuer avec',
       code_sent: 'Verification code sent!',
       welcome_back: 'Welcome back!',
-      new_code_sent: 'A new code has been sent!'
+      new_code_sent: 'A new code has been sent!',
+      edit_info: 'Informations du compte',
+      save_changes: 'Enregistrer les modifications',
+    },
+    footer: {
+      desc: 'La plateforme interactive pour apprendre la géographie mondiale, maîtriser les capitales, les drapeaux et relever des défis chronométrés.',
+      nav_title: 'Navigation',
+      community_title: 'Communauté',
+      legal_title: 'Légal & RGPD',
+      feedback_link: 'Suggérer une idée / Signaler un bug',
+      about_link: 'Qui sommes-nous ?',
+      admin_link: 'Panneau Administrateur',
+      privacy_link: 'Politique de confidentialité (RGPD)',
+      contact_link: 'Nous contacter',
+      rights: 'Tous droits réservés.'
     }
   },
   en: {
@@ -228,7 +242,21 @@ const messages = {
       or_continue: 'Or continue with',
       code_sent: 'Verification code sent!',
       welcome_back: 'Welcome back!',
-      new_code_sent: 'A new code has been sent!'
+      new_code_sent: 'A new code has been sent!',
+      edit_info: 'Account Information',
+      save_changes: 'Save changes',
+    },
+    footer: {
+      desc: 'The interactive platform to learn world geography, master capitals, flags, and take on timed challenges.',
+      nav_title: 'Navigation',
+      community_title: 'Community',
+      legal_title: 'Legal & GDPR',
+      feedback_link: 'Suggest an idea / Report a bug',
+      about_link: 'About Us',
+      admin_link: 'Admin Dashboard',
+      privacy_link: 'Privacy Policy (GDPR)',
+      contact_link: 'Contact Us',
+      rights: 'All rights reserved.'
     }
   }
 }

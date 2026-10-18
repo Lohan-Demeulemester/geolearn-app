@@ -1,13 +1,11 @@
 <template>
   <div class="profil-container">
-    <!-- NOTIFICATION TOAST -->
     <transition name="fade">
       <div v-if="toast.show" :class="['toast-notification', toast.type]">
         {{ toast.message }}
       </div>
     </transition>
 
-    <!-- EN-TÊTE DE LA PAGE -->
     <div class="profil-header">
       <h1>{{ t('profil.title') }}</h1>
       <p>{{ t('profil.subtitle') }}</p>
@@ -21,10 +19,9 @@
         
         <!-- A. ÉCRAN DE VÉRIFICATION DU CODE PAR EMAIL -->
         <div v-if="showVerificationForm" class="verification-box">
-          <div class="verify-icon">✉️</div>
           <h2>{{ t('profil.verify_title') }}</h2>
           <p class="verify-text">
-            {{ t('profil.verify_subtitle') }}<br />
+            {{ t('profil.verify_desc') }}<br />
             <strong>{{ registeredEmail }}</strong>
           </p>
 
@@ -34,7 +31,6 @@
 
           <form @submit.prevent="verifyCode" class="auth-form">
             <div class="form-group">
-              <label>{{ t('profil.verify_code_label') }}</label>
               <input
                 type="text"
                 v-model="verificationCode"
@@ -46,23 +42,22 @@
             </div>
 
             <button type="submit" class="btn-primary" :disabled="isLoading">
-              {{ isLoading ? t('profil.verifying') : t('profil.verify_btn') }}
+              {{ isLoading ? t('common.loading') : t('profil.validate_btn') }}
             </button>
           </form>
 
           <div class="verify-actions">
             <button @click="resendCode" class="btn-link" type="button">
-              {{ t('profil.resend_code') }}
+              {{ t('profil.resend') }}
             </button>
             <button @click="showVerificationForm = false" class="btn-link secondary" type="button">
-              ← {{ t('common.back') }}
+              {{ t('profil.back_register') }}
             </button>
           </div>
         </div>
 
         <!-- B. ÉCRAN CONNEXION / INSCRIPTION -->
         <div v-else>
-          <!-- Onglets Login / Register -->
           <div class="auth-tabs">
             <button
               type="button"
@@ -80,7 +75,6 @@
             </button>
           </div>
 
-          <!-- Bannière d'erreur -->
           <div v-if="errorMessage" class="error-banner">
             {{ errorMessage }}
           </div>
@@ -93,7 +87,7 @@
                 <input
                   type="email"
                   v-model="loginForm.email"
-                  :placeholder="t('profil.email_placeholder')"
+                  placeholder="votre@email.com"
                   required
                 />
               </div>
@@ -112,7 +106,7 @@
             </div>
 
             <button type="submit" class="btn-primary" :disabled="isLoading">
-              {{ isLoading ? t('profil.logging_in') : t('profil.login_btn') }}
+              {{ isLoading ? t('profil.connecting') : t('profil.connect_btn') }}
             </button>
           </form>
 
@@ -124,13 +118,15 @@
                 <input
                   type="text"
                   v-model="registerForm.username"
-                  :placeholder="t('profil.username_placeholder')"
+                  :placeholder="t('profil.username')"
                   minlength="3"
                   maxlength="25"
                   required
                 />
               </div>
-              <small class="input-hint">3 à 25 caractères (lettres, chiffres, espace, -, _, .)</small>
+              <small class="input-hint">
+                {{ locale === 'fr' ? '3 à 25 caractères (lettres, chiffres, espace, -, _, .)' : '3 to 25 characters (letters, numbers, space, -, _, .)' }}
+              </small>
             </div>
 
             <div class="form-group">
@@ -139,7 +135,7 @@
                 <input
                   type="email"
                   v-model="registerForm.email"
-                  :placeholder="t('profil.email_placeholder')"
+                  placeholder="votre@email.com"
                   required
                 />
               </div>
@@ -157,11 +153,13 @@
                   required
                 />
               </div>
-              <small class="input-hint">6 à 30 caractères, au moins 1 majuscule et 1 chiffre</small>
+              <small class="input-hint">
+                {{ locale === 'fr' ? '6 à 30 caractères, au moins 1 majuscule et 1 chiffre' : '6 to 30 characters, at least 1 uppercase letter and 1 number' }}
+              </small>
             </div>
 
             <button type="submit" class="btn-primary" :disabled="isLoading">
-              {{ isLoading ? t('profil.creating') : t('profil.register_btn') }}
+              {{ isLoading ? t('profil.creating') : t('profil.create_btn') }}
             </button>
           </form>
 
@@ -189,7 +187,7 @@
             <h2>{{ user.name }}</h2>
             <p class="profile-email">{{ user.email }}</p>
             <span class="member-badge">
-              {{ locale === 'fr' ? 'Membre depuis le' : 'Member since' }} {{ user.joinDate }}
+              {{ t('profil.member_since', { date: user.joinDate }) }}
             </span>
           </div>
         </div>
@@ -197,7 +195,7 @@
         <hr class="profile-divider" />
 
         <form @submit.prevent="updateProfile" class="profile-edit-form">
-          <h3>{{ locale === 'fr' ? 'Informations du compte' : 'Account Information' }}</h3>
+          <h3>{{ t('profil.personal_info') }}</h3>
 
           <div class="form-group">
             <label>{{ t('profil.username') }}</label>
@@ -210,7 +208,9 @@
                 required
               />
             </div>
-            <small class="input-hint">3 à 25 caractères (lettres, chiffres, espace, -, _, .)</small>
+            <small class="input-hint">
+              {{ locale === 'fr' ? '3 à 25 caractères (lettres, chiffres, espace, -, _, .)' : '3 to 25 characters (letters, numbers, space, -, _, .)' }}
+            </small>
           </div>
 
           <div class="form-group">
@@ -226,7 +226,7 @@
 
           <div class="profile-actions">
             <button type="submit" class="btn-save">
-              {{ locale === 'fr' ? 'Enregistrer les modifications' : 'Save Changes' }}
+              {{ t('common.save') }}
             </button>
             <button type="button" @click="logout" class="btn-logout">
               {{ t('profil.logout') }}
@@ -321,12 +321,12 @@ const apiCall = async (endpoint, payload, method = 'POST') => {
     try {
       data = JSON.parse(text);
     } catch (e) {
-      throw new Error("Erreur de communication avec le serveur.");
+      throw new Error(t('common.error'));
     }
   }
 
   if (!res.ok) {
-    throw new Error(data.error || "Une erreur est survenue.");
+    throw new Error(data.error || t('common.error'));
   }
   return data;
 };
@@ -337,7 +337,7 @@ const handleGoogleLogin = async (response) => {
   try {
     const data = await apiCall('/api/google-login', { credential: response.credential });
     connectUser(data.user);
-    showToast("Connexion Google réussie !", 'success');
+    showToast(t('profil.welcome_back'), 'success');
   } catch (error) {
     errorMessage.value = error.message;
   } finally {
@@ -360,7 +360,7 @@ const register = async () => {
     await apiCall('/api/register', registerForm.value);
     registeredEmail.value = registerForm.value.email;
     showVerificationForm.value = true;
-    showToast("Code de vérification envoyé par e-mail !", 'success');
+    showToast(t('profil.code_sent'), 'success');
     registerForm.value.password = '';
   } catch (error) {
     errorMessage.value = error.message;
@@ -377,7 +377,7 @@ const verifyCode = async () => {
       email: registeredEmail.value,
       code: verificationCode.value.trim()
     });
-    showToast("Compte vérifié ! Tu peux maintenant te connecter.", 'success');
+    showToast(t('common.success'), 'success');
     showVerificationForm.value = false;
     showLoginForm.value = true;
     loginForm.value.email = registeredEmail.value;
@@ -393,7 +393,7 @@ const resendCode = async () => {
   errorMessage.value = '';
   try {
     await apiCall('/api/resend-code', { email: registeredEmail.value });
-    showToast("Un nouveau code a été envoyé !", 'success');
+    showToast(t('profil.new_code_sent'), 'success');
   } catch (error) {
     errorMessage.value = error.message;
   }
@@ -405,7 +405,7 @@ const login = async () => {
   try {
     const data = await apiCall('/api/login', loginForm.value);
     connectUser(data.user);
-    showToast("Ravi de te revoir !", 'success');
+    showToast(t('profil.welcome_back'), 'success');
   } catch (error) {
     errorMessage.value = error.message;
   } finally {
@@ -430,7 +430,7 @@ const updateProfile = async () => {
     user.value.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.value.name)}&background=E0F2FE&color=2563EB&size=128`;
     localStorage.setItem('geolearn_user', JSON.stringify(user.value));
     window.dispatchEvent(new Event('auth-change'));
-    showToast("Profil mis à jour avec succès !", 'success');
+    showToast(t('common.success'), 'success');
   } catch (error) {
     showToast(error.message, 'error');
   }
@@ -468,25 +468,24 @@ const logout = () => {
 
 <style scoped>
 .profil-container {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 0 1.5rem;
+  max-width: 820px;
+  margin: 0 auto;
 }
 
 .profil-header {
-  margin-bottom: 2rem;
+  margin-bottom: 2.2rem;
 }
 
 .profil-header h1 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 0.3rem;
+  color: var(--text-main);
+  margin-bottom: 0.35rem;
 }
 
 .profil-header p {
-  color: #64748b;
-  font-size: 1rem;
+  color: var(--text-muted);
+  font-size: 1.05rem;
 }
 
 .auth-wrapper {
@@ -496,21 +495,22 @@ const logout = () => {
 }
 
 .auth-card {
-  background: #ffffff;
-  border-radius: 20px;
+  background: var(--card-bg);
+  border-radius: 22px;
   padding: 2.5rem;
   width: 100%;
-  max-width: 440px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
-  border: 1px solid #f1f5f9;
+  max-width: 450px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
 }
 
 .auth-tabs {
   display: flex;
-  background: #f1f5f9;
+  background: var(--input-bg);
   padding: 0.35rem;
   border-radius: 12px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.6rem;
+  border: 1px solid var(--border-color);
 }
 
 .tab-btn {
@@ -520,21 +520,21 @@ const logout = () => {
   background: transparent;
   border-radius: 9px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tab-btn.active {
-  background: #ffffff;
+  background: var(--card-bg);
   color: #2563eb;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .error-banner {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
   padding: 0.85rem 1rem;
   border-radius: 10px;
   font-size: 0.9rem;
@@ -546,42 +546,41 @@ const logout = () => {
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1.2rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 .form-group label {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-main);
 }
 
 .input-wrapper input {
   width: 100%;
-  padding: 0.8rem 1rem;
-  border: 1px solid #e2e8f0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   font-size: 0.95rem;
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--input-bg);
+  color: var(--text-main);
   transition: all 0.2s;
 }
 
 .input-wrapper input:focus {
   outline: none;
   border-color: #2563eb;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .input-hint {
-  font-size: 0.76rem;
-  color: #64748b;
+  font-size: 0.78rem;
+  color: var(--text-muted);
   margin-top: 0.1rem;
 }
 
@@ -589,17 +588,18 @@ const logout = () => {
   margin-top: 0.5rem;
   padding: 0.9rem;
   background: #2563eb;
-  color: white;
+  color: #ffffff;
   border: none;
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: #1d4ed8;
+  transform: translateY(-1px);
 }
 
 .btn-primary:disabled {
@@ -611,8 +611,8 @@ const logout = () => {
   display: flex;
   align-items: center;
   text-align: center;
-  margin: 1.5rem 0 1.2rem;
-  color: #94a3b8;
+  margin: 1.6rem 0 1.25rem;
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
 
@@ -620,7 +620,7 @@ const logout = () => {
 .divider::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .divider span {
@@ -636,14 +636,14 @@ const logout = () => {
   text-align: center;
 }
 
-.verify-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
+.verification-box h2 {
+  margin-bottom: 0.6rem;
+  color: var(--text-main);
 }
 
 .verify-text {
-  color: #64748b;
-  font-size: 0.92rem;
+  color: var(--text-muted);
+  font-size: 0.94rem;
   margin-bottom: 1.5rem;
   line-height: 1.5;
 }
@@ -655,15 +655,17 @@ const logout = () => {
   letter-spacing: 8px;
   text-align: center;
   font-weight: 700;
-  border: 2px solid #cbd5e1;
+  border: 2px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-main);
   border-radius: 10px;
 }
 
 .verify-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 1.2rem;
+  gap: 0.55rem;
+  margin-top: 1.25rem;
 }
 
 .btn-link {
@@ -676,15 +678,15 @@ const logout = () => {
 }
 
 .btn-link.secondary {
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .profile-card {
-  background: #ffffff;
-  border-radius: 20px;
+  background: var(--card-bg);
+  border-radius: 22px;
   padding: 2.5rem;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
-  border: 1px solid #f1f5f9;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
 }
 
 .profile-top {
@@ -698,39 +700,39 @@ const logout = () => {
   height: 88px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #dbeafe;
+  border: 3px solid rgba(37, 99, 235, 0.25);
 }
 
 .profile-meta h2 {
-  font-size: 1.5rem;
-  color: #0f172a;
+  font-size: 1.55rem;
+  color: var(--text-main);
   margin: 0 0 0.25rem 0;
 }
 
 .profile-email {
-  color: #64748b;
-  margin: 0 0 0.6rem 0;
+  color: var(--text-muted);
+  margin: 0 0 0.65rem 0;
 }
 
 .member-badge {
   display: inline-block;
-  background: #eff6ff;
-  color: #2563eb;
+  background: rgba(37, 99, 235, 0.12);
+  color: #3b82f6;
   font-size: 0.82rem;
   font-weight: 600;
-  padding: 0.35rem 0.75rem;
+  padding: 0.35rem 0.85rem;
   border-radius: 999px;
 }
 
 .profile-divider {
   border: none;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
   margin: 1.8rem 0;
 }
 
 .profile-edit-form h3 {
   margin-bottom: 1.2rem;
-  color: #0f172a;
+  color: var(--text-main);
   font-size: 1.2rem;
 }
 
@@ -742,12 +744,13 @@ const logout = () => {
 
 .btn-save {
   flex: 1;
-  padding: 0.85rem;
+  padding: 0.9rem;
   background: #2563eb;
-  color: white;
+  color: #ffffff;
   border: none;
   border-radius: 10px;
   font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -757,18 +760,19 @@ const logout = () => {
 }
 
 .btn-logout {
-  padding: 0.85rem 1.4rem;
-  background: #fee2e2;
-  color: #dc2626;
-  border: none;
+  padding: 0.9rem 1.5rem;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
   border-radius: 10px;
   font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .btn-logout:hover {
-  background: #fecaca;
+  background: rgba(239, 68, 68, 0.22);
 }
 
 .toast-notification {
@@ -780,7 +784,7 @@ const logout = () => {
   color: white;
   font-weight: 600;
   z-index: 9999;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .toast-notification.success {
