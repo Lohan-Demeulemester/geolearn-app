@@ -654,7 +654,7 @@ body.dark-mode .profile-btn {
   }
   .profile-btn {
     padding: 0.35rem;
-    border-radius: 50%;
+    border-radius: 25%;
   }
   .mobile-menu-btn {
     display: inline-flex !important;
