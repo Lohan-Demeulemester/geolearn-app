@@ -293,6 +293,37 @@ body.dark,
   padding: 3rem 1.5rem; /* Redonne de l'air en haut et sur les côtés */
 }
 
+/* --- ESPACEMENT UNIVERSEL DE TOUTES LES PAGES --- */
+.explorer-container, 
+.quiz-container, 
+.scores-container, 
+.profil-container,
+.main-content > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem; /* Espace vertical automatique entre les grands blocs de chaque page */
+}
+
+/* Espacement spécifique pour la page Explorer (Carte -> Recherche -> Grille) */
+.explorer-container .leaflet-container, 
+.explorer-container .vue2leaflet-map {
+  margin-bottom: 1.5rem !important;
+  border-radius: 20px !important;
+}
+
+.explorer-container input, 
+.explorer-container select {
+  margin-top: 1rem !important;
+  margin-bottom: 2rem !important;
+}
+
+/* Grille des pays bien aérée */
+.countries-grid, .grid-pays, .explorer-container .row {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  gap: 1.8rem !important;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
