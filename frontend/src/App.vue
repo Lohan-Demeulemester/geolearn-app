@@ -83,7 +83,7 @@
           </router-link>
 
           <!-- Bouton Burger (Strictement caché sur PC) -->
-          <button type="button" class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Menu">
+          <button v-if="currentUser" type="button" class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Menu">
             <span v-if="!mobileMenuOpen">☰</span>
             <span v-else>✕</span>
           </button>
@@ -638,7 +638,12 @@ body.dark-mode .profile-btn {
   .nav-actions {
     gap: 0.4rem;
   }
-  .profile-name {
+  .profile-btn .profile-name {
+    display: inline; /* Visible par défaut pour "Connexion" */
+  }
+
+  /* Si connecté (il y a un avatar), on cache le texte du nom sur mobile pour gagner de la place */
+  .profile-btn:has(.nav-avatar) .profile-name {
     display: none;
   }
   .profile-btn {
