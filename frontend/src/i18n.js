@@ -4,7 +4,7 @@ const messages = {
   fr: {
     nav: {
       home: 'Accueil',
-      explore: 'Explorer',
+      explore: 'Exploreur',
       quiz: 'Quiz',
       scores: 'Mes scores',
       login: 'Connexion'

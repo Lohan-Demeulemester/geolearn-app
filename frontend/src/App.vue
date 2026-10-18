@@ -285,11 +285,6 @@ body.dark,
   --shadow-lg: 0 20px 35px -5px rgba(0, 0, 0, 0.45);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -302,7 +297,6 @@ body {
 .main-content {
   flex: 1;
   width: 100%;
-  max-width: 1280px;
   margin: 0 auto;
   padding: 3rem 1.5rem; /* Redonne de l'air en haut et sur les côtés */
 }
