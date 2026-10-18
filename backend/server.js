@@ -44,6 +44,31 @@ db.getConnection((err, connection) => {
 
 const generateVerificationCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 
+// --- RÈGLES DE VALIDATION ---
+const validateUsername = (username) => {
+  if (!username || username.length < 3 || username.length > 25) {
+    return "L'identifiant doit contenir entre 3 et 25 caractères.";
+  }
+  if (/\s{2,}/.test(username) || username.startsWith(' ') || username.endsWith(' ')) {
+    return "L'identifiant ne peut pas contenir deux espaces de suite ni commencer/finir par un espace.";
+  }
+  const usernameRegex = /^[a-zA-Z0-9À-ÿ_.\- ]+$/;
+  if (!usernameRegex.test(username)) {
+    return "L'identifiant ne peut contenir que des lettres, chiffres, espaces, tirets (-), underscores (_) et points (.).";
+  }
+  return null;
+};
+
+const validatePassword = (password) => {
+  if (!password || password.length < 6 || password.length > 30) {
+    return "Le mot de passe doit contenir entre 6 et 30 caractères.";
+  }
+  if (!/[A-Z]/.test(password) || !/\d/.test(password)) {
+    return "Le mot de passe doit contenir au moins une majuscule et un chiffre.";
+  }
+  return null;
+};
+
 // ==========================================
 // ROUTES UTILISATEURS ET AUTHENTIFICATION
 // ==========================================
@@ -51,6 +76,13 @@ const generateVerificationCode = () => Math.floor(100000 + Math.random() * 90000
 // 1. INSCRIPTION CLASSIQUE
 app.post('/api/register', async (req, res) => {
   const { username, email, password } = req.body;
+
+  // Vérification des règles strictes
+  const usernameError = validateUsername(username);
+  if (usernameError) return res.status(400).json({ error: usernameError });
+
+  const passwordError = validatePassword(password);
+  if (passwordError) return res.status(400).json({ error: passwordError });
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationCode = generateVerificationCode();
@@ -197,6 +229,10 @@ app.post('/api/google-login', async (req, res) => {
 // 6. METTRE À JOUR LE PROFIL
 app.put('/api/users/:id', (req, res) => {
   const { name, email } = req.body;
+
+  const usernameError = validateUsername(name);
+  if (usernameError) return res.status(400).json({ error: usernameError });
+
   db.query('UPDATE users SET username = ?, email = ? WHERE id = ?', [name, email, req.params.id], (err) => {
     if (err) {
       if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Email ou pseudo déjà pris.' });
