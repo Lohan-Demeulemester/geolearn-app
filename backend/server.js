@@ -18,14 +18,19 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const db = mysql.createPool({
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  port: Number(process.env.DB_PORT) || 11210,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   ssl: { rejectUnauthorized: false },
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  connectionLimit: 5,           // Limité à 5 pour ne pas saturer l'offre gratuite Aiven
+  maxIdle: 5,
+  idleTimeout: 60000,           // Ferme proprement les connexions inactives après 60s
+  queueLimit: 0,
+  enableKeepAlive: true,        // <-- TRÈS IMPORTANT : Garde la connexion active avec Aiven
+  keepAliveInitialDelay: 10000, // Envoie un signal toutes les 10s pour éviter la coupure
+  connectTimeout: 10000         // Évite de ramer pendant 40s si le réseau accroche
 });
 
 db.getConnection((err, connection) => {
