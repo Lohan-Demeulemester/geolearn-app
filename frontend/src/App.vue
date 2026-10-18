@@ -1,23 +1,18 @@
 <template>
   <div class="app-layout">
-    <!-- ========================================== -->
-    <!-- BARRE DE NAVIGATION (HEADER)               -->
-    <!-- ========================================== -->
+    <!-- NAVBAR -->
     <header class="navbar">
       <div class="navbar-container">
-        <!-- Logo -->
         <router-link to="/" class="brand-logo">
           <span class="logo-icon">🌍</span>
           <span class="logo-text">GeoLearn</span>
         </router-link>
 
-        <!-- Menu burger (Mobile) -->
         <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
           <span v-if="!mobileMenuOpen">☰</span>
           <span v-else>✕</span>
         </button>
 
-        <!-- Liens de navigation -->
         <nav :class="['nav-links', { 'nav-open': mobileMenuOpen }]">
           <router-link to="/" class="nav-item" @click="mobileMenuOpen = false">
             {{ t ? t('nav.home', 'Accueil') : 'Accueil' }}
@@ -32,20 +27,18 @@
             {{ t ? t('nav.progress', 'Progression') : 'Progression' }}
           </router-link>
 
-          <!-- BOUTON ADMIN SECRET (Visible uniquement par toi) -->
           <router-link
             v-if="isAdmin"
             to="/admin"
             class="nav-item admin-badge"
             @click="mobileMenuOpen = false"
           >
-            🛠️ Admin
+            Admin
           </router-link>
         </nav>
 
-        <!-- Actions à droite (Langue + Profil) -->
         <div class="nav-actions">
-          <button class="lang-switch" @click="toggleLanguage" :title="locale === 'fr' ? 'Switch to English' : 'Passer en Français'">
+          <button class="lang-switch" @click="toggleLanguage">
             {{ locale === 'fr' ? '🇫🇷 FR' : '🇬🇧 EN' }}
           </button>
 
@@ -60,23 +53,16 @@
       </div>
     </header>
 
-    <!-- ========================================== -->
-    <!-- CONTENU PRINCIPAL DES PAGES                -->
-    <!-- ========================================== -->
+    <!-- CONTENU PRINCIPAL (Centré et aéré comme avant) -->
     <main class="main-content">
       <router-view />
     </main>
 
-    <!-- ========================================== -->
-    <!-- PIED DE PAGE GLOBAL (FOOTER - ÉTAPE 1.1)   -->
-    <!-- ========================================== -->
+    <!-- FOOTER (Sans emojis) -->
     <footer class="site-footer">
       <div class="footer-container">
-        
-        <!-- Colonne 1 : Marque & Description -->
         <div class="footer-col brand-col">
           <div class="footer-logo">
-            <span class="logo-icon">🌍</span>
             <span class="logo-text">GeoLearn</span>
           </div>
           <p class="footer-desc">
@@ -86,11 +72,10 @@
             }}
           </p>
           <a href="mailto:contact@geolearn.fun" class="footer-mail">
-            ✉️ contact@geolearn.fun
+            contact@geolearn.fun
           </a>
         </div>
 
-        <!-- Colonne 2 : Navigation rapide -->
         <div class="footer-col">
           <h4>{{ locale === 'fr' ? 'Navigation' : 'Navigation' }}</h4>
           <ul class="footer-links">
@@ -102,54 +87,50 @@
           </ul>
         </div>
 
-        <!-- Colonne 3 : Communauté & Aide -->
         <div class="footer-col">
           <h4>{{ locale === 'fr' ? 'Communauté' : 'Community' }}</h4>
           <ul class="footer-links">
             <li>
               <router-link to="/feedback" class="highlight-link">
-                💡 {{ locale === 'fr' ? 'Suggérer une idée / Signaler un bug' : 'Suggest an idea / Report a bug' }}
+                {{ locale === 'fr' ? 'Suggérer une idée / Signaler un bug' : 'Suggest an idea / Report a bug' }}
               </router-link>
             </li>
             <li>
               <router-link to="/a-propos">
-                👋 {{ locale === 'fr' ? 'Qui sommes-nous ?' : 'About Us' }}
+                {{ locale === 'fr' ? 'Qui sommes-nous ?' : 'About Us' }}
               </router-link>
             </li>
             <li v-if="isAdmin">
               <router-link to="/admin" class="admin-footer-link">
-                🛠️ {{ locale === 'fr' ? 'Panneau Administrateur' : 'Admin Dashboard' }}
+                {{ locale === 'fr' ? 'Panneau Administrateur' : 'Admin Dashboard' }}
               </router-link>
             </li>
           </ul>
         </div>
 
-        <!-- Colonne 4 : Informations Légales -->
         <div class="footer-col">
           <h4>{{ locale === 'fr' ? 'Légal & RGPD' : 'Legal & Privacy' }}</h4>
           <ul class="footer-links">
             <li>
               <router-link to="/confidentialite">
-                🔒 {{ locale === 'fr' ? 'Politique de confidentialité (RGPD)' : 'Privacy Policy (GDPR)' }}
+                {{ locale === 'fr' ? 'Politique de confidentialité (RGPD)' : 'Privacy Policy (GDPR)' }}
               </router-link>
             </li>
             <li>
               <router-link to="/a-propos#contact">
-                📬 {{ locale === 'fr' ? 'Nous contacter' : 'Contact Us' }}
+                {{ locale === 'fr' ? 'Nous contacter' : 'Contact Us' }}
               </router-link>
             </li>
           </ul>
         </div>
-
       </div>
 
-      <!-- Barre de copyright en bas -->
       <div class="footer-bottom">
         <div class="footer-bottom-content">
           <p>© {{ new Date().getFullYear() }} GeoLearn (geolearn.fun). {{ locale === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.' }}</p>
           <div class="footer-bottom-right">
             <button class="footer-lang-btn" @click="toggleLanguage">
-              🌐 {{ locale === 'fr' ? 'Français (FR)' : 'English (EN)' }}
+              {{ locale === 'fr' ? 'Français (FR)' : 'English (EN)' }}
             </button>
           </div>
         </div>
@@ -166,7 +147,6 @@ const { t, locale } = useI18n();
 const mobileMenuOpen = ref(false);
 const currentUser = ref(null);
 
-// Liste de tes adresses emails autorisées à voir le bouton Admin
 const ADMIN_EMAILS = [
   'lohan.dtr@gmail.com',
   'lohan.demeulemester@efrei.net'
@@ -210,7 +190,6 @@ onUnmounted(() => {
 </script>
 
 <style>
-/* RESET & LAYOUT GLOBAL */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -232,9 +211,12 @@ body {
 
 .main-content {
   flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
 }
 
-/* NAVBAR */
 .navbar {
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
@@ -242,6 +224,7 @@ body {
   top: 0;
   z-index: 1000;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+  width: 100%;
 }
 
 .navbar-container {
@@ -306,10 +289,6 @@ body {
   border: 1px solid #fde68a;
 }
 
-.admin-badge:hover {
-  background: #fde68a;
-}
-
 .nav-actions {
   display: flex;
   align-items: center;
@@ -366,14 +345,12 @@ body {
   color: #334155;
 }
 
-/* ========================================== */
-/* STYLES DU FOOTER                           */
-/* ========================================== */
 .site-footer {
   background: #0f172a;
   color: #cbd5e1;
   margin-top: 4rem;
   border-top: 1px solid #1e293b;
+  width: 100%;
 }
 
 .footer-container {
@@ -386,12 +363,10 @@ body {
 }
 
 .footer-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   font-size: 1.4rem;
   font-weight: 800;
   margin-bottom: 0.8rem;
+  color: #ffffff;
 }
 
 .footer-desc {
@@ -484,7 +459,6 @@ body {
   border-color: #475569;
 }
 
-/* RESPONSIVE */
 @media (max-width: 900px) {
   .footer-container {
     grid-template-columns: 1fr 1fr;
@@ -505,6 +479,7 @@ body {
     flex-direction: column;
     padding: 1rem;
     border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 10px 15px rgba(0,0,0,0.05);
   }
   .nav-links.nav-open {
     display: flex;

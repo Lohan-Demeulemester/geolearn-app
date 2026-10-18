@@ -21,7 +21,7 @@
         
         <!-- A. ÉCRAN DE VÉRIFICATION DU CODE PAR EMAIL -->
         <div v-if="showVerificationForm" class="verification-box">
-          <div class="verify-icon">📩</div>
+          <div class="verify-icon">✉️</div>
           <h2>{{ t('profil.verify_title') }}</h2>
           <p class="verify-text">
             {{ t('profil.verify_subtitle') }}<br />
@@ -90,7 +90,6 @@
             <div class="form-group">
               <label>{{ t('profil.email') }}</label>
               <div class="input-wrapper">
-                <span class="input-icon">✉️</span>
                 <input
                   type="email"
                   v-model="loginForm.email"
@@ -103,7 +102,6 @@
             <div class="form-group">
               <label>{{ t('profil.password') }}</label>
               <div class="input-wrapper">
-                <span class="input-icon">🔒</span>
                 <input
                   type="password"
                   v-model="loginForm.password"
@@ -123,7 +121,6 @@
             <div class="form-group">
               <label>{{ t('profil.username') }}</label>
               <div class="input-wrapper">
-                <span class="input-icon">👤</span>
                 <input
                   type="text"
                   v-model="registerForm.username"
@@ -139,7 +136,6 @@
             <div class="form-group">
               <label>{{ t('profil.email') }}</label>
               <div class="input-wrapper">
-                <span class="input-icon">✉️</span>
                 <input
                   type="email"
                   v-model="registerForm.email"
@@ -152,7 +148,6 @@
             <div class="form-group">
               <label>{{ t('profil.password') }}</label>
               <div class="input-wrapper">
-                <span class="input-icon">🔒</span>
                 <input
                   type="password"
                   v-model="registerForm.password"
@@ -194,7 +189,7 @@
             <h2>{{ user.name }}</h2>
             <p class="profile-email">{{ user.email }}</p>
             <span class="member-badge">
-              📅 {{ t('profil.member_since') }} {{ user.joinDate }}
+              {{ locale === 'fr' ? 'Membre depuis le' : 'Member since' }} {{ user.joinDate }}
             </span>
           </div>
         </div>
@@ -202,12 +197,11 @@
         <hr class="profile-divider" />
 
         <form @submit.prevent="updateProfile" class="profile-edit-form">
-          <h3>{{ t('profil.edit_info') }}</h3>
+          <h3>{{ locale === 'fr' ? 'Informations du compte' : 'Account Information' }}</h3>
 
           <div class="form-group">
             <label>{{ t('profil.username') }}</label>
             <div class="input-wrapper">
-              <span class="input-icon">👤</span>
               <input
                 type="text"
                 v-model="user.name"
@@ -222,7 +216,6 @@
           <div class="form-group">
             <label>{{ t('profil.email') }}</label>
             <div class="input-wrapper">
-              <span class="input-icon">✉️</span>
               <input
                 type="email"
                 v-model="user.email"
@@ -233,10 +226,10 @@
 
           <div class="profile-actions">
             <button type="submit" class="btn-save">
-              💾 {{ t('profil.save_changes') }}
+              {{ locale === 'fr' ? 'Enregistrer les modifications' : 'Save Changes' }}
             </button>
             <button type="button" @click="logout" class="btn-logout">
-              🚪 {{ t('profil.logout') }}
+              {{ t('profil.logout') }}
             </button>
           </div>
         </form>
@@ -250,9 +243,8 @@ import { ref, onMounted } from 'vue';
 import { GoogleLogin } from 'vue3-google-login';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
-// URL du Backend Render
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 const isLoggedIn = ref(false);
@@ -291,7 +283,6 @@ onMounted(() => {
   }
 });
 
-// --- VALIDATION STRICTE PSEUDO & MOT DE PASSE ---
 const checkCredentials = (username, password = null) => {
   const cleanUsername = (username || '').trim();
   
@@ -316,7 +307,6 @@ const checkCredentials = (username, password = null) => {
   return null;
 };
 
-// --- APPEL API SÉCURISÉ ---
 const apiCall = async (endpoint, payload, method = 'POST') => {
   const res = await fetch(`${API_URL}${endpoint}`, {
     method,
@@ -341,7 +331,6 @@ const apiCall = async (endpoint, payload, method = 'POST') => {
   return data;
 };
 
-// --- AUTHENTIFICATION GOOGLE ---
 const handleGoogleLogin = async (response) => {
   errorMessage.value = '';
   isLoading.value = true;
@@ -356,7 +345,6 @@ const handleGoogleLogin = async (response) => {
   }
 };
 
-// --- INSCRIPTION CLASSIQUE ---
 const register = async () => {
   errorMessage.value = '';
   registerForm.value.username = registerForm.value.username.trim();
@@ -381,7 +369,6 @@ const register = async () => {
   }
 };
 
-// --- VÉRIFICATION DU CODE EMAIL ---
 const verifyCode = async () => {
   errorMessage.value = '';
   isLoading.value = true;
@@ -402,7 +389,6 @@ const verifyCode = async () => {
   }
 };
 
-// --- RENVOYER LE CODE ---
 const resendCode = async () => {
   errorMessage.value = '';
   try {
@@ -413,7 +399,6 @@ const resendCode = async () => {
   }
 };
 
-// --- CONNEXION CLASSIQUE ---
 const login = async () => {
   errorMessage.value = '';
   isLoading.value = true;
@@ -428,7 +413,6 @@ const login = async () => {
   }
 };
 
-// --- MISE À JOUR DU PROFIL ---
 const updateProfile = async () => {
   user.value.name = user.value.name.trim();
   const validationError = checkCredentials(user.value.name);
@@ -452,7 +436,6 @@ const updateProfile = async () => {
   }
 };
 
-// --- CONNEXION EN MÉMOIRE LOCALE ---
 const connectUser = (userData) => {
   let formattedDate = new Date().toLocaleDateString('fr-FR');
   if (userData.createdAt) {
@@ -474,7 +457,6 @@ const connectUser = (userData) => {
   window.dispatchEvent(new Event('auth-change'));
 };
 
-// --- DÉCONNEXION ---
 const logout = () => {
   isLoggedIn.value = false;
   loginForm.value = { email: '', password: '' };
@@ -486,9 +468,9 @@ const logout = () => {
 
 <style scoped>
 .profil-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
 }
 
 .profil-header {
@@ -507,7 +489,6 @@ const logout = () => {
   font-size: 1rem;
 }
 
-/* CARTE AUTHENTIFICATION */
 .auth-wrapper {
   display: flex;
   justify-content: center;
@@ -517,14 +498,13 @@ const logout = () => {
 .auth-card {
   background: #ffffff;
   border-radius: 20px;
-  padding: 2.2rem;
+  padding: 2.5rem;
   width: 100%;
   max-width: 440px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
   border: 1px solid #f1f5f9;
 }
 
-/* ONGLETS */
 .auth-tabs {
   display: flex;
   background: #f1f5f9;
@@ -551,7 +531,6 @@ const logout = () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* BANNIÈRE ERREUR */
 .error-banner {
   background: #fef2f2;
   color: #dc2626;
@@ -564,7 +543,6 @@ const logout = () => {
   margin-bottom: 1.25rem;
 }
 
-/* FORMULAIRE */
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -583,22 +561,9 @@ const logout = () => {
   color: #334155;
 }
 
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon {
-  position: absolute;
-  left: 1rem;
-  font-size: 1rem;
-  opacity: 0.65;
-}
-
 .input-wrapper input {
   width: 100%;
-  padding: 0.8rem 1rem 0.8rem 2.7rem;
+  padding: 0.8rem 1rem;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   font-size: 0.95rem;
@@ -623,7 +588,7 @@ const logout = () => {
 .btn-primary {
   margin-top: 0.5rem;
   padding: 0.9rem;
-  background: #1d4ed8;
+  background: #2563eb;
   color: white;
   border: none;
   border-radius: 10px;
@@ -634,7 +599,7 @@ const logout = () => {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #1e40af;
+  background: #1d4ed8;
 }
 
 .btn-primary:disabled {
@@ -642,7 +607,6 @@ const logout = () => {
   cursor: not-allowed;
 }
 
-/* SÉPARATEUR & GOOGLE */
 .divider {
   display: flex;
   align-items: center;
@@ -668,13 +632,12 @@ const logout = () => {
   justify-content: center;
 }
 
-/* VÉRIFICATION EMAIL */
 .verification-box {
   text-align: center;
 }
 
 .verify-icon {
-  font-size: 2.8rem;
+  font-size: 2.5rem;
   margin-bottom: 0.5rem;
 }
 
@@ -716,11 +679,10 @@ const logout = () => {
   color: #64748b;
 }
 
-/* PROFIL CONNECTÉ */
 .profile-card {
   background: #ffffff;
   border-radius: 20px;
-  padding: 2.2rem;
+  padding: 2.5rem;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
   border: 1px solid #f1f5f9;
 }
@@ -769,12 +731,13 @@ const logout = () => {
 .profile-edit-form h3 {
   margin-bottom: 1.2rem;
   color: #0f172a;
+  font-size: 1.2rem;
 }
 
 .profile-actions {
   display: flex;
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 1.8rem;
 }
 
 .btn-save {
@@ -786,6 +749,11 @@ const logout = () => {
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-save:hover {
+  background: #1d4ed8;
 }
 
 .btn-logout {
@@ -796,9 +764,13 @@ const logout = () => {
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
-/* TOAST */
+.btn-logout:hover {
+  background: #fecaca;
+}
+
 .toast-notification {
   position: fixed;
   bottom: 24px;
