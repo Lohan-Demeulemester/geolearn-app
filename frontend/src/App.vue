@@ -465,13 +465,19 @@ body.dark-mode textarea {
   gap: 0.55rem;
   height: 40px;
   text-decoration: none;
-  background: #0f172a;
+  background: #2563eb; /* Le même bleu professionnel que le bouton du formulaire */
   color: #ffffff !important;
   padding: 0 1.1rem;
-  border-radius: 999px;
+  border-radius: 10px; /* Moins arrondi, style pro aligné sur les inputs et boutons */
   font-weight: 600;
   font-size: 0.9rem;
   transition: all 0.2s ease;
+}
+
+.profile-btn:hover {
+  background: #1d4ed8; /* Un bleu légèrement plus foncé au survol */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 body.dark-mode .profile-btn {
