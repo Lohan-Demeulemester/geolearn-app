@@ -484,10 +484,6 @@ body.dark-mode .profile-btn {
   background: #2563eb;
 }
 
-.profile-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-}
 
 .nav-avatar {
   width: 24px;
@@ -648,13 +644,21 @@ body.dark-mode .profile-btn {
     display: inline; /* Visible par défaut pour "Connexion" */
   }
 
-  /* Si connecté (il y a un avatar), on cache le texte du nom sur mobile pour gagner de la place */
-  .profile-btn:has(.nav-avatar) .profile-name {
-    display: none;
+  .profile-btn:has(.nav-avatar) .profile-name { display: none; }
+  .profile-btn:has(.nav-avatar) { 
+    padding: 0.35rem; 
+    border-radius: 50%; /* Garde le cercle uniquement si c'est un avatar */
   }
-  .profile-btn {
-    padding: 0.35rem;
-    border-radius: 10%;
+
+  /* 
+    2. SI L'UTILISATEUR N'EST PAS CONNECTÉ (il y a le texte "Connexion") : 
+       On force le bouton à garder la même forme pro et rectangulaire qu'sur PC (border-radius: 10px).
+  */
+  .profile-btn:not(:has(.nav-avatar)) {
+    border-radius: 10px !important;
+    padding: 0 0.85rem;
+    height: 38px;
+    font-size: 0.85rem;
   }
   .mobile-menu-btn {
     display: inline-flex !important;
