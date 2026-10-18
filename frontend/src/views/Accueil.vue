@@ -1,146 +1,386 @@
 <template>
-  <div class="space-y-24 pb-12">
+  <div class="home-container">
     
-    <!-- SECTION HERO (En-tête principal) -->
-    <section class="relative pt-12 lg:pt-20 text-center">
-      <!-- Éléments de décoration en arrière-plan -->
-      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-blue-50 to-transparent dark:from-blue-900/20 dark:to-transparent -z-10 rounded-b-full blur-3xl opacity-60"></div>
+    <!-- HEADER HERO SECTION -->
+    <section class="hero slide-up">
+      <div class="badge-version">
+        <span class="pulse-dot"></span>
+        {{ t ? t('home.new_version', 'Nouvelle version disponible') : 'Nouvelle version disponible' }}
+      </div>
       
-      <div class="max-w-4xl mx-auto px-4">
-        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-brandBlue dark:text-blue-400 font-semibold text-sm mb-6 shadow-sm">
-          <span class="relative flex h-3 w-3">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brandBlue opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-brandBlue"></span>
-          </span>
-          {{ $t('home.new_version') }}
+      <h1 class="hero-title">
+        Maîtrisez la géographie <br />
+        avec <span class="highlight">GeoLearn</span>
+      </h1>
+      
+      <p class="hero-subtitle">
+        Découvrez le monde à travers des quiz interactifs, des défis chronométrés et des cartes dynamiques. Apprendre n'a jamais été aussi amusant.
+      </p>
+      
+      <div class="hero-actions">
+        <router-link to="/quiz" class="btn btn-primary shadow-hover">
+          Lancer une partie ➔
+        </router-link>
+        <router-link to="/explorer" class="btn btn-secondary shadow-hover">
+          🌍 Explorer la carte
+        </router-link>
+      </div>
+    </section>
+
+    <!-- SECTION DES FONCTIONNALITÉS -->
+    <section class="features slide-up delay-1">
+      <div class="section-header">
+        <h2>4 façons d'apprendre</h2>
+        <p>Que vous soyez débutant ou expert, nos différents modes de jeu s'adaptent à votre niveau pour une progression optimale.</p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Carte 1 -->
+        <div class="feature-card">
+          <div class="feature-icon bg-red">⏱️</div>
+          <h3>Défi Europe</h3>
+          <p>Le test ultime. Vous avez 3 minutes pour retrouver sur la carte interactive les 47 pays qui composent le continent européen.</p>
+          <router-link to="/quiz" class="feature-link text-red">Essayer ce mode ▸</router-link>
         </div>
         
-        <h1 class="text-5xl lg:text-7xl font-black text-gray-900 dark:text-white tracking-tight mb-6 leading-tight">
-          {{ $t('home.title_1') }} <span class="text-transparent bg-clip-text bg-gradient-to-r from-brandBlue to-cyan-500">GeoLearn</span>
-        </h1>
+        <!-- Carte 2 -->
+        <div class="feature-card">
+          <div class="feature-icon bg-blue">🏛️</div>
+          <h3>Quiz des Capitales</h3>
+          <p>Testez vos connaissances à travers des séries de 15 questions générées aléatoirement sur les capitales du monde entier.</p>
+          <router-link to="/quiz" class="feature-link text-blue">Essayer ce mode ▸</router-link>
+        </div>
         
-        <p class="text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-          {{ $t('home.desc') }}
-        </p>
+        <!-- Carte 3 -->
+        <div class="feature-card">
+          <div class="feature-icon bg-orange">🚩</div>
+          <h3>Reconnaissance de Drapeaux</h3>
+          <p>Associez visuellement les drapeaux à leurs pays respectifs. Des images haute définition pour ne rater aucun détail.</p>
+          <router-link to="/quiz" class="feature-link text-orange">Essayer ce mode ▸</router-link>
+        </div>
         
-        <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
-          <router-link 
-            :to="isLoggedIn ? '/quiz' : '/profil'" 
-            class="w-full sm:w-auto px-8 py-4 bg-brandBlue text-white rounded-full font-bold text-lg hover:bg-blue-700 hover:scale-105 transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2"
-          >
-            {{ isLoggedIn ? $t('home.play_btn') : $t('home.register_btn') }}
-            <i class="fas fa-arrow-right"></i>
-          </router-link>
-          
-          <router-link 
-            to="/explorer" 
-            class="w-full sm:w-auto px-8 py-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-700 rounded-full font-bold text-lg hover:border-brandBlue dark:hover:border-brandBlue transition-all shadow-sm flex items-center justify-center gap-2"
-          >
-            <i class="fas fa-globe-europe text-brandBlue"></i>
-            {{ $t('home.explore_btn') }}
-          </router-link>
+        <!-- Carte 4 -->
+        <div class="feature-card">
+          <div class="feature-icon bg-green">🃏</div>
+          <h3>Flashcards (Révision)</h3>
+          <p>Apprenez sans pression. Un mode révision pur avec des cartes mémorielles recto-verso pour vous entraîner avant les quiz.</p>
+          <router-link to="/quiz" class="feature-link text-green">Essayer ce mode ▸</router-link>
         </div>
       </div>
     </section>
 
-    <!-- SECTION DES MODES DE JEU -->
-    <section class="max-w-6xl mx-auto px-4">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">{{ $t('home.ways_title') }}</h2>
-        <p class="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">{{ $t('home.ways_desc') }}</p>
+    <!-- BANNIÈRE STATISTIQUES -->
+    <section class="stats-banner slide-up delay-2">
+      <div class="stat-item">
+        <span class="stat-number">190+</span>
+        <span class="stat-label">Pays intégrés</span>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Carte Défi Chrono -->
-        <div class="bg-gradient-to-br from-red-50 to-white dark:from-gray-800 dark:to-gray-800 p-8 rounded-3xl border border-red-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div class="absolute -right-4 -bottom-4 text-9xl opacity-5 group-hover:scale-110 transition-transform duration-500">⏱️</div>
-          <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-sm">⏱️</div>
-          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">{{ $t('home.mode_chrono_title') }}</h3>
-          <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">{{ $t('home.mode_chrono_desc') }}</p>
-          <router-link to="/quiz" class="text-red-600 dark:text-red-400 font-bold hover:underline inline-flex items-center gap-2">{{ $t('home.try_mode') }} <i class="fas fa-play text-xs"></i></router-link>
-        </div>
-
-        <!-- Carte QCM Capitales -->
-        <div class="bg-gradient-to-br from-blue-50 to-white dark:from-gray-800 dark:to-gray-800 p-8 rounded-3xl border border-blue-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div class="absolute -right-4 -bottom-4 text-9xl opacity-5 group-hover:scale-110 transition-transform duration-500">🏛️</div>
-          <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-brandBlue dark:text-blue-400 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-sm">🏛️</div>
-          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">{{ $t('home.mode_caps_title') }}</h3>
-          <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">{{ $t('home.mode_caps_desc') }}</p>
-          <router-link to="/quiz" class="text-brandBlue dark:text-blue-400 font-bold hover:underline inline-flex items-center gap-2">{{ $t('home.try_mode') }} <i class="fas fa-play text-xs"></i></router-link>
-        </div>
-
-        <!-- Carte QCM Drapeaux -->
-        <div class="bg-gradient-to-br from-orange-50 to-white dark:from-gray-800 dark:to-gray-800 p-8 rounded-3xl border border-orange-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div class="absolute -right-4 -bottom-4 text-9xl opacity-5 group-hover:scale-110 transition-transform duration-500">🚩</div>
-          <div class="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-sm">🚩</div>
-          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">{{ $t('home.mode_flags_title') }}</h3>
-          <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">{{ $t('home.mode_flags_desc') }}</p>
-          <router-link to="/quiz" class="text-orange-600 dark:text-orange-400 font-bold hover:underline inline-flex items-center gap-2">{{ $t('home.try_mode') }} <i class="fas fa-play text-xs"></i></router-link>
-        </div>
-
-        <!-- Carte Flashcards -->
-        <div class="bg-gradient-to-br from-green-50 to-white dark:from-gray-800 dark:to-gray-800 p-8 rounded-3xl border border-green-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div class="absolute -right-4 -bottom-4 text-9xl opacity-5 group-hover:scale-110 transition-transform duration-500">🃏</div>
-          <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-sm">🃏</div>
-          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">{{ $t('home.mode_flash_title') }}</h3>
-          <p class="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">{{ $t('home.mode_flash_desc') }}</p>
-          <router-link to="/quiz" class="text-green-600 dark:text-green-400 font-bold hover:underline inline-flex items-center gap-2">{{ $t('home.try_mode') }} <i class="fas fa-play text-xs"></i></router-link>
-        </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number">100%</span>
+        <span class="stat-label">Gratuit & Sans pub</span>
       </div>
-    </section>
-
-    <!-- SECTION STATISTIQUES RAPIDES -->
-    <section class="max-w-5xl mx-auto px-4">
-      <div class="bg-gray-900 dark:bg-gray-800 rounded-3xl p-10 text-center relative overflow-hidden shadow-xl">
-        <div class="absolute -top-24 -right-24 w-64 h-64 bg-brandBlue rounded-full blur-3xl opacity-20"></div>
-        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-cyan-500 rounded-full blur-3xl opacity-20"></div>
-        
-        <div class="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <div class="text-4xl font-black text-white mb-2">190+</div>
-            <div class="text-gray-400 font-medium">{{ $t('home.stat_countries') }}</div>
-          </div>
-          <div>
-            <div class="text-4xl font-black text-white mb-2">100%</div>
-            <div class="text-gray-400 font-medium">{{ $t('home.stat_free') }}</div>
-          </div>
-          <div>
-            <div class="text-4xl font-black text-white mb-2"><i class="fas fa-chart-line"></i></div>
-            <div class="text-gray-400 font-medium">{{ $t('home.stat_tracking') }}</div>
-          </div>
-        </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-icon">📈</span>
+        <span class="stat-label">Suivi de progression en direct</span>
       </div>
-    </section>
-
-    <!-- CALL TO ACTION FINAL -->
-    <section v-if="!isLoggedIn" class="text-center px-4 pt-8">
-      <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">{{ $t('home.cta_title') }}</h2>
-      <router-link 
-        to="/profil" 
-        class="inline-block px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-lg"
-      >
-        {{ $t('home.cta_btn') }}
-      </router-link>
     </section>
 
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-
-const isLoggedIn = ref(false);
-
-const checkAuthStatus = () => {
-  isLoggedIn.value = !!localStorage.getItem('geolearn_user');
-};
-
-onMounted(() => {
-  checkAuthStatus();
-  window.addEventListener('auth-change', checkAuthStatus);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('auth-change', checkAuthStatus);
-});
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 </script>
+
+<style scoped>
+/* CONTENEUR PRINCIPAL */
+.home-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 6rem; /* Beaucoup plus d'espace en haut et en bas */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ================= HERO SECTION ================= */
+.hero {
+  text-align: center;
+  margin-bottom: 7rem; /* Sépare massivement le hero du reste */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 800px;
+}
+
+.badge-version {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  animation: pulse 2s infinite;
+}
+
+.hero-title {
+  font-size: 3.8rem;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.15;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.highlight {
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  padding: 0 1rem;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: center;
+}
+
+.btn {
+  padding: 0.95rem 1.8rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+  border: 2px solid #2563eb;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #0f172a;
+  border: 2px solid #e2e8f0;
+}
+
+.btn-secondary:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  transform: translateY(-2px);
+}
+
+.shadow-hover:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* ================= FEATURES SECTION ================= */
+.features {
+  width: 100%;
+  margin-bottom: 6rem;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem; /* Éloigne le titre des cartes */
+}
+
+.section-header h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 1rem;
+}
+
+.section-header p {
+  color: #64748b;
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.5rem; /* Aère massivement les cartes entre elles */
+}
+
+.feature-card {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: #e2e8f0;
+}
+
+.feature-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Couleurs douces pour les icônes */
+.bg-red { background: #fee2e2; }
+.bg-blue { background: #dbeafe; }
+.bg-orange { background: #ffedd5; }
+.bg-green { background: #dcfce7; }
+
+.text-red { color: #dc2626; }
+.text-blue { color: #2563eb; }
+.text-orange { color: #ea580c; }
+.text-green { color: #16a34a; }
+
+.feature-card h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.8rem;
+}
+
+.feature-card p {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  flex-grow: 1;
+  margin-bottom: 1.8rem;
+}
+
+.feature-link {
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.feature-link:hover {
+  opacity: 0.7;
+}
+
+/* ================= STATS BANNER ================= */
+.stats-banner {
+  background: #0f172a;
+  width: 100%;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  color: white;
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.3);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+}
+
+.stat-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.3rem;
+}
+
+.stat-label {
+  color: #94a3b8;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 60px;
+  background: #334155;
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+
+.slide-up {
+  animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.delay-1 { animation-delay: 0.2s; }
+.delay-2 { animation-delay: 0.4s; }
+
+@keyframes slideUpFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .hero-title { font-size: 2.8rem; }
+  .features-grid { grid-template-columns: 1fr; }
+  .stats-banner { flex-direction: column; gap: 2rem; padding: 2.5rem 1.5rem; }
+  .stat-divider { width: 100%; height: 1px; }
+}
+
+@media (max-width: 600px) {
+  .hero-actions { flex-direction: column; }
+  .hero-title { font-size: 2.3rem; }
+  .home-container { padding: 2rem 1rem 4rem; }
+}
+</style>
