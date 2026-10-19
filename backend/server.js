@@ -278,7 +278,7 @@ const ADMIN_EMAILS = [
 ];
 
 // Création automatique de la table feedbacks si elle n'existe pas
-pool.query(`
+db.query(`
   CREATE TABLE IF NOT EXISTS feedbacks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NULL,
@@ -300,7 +300,7 @@ app.post('/api/feedbacks', async (req, res) => {
       return res.status(400).json({ error: 'Tous les champs sont obligatoires.' });
     }
 
-    await pool.query(
+    await db.query(
       'INSERT INTO feedbacks (user_id, username, email, type, subject, message) VALUES (?, ?, ?, ?, ?, ?)',
       [userId || null, username, email, type || 'suggestion', subject, message]
     );
@@ -320,7 +320,7 @@ app.get('/api/admin/feedbacks', async (req, res) => {
       return res.status(403).json({ error: 'Accès réservé à l\'administrateur.' });
     }
 
-    const [rows] = await pool.query('SELECT * FROM feedbacks ORDER BY created_at DESC');
+    const [rows] = await db.query('SELECT * FROM feedbacks ORDER BY created_at DESC');
     res.json({ feedbacks: rows });
   } catch (error) {
     console.error('Erreur GET /api/admin/feedbacks:', error);
@@ -337,7 +337,7 @@ app.put('/api/admin/feedbacks/:id', async (req, res) => {
       return res.status(403).json({ error: 'Accès refusé.' });
     }
 
-    await pool.query('UPDATE feedbacks SET status = ? WHERE id = ?', [status, req.params.id]);
+    await db.query('UPDATE feedbacks SET status = ? WHERE id = ?', [status, req.params.id]);
     res.json({ message: 'Statut mis à jour.' });
   } catch (error) {
     console.error('Erreur PUT /api/admin/feedbacks:', error);
@@ -353,7 +353,7 @@ app.delete('/api/admin/feedbacks/:id', async (req, res) => {
       return res.status(403).json({ error: 'Accès refusé.' });
     }
 
-    await pool.query('DELETE FROM feedbacks WHERE id = ?', [req.params.id]);
+    await db.query('DELETE FROM feedbacks WHERE id = ?', [req.params.id]);
     res.json({ message: 'Retour supprimé.' });
   } catch (error) {
     console.error('Erreur DELETE /api/admin/feedbacks:', error);
