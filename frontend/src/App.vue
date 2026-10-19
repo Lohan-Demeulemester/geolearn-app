@@ -147,49 +147,6 @@
       <div class="footer-container">
         <div class="footer-col brand-col">
           <div class="footer-logo">
-            <!-- Logo GeoLearn Vectoriel (Proposition A) -->
-            <svg 
-              class="logo-svg" 
-              width="34" 
-              height="34" 
-              viewBox="0 0 64 64" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <linearGradient id="geolearn-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#2563eb" />
-                  <stop offset="100%" stop-color="#0ea5e9" />
-                </linearGradient>
-              </defs>
-              
-              <!-- Tracé continu : Épingle de carte + Lettre G -->
-              <path 
-                d="M49.5 20C46.2 13.5 39.6 9 32 9C21.5 9 13 17.5 13 28C13 40.2 32 56 32 56C32 56 51 40.2 51 28H34" 
-                stroke="url(#geolearn-grad)" 
-                stroke-width="5.2" 
-                stroke-linecap="round" 
-                stroke-linejoin="round"
-              />
-              
-              <!-- Chapeau de diplômé (Mortier) au centre -->
-              <path 
-                d="M32 20L21 25L32 30L43 25L32 20Z" 
-                fill="url(#geolearn-grad)" 
-              />
-              <path 
-                d="M25.5 28.2V33.5C25.5 35.5 28.4 37.2 32 37.2C35.6 37.2 38.5 35.5 38.5 33.5V28.2" 
-                stroke="url(#geolearn-grad)" 
-                stroke-width="3.2" 
-                stroke-linecap="round"
-              />
-              <path 
-                d="M41.5 26V33.5" 
-                stroke="url(#geolearn-grad)" 
-                stroke-width="2.5" 
-                stroke-linecap="round"
-              />
-            </svg>
             <span class="logo-text">GeoLearn</span>
           </div>
           <p class="footer-desc">
