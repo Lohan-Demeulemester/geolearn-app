@@ -1,3 +1,5 @@
+import COUNTRY_DETAILS from './countryDetails.js';
+
 // Base de données officielle GeoLearn : 196 pays (195 États + Kosovo)
 // Format compact : [id, name_fr, name_en, capital_fr, capital_en, continent_en, iso, iso3, lat, lng, subregion_fr, subregion_en, aliases]
 
@@ -213,20 +215,31 @@ const RAW_COUNTRIES = [
 
 export const ALL_COUNTRIES = RAW_COUNTRIES.map(([
   id, name_fr, name_en, capital_fr, capital_en, continent_en, iso, iso3, lat, lng, subregion_fr, subregion_en, aliases
-]) => ({
-  id,
-  name_fr,
-  name_en,
-  capital_fr,
-  capital_en,
-  continent_en,
-  iso,
-  iso3,
-  lat,
-  lng,
-  subregion_fr,
-  subregion_en,
-  aliases: aliases || []
-}));
+]) => {
+  const details = COUNTRY_DETAILS[iso] || ["-", "-", "-", "-", "-", "-", "", ""];
+  return {
+    id,
+    name_fr,
+    name_en,
+    capital_fr,
+    capital_en,
+    continent_en,
+    iso,
+    iso3,
+    lat,
+    lng,
+    subregion_fr,
+    subregion_en,
+    aliases: aliases || [],
+    population_fr: details[0],
+    population_en: details[1],
+    lang_fr: details[2],
+    lang_en: details[3],
+    currency: details[4],
+    area: details[5],
+    fact_fr: details[6],
+    fact_en: details[7]
+  };
+});
 
 export default ALL_COUNTRIES;
