@@ -254,11 +254,18 @@ app.post('/api/scores', (req, res) => {
   });
 });
 
-app.get('/api/scores/:user_id', (req, res) => {
-  db.query('SELECT * FROM scores WHERE user_id = ? ORDER BY played_at DESC', [req.params.user_id], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Erreur de lecture.' });
-    res.json(results);
-  });
+// Récupérer les scores d'un utilisateur (par paramètre d'URL)
+app.get('/api/scores/:userId', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT * FROM scores WHERE user_id = ? ORDER BY played_at DESC',
+      [req.params.userId]
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error('Erreur GET /api/scores/:userId :', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des scores.' });
+  }
 });
 
 // =========================================================

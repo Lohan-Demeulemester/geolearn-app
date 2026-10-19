@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-5xl mx-auto space-y-8">
+  <div class="max-w-6xl mx-auto space-y-8">
     
     <div class="flex justify-between items-end">
       <div>
@@ -15,27 +15,48 @@
       </button>
     </div>
 
-<!-- MENU PRINCIPAL DES MODES DE JEU -->
-    <div v-if="currentMode === 'menu'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+    <!-- ========================================== -->
+    <!-- MENU PRINCIPAL DES 5 MODES DE JEU          -->
+    <!-- ========================================== -->
+    <div v-if="currentMode === 'menu'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mt-8">
+      <!-- 1. QCM Capitales -->
       <div @click="lancerMode('qcm', 'capital')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
         <div class="w-14 h-14 bg-blue-100 dark:bg-gray-700 text-brandBlue dark:text-blue-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏛️</div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_caps_title') }}</h3>
         <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_caps_desc') }}</p>
       </div>
 
+      <!-- 2. QCM Drapeaux -->
       <div @click="lancerMode('qcm', 'flag')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
         <div class="w-14 h-14 bg-orange-100 dark:bg-gray-700 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">🚩</div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_flags_title') }}</h3>
         <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_flags_desc') }}</p>
       </div>
+
+      <!-- 3. NOUVEAU : Grille des Drapeaux -->
+      <div @click="lancerMode('flag-grid')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-emerald-500/30 dark:border-emerald-500/30 hover:border-emerald-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
+        <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+          {{ locale === 'fr' ? 'Nouveau' : 'New' }}
+        </span>
+        <div class="w-14 h-14 bg-emerald-100 dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏳️</div>
+        <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
+          {{ locale === 'fr' ? 'Grille des Drapeaux' : 'World Flag Grid' }}
+        </h3>
+        <p class="text-gray-500 dark:text-gray-400 text-xs">
+          {{ locale === 'fr'
+            ? 'Tous les drapeaux devant vous : remplissez le nom du pays sous chaque drapeau pour valider la carte en vert !'
+            : 'All flags in front of you: type the country name under each flag to turn the card green!' }}
+        </p>
+      </div>
       
+      <!-- 4. Flashcards -->
       <div @click="lancerMode('flashcards')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
         <div class="w-14 h-14 bg-green-100 dark:bg-gray-700 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">🃏</div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_flash_title') }}</h3>
         <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_flash_desc') }}</p>
       </div>
 
-      <!-- CARTE CHRONO GÉNÉRALE SUR LE MENU -->
+      <!-- 5. Défis Chronométrés Carte -->
       <div @click="lancerMode('chrono')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
         <div class="w-14 h-14 bg-red-100 dark:bg-gray-700 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">⏱️</div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
@@ -47,7 +68,9 @@
       </div>
     </div>
 
-    <!-- MODE QCM (CAPITALES & DRAPEAUX SUR 195 PAYS) -->
+    <!-- ========================================== -->
+    <!-- MODE 1 & 2 : QCM (CAPITALES & DRAPEAUX)    -->
+    <!-- ========================================== -->
     <div v-if="currentMode === 'qcm'" class="max-w-2xl mx-auto mt-8">
       <div v-if="!qcmFini" class="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
         <div class="flex justify-between items-center mb-8 text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -92,7 +115,170 @@
       </div>
     </div>
 
-    <!-- MODE FLASHCARDS ENRICHI (AVEC FILTRE CONTINENT & MÉLANGER) -->
+    <!-- ========================================================================= -->
+    <!-- MODE 3 (NOUVEAU) : GRILLE DES DRAPEAUX (REMPLIR SOUS CHAQUE DRAPEAU)      -->
+    <!-- ========================================================================= -->
+    <div v-if="currentMode === 'flag-grid'" class="space-y-6 mt-6">
+      
+      <!-- BARRE DE CONTRÔLE STICKY (CHRONO + PROGRESSION + FILTRE + ABANDONNER) -->
+      <div class="sticky top-20 z-30 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        <!-- Chrono + Compteur -->
+        <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+          <div 
+            class="px-4 py-2.5 rounded-xl font-black text-xl tracking-wider text-white shadow-sm flex items-center gap-2"
+            :class="flagGridTime <= 30 && !flagGridFinished ? 'bg-red-500 animate-pulse' : 'bg-blue-600'"
+          >
+            <span>⏱️</span>
+            <span>{{ formatTime(flagGridTime) }}</span>
+          </div>
+
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              {{ locale === 'fr' ? 'Drapeaux trouvés' : 'Flags Found' }}
+            </p>
+            <div class="flex items-baseline gap-1.5">
+              <strong class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                {{ flagGridFoundCount }}
+              </strong>
+              <span class="text-sm font-bold text-gray-500 dark:text-gray-400">
+                / {{ flagGridCountries.length }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barre de progression visuelle centrale -->
+        <div class="w-full md:flex-1 max-w-md">
+          <div class="h-3 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div 
+              class="h-full bg-gradient-to-r from-blue-600 to-emerald-500 transition-all duration-300 rounded-full"
+              :style="{ width: `${flagGridCountries.length ? (flagGridFoundCount / flagGridCountries.length) * 100 : 0}%` }"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Filtre Continent + Boutons Action -->
+        <div class="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
+          <select
+            v-model="flagGridContinent"
+            @change="initFlagGrid"
+            :disabled="flagGridFoundCount > 0 && !flagGridFinished"
+            class="px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm font-semibold focus:outline-none disabled:opacity-50"
+          >
+            <option value="">{{ locale === 'fr' ? 'Monde entier (196)' : 'Whole World (196)' }}</option>
+            <option value="Europe">{{ locale === 'fr' ? 'Europe (47)' : 'Europe (47)' }}</option>
+            <option value="Asia">{{ locale === 'fr' ? 'Asie (46)' : 'Asia (46)' }}</option>
+            <option value="Africa">{{ locale === 'fr' ? 'Afrique (54)' : 'Africa (54)' }}</option>
+            <option value="North America">{{ locale === 'fr' ? 'Amérique du Nord (23)' : 'North America (23)' }}</option>
+            <option value="South America">{{ locale === 'fr' ? 'Amérique du Sud (12)' : 'South America (12)' }}</option>
+            <option value="Oceania">{{ locale === 'fr' ? 'Océanie (14)' : 'Oceania (14)' }}</option>
+          </select>
+
+          <button
+            v-if="!flagGridFinished"
+            type="button"
+            @click="finishFlagGrid"
+            class="px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition shadow-sm cursor-pointer"
+          >
+            {{ locale === 'fr' ? 'Abandonner / Terminer' : 'Give Up / Finish' }}
+          </button>
+
+          <button
+            v-else
+            type="button"
+            @click="initFlagGrid"
+            class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition shadow-sm cursor-pointer"
+          >
+            ↻ {{ locale === 'fr' ? 'Rejouer' : 'Play Again' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- BANNIÈRE DE RÉSULTAT EN FIN DE PARTIE -->
+      <div 
+        v-if="flagGridFinished" 
+        class="p-6 rounded-2xl text-center border"
+        :class="flagGridFoundCount === flagGridCountries.length 
+          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-800 dark:text-emerald-200' 
+          : 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-200'"
+      >
+        <h3 class="text-2xl font-black mb-1">
+          {{ flagGridFoundCount === flagGridCountries.length
+            ? (locale === 'fr' ? 'Sans-faute légendaire ! 🏆' : 'Legendary Perfect Score! 🏆')
+            : (locale === 'fr' ? 'Partie terminée !' : 'Game Over!') }}
+        </h3>
+        <p class="text-sm opacity-90">
+          {{ locale === 'fr'
+            ? `Vous avez identifié ${flagGridFoundCount} drapeaux sur ${flagGridCountries.length}. Les réponses manquantes sont affichées en rouge sous chaque drapeau.`
+            : `You identified ${flagGridFoundCount} out of ${flagGridCountries.length} flags. Missed answers are shown in red below each flag.` }}
+        </p>
+      </div>
+
+      <!-- GRILLE DES CARTES DRAPEAUX (STYLE GEOLEARN) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div
+          v-for="(country, index) in flagGridCountries"
+          :key="country.id"
+          class="rounded-2xl p-3.5 transition-all duration-300 flex flex-col justify-between border-2"
+          :class="[
+            flagGridFound[country.iso]
+              ? 'bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-500 shadow-sm scale-[1.01]'
+              : flagGridFinished
+                ? 'bg-red-50/60 dark:bg-red-950/30 border-red-300 dark:border-red-800/70'
+                : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-blue-400/60 shadow-sm'
+          ]"
+        >
+          <!-- Image du drapeau -->
+          <div class="h-24 w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900/60 rounded-xl p-2 mb-3 overflow-hidden border border-gray-100 dark:border-gray-700/60">
+            <img
+              :src="`https://flagcdn.com/w160/${country.iso}.png`"
+              :alt="locale === 'fr' ? 'Drapeau à deviner' : 'Flag to guess'"
+              class="max-h-full max-w-full object-contain rounded shadow-sm select-none pointer-events-none"
+              loading="lazy"
+            />
+          </div>
+
+          <!-- Case à remplir sous chaque drapeau -->
+          <div class="relative">
+            <!-- Si trouvé : Case verte verrouillée avec le nom officiel -->
+            <div
+              v-if="flagGridFound[country.iso]"
+              class="w-full px-3 py-2 rounded-xl bg-emerald-500 text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-xs"
+            >
+              <span>✓</span>
+              <span class="truncate">{{ country.name }}</span>
+            </div>
+
+            <!-- Si partie finie et non trouvé : Affiche la réponse en rouge -->
+            <div
+              v-else-if="flagGridFinished"
+              class="w-full px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 font-bold text-xs sm:text-sm text-center truncate"
+              :title="country.name"
+            >
+              {{ country.name }}
+            </div>
+
+            <!-- Pendant la partie : Champ input à remplir -->
+            <input
+              v-else
+              :ref="el => setFlagInputRef(el, index)"
+              v-model="flagGridInputs[country.iso]"
+              @input="checkSingleFlagInput(country, index)"
+              type="text"
+              :placeholder="locale === 'fr' ? 'Nom du pays...' : 'Country name...'"
+              autocomplete="off"
+              spellcheck="false"
+              class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-xs sm:text-sm font-semibold text-center focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODE 4 : FLASHCARDS ENRICHIES              -->
+    <!-- ========================================== -->
     <div v-if="currentMode === 'flashcards'" class="max-w-xl mx-auto mt-8 text-center space-y-6">
       <div class="flex flex-col sm:flex-row justify-between items-center gap-3 px-2">
         <select 
@@ -148,11 +334,12 @@
       </div>
     </div>
 
-    <!-- MODE CHRONO (DÉFI EUROPE & DÉFI MONDE) -->
+    <!-- ========================================== -->
+    <!-- MODE 5 : CHRONO CARTE (EUROPE & MONDE)     -->
+    <!-- ========================================== -->
     <div v-if="currentMode === 'chrono'" class="max-w-4xl mx-auto mt-8">
       <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-700">
         
-        <!-- CHOIX DU DÉFI CHRONO -->
         <div v-if="!isChronoStarted && !chronoFini" class="text-center py-4 space-y-6">
           <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ locale === 'fr' ? 'Choisissez votre Défi Chrono' : 'Choose Your Timed Challenge' }}</h3>
           
@@ -183,7 +370,6 @@
           </button>
         </div>
 
-        <!-- PENDANT LA PARTIE CHRONO -->
         <div v-else>
           <div class="text-center mb-6">
             <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -259,7 +445,6 @@
             <span v-else>{{ t('quiz.time_up', { current: paysTrouves.length }) }}</span>
           </div>
 
-          <!-- LISTE DES PAYS TROUVÉS / MANQUANTS -->
           <div class="border-t border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm max-h-96 overflow-y-auto">
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 text-sm">
               <div 
@@ -294,7 +479,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, onUnmounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n'; 
 import ALL_COUNTRIES from '../data/countries.js';
 
@@ -316,11 +501,18 @@ const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 const countriesData = ref(ALL_COUNTRIES);
 
 const currentMode = ref('menu'); 
-const retourMenu = () => { currentMode.value = 'menu'; arreterChrono(); };
+const retourMenu = () => {
+  currentMode.value = 'menu';
+  arreterChrono();
+  stopFlagGridTimer();
+};
 
 const lancerMode = (mode, type = null) => {
+  arreterChrono();
+  stopFlagGridTimer();
   currentMode.value = mode;
   if (mode === 'qcm') initQcm(type);
+  if (mode === 'flag-grid') initFlagGrid();
   if (mode === 'flashcards') initFlashcards();
   if (mode === 'chrono') { isChronoStarted.value = false; paysTrouves.value = []; chronoFini.value = false; }
 };
@@ -340,6 +532,9 @@ const sauvegarderScore = async (mode, score, maxScore) => {
   }
 };
 
+const normalizeStr = (str = '') =>
+  str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-']/g, " ").toLowerCase().trim();
+
 const localizedCountries = computed(() => {
   const isEn = locale.value === 'en';
   return countriesData.value.map(c => ({
@@ -356,7 +551,103 @@ const getLocalizedName = (id) => getCountry(id)?.name || '';
 const getLocalizedCapital = (id) => getCountry(id)?.capital || '';
 const getIso = (id) => getCountry(id)?.iso || '';
 
-// --- LOGIQUE QCM SUR 195 PAYS ---
+// =========================================================
+// LOGIQUE MODE 3 : GRILLE DES DRAPEAUX (NOUVEAU)
+// =========================================================
+const flagGridContinent = ref('');
+const flagGridInputs = ref({});
+const flagGridFound = ref({});
+const flagGridTime = ref(900);
+const flagGridFinished = ref(false);
+const flagInputRefs = ref({});
+let flagGridInterval = null;
+
+const setFlagInputRef = (el, index) => {
+  if (el) flagInputRefs.value[index] = el;
+};
+
+const flagGridCountries = computed(() => {
+  let list = localizedCountries.value;
+  if (flagGridContinent.value) {
+    list = list.filter(c => c.continent === flagGridContinent.value);
+  }
+  return list;
+});
+
+const flagGridFoundCount = computed(() =>
+  flagGridCountries.value.filter(c => flagGridFound.value[c.iso]).length
+);
+
+const stopFlagGridTimer = () => {
+  if (flagGridInterval) {
+    clearInterval(flagGridInterval);
+    flagGridInterval = null;
+  }
+};
+
+const initFlagGrid = () => {
+  stopFlagGridTimer();
+  flagGridInputs.value = {};
+  flagGridFound.value = {};
+  flagGridFinished.value = false;
+  flagInputRefs.value = {};
+  flagGridTime.value = flagGridContinent.value ? 300 : 900; // 5 min par continent ou 15 min monde entier
+
+  flagGridInterval = setInterval(() => {
+    if (flagGridTime.value > 0) {
+      flagGridTime.value--;
+    } else {
+      finishFlagGrid();
+    }
+  }, 1000);
+};
+
+const checkSingleFlagInput = async (country, currentIndex) => {
+  if (flagGridFinished.value || flagGridFound.value[country.iso]) return;
+
+  const userTyped = normalizeStr(flagGridInputs.value[country.iso] || '');
+  if (!userTyped) return;
+
+  const validNames = [
+    normalizeStr(country.name_fr),
+    normalizeStr(country.name_en),
+    ...(country.aliases || []).map(a => normalizeStr(a))
+  ];
+
+  if (validNames.includes(userTyped)) {
+    flagGridFound.value[country.iso] = true;
+    flagGridInputs.value[country.iso] = country.name;
+
+    // Si tous les drapeaux sont trouvés, on termine la partie
+    if (flagGridFoundCount.value === flagGridCountries.value.length) {
+      finishFlagGrid();
+      return;
+    }
+
+    // Passe automatiquement le curseur sur le prochain drapeau non trouvé
+    await nextTick();
+    const total = flagGridCountries.value.length;
+    for (let step = 1; step < total; step++) {
+      const nextIdx = (currentIndex + step) % total;
+      const nextCountry = flagGridCountries.value[nextIdx];
+      if (!flagGridFound.value[nextCountry.iso] && flagInputRefs.value[nextIdx]) {
+        flagInputRefs.value[nextIdx].focus();
+        break;
+      }
+    }
+  }
+};
+
+const finishFlagGrid = () => {
+  if (flagGridFinished.value) return;
+  flagGridFinished.value = true;
+  stopFlagGridTimer();
+  sauvegarderScore('Grille Drapeaux', flagGridFoundCount.value, flagGridCountries.value.length);
+};
+
+// =========================================================
+// LOGIQUE MODE 1 & 2 : QCM SUR 196 PAYS
+// =========================================================
 const qcmCurrentType = ref('capital'); 
 const qcmQuestionsList = ref([]);
 const qcmMaxQuestions = 15;
@@ -417,7 +708,9 @@ const verifierReponseQcm = (choixId) => {
   }, 1000);
 };
 
-// --- LOGIQUE FLASHCARDS AVEC FILTRE & MÉLANGE ---
+// =========================================================
+// LOGIQUE MODE 4 : FLASHCARDS
+// =========================================================
 const flashcardIndex = ref(0);
 const flashcardFlipped = ref(false);
 const flashcardContinent = ref('');
@@ -460,7 +753,9 @@ const flashcardPrecedente = () => {
   } 
 };
 
-// --- LOGIQUE CHRONO (DÉFI EUROPE & DÉFI MONDE) ---
+// =========================================================
+// LOGIQUE MODE 5 : CHRONO CARTE (EUROPE & MONDE)
+// =========================================================
 const isChronoStarted = ref(false);
 const chronoRegion = ref('europe');
 const chronoTemps = ref(180);
@@ -479,7 +774,7 @@ const selectChronoMode = (region) => {
     mapCenter.value = [54.0, 15.0];
     mapZoom.value = 3.8;
   } else {
-    chronoTemps.value = 900; // 15 minutes pour le monde
+    chronoTemps.value = 900;
     mapCenter.value = [20.0, 10.0];
     mapZoom.value = 2;
   }
@@ -489,7 +784,7 @@ const targetCountries = computed(() => {
   if (chronoRegion.value === 'europe') {
     return localizedCountries.value.filter(c => c.continent === 'Europe').sort((a, b) => a.name.localeCompare(b.name));
   }
-  return localizedCountries.value.sort((a, b) => a.name.localeCompare(b.name));
+  return [...localizedCountries.value].sort((a, b) => a.name.localeCompare(b.name));
 });
 
 const getMarkerRadius = (iso) => {
@@ -516,7 +811,7 @@ const demarrerChrono = () => {
     } else {
       chronoFini.value = true;
       arreterChrono();
-      sauvegarderScore(chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde', paysTrouves.value.length, targetCountries.value.length);
+      sauvegarderScore(chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde', paysTrouves.value.length, targetCountries.length);
     }
   }, 1000);
 };
@@ -529,11 +824,11 @@ const formatTime = (seconds) => {
 
 const verifierSaisieChrono = () => {
   if (chronoFini.value) return;
-  const inputNormalise = chronoInput.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const inputNormalise = normalizeStr(chronoInput.value);
   
   const pays = targetCountries.value.find(c => {
-    const mainName = c.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    const altNames = (c.aliases || []).map(a => a.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase());
+    const mainName = normalizeStr(c.name);
+    const altNames = (c.aliases || []).map(a => normalizeStr(a));
     return mainName === inputNormalise || altNames.includes(inputNormalise);
   });
 
@@ -558,6 +853,7 @@ const arreterChrono = () => {
 
 onUnmounted(() => {
   arreterChrono();
+  stopFlagGridTimer();
 });
 </script>
 
