@@ -257,7 +257,7 @@ app.post('/api/scores', (req, res) => {
 // Récupérer les scores d'un utilisateur (par paramètre d'URL)
 app.get('/api/scores/:userId', async (req, res) => {
   try {
-    const [rows] = await pool.query(
+    const [rows] = await db.query(
       'SELECT * FROM scores WHERE user_id = ? ORDER BY played_at DESC',
       [req.params.userId]
     );
