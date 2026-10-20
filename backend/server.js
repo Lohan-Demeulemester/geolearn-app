@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2/promise');
+const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 const { Resend } = require('resend');
 const { OAuth2Client } = require('google-auth-library');
@@ -242,30 +242,23 @@ app.put('/api/users/:id', (req, res) => {
   });
 });
 
-// ==========================================
-// ROUTES SCORES
-// ==========================================
-app.post('/api/scores', (req, res) => {
-  const { user_id, mode, score, max_score } = req.body;
-  if (!user_id) return res.status(401).json({ error: 'Non connecté.' });
-  db.query('INSERT INTO scores (user_id, mode, score, max_score) VALUES (?, ?, ?, ?)', [user_id, mode, score, max_score], (err) => {
-    if (err) return res.status(500).json({ error: 'Erreur de sauvegarde.' });
-    res.status(201).json({ message: 'Score enregistré.' });
-  });
-});
-
-// Récupérer les scores d'un utilisateur (par paramètre d'URL)
-app.get('/api/scores/:userId', async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      'SELECT * FROM scores WHERE user_id = ? ORDER BY played_at DESC',
-      [req.params.userId]
-    );
-    res.json(rows);
-  } catch (error) {
-    console.error('Erreur GET /api/scores/:userId :', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération des scores.' });
-  }
+// =========================================================
+// RÉCUPÉRATION DES SCORES D'UN UTILISATEUR
+// (Note : si tu avais déjà une route app.get('/api/scores/:userId') plus haut dans ton fichier, ne garde qu'une seule des deux)
+// =========================================================
+app.get('/api/scores/:userId', (req, res) => {
+  const userId = req.params.userId;
+  db.query(
+    'SELECT * FROM scores WHERE user_id = ? ORDER BY played_at DESC',
+    [userId],
+    (err, results) => {
+      if (err) {
+        console.error('Erreur GET /api/scores/:userId :', err);
+        return res.status(500).json({ error: 'Erreur lors de la récupération des scores.' });
+      }
+      res.json(results);
+    }
+  );
 });
 
 // =========================================================
@@ -277,9 +270,9 @@ const ADMIN_EMAILS = [
   'lohan.demeulemester@efrei.net'
 ];
 
-// Création automatique de la table feedbacks si elle n'existe pas
-db.query(`
-  CREATE TABLE IF NOT EXISTS feedbacks (
+// Création automatique de la table feedbacks (Version Callback compatible mysql2)
+db.query(
+  `CREATE TABLE IF NOT EXISTS feedbacks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NULL,
     username VARCHAR(100) NOT NULL,
@@ -289,76 +282,87 @@ db.query(`
     message TEXT NOT NULL,
     status VARCHAR(30) DEFAULT 'nouveau',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  )
-`).catch(err => console.error('Erreur initialisation table feedbacks:', err));
+  )`,
+  (err) => {
+    if (err) {
+      console.error('Erreur initialisation table feedbacks:', err);
+    } else {
+      console.log('Table feedbacks prête.');
+    }
+  }
+);
 
 // 1. Envoyer un retour (Accessible à tous les utilisateurs)
-app.post('/api/feedbacks', async (req, res) => {
-  try {
-    const { userId, username, email, type, subject, message } = req.body;
-    if (!username || !email || !subject || !message) {
-      return res.status(400).json({ error: 'Tous les champs sont obligatoires.' });
-    }
-
-    await db.query(
-      'INSERT INTO feedbacks (user_id, username, email, type, subject, message) VALUES (?, ?, ?, ?, ?, ?)',
-      [userId || null, username, email, type || 'suggestion', subject, message]
-    );
-
-    res.status(201).json({ message: 'Retour enregistré avec succès !' });
-  } catch (error) {
-    console.error('Erreur POST /api/feedbacks:', error);
-    res.status(500).json({ error: 'Erreur serveur lors de l\'enregistrement.' });
+app.post('/api/feedbacks', (req, res) => {
+  const { userId, username, email, type, subject, message } = req.body;
+  if (!username || !email || !subject || !message) {
+    return res.status(400).json({ error: 'Tous les champs sont obligatoires.' });
   }
+
+  db.query(
+    'INSERT INTO feedbacks (user_id, username, email, type, subject, message) VALUES (?, ?, ?, ?, ?, ?)',
+    [userId || null, username, email, type || 'suggestion', subject, message],
+    (err) => {
+      if (err) {
+        console.error('Erreur POST /api/feedbacks:', err);
+        return res.status(500).json({ error: 'Erreur serveur lors de l\'enregistrement.' });
+      }
+      res.status(201).json({ message: 'Retour enregistré avec succès !' });
+    }
+  );
 });
 
 // 2. Récupérer tous les retours (Réservé à l'Admin)
-app.get('/api/admin/feedbacks', async (req, res) => {
-  try {
-    const adminEmail = (req.query.email || '').toLowerCase();
-    if (!ADMIN_EMAILS.includes(adminEmail)) {
-      return res.status(403).json({ error: 'Accès réservé à l\'administrateur.' });
-    }
-
-    const [rows] = await db.query('SELECT * FROM feedbacks ORDER BY created_at DESC');
-    res.json({ feedbacks: rows });
-  } catch (error) {
-    console.error('Erreur GET /api/admin/feedbacks:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération des retours.' });
+app.get('/api/admin/feedbacks', (req, res) => {
+  const adminEmail = (req.query.email || '').toLowerCase();
+  if (!ADMIN_EMAILS.includes(adminEmail)) {
+    return res.status(403).json({ error: 'Accès réservé à l\'administrateur.' });
   }
+
+  db.query('SELECT * FROM feedbacks ORDER BY created_at DESC', (err, rows) => {
+    if (err) {
+      console.error('Erreur GET /api/admin/feedbacks:', err);
+      return res.status(500).json({ error: 'Erreur lors de la récupération des retours.' });
+    }
+    res.json({ feedbacks: rows });
+  });
 });
 
 // 3. Mettre à jour le statut d'un retour (Réservé à l'Admin)
-app.put('/api/admin/feedbacks/:id', async (req, res) => {
-  try {
-    const adminEmail = (req.body.email || '').toLowerCase();
-    const { status } = req.body;
-    if (!ADMIN_EMAILS.includes(adminEmail)) {
-      return res.status(403).json({ error: 'Accès refusé.' });
-    }
-
-    await db.query('UPDATE feedbacks SET status = ? WHERE id = ?', [status, req.params.id]);
-    res.json({ message: 'Statut mis à jour.' });
-  } catch (error) {
-    console.error('Erreur PUT /api/admin/feedbacks:', error);
-    res.status(500).json({ error: 'Erreur lors de la mise à jour.' });
+app.put('/api/admin/feedbacks/:id', (req, res) => {
+  const adminEmail = (req.body.email || '').toLowerCase();
+  const { status } = req.body;
+  if (!ADMIN_EMAILS.includes(adminEmail)) {
+    return res.status(403).json({ error: 'Accès refusé.' });
   }
+
+  db.query(
+    'UPDATE feedbacks SET status = ? WHERE id = ?',
+    [status, req.params.id],
+    (err) => {
+      if (err) {
+        console.error('Erreur PUT /api/admin/feedbacks:', err);
+        return res.status(500).json({ error: 'Erreur lors de la mise à jour.' });
+      }
+      res.json({ message: 'Statut mis à jour.' });
+    }
+  );
 });
 
 // 4. Supprimer un retour (Réservé à l'Admin)
-app.delete('/api/admin/feedbacks/:id', async (req, res) => {
-  try {
-    const adminEmail = (req.query.email || '').toLowerCase();
-    if (!ADMIN_EMAILS.includes(adminEmail)) {
-      return res.status(403).json({ error: 'Accès refusé.' });
-    }
-
-    await db.query('DELETE FROM feedbacks WHERE id = ?', [req.params.id]);
-    res.json({ message: 'Retour supprimé.' });
-  } catch (error) {
-    console.error('Erreur DELETE /api/admin/feedbacks:', error);
-    res.status(500).json({ error: 'Erreur lors de la suppression.' });
+app.delete('/api/admin/feedbacks/:id', (req, res) => {
+  const adminEmail = (req.query.email || '').toLowerCase();
+  if (!ADMIN_EMAILS.includes(adminEmail)) {
+    return res.status(403).json({ error: 'Accès refusé.' });
   }
+
+  db.query('DELETE FROM feedbacks WHERE id = ?', [req.params.id], (err) => {
+    if (err) {
+      console.error('Erreur DELETE /api/admin/feedbacks:', err);
+      return res.status(500).json({ error: 'Erreur lors de la suppression.' });
+    }
+    res.json({ message: 'Retour supprimé.' });
+  });
 });
 
 app.listen(PORT, () => {
