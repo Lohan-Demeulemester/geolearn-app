@@ -172,7 +172,7 @@
         </div>
         <div>
           <h2 class="text-xl font-black text-gray-900 dark:text-white">
-            {{ locale === 'fr' ? `Bon retour parmi nous, ${currentUser.username} !` : `Welcome back, ${currentUser.username}!` }}
+            {{ locale === 'fr' ? `Bon retour parmi nous, ${displayUsername} !` : `Welcome back, ${displayUsername} !` }}
           </h2>
           <p class="text-sm text-gray-600 dark:text-gray-400">
             <template v-if="userStats.totalGames > 0">
@@ -459,6 +459,18 @@ const pickRandomSpotlight = () => {
 
 // Informations rapides de l'utilisateur connecté
 const currentUser = ref(null);
+
+const displayUsername = computed(() => {
+  if (!currentUser.value) return '';
+  return (
+    currentUser.value.username ||
+    currentUser.value.pseudo ||
+    currentUser.value.name ||
+    (currentUser.value.user && (currentUser.value.user.username || currentUser.value.user.name)) ||
+    (currentUser.value.email ? currentUser.value.email.split('@')[0] : 'Explorateur')
+  );
+});
+
 const userStats = ref({
   totalGames: 0,
   lastMode: '',

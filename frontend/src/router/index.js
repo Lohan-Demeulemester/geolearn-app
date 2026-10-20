@@ -8,6 +8,9 @@ import Confidentialite from '../views/Confidentialite.vue'
 import APropos from '../views/APropos.vue'
 import Feedback from '../views/Feedback.vue'
 import Admin from '../views/Admin.vue'
+import Collection from '../views/Collection.vue';
+import Leaderboard from '../views/Leaderboard.vue';
+
 
 const ADMIN_EMAILS = [
   'lohan.dtr@gmail.com',
@@ -45,6 +48,11 @@ const router = createRouter({
       component: Feedback
     },
 
+    { path: '/classement',
+      name: 'Leaderboard',
+      component: Leaderboard 
+    },
+
     // --- ROUTES PROTÉGÉES ---
     {
       path: '/explorer',
@@ -64,6 +72,12 @@ const router = createRouter({
       component: Scores,
       meta: { requiresAuth: true }
     },
+    { path: '/collection',
+      name: 'Collection',
+      component: Collection,
+      meta: { requiresAuth: true }
+    },
+  
 
     // --- ROUTE ADMINISTRATEUR ---
     {

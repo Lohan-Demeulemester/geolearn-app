@@ -67,6 +67,12 @@
           <router-link to="/scores" class="nav-item" @click="mobileMenuOpen = false">
             {{ t('nav.scores') }}
           </router-link>
+          <router-link to="/collection" class="nav-item" @click="mobileMenuOpen = false">
+            {{ t('nav.collection') }}
+          </router-link>
+          <router-link to="/classement" class="nav-item" @click="mobileMenuOpen = false">
+            {{ t('nav.leaderboard') }}
+          </router-link>
 
           <!-- Bouton Admin visible uniquement par toi -->
           <router-link

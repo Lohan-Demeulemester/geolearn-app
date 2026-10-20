@@ -283,6 +283,68 @@ app.post('/api/scores', (req, res) => {
   );
 });
 
+// =========================================================
+// CLASSEMENT MONDIAL (LEADERBOARD GLOBAL & PAR MODE)
+// =========================================================
+app.get('/api/leaderboard', (req, res) => {
+  // 1. Classement général (XP cumulée, parties jouées, moyenne et meilleur score par joueur)
+  const generalSql = `
+    SELECT 
+      u.id AS user_id,
+      u.username,
+      COUNT(s.id) AS games_played,
+      COALESCE(SUM(s.score * 10), 0) + (COUNT(s.id) * 25) AS total_xp,
+      COALESCE(SUM(s.score), 0) AS total_points,
+      MAX(CASE WHEN s.mode LIKE '%Capitales%' THEN s.score ELSE 0 END) AS best_capitals,
+      MAX(CASE WHEN s.mode LIKE '%QCM Drapeaux%' THEN s.score ELSE 0 END) AS best_flags_qcm,
+      MAX(CASE WHEN s.mode LIKE '%Grille%' THEN s.score ELSE 0 END) AS best_flag_grid,
+      MAX(CASE WHEN s.mode LIKE '%Europe%' THEN s.score ELSE 0 END) AS best_europe,
+      MAX(CASE WHEN s.mode LIKE '%Monde%' THEN s.score ELSE 0 END) AS best_world,
+      MAX(s.played_at) AS last_played
+    FROM users u
+    INNER JOIN scores s ON u.id = s.user_id
+    GROUP BY u.id, u.username
+    ORDER BY total_xp DESC, games_played DESC
+    LIMIT 50
+  `;
+
+  // 2. Meilleurs records individuels par mode de jeu
+  const recordsSql = `
+    SELECT 
+      s.id,
+      s.user_id,
+      u.username,
+      s.mode,
+      s.score,
+      s.max_score,
+      ROUND((s.score / GREATEST(s.max_score, 1)) * 100, 1) AS percentage,
+      s.played_at
+    FROM scores s
+    INNER JOIN users u ON u.id = s.user_id
+    ORDER BY s.score DESC, s.played_at ASC
+    LIMIT 150
+  `;
+
+  db.query(generalSql, (err, generalRows) => {
+    if (err) {
+      console.error('Erreur GET /api/leaderboard (general) :', err);
+      return res.status(500).json({ error: 'Erreur lors du chargement du classement.' });
+    }
+
+    db.query(recordsSql, (err2, recordRows) => {
+      if (err2) {
+        console.error('Erreur GET /api/leaderboard (records) :', err2);
+        return res.status(500).json({ error: 'Erreur lors du chargement des records.' });
+      }
+
+      res.json({
+        general: generalRows || [],
+        records: recordRows || []
+      });
+    });
+  });
+});
+
 
 // =========================================================
 // GESTION DES RETOURS COMMUNAUTAIRES & ADMIN (FEEDBACKS)

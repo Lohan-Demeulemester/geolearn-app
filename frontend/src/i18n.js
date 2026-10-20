@@ -7,7 +7,9 @@ const messages = {
       explore: 'Exploreur',
       quiz: 'Quiz',
       scores: 'Mes scores',
-      login: 'Connexion'
+      login: 'Connexion',
+      collection: 'Collection',
+      leaderboard: 'Classement'
     },
     common: {
       capital: 'Capitale',
@@ -136,7 +138,9 @@ const messages = {
       explore: 'Explore',
       quiz: 'Quiz',
       scores: 'My Scores',
-      login: 'Login'
+      login: 'Login',
+      collection: 'Collection',
+      leaderboard: 'Leaderboard'
     },
     common: {
       capital: 'Capital',
