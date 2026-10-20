@@ -260,6 +260,29 @@ app.get('/api/scores/:userId', (req, res) => {
     }
   );
 });
+// =========================================================
+// ENREGISTREMENT D'UN SCORE DE PARTIE
+// =========================================================
+app.post('/api/scores', (req, res) => {
+  const { user_id, mode, score, max_score } = req.body;
+  
+  if (!user_id || !mode || score === undefined || max_score === undefined) {
+    return res.status(400).json({ error: 'Tous les champs du score sont obligatoires.' });
+  }
+
+  db.query(
+    'INSERT INTO scores (user_id, mode, score, max_score, played_at) VALUES (?, ?, ?, ?, NOW())',
+    [user_id, mode, score, max_score],
+    (err, result) => {
+      if (err) {
+        console.error('Erreur POST /api/scores :', err);
+        return res.status(500).json({ error: 'Erreur serveur lors de l\'enregistrement du score.' });
+      }
+      res.status(201).json({ message: 'Score enregistré avec succès !', scoreId: result.insertId });
+    }
+  );
+});
+
 
 // =========================================================
 // GESTION DES RETOURS COMMUNAUTAIRES & ADMIN (FEEDBACKS)
