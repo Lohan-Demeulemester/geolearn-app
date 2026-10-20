@@ -1198,16 +1198,19 @@ onUnmounted(() => {
 }
 
 /* ========================================================= */
-/* ANIMATION 3D FLIP POUR LES FLASHCARDS                     */
+/* ANIMATION 3D FLIP POUR LES FLASHCARDS (SANS SUPERPOSITION)*/
 /* ========================================================= */
 .flip-scene {
   perspective: 1500px;
+  margin-bottom: 1.5rem;
 }
 
 .flip-card-inner {
+  display: grid;
+  grid-template-columns: 1fr;
   position: relative;
   width: 100%;
-  min-height: 510px;
+  min-height: 580px;
   transform-style: preserve-3d;
   transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
   cursor: pointer;
@@ -1218,8 +1221,7 @@ onUnmounted(() => {
 }
 
 .flip-card-face {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
