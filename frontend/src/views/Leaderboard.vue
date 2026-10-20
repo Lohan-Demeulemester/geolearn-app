@@ -244,7 +244,8 @@ const tabs = computed(() => {
     { id: 'europe', icon: '🇪🇺', label: isFr ? 'Défi Europe (47)' : 'Europe Challenge (47)' },
     { id: 'grid', icon: '🏳️', label: isFr ? 'Grille Drapeaux' : 'Flag Grid' },
     { id: 'capitals', icon: '🏛️', label: isFr ? 'QCM Capitales' : 'Capitals Quiz' },
-    { id: 'flags', icon: '🚩', label: isFr ? 'QCM Drapeaux' : 'Flags Quiz' }
+    { id: 'flags', icon: '🚩', label: isFr ? 'QCM Drapeaux' : 'Flags Quiz' },
+    { id: 'culture', icon: '🗣️', label: isFr ? 'QCM Culture' : 'Culture Quiz' }
   ];
 });
 
@@ -317,7 +318,8 @@ const activeRanking = computed(() => {
     europe: 'europe',
     grid: 'grille',
     capitals: 'capitale',
-    flags: 'qcm drapeaux'
+    flags: 'qcm drapeaux',
+    culture: 'qcm culture'
   };
   const keyword = modeKeywords[activeTab.value] || '';
 

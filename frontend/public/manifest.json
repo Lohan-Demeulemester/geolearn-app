@@ -1,0 +1,15 @@
+{
+  "name": "GeoLearn - Maîtrisez la géographie",
+  "short_name": "GeoLearn",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
