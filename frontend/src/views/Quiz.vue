@@ -1,44 +1,83 @@
 <template>
   <div class="max-w-6xl mx-auto space-y-8">
     
-    <div class="flex justify-between items-end">
+    <!-- EN-TÊTE + BOUTON SON (MUTE/UNMUTE) + BOUTON RETOUR -->
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
       <div>
-        <h2 class="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-500 mb-2">{{ t('quiz.title') }}</h2>
-        <p class="text-gray-600 dark:text-gray-400 transition-colors duration-500">{{ t('quiz.subtitle') }}</p>
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-500 mb-2">
+          {{ t('quiz.title') }}
+        </h2>
+        <p class="text-gray-600 dark:text-gray-400 transition-colors duration-500">
+          {{ t('quiz.subtitle') }}
+        </p>
       </div>
-      <button 
-        v-if="currentMode !== 'menu'" 
-        @click="retourMenu"
-        class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-5 py-2 rounded-full font-medium transition-colors flex items-center gap-2 cursor-pointer"
-      >
-        <i class="fas fa-arrow-left"></i> {{ t('quiz.back') }}
-      </button>
+
+      <div class="flex items-center gap-3 self-start sm:self-auto">
+        <!-- Bouton Activer / Désactiver les effets sonores -->
+        <button
+          type="button"
+          @click="toggleSound"
+          class="px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+          :class="soundEnabled
+            ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700'"
+          :title="locale === 'fr' ? 'Activer ou couper les effets sonores' : 'Toggle sound effects'"
+        >
+          <span>{{ soundEnabled ? '🔊' : '🔇' }}</span>
+          <span>{{ soundEnabled ? (locale === 'fr' ? 'Sons activés' : 'Sound ON') : (locale === 'fr' ? 'Muet' : 'Muted') }}</span>
+        </button>
+
+        <button 
+          v-if="currentMode !== 'menu'" 
+          @click="retourMenu"
+          class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-5 py-2 rounded-full font-medium transition-colors flex items-center gap-2 cursor-pointer"
+        >
+          <i class="fas fa-arrow-left"></i> {{ t('quiz.back') }}
+        </button>
+      </div>
     </div>
 
     <!-- ========================================== -->
-    <!-- MENU PRINCIPAL DES 5 MODES DE JEU          -->
+    <!-- MENU PRINCIPAL DES 6 MODES DE JEU (2 x 3)  -->
     <!-- ========================================== -->
-    <div v-if="currentMode === 'menu'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mt-8">
+    <div v-if="currentMode === 'menu'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+      
       <!-- 1. QCM Capitales -->
       <div @click="lancerMode('qcm', 'capital')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
-        <div class="w-14 h-14 bg-blue-100 dark:bg-gray-700 text-brandBlue dark:text-blue-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏛️</div>
+        <div class="w-14 h-14 bg-blue-100 dark:bg-gray-700 text-brandBlue dark:text-blue-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏛️</div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_caps_title') }}</h3>
         <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_caps_desc') }}</p>
       </div>
 
       <!-- 2. QCM Drapeaux -->
       <div @click="lancerMode('qcm', 'flag')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
-        <div class="w-14 h-14 bg-orange-100 dark:bg-gray-700 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">🚩</div>
+        <div class="w-14 h-14 bg-orange-100 dark:bg-gray-700 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🚩</div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_flags_title') }}</h3>
         <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_flags_desc') }}</p>
       </div>
 
-      <!-- 3. Grille des Drapeaux -->
-      <div @click="lancerMode('flag-grid')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-emerald-500/30 dark:border-emerald-500/30 hover:border-emerald-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
-        <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+      <!-- 3. NOUVEAU : QCM Population, Langues & Monnaies -->
+      <div @click="lancerMode('qcm', 'culture')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-purple-500/30 dark:border-purple-500/30 hover:border-purple-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
+        <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
           {{ locale === 'fr' ? 'Nouveau' : 'New' }}
         </span>
-        <div class="w-14 h-14 bg-emerald-100 dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏳️</div>
+        <div class="w-14 h-14 bg-purple-100 dark:bg-gray-700 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🗣️</div>
+        <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
+          {{ locale === 'fr' ? 'Population, Langues & Monnaies' : 'Population, Languages & Currencies' }}
+        </h3>
+        <p class="text-gray-500 dark:text-gray-400 text-xs">
+          {{ locale === 'fr'
+            ? 'Testez votre culture générale : quel pays est le plus peuplé, quelle est sa langue officielle ou sa monnaie ?'
+            : 'Test your general knowledge: which country is most populous, what is its official language or currency?' }}
+        </p>
+      </div>
+
+      <!-- 4. Grille des Drapeaux -->
+      <div @click="lancerMode('flag-grid')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-emerald-500/30 dark:border-emerald-500/30 hover:border-emerald-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
+        <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+          {{ locale === 'fr' ? 'Populaire' : 'Popular' }}
+        </span>
+        <div class="w-14 h-14 bg-emerald-100 dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏳️</div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
           {{ locale === 'fr' ? 'Grille des Drapeaux' : 'World Flag Grid' }}
         </h3>
@@ -49,16 +88,16 @@
         </p>
       </div>
       
-      <!-- 4. Flashcards 3D -->
+      <!-- 5. Flashcards 3D -->
       <div @click="lancerMode('flashcards')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
-        <div class="w-14 h-14 bg-green-100 dark:bg-gray-700 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">🃏</div>
+        <div class="w-14 h-14 bg-green-100 dark:bg-gray-700 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🃏</div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_flash_title') }}</h3>
         <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_flash_desc') }}</p>
       </div>
 
-      <!-- 5. Défis Chronométrés Carte -->
+      <!-- 6. Défis Chronométrés Carte -->
       <div @click="lancerMode('chrono')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
-        <div class="w-14 h-14 bg-red-100 dark:bg-gray-700 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">⏱️</div>
+        <div class="w-14 h-14 bg-red-100 dark:bg-gray-700 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">⏱️</div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
           {{ locale === 'fr' ? 'Défis Chronométrés' : 'Timed Challenges' }}
         </h3>
@@ -68,33 +107,77 @@
       </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODE 1 & 2 : QCM (CAPITALES & DRAPEAUX)    -->
-    <!-- ========================================== -->
+    <!-- ========================================================== -->
+    <!-- MODES 1, 2 & 3 : QCM (CAPITALES, DRAPEAUX & CULTURE)       -->
+    <!-- ========================================================== -->
     <div v-if="currentMode === 'qcm'" class="max-w-2xl mx-auto mt-8">
       <div v-if="!qcmFini" class="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div class="flex justify-between items-center mb-8 text-sm font-medium text-gray-500 dark:text-gray-400">
+        <div class="flex justify-between items-center mb-6 text-sm font-medium text-gray-500 dark:text-gray-400">
           <span>{{ t('quiz.question_x_of_y', { current: qcmIndex + 1, total: qcmMaxQuestions }) }}</span>
-          <span>{{ t('quiz.score', { score: qcmScore }) }}</span>
+          <span class="font-bold text-blue-600 dark:text-blue-400">{{ t('quiz.score', { score: qcmScore }) }}</span>
+        </div>
+
+        <!-- Barre de progression du QCM -->
+        <div class="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden mb-8">
+          <div
+            class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-300"
+            :style="{ width: `${((qcmIndex + 1) / qcmMaxQuestions) * 100}%` }"
+          ></div>
         </div>
         
+        <!-- Cas 1 : QCM Capitales -->
         <h3 v-if="qcmCurrentType === 'capital'" class="text-2xl font-bold text-center text-gray-900 dark:text-white mb-8 flex flex-col items-center gap-4">
           {{ t('quiz.ask_capital', { country: getLocalizedName(qcmQuestionsList[qcmIndex]) }) }}
-          <img :src="`https://flagcdn.com/w80/${getIso(qcmQuestionsList[qcmIndex])}.png`" class="h-10 w-auto shadow-sm rounded-sm" alt="drapeau">
+          <img :src="`https://flagcdn.com/w80/${getIso(qcmQuestionsList[qcmIndex])}.png`" class="h-12 w-auto shadow-sm rounded-md border border-gray-100 dark:border-gray-700" alt="drapeau">
         </h3>
-        <div v-else class="text-center mb-8">
-          <img :src="`https://flagcdn.com/w160/${getIso(qcmQuestionsList[qcmIndex])}.png`" class="h-24 w-auto mx-auto mb-6 shadow-md rounded-md" alt="drapeau">
+
+        <!-- Cas 2 : QCM Drapeaux -->
+        <div v-else-if="qcmCurrentType === 'flag'" class="text-center mb-8">
+          <img :src="`https://flagcdn.com/w160/${getIso(qcmQuestionsList[qcmIndex])}.png`" class="h-24 w-auto mx-auto mb-6 shadow-md rounded-md border border-gray-100 dark:border-gray-700" alt="drapeau">
           <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
             {{ t('quiz.ask_flag') }}
           </h3>
         </div>
+
+        <!-- Cas 3 : QCM Culture (Population, Langues & Monnaies) -->
+        <div v-else class="text-center mb-8 space-y-4">
+          <span class="inline-block px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+            <template v-if="cultureSubType === 'population'">👥 {{ locale === 'fr' ? 'Défi Population' : 'Population Challenge' }}</template>
+            <template v-else-if="cultureSubType === 'lang'">🗣️ {{ locale === 'fr' ? 'Langue Officielle' : 'Official Language' }}</template>
+            <template v-else>💶 {{ locale === 'fr' ? 'Monnaie Nationale' : 'National Currency' }}</template>
+          </span>
+
+          <img
+            v-if="cultureSubType !== 'population'"
+            :src="`https://flagcdn.com/w160/${getIso(qcmQuestionsList[qcmIndex])}.png`"
+            class="h-16 w-auto mx-auto shadow-sm rounded-lg border border-gray-100 dark:border-gray-700"
+            alt="drapeau"
+          />
+
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
+            <template v-if="cultureSubType === 'population'">
+              {{ locale === 'fr' ? 'Lequel de ces 4 pays compte le plus grand nombre d\'habitants ?' : 'Which of these 4 countries has the largest population?' }}
+            </template>
+            <template v-else-if="cultureSubType === 'lang'">
+              {{ locale === 'fr'
+                ? `Quelle est la langue officielle principale parlée en / au ${getLocalizedName(qcmQuestionsList[qcmIndex])} ?`
+                : `What is the main official language spoken in ${getLocalizedName(qcmQuestionsList[qcmIndex])}?` }}
+            </template>
+            <template v-else>
+              {{ locale === 'fr'
+                ? `Quelle est la monnaie officielle utilisée en / au ${getLocalizedName(qcmQuestionsList[qcmIndex])} ?`
+                : `What is the official currency used in ${getLocalizedName(qcmQuestionsList[qcmIndex])}?` }}
+            </template>
+          </h3>
+        </div>
         
+        <!-- Grille des 4 propositions -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button 
             v-for="choixId in qcmOptions" :key="choixId"
             @click="verifierReponseQcm(choixId)"
             :disabled="qcmIsAnswered"
-            class="p-4 rounded-xl border-2 font-medium transition-all duration-300 cursor-pointer"
+            class="p-4 rounded-xl border-2 font-medium transition-all duration-300 cursor-pointer flex flex-col items-center justify-center gap-1"
             :class="[
               !qcmIsAnswered ? 'border-gray-200 hover:border-brandBlue hover:bg-blue-50 text-gray-800 dark:border-gray-600 dark:hover:border-brandBlue dark:hover:bg-gray-700 dark:text-white' : '',
               qcmIsAnswered && choixId === qcmCorrectAnswer ? 'bg-green-100 border-green-500 text-green-800 dark:bg-green-900/50 dark:border-green-500 dark:text-green-300 scale-[1.02] shadow-sm' : '',
@@ -102,7 +185,23 @@
               qcmIsAnswered && choixId !== qcmSelected && choixId !== qcmCorrectAnswer ? 'border-gray-100 text-gray-400 dark:border-gray-800 dark:text-gray-600 opacity-50 cursor-not-allowed' : ''
             ]"
           >
-            {{ qcmCurrentType === 'capital' ? getLocalizedCapital(choixId) : getLocalizedName(choixId) }}
+            <div class="flex items-center gap-2.5">
+              <img
+                v-if="qcmCurrentType === 'culture' && cultureSubType === 'population'"
+                :src="`https://flagcdn.com/w40/${getIso(choixId)}.png`"
+                class="h-5 w-auto rounded-xs shadow-2xs"
+                alt=""
+              />
+              <span class="font-bold">{{ getOptionLabel(choixId) }}</span>
+            </div>
+
+            <!-- Révèle la population exacte de chaque pays après avoir répondu à une question Population -->
+            <span
+              v-if="qcmIsAnswered && qcmCurrentType === 'culture' && cultureSubType === 'population'"
+              class="text-xs font-extrabold opacity-85"
+            >
+              👥 {{ getCountry(choixId)?.population }}
+            </span>
           </button>
         </div>
       </div>
@@ -116,7 +215,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODE 3 : GRILLE DES DRAPEAUX (REMPLIR SOUS CHAQUE DRAPEAU)                -->
+    <!-- MODE 4 : GRILLE DES DRAPEAUX (REMPLIR SOUS CHAQUE DRAPEAU)                -->
     <!-- ========================================================================= -->
     <div v-if="currentMode === 'flag-grid'" class="space-y-6 mt-6">
       <div class="sticky top-20 z-30 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -264,13 +363,11 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODE 4 : FLASHCARDS 3D ENRICHIES (AVEC LA VRAIE FICHE PAYS AU VERSO)      -->
+    <!-- MODE 5 : FLASHCARDS 3D ENRICHIES (AVEC LA VRAIE FICHE PAYS AU VERSO)      -->
     <!-- ========================================================================= -->
     <div v-if="currentMode === 'flashcards'" class="max-w-xl mx-auto mt-6 space-y-6">
       
-      <!-- BARRE D'OUTILS SUPÉRIEURE : CONTINENT + INDICE RECTO + MÉLANGER -->
       <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
-        <!-- Filtre Continent -->
         <select 
           v-model="flashcardContinent"
           @change="resetFlashcards"
@@ -285,7 +382,6 @@
           <option value="Oceania">{{ locale === 'fr' ? 'Océanie (14)' : 'Oceania (14)' }}</option>
         </select>
 
-        <!-- Choix de l'indice affiché au Recto -->
         <select 
           v-model="flashcardFrontPrompt"
           @change="flashcardFlipped = false"
@@ -296,7 +392,6 @@
           <option value="capital">{{ locale === 'fr' ? 'Recto : Capitale' : 'Front: Capital' }}</option>
         </select>
 
-        <!-- Bouton Mélanger -->
         <button 
           type="button"
           @click="shuffleFlashcards"
@@ -306,7 +401,6 @@
         </button>
       </div>
 
-      <!-- FILTRE DE RÉVISION (TOUTES / À REVOIR / MAÎTRISÉES) + COMPTEUR -->
       <div class="flex flex-wrap items-center justify-between gap-2 px-1">
         <div class="flex items-center gap-1.5">
           <button
@@ -340,7 +434,6 @@
         </span>
       </div>
 
-      <!-- BARRE DE PROGRESSION DE LA SESSION -->
       <div v-if="currentFlashcard" class="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
           class="h-full bg-gradient-to-r from-blue-600 to-emerald-500 transition-all duration-300"
@@ -348,7 +441,6 @@
         ></div>
       </div>
 
-      <!-- ÉTAT VIDE SI AUCUNE CARTE DANS LE FILTRE ACTUEL -->
       <div v-if="!currentFlashcard" class="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
         <div class="text-4xl">🎉</div>
         <h3 class="text-xl font-bold text-gray-900 dark:text-white">
@@ -363,19 +455,14 @@
         </button>
       </div>
 
-      <!-- ================================================================= -->
-      <!-- SCÈNE 3D FLIP : LA VRAIE CARTE PAYS RECTO / VERSO                 -->
-      <!-- ================================================================= -->
       <div v-else class="flip-scene w-full select-none">
         <div 
           class="flip-card-inner" 
           :class="{ 'is-flipped': flashcardFlipped }"
-          @click="flashcardFlipped = !flashcardFlipped"
+          @click="toggleFlashcardFlip"
         >
-          <!-- ==================== FACE RECTO (QUESTION DE RÉVISION) ==================== -->
+          <!-- FACE RECTO -->
           <div class="flip-card-face flip-card-front bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-between text-center">
-            
-            <!-- En-tête du recto : Badge Sous-région + Statut éventuel -->
             <div class="w-full flex items-center justify-between">
               <span class="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-300">
                 {{ currentFlashcard.subregion || currentFlashcard.continent }}
@@ -395,9 +482,7 @@
               </span>
             </div>
 
-            <!-- Contenu central selon le mode d'indice choisi -->
             <div class="my-auto flex flex-col items-center justify-center py-6">
-              <!-- Indice 1 : Drapeau -->
               <template v-if="flashcardFrontPrompt === 'flag'">
                 <img 
                   :src="`https://flagcdn.com/w320/${currentFlashcard.iso}.png`" 
@@ -409,7 +494,6 @@
                 </p>
               </template>
 
-              <!-- Indice 2 : Nom du pays -->
               <template v-else-if="flashcardFrontPrompt === 'country'">
                 <div class="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-300 flex items-center justify-center text-3xl mb-4">
                   🌍
@@ -422,7 +506,6 @@
                 </p>
               </template>
 
-              <!-- Indice 3 : Capitale -->
               <template v-else>
                 <div class="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-gray-700 text-amber-600 dark:text-amber-300 flex items-center justify-center text-3xl mb-4">
                   🏛️
@@ -439,18 +522,15 @@
               </template>
             </div>
 
-            <!-- Pied du recto -->
             <div class="w-full pt-4 border-t border-gray-100 dark:border-gray-700/70 flex items-center justify-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400">
               <i class="fas fa-sync-alt"></i>
               <span>{{ locale === 'fr' ? 'Cliquez ou appuyez sur Espace pour retourner la fiche complète ↻' : 'Click or press Space to flip for full country card ↻' }}</span>
             </div>
           </div>
 
-          <!-- ==================== FACE VERSO (LA VRAIE FICHE COMPLÈTE + FUN FACT) ==================== -->
+          <!-- FACE VERSO -->
           <div class="flip-card-face flip-card-back bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 dark:border-gray-700 flex flex-col justify-between text-left">
-            
             <div>
-              <!-- En-tête du verso : Drapeau + Sous-région + Nom du pays -->
               <div class="flex items-start justify-between gap-4 pb-4 mb-5 border-b border-gray-100 dark:border-gray-700">
                 <div class="flex items-center gap-3.5">
                   <img 
@@ -473,7 +553,6 @@
                 </span>
               </div>
 
-              <!-- Grille des 6 informations clés (identique à Explorer.vue) -->
               <div class="grid grid-cols-2 gap-3 mb-5">
                 <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
                   <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
@@ -530,7 +609,6 @@
                 </div>
               </div>
 
-              <!-- Encadré Fun Fact -->
               <div class="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/70 dark:border-blue-800/60 rounded-2xl p-4">
                 <div class="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-1.5">
                   <span>💡 {{ locale === 'fr' ? 'Le saviez-vous ? (Fun Fact)' : 'Did you know? (Fun Fact)' }}</span>
@@ -541,7 +619,6 @@
               </div>
             </div>
 
-            <!-- Boutons d'auto-évaluation en bas du verso -->
             <div class="flex items-center justify-between gap-3 pt-4 mt-4 border-t border-gray-100 dark:border-gray-700/70">
               <button
                 type="button"
@@ -570,7 +647,6 @@
         </div>
       </div>
 
-      <!-- CONTRÔLES DE NAVIGATION BAS DE PAGE -->
       <div v-if="currentFlashcard" class="flex items-center justify-center gap-5 pt-2">
         <button 
           @click="flashcardPrecedente" 
@@ -582,7 +658,7 @@
 
         <button
           type="button"
-          @click="flashcardFlipped = !flashcardFlipped"
+          @click="toggleFlashcardFlip"
           class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white font-bold text-sm hover:border-blue-500 transition cursor-pointer shadow-xs"
         >
           ↻ {{ flashcardFlipped ? (locale === 'fr' ? 'Voir la question' : 'Show Question') : (locale === 'fr' ? 'Voir la fiche complète' : 'Show Full Card') }}
@@ -599,7 +675,7 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- MODE 5 : CHRONO CARTE (EUROPE & MONDE)     -->
+    <!-- MODE 6 : CHRONO CARTE (EUROPE & MONDE)     -->
     <!-- ========================================== -->
     <div v-if="currentMode === 'chrono'" class="max-w-4xl mx-auto mt-8">
       <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-700">
@@ -764,6 +840,97 @@ const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 const countriesData = ref(ALL_COUNTRIES);
 
+// =========================================================
+// SYNTHÉTISEUR D'EFFETS SONORES (WEB AUDIO API)
+// =========================================================
+const soundEnabled = ref(localStorage.getItem('geolearn_sound') !== 'false');
+let audioCtx = null;
+
+const getAudioContext = () => {
+  if (!audioCtx && typeof window !== 'undefined') {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) audioCtx = new AudioContextClass();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+};
+
+const playSound = (type) => {
+  if (!soundEnabled.value) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    if (type === 'correct') {
+      // Accord ascendant lumineux (Do5 -> Mi5)
+      [523.25, 659.25].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        gain.gain.setValueAtTime(0.12, now + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.23);
+      });
+    } else if (type === 'wrong') {
+      // Double note grave douce d'erreur
+      [220, 185].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+        gain.gain.setValueAtTime(0.12, now + idx * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.1);
+        osc.stop(now + idx * 0.1 + 0.26);
+      });
+    } else if (type === 'flip') {
+      // Léger clic cristallin au retournement d'une Flashcard
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(360, now);
+      osc.frequency.exponentialRampToValueAtTime(540, now + 0.06);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } else if (type === 'victory') {
+      // Fanfare de fin de partie (Do5 - Mi5 - Sol5 - Do6)
+      [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+        gain.gain.setValueAtTime(0.14, now + idx * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.32);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.09);
+        osc.stop(now + idx * 0.09 + 0.34);
+      });
+    }
+  } catch (e) {
+    // Ignore si l'audio est bloqué par le navigateur
+  }
+};
+
+const toggleSound = () => {
+  soundEnabled.value = !soundEnabled.value;
+  localStorage.setItem('geolearn_sound', soundEnabled.value ? 'true' : 'false');
+  if (soundEnabled.value) playSound('correct');
+};
+
 const currentMode = ref('menu'); 
 const retourMenu = () => {
   currentMode.value = 'menu';
@@ -785,11 +952,13 @@ const sauvegarderScore = async (mode, score, maxScore) => {
   const savedUser = localStorage.getItem('geolearn_user');
   if (!savedUser) return; 
   try {
-    const user = JSON.parse(savedUser);
+    const parsed = JSON.parse(savedUser);
+    const userId = parsed.id || (parsed.user && parsed.user.id);
+    if (!userId) return;
     await fetch(`${API_URL}/api/scores`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: user.id, mode: mode, score: score, max_score: maxScore })
+      body: JSON.stringify({ user_id: userId, mode: mode, score: score, max_score: maxScore })
     });
   } catch (error) {
     console.error("Erreur serveur scores:", error);
@@ -799,7 +968,17 @@ const sauvegarderScore = async (mode, score, maxScore) => {
 const normalizeStr = (str = '') =>
   str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-']/g, " ").toLowerCase().trim();
 
-// Inclut désormais toutes les données enrichies (population, langue, monnaie, superficie, fun fact)
+// Convertit "84,4 M", "1,41 Md", "390 000" en nombre entier exact pour comparer les populations
+const parseNumericPopulation = (popStr = '') => {
+  if (!popStr) return 0;
+  const s = popStr.toString().replace(',', '.').trim();
+  const num = parseFloat(s.replace(/[^\d.]/g, '')) || 0;
+  if (/Md|B/i.test(s)) return num * 1_000_000_000;
+  if (/M/i.test(s)) return num * 1_000_000;
+  if (/K/i.test(s)) return num * 1_000;
+  return parseFloat(s.replace(/\s+/g, '')) || 0;
+};
+
 const localizedCountries = computed(() => {
   const isEn = locale.value === 'en';
   return countriesData.value.map(c => ({
@@ -809,6 +988,7 @@ const localizedCountries = computed(() => {
     continent: c.continent_en,
     subregion: isEn ? c.subregion_en : c.subregion_fr,
     population: isEn ? c.population_en : c.population_fr,
+    populationNumeric: parseNumericPopulation(c.population_fr),
     lang: isEn ? c.lang_en : c.lang_fr,
     fact: isEn ? c.fact_en : c.fact_fr
   }));
@@ -820,7 +1000,7 @@ const getLocalizedCapital = (id) => getCountry(id)?.capital || '';
 const getIso = (id) => getCountry(id)?.iso || '';
 
 // =========================================================
-// LOGIQUE MODE 3 : GRILLE DES DRAPEAUX
+// LOGIQUE MODE 4 : GRILLE DES DRAPEAUX
 // =========================================================
 const flagGridContinent = ref('');
 const flagGridInputs = ref({});
@@ -885,6 +1065,7 @@ const checkSingleFlagInput = async (country, currentIndex) => {
   if (validNames.includes(userTyped)) {
     flagGridFound.value[country.iso] = true;
     flagGridInputs.value[country.iso] = country.name;
+    playSound('correct');
 
     if (flagGridFoundCount.value === flagGridCountries.value.length) {
       finishFlagGrid();
@@ -908,13 +1089,15 @@ const finishFlagGrid = () => {
   if (flagGridFinished.value) return;
   flagGridFinished.value = true;
   stopFlagGridTimer();
+  playSound('victory');
   sauvegarderScore('Grille Drapeaux', flagGridFoundCount.value, flagGridCountries.value.length);
 };
 
 // =========================================================
-// LOGIQUE MODE 1 & 2 : QCM SUR 196 PAYS
+// LOGIQUE MODES 1, 2 & 3 : QCM (CAPITALES, DRAPEAUX, CULTURE)
 // =========================================================
 const qcmCurrentType = ref('capital'); 
+const cultureSubType = ref('lang'); // 'population' | 'lang' | 'currency'
 const qcmQuestionsList = ref([]);
 const qcmMaxQuestions = 15;
 const qcmIndex = ref(0);
@@ -927,7 +1110,7 @@ const qcmCorrectAnswer = ref('');
 
 const initQcm = (type) => {
   qcmCurrentType.value = type;
-  let shuffled = [...countriesData.value].sort(() => 0.5 - Math.random());
+  const shuffled = [...countriesData.value].sort(() => 0.5 - Math.random());
   qcmQuestionsList.value = shuffled.slice(0, Math.min(qcmMaxQuestions, shuffled.length)).map(c => c.id);
   qcmIndex.value = 0; 
   qcmScore.value = 0; 
@@ -938,52 +1121,124 @@ const initQcm = (type) => {
 const genererOptionsQcm = () => {
   qcmIsAnswered.value = false;
   qcmSelected.value = null;
-  const correctId = qcmQuestionsList.value[qcmIndex.value];
-  qcmCorrectAnswer.value = correctId;
-  const correctCountry = getCountry(correctId);
+  const baseId = qcmQuestionsList.value[qcmIndex.value];
+  const baseCountry = getCountry(baseId);
 
-  let sameContinent = countriesData.value
-    .filter(c => c.id !== correctId && c.continent_en === correctCountry.continent_en)
+  // Si mode Culture : alterne entre Population, Langue officielle et Monnaie
+  if (qcmCurrentType.value === 'culture') {
+    const cycle = ['population', 'lang', 'currency'];
+    cultureSubType.value = cycle[qcmIndex.value % 3];
+
+    if (cultureSubType.value === 'population') {
+      // Choisit 4 pays ayant tous des populations numériques bien distinctes
+      const chosen = [baseCountry];
+      const pool = [...localizedCountries.value].sort(() => 0.5 - Math.random());
+      for (const candidate of pool) {
+        if (chosen.length >= 4) break;
+        const isDistinct = chosen.every(
+          c => c.id !== candidate.id && Math.abs(c.populationNumeric - candidate.populationNumeric) > 250_000
+        );
+        if (isDistinct) chosen.push(candidate);
+      }
+      // La bonne réponse est le pays le plus peuplé parmi les 4 proposés
+      const mostPopulous = [...chosen].sort((a, b) => b.populationNumeric - a.populationNumeric)[0];
+      qcmCorrectAnswer.value = mostPopulous.id;
+      qcmOptions.value = chosen.map(c => c.id).sort(() => 0.5 - Math.random());
+      return;
+    }
+
+    // Pour Langue ou Monnaie : garantit 4 valeurs de texte différentes pour éviter les doublons
+    qcmCorrectAnswer.value = baseId;
+    const field = cultureSubType.value === 'lang' ? 'lang' : 'currency';
+    const usedValues = new Set([baseCountry[field]]);
+    const distractors = [];
+    const pool = [...localizedCountries.value].sort(() => 0.5 - Math.random());
+
+    for (const candidate of pool) {
+      if (distractors.length >= 3) break;
+      const val = candidate[field];
+      if (candidate.id !== baseId && val && val !== '-' && !usedValues.has(val)) {
+        usedValues.add(val);
+        distractors.push(candidate.id);
+      }
+    }
+    qcmOptions.value = [baseId, ...distractors].sort(() => 0.5 - Math.random());
+    return;
+  }
+
+  // Modes QCM Capitales & Drapeaux classiques
+  qcmCorrectAnswer.value = baseId;
+  const sameContinent = countriesData.value
+    .filter(c => c.id !== baseId && c.continent_en === baseCountry.continent_en)
     .map(c => c.id);
     
-  let distractors = [...sameContinent].sort(() => 0.5 - Math.random()).slice(0, 3);
+  const distractors = [...sameContinent].sort(() => 0.5 - Math.random()).slice(0, 3);
   
   while (distractors.length < 3) {
     const randomC = countriesData.value[Math.floor(Math.random() * countriesData.value.length)].id;
-    if (randomC !== correctId && !distractors.includes(randomC)) {
+    if (randomC !== baseId && !distractors.includes(randomC)) {
       distractors.push(randomC);
     }
   }
   
-  qcmOptions.value = [correctId, ...distractors].sort(() => 0.5 - Math.random());
+  qcmOptions.value = [baseId, ...distractors].sort(() => 0.5 - Math.random());
+};
+
+const getOptionLabel = (choixId) => {
+  const c = getCountry(choixId);
+  if (!c) return '';
+  if (qcmCurrentType.value === 'capital') return c.capital;
+  if (qcmCurrentType.value === 'flag') return c.name;
+  if (cultureSubType.value === 'population') return c.name;
+  if (cultureSubType.value === 'lang') return c.lang;
+  return c.currency;
 };
 
 const verifierReponseQcm = (choixId) => {
   if (qcmIsAnswered.value) return; 
   qcmSelected.value = choixId;
   qcmIsAnswered.value = true;
-  if (choixId === qcmCorrectAnswer.value) qcmScore.value++;
+
+  if (choixId === qcmCorrectAnswer.value) {
+    qcmScore.value++;
+    playSound('correct');
+  } else {
+    playSound('wrong');
+  }
+
   setTimeout(() => {
     if (qcmIndex.value < qcmMaxQuestions - 1) {
       qcmIndex.value++;
       genererOptionsQcm();
     } else {
       qcmFini.value = true;
-      sauvegarderScore(qcmCurrentType.value === 'capital' ? 'QCM Capitales' : 'QCM Drapeaux', qcmScore.value, qcmMaxQuestions);
+      playSound('victory');
+      const modeName =
+        qcmCurrentType.value === 'capital'
+          ? 'QCM Capitales'
+          : qcmCurrentType.value === 'flag'
+            ? 'QCM Drapeaux'
+            : 'QCM Culture';
+      sauvegarderScore(modeName, qcmScore.value, qcmMaxQuestions);
     }
-  }, 1000);
+  }, 1150);
 };
 
 // =========================================================
-// LOGIQUE MODE 4 : FLASHCARDS 3D ENRICHIES
+// LOGIQUE MODE 5 : FLASHCARDS 3D ENRICHIES
 // =========================================================
 const flashcardIndex = ref(0);
 const flashcardFlipped = ref(false);
 const flashcardContinent = ref('');
 const flashcardFrontPrompt = ref('flag');
-const flashcardFilterMode = ref('all'); // 'all' | 'review' | 'mastered'
+const flashcardFilterMode = ref('all');
 const flashcardOrderIds = ref([]);
-const flashcardStatus = ref({}); // { iso: 'review' | 'mastered' }
+const flashcardStatus = ref({});
+
+const toggleFlashcardFlip = () => {
+  flashcardFlipped.value = !flashcardFlipped.value;
+  playSound('flip');
+};
 
 const initFlashcards = () => {
   flashcardContinent.value = '';
@@ -1013,7 +1268,6 @@ const setFlashcardFilter = (mode) => {
   flashcardFlipped.value = false;
 };
 
-// Liste de base (selon le continent sélectionné et l'ordre actuel)
 const baseFlashcardList = computed(() => {
   if (flashcardOrderIds.value.length === 0) return localizedCountries.value;
   return flashcardOrderIds.value
@@ -1043,7 +1297,7 @@ const currentFlashcard = computed(() => activeFlashcards.value[flashcardIndex.va
 
 const markCardStatus = (iso, status) => {
   flashcardStatus.value[iso] = status;
-  // Passe automatiquement à la carte suivante après avoir évalué la carte
+  playSound(status === 'mastered' ? 'correct' : 'flip');
   if (flashcardIndex.value < activeFlashcards.value.length - 1) {
     flashcardSuivante();
   } else {
@@ -1065,12 +1319,11 @@ const flashcardPrecedente = () => {
   } 
 };
 
-// Raccourcis clavier pour les Flashcards (Espace = Flip, Flèches = Précédent/Suivant)
 const handleFlashcardKeydown = (e) => {
   if (currentMode.value !== 'flashcards' || !currentFlashcard.value) return;
   if (e.code === 'Space') {
     e.preventDefault();
-    flashcardFlipped.value = !flashcardFlipped.value;
+    toggleFlashcardFlip();
   } else if (e.code === 'ArrowRight') {
     e.preventDefault();
     flashcardSuivante();
@@ -1083,7 +1336,7 @@ const handleFlashcardKeydown = (e) => {
 onMounted(() => window.addEventListener('keydown', handleFlashcardKeydown));
 
 // =========================================================
-// LOGIQUE MODE 5 : CHRONO CARTE (EUROPE & MONDE)
+// LOGIQUE MODE 6 : CHRONO CARTE (EUROPE & MONDE)
 // =========================================================
 const isChronoStarted = ref(false);
 const chronoRegion = ref('europe');
@@ -1140,6 +1393,7 @@ const demarrerChrono = () => {
     } else {
       chronoFini.value = true;
       arreterChrono();
+      playSound('victory');
       sauvegarderScore(chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde', paysTrouves.value.length, targetCountries.length);
     }
   }, 1000);
@@ -1164,11 +1418,13 @@ const verifierSaisieChrono = () => {
   if (pays && !paysTrouves.value.includes(pays.iso)) {
     paysTrouves.value.push(pays.iso); 
     chronoInput.value = ''; 
+    playSound('correct');
     
     if (paysTrouves.value.length === targetCountries.value.length) {
       chronoFini.value = true;
       arreterChrono();
-      sauvegarderScore(chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde', paysTrouves.value.length, targetCountries.length);
+      playSound('victory');
+      sauvegarderScore(chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde', paysTrouves.length, targetCountries.value.length);
     }
   }
 };
