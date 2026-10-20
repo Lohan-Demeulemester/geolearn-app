@@ -33,7 +33,7 @@
         <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_flags_desc') }}</p>
       </div>
 
-      <!-- 3. NOUVEAU : Grille des Drapeaux -->
+      <!-- 3. Grille des Drapeaux -->
       <div @click="lancerMode('flag-grid')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-emerald-500/30 dark:border-emerald-500/30 hover:border-emerald-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
         <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
           {{ locale === 'fr' ? 'Nouveau' : 'New' }}
@@ -49,7 +49,7 @@
         </p>
       </div>
       
-      <!-- 4. Flashcards -->
+      <!-- 4. Flashcards 3D -->
       <div @click="lancerMode('flashcards')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
         <div class="w-14 h-14 bg-green-100 dark:bg-gray-700 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-xl mx-auto mb-4 group-hover:scale-110 transition-transform">🃏</div>
         <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_flash_title') }}</h3>
@@ -116,14 +116,10 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODE 3 (NOUVEAU) : GRILLE DES DRAPEAUX (REMPLIR SOUS CHAQUE DRAPEAU)      -->
+    <!-- MODE 3 : GRILLE DES DRAPEAUX (REMPLIR SOUS CHAQUE DRAPEAU)                -->
     <!-- ========================================================================= -->
     <div v-if="currentMode === 'flag-grid'" class="space-y-6 mt-6">
-      
-      <!-- BARRE DE CONTRÔLE STICKY (CHRONO + PROGRESSION + FILTRE + ABANDONNER) -->
       <div class="sticky top-20 z-30 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4">
-        
-        <!-- Chrono + Compteur -->
         <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
           <div 
             class="px-4 py-2.5 rounded-xl font-black text-xl tracking-wider text-white shadow-sm flex items-center gap-2"
@@ -148,7 +144,6 @@
           </div>
         </div>
 
-        <!-- Barre de progression visuelle centrale -->
         <div class="w-full md:flex-1 max-w-md">
           <div class="h-3 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div 
@@ -158,7 +153,6 @@
           </div>
         </div>
 
-        <!-- Filtre Continent + Boutons Action -->
         <div class="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
           <select
             v-model="flagGridContinent"
@@ -195,7 +189,6 @@
         </div>
       </div>
 
-      <!-- BANNIÈRE DE RÉSULTAT EN FIN DE PARTIE -->
       <div 
         v-if="flagGridFinished" 
         class="p-6 rounded-2xl text-center border"
@@ -215,7 +208,6 @@
         </p>
       </div>
 
-      <!-- GRILLE DES CARTES DRAPEAUX (STYLE GEOLEARN) -->
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         <div
           v-for="(country, index) in flagGridCountries"
@@ -229,7 +221,6 @@
                 : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-blue-400/60 shadow-sm'
           ]"
         >
-          <!-- Image du drapeau -->
           <div class="h-24 w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900/60 rounded-xl p-2 mb-3 overflow-hidden border border-gray-100 dark:border-gray-700/60">
             <img
               :src="`https://flagcdn.com/w160/${country.iso}.png`"
@@ -239,9 +230,7 @@
             />
           </div>
 
-          <!-- Case à remplir sous chaque drapeau -->
           <div class="relative">
-            <!-- Si trouvé : Case verte verrouillée avec le nom officiel -->
             <div
               v-if="flagGridFound[country.iso]"
               class="w-full px-3 py-2 rounded-xl bg-emerald-500 text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-xs"
@@ -250,7 +239,6 @@
               <span class="truncate">{{ country.name }}</span>
             </div>
 
-            <!-- Si partie finie et non trouvé : Affiche la réponse en rouge -->
             <div
               v-else-if="flagGridFinished"
               class="w-full px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 font-bold text-xs sm:text-sm text-center truncate"
@@ -259,7 +247,6 @@
               {{ country.name }}
             </div>
 
-            <!-- Pendant la partie : Champ input à remplir -->
             <input
               v-else
               :ref="el => setFlagInputRef(el, index)"
@@ -276,61 +263,338 @@
       </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODE 4 : FLASHCARDS ENRICHIES              -->
-    <!-- ========================================== -->
-    <div v-if="currentMode === 'flashcards'" class="max-w-xl mx-auto mt-8 text-center space-y-6">
-      <div class="flex flex-col sm:flex-row justify-between items-center gap-3 px-2">
+    <!-- ========================================================================= -->
+    <!-- MODE 4 : FLASHCARDS 3D ENRICHIES (AVEC LA VRAIE FICHE PAYS AU VERSO)      -->
+    <!-- ========================================================================= -->
+    <div v-if="currentMode === 'flashcards'" class="max-w-xl mx-auto mt-6 space-y-6">
+      
+      <!-- BARRE D'OUTILS SUPÉRIEURE : CONTINENT + INDICE RECTO + MÉLANGER -->
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
+        <!-- Filtre Continent -->
         <select 
           v-model="flashcardContinent"
           @change="resetFlashcards"
-          class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium focus:outline-none"
+          class="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-xs sm:text-sm font-semibold focus:outline-none"
         >
           <option value="">{{ locale === 'fr' ? 'Tous les continents (196)' : 'All Continents (196)' }}</option>
-          <option value="Europe">Europe</option>
-          <option value="Asia">Asia</option>
-          <option value="Africa">Africa</option>
-          <option value="North America">North America</option>
-          <option value="South America">South America</option>
-          <option value="Oceania">Oceania</option>
+          <option value="Europe">Europe (47)</option>
+          <option value="Asia">{{ locale === 'fr' ? 'Asie (46)' : 'Asia (46)' }}</option>
+          <option value="Africa">{{ locale === 'fr' ? 'Afrique (54)' : 'Africa (54)' }}</option>
+          <option value="North America">{{ locale === 'fr' ? 'Amérique du Nord (23)' : 'North America (23)' }}</option>
+          <option value="South America">{{ locale === 'fr' ? 'Amérique du Sud (12)' : 'South America (12)' }}</option>
+          <option value="Oceania">{{ locale === 'fr' ? 'Océanie (14)' : 'Oceania (14)' }}</option>
         </select>
 
+        <!-- Choix de l'indice affiché au Recto -->
+        <select 
+          v-model="flashcardFrontPrompt"
+          @change="flashcardFlipped = false"
+          class="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-xs sm:text-sm font-semibold focus:outline-none"
+        >
+          <option value="flag">{{ locale === 'fr' ? 'Recto : Drapeau' : 'Front: Flag' }}</option>
+          <option value="country">{{ locale === 'fr' ? 'Recto : Nom du pays' : 'Front: Country Name' }}</option>
+          <option value="capital">{{ locale === 'fr' ? 'Recto : Capitale' : 'Front: Capital' }}</option>
+        </select>
+
+        <!-- Bouton Mélanger -->
         <button 
           type="button"
           @click="shuffleFlashcards"
-          class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-4 py-2 rounded-xl text-sm font-semibold transition cursor-pointer flex items-center gap-2"
+          class="bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-gray-600 text-gray-800 dark:text-white hover:text-blue-600 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-2"
         >
           <i class="fas fa-random"></i> {{ locale === 'fr' ? 'Mélanger' : 'Shuffle' }}
         </button>
+      </div>
 
-        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">
+      <!-- FILTRE DE RÉVISION (TOUTES / À REVOIR / MAÎTRISÉES) + COMPTEUR -->
+      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            @click="setFlashcardFilter('all')"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
+            :class="flashcardFilterMode === 'all' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700'"
+          >
+            {{ locale === 'fr' ? 'Toutes' : 'All' }} ({{ baseFlashcardList.length }})
+          </button>
+          <button
+            type="button"
+            @click="setFlashcardFilter('review')"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
+            :class="flashcardFilterMode === 'review' ? 'bg-amber-500 text-white' : 'bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 border border-gray-200 dark:border-gray-700'"
+          >
+            ⏳ {{ locale === 'fr' ? 'À revoir' : 'To Review' }} ({{ reviewCount }})
+          </button>
+          <button
+            type="button"
+            @click="setFlashcardFilter('mastered')"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
+            :class="flashcardFilterMode === 'mastered' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 border border-gray-200 dark:border-gray-700'"
+          >
+            ✓ {{ locale === 'fr' ? 'Maîtrisées' : 'Mastered' }} ({{ masteredCount }})
+          </button>
+        </div>
+
+        <span v-if="currentFlashcard" class="text-sm font-extrabold text-gray-500 dark:text-gray-400">
           {{ t('quiz.card_x_of_y', { current: flashcardIndex + 1, total: activeFlashcards.length }) }}
         </span>
       </div>
 
-      <div 
-        @click="flashcardFlipped = !flashcardFlipped"
-        class="h-80 w-full bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-100 dark:border-gray-700 cursor-pointer flex flex-col items-center justify-center transition-all duration-300 hover:shadow-lg p-6 relative overflow-hidden group"
-      >
-        <span class="absolute top-4 right-4 text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-300">
-          {{ activeFlashcards[flashcardIndex]?.continent }}
-        </span>
+      <!-- BARRE DE PROGRESSION DE LA SESSION -->
+      <div v-if="currentFlashcard" class="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div
+          class="h-full bg-gradient-to-r from-blue-600 to-emerald-500 transition-all duration-300"
+          :style="{ width: `${((flashcardIndex + 1) / activeFlashcards.length) * 100}%` }"
+        ></div>
+      </div>
 
-        <div v-if="!flashcardFlipped" class="flex flex-col items-center">
-          <img :src="`https://flagcdn.com/w160/${activeFlashcards[flashcardIndex].iso}.png`" class="h-28 w-auto mb-8 shadow-sm rounded-md" alt="drapeau">
-          <span class="text-gray-400 dark:text-gray-500 text-sm"><i class="fas fa-hand-pointer"></i> {{ t('quiz.click_flip') }}</span>
-        </div>
-        <div v-else class="flex flex-col items-center">
-          <h3 class="text-4xl font-bold text-gray-900 dark:text-white mb-3">{{ activeFlashcards[flashcardIndex].name }}</h3>
-          <p class="text-lg text-gray-600 dark:text-gray-300 mb-2">{{ t('common.capital') }} : <strong>{{ activeFlashcards[flashcardIndex].capital }}</strong></p>
-          <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">{{ activeFlashcards[flashcardIndex].subregion }}</p>
-          <span class="text-gray-400 dark:text-gray-500 text-sm"><i class="fas fa-undo"></i></span>
+      <!-- ÉTAT VIDE SI AUCUNE CARTE DANS LE FILTRE ACTUEL -->
+      <div v-if="!currentFlashcard" class="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+        <div class="text-4xl">🎉</div>
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+          {{ locale === 'fr' ? 'Aucune carte dans cette catégorie !' : 'No cards in this category!' }}
+        </h3>
+        <button
+          type="button"
+          @click="setFlashcardFilter('all')"
+          class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition cursor-pointer"
+        >
+          {{ locale === 'fr' ? 'Afficher toutes les cartes' : 'Show all cards' }}
+        </button>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- SCÈNE 3D FLIP : LA VRAIE CARTE PAYS RECTO / VERSO                 -->
+      <!-- ================================================================= -->
+      <div v-else class="flip-scene w-full select-none">
+        <div 
+          class="flip-card-inner" 
+          :class="{ 'is-flipped': flashcardFlipped }"
+          @click="flashcardFlipped = !flashcardFlipped"
+        >
+          <!-- ==================== FACE RECTO (QUESTION DE RÉVISION) ==================== -->
+          <div class="flip-card-face flip-card-front bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-between text-center">
+            
+            <!-- En-tête du recto : Badge Sous-région + Statut éventuel -->
+            <div class="w-full flex items-center justify-between">
+              <span class="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-300">
+                {{ currentFlashcard.subregion || currentFlashcard.continent }}
+              </span>
+
+              <span 
+                v-if="flashcardStatus[currentFlashcard.iso] === 'mastered'"
+                class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+              >
+                ✓ {{ locale === 'fr' ? 'Maîtrisée' : 'Mastered' }}
+              </span>
+              <span 
+                v-else-if="flashcardStatus[currentFlashcard.iso] === 'review'"
+                class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+              >
+                ⏳ {{ locale === 'fr' ? 'À revoir' : 'To Review' }}
+              </span>
+            </div>
+
+            <!-- Contenu central selon le mode d'indice choisi -->
+            <div class="my-auto flex flex-col items-center justify-center py-6">
+              <!-- Indice 1 : Drapeau -->
+              <template v-if="flashcardFrontPrompt === 'flag'">
+                <img 
+                  :src="`https://flagcdn.com/w320/${currentFlashcard.iso}.png`" 
+                  :alt="currentFlashcard.name"
+                  class="h-36 w-auto rounded-xl shadow-md mb-6 border border-gray-200 dark:border-gray-700 object-contain"
+                >
+                <p class="text-lg font-bold text-gray-700 dark:text-gray-200">
+                  {{ locale === 'fr' ? 'Quel est ce pays et sa capitale ?' : 'What is this country and its capital?' }}
+                </p>
+              </template>
+
+              <!-- Indice 2 : Nom du pays -->
+              <template v-else-if="flashcardFrontPrompt === 'country'">
+                <div class="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-300 flex items-center justify-center text-3xl mb-4">
+                  🌍
+                </div>
+                <h3 class="text-4xl font-black text-gray-900 dark:text-white mb-3">
+                  {{ currentFlashcard.name }}
+                </h3>
+                <p class="text-base font-medium text-gray-500 dark:text-gray-400">
+                  {{ locale === 'fr' ? 'Devinez sa capitale, son drapeau et ses infos clés !' : 'Guess its capital, flag, and key facts!' }}
+                </p>
+              </template>
+
+              <!-- Indice 3 : Capitale -->
+              <template v-else>
+                <div class="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-gray-700 text-amber-600 dark:text-amber-300 flex items-center justify-center text-3xl mb-4">
+                  🏛️
+                </div>
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
+                  {{ t('common.capital') }}
+                </span>
+                <h3 class="text-4xl font-black text-gray-900 dark:text-white mb-3">
+                  {{ currentFlashcard.capital }}
+                </h3>
+                <p class="text-base font-medium text-gray-500 dark:text-gray-400">
+                  {{ locale === 'fr' ? 'De quel pays est-ce la capitale ?' : 'Which country is this the capital of?' }}
+                </p>
+              </template>
+            </div>
+
+            <!-- Pied du recto -->
+            <div class="w-full pt-4 border-t border-gray-100 dark:border-gray-700/70 flex items-center justify-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400">
+              <i class="fas fa-sync-alt"></i>
+              <span>{{ locale === 'fr' ? 'Cliquez ou appuyez sur Espace pour retourner la fiche complète ↻' : 'Click or press Space to flip for full country card ↻' }}</span>
+            </div>
+          </div>
+
+          <!-- ==================== FACE VERSO (LA VRAIE FICHE COMPLÈTE + FUN FACT) ==================== -->
+          <div class="flip-card-face flip-card-back bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 dark:border-gray-700 flex flex-col justify-between text-left">
+            
+            <div>
+              <!-- En-tête du verso : Drapeau + Sous-région + Nom du pays -->
+              <div class="flex items-start justify-between gap-4 pb-4 mb-5 border-b border-gray-100 dark:border-gray-700">
+                <div class="flex items-center gap-3.5">
+                  <img 
+                    :src="`https://flagcdn.com/w160/${currentFlashcard.iso}.png`" 
+                    :alt="currentFlashcard.name"
+                    class="h-12 w-auto rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 shrink-0"
+                  >
+                  <div>
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">
+                      {{ currentFlashcard.subregion }}
+                    </span>
+                    <h3 class="text-2xl font-black text-gray-900 dark:text-white leading-tight">
+                      {{ currentFlashcard.name }}
+                    </h3>
+                  </div>
+                </div>
+
+                <span class="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold shrink-0">
+                  ↻ {{ locale === 'fr' ? 'Recto' : 'Front' }}
+                </span>
+              </div>
+
+              <!-- Grille des 6 informations clés (identique à Explorer.vue) -->
+              <div class="grid grid-cols-2 gap-3 mb-5">
+                <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
+                  <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
+                    🏛️ {{ t('common.capital') }}
+                  </span>
+                  <strong class="text-sm font-bold text-gray-900 dark:text-white">
+                    {{ currentFlashcard.capital }}
+                  </strong>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
+                  <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
+                    👥 {{ locale === 'fr' ? 'Habitants' : 'Population' }}
+                  </span>
+                  <strong class="text-sm font-bold text-gray-900 dark:text-white">
+                    {{ currentFlashcard.population }}
+                  </strong>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
+                  <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
+                    🗣️ {{ locale === 'fr' ? 'Langue(s) officielle(s)' : 'Official Language(s)' }}
+                  </span>
+                  <strong class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2">
+                    {{ currentFlashcard.lang }}
+                  </strong>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
+                  <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
+                    💶 {{ locale === 'fr' ? 'Monnaie' : 'Currency' }}
+                  </span>
+                  <strong class="text-sm font-bold text-gray-900 dark:text-white">
+                    {{ currentFlashcard.currency }}
+                  </strong>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
+                  <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
+                    📐 {{ locale === 'fr' ? 'Superficie' : 'Area' }}
+                  </span>
+                  <strong class="text-sm font-bold text-gray-900 dark:text-white">
+                    {{ currentFlashcard.area }}
+                  </strong>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
+                  <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
+                    🧭 {{ locale === 'fr' ? 'Code ISO / GPS' : 'ISO / Coordinates' }}
+                  </span>
+                  <strong class="text-sm font-bold text-gray-900 dark:text-white">
+                    {{ currentFlashcard.iso3 }} ({{ currentFlashcard.lat.toFixed(1) }}°, {{ currentFlashcard.lng.toFixed(1) }}°)
+                  </strong>
+                </div>
+              </div>
+
+              <!-- Encadré Fun Fact -->
+              <div class="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/70 dark:border-blue-800/60 rounded-2xl p-4">
+                <div class="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-1.5">
+                  <span>💡 {{ locale === 'fr' ? 'Le saviez-vous ? (Fun Fact)' : 'Did you know? (Fun Fact)' }}</span>
+                </div>
+                <p class="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
+                  {{ currentFlashcard.fact }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Boutons d'auto-évaluation en bas du verso -->
+            <div class="flex items-center justify-between gap-3 pt-4 mt-4 border-t border-gray-100 dark:border-gray-700/70">
+              <button
+                type="button"
+                @click.stop="markCardStatus(currentFlashcard.iso, 'review')"
+                class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm border transition cursor-pointer flex items-center justify-center gap-1.5"
+                :class="flashcardStatus[currentFlashcard.iso] === 'review'
+                  ? 'bg-amber-500 text-white border-amber-500'
+                  : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100'"
+              >
+                ⏳ {{ locale === 'fr' ? 'À revoir' : 'Need Review' }}
+              </button>
+
+              <button
+                type="button"
+                @click.stop="markCardStatus(currentFlashcard.iso, 'mastered')"
+                class="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm border transition cursor-pointer flex items-center justify-center gap-1.5"
+                :class="flashcardStatus[currentFlashcard.iso] === 'mastered'
+                  ? 'bg-emerald-600 text-white border-emerald-600'
+                  : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100'"
+              >
+                ✓ {{ locale === 'fr' ? 'Maîtrisée !' : 'Mastered!' }}
+              </button>
+            </div>
+
+          </div>
         </div>
       </div>
 
-      <div class="flex justify-center gap-4">
-        <button @click="flashcardPrecedente" class="p-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition cursor-pointer"><i class="fas fa-arrow-left"></i></button>
-        <button @click="flashcardSuivante" class="p-4 bg-brandBlue text-white rounded-full hover:bg-blue-700 transition cursor-pointer"><i class="fas fa-arrow-right"></i></button>
+      <!-- CONTRÔLES DE NAVIGATION BAS DE PAGE -->
+      <div v-if="currentFlashcard" class="flex items-center justify-center gap-5 pt-2">
+        <button 
+          @click="flashcardPrecedente" 
+          :disabled="flashcardIndex === 0"
+          class="w-12 h-12 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer flex items-center justify-center shadow-xs"
+        >
+          <i class="fas fa-arrow-left"></i>
+        </button>
+
+        <button
+          type="button"
+          @click="flashcardFlipped = !flashcardFlipped"
+          class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white font-bold text-sm hover:border-blue-500 transition cursor-pointer shadow-xs"
+        >
+          ↻ {{ flashcardFlipped ? (locale === 'fr' ? 'Voir la question' : 'Show Question') : (locale === 'fr' ? 'Voir la fiche complète' : 'Show Full Card') }}
+        </button>
+
+        <button 
+          @click="flashcardSuivante" 
+          :disabled="flashcardIndex >= activeFlashcards.length - 1"
+          class="w-12 h-12 bg-brandBlue text-white rounded-full hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer flex items-center justify-center shadow-sm"
+        >
+          <i class="fas fa-arrow-right"></i>
+        </button>
       </div>
     </div>
 
@@ -479,7 +743,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n'; 
 import ALL_COUNTRIES from '../data/countries.js';
 
@@ -535,6 +799,7 @@ const sauvegarderScore = async (mode, score, maxScore) => {
 const normalizeStr = (str = '') =>
   str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-']/g, " ").toLowerCase().trim();
 
+// Inclut désormais toutes les données enrichies (population, langue, monnaie, superficie, fun fact)
 const localizedCountries = computed(() => {
   const isEn = locale.value === 'en';
   return countriesData.value.map(c => ({
@@ -542,7 +807,10 @@ const localizedCountries = computed(() => {
     name: isEn ? c.name_en : c.name_fr,
     capital: isEn ? c.capital_en : c.capital_fr,
     continent: c.continent_en,
-    subregion: isEn ? c.subregion_en : c.subregion_fr
+    subregion: isEn ? c.subregion_en : c.subregion_fr,
+    population: isEn ? c.population_en : c.population_fr,
+    lang: isEn ? c.lang_en : c.lang_fr,
+    fact: isEn ? c.fact_en : c.fact_fr
   }));
 });
 
@@ -552,7 +820,7 @@ const getLocalizedCapital = (id) => getCountry(id)?.capital || '';
 const getIso = (id) => getCountry(id)?.iso || '';
 
 // =========================================================
-// LOGIQUE MODE 3 : GRILLE DES DRAPEAUX (NOUVEAU)
+// LOGIQUE MODE 3 : GRILLE DES DRAPEAUX
 // =========================================================
 const flagGridContinent = ref('');
 const flagGridInputs = ref({});
@@ -591,7 +859,7 @@ const initFlagGrid = () => {
   flagGridFound.value = {};
   flagGridFinished.value = false;
   flagInputRefs.value = {};
-  flagGridTime.value = flagGridContinent.value ? 300 : 900; // 5 min par continent ou 15 min monde entier
+  flagGridTime.value = flagGridContinent.value ? 300 : 900;
 
   flagGridInterval = setInterval(() => {
     if (flagGridTime.value > 0) {
@@ -618,13 +886,11 @@ const checkSingleFlagInput = async (country, currentIndex) => {
     flagGridFound.value[country.iso] = true;
     flagGridInputs.value[country.iso] = country.name;
 
-    // Si tous les drapeaux sont trouvés, on termine la partie
     if (flagGridFoundCount.value === flagGridCountries.value.length) {
       finishFlagGrid();
       return;
     }
 
-    // Passe automatiquement le curseur sur le prochain drapeau non trouvé
     await nextTick();
     const total = flagGridCountries.value.length;
     for (let step = 1; step < total; step++) {
@@ -709,15 +975,19 @@ const verifierReponseQcm = (choixId) => {
 };
 
 // =========================================================
-// LOGIQUE MODE 4 : FLASHCARDS
+// LOGIQUE MODE 4 : FLASHCARDS 3D ENRICHIES
 // =========================================================
 const flashcardIndex = ref(0);
 const flashcardFlipped = ref(false);
 const flashcardContinent = ref('');
-const flashcardList = ref([]);
+const flashcardFrontPrompt = ref('flag');
+const flashcardFilterMode = ref('all'); // 'all' | 'review' | 'mastered'
+const flashcardOrderIds = ref([]);
+const flashcardStatus = ref({}); // { iso: 'review' | 'mastered' }
 
 const initFlashcards = () => {
   flashcardContinent.value = '';
+  flashcardFilterMode.value = 'all';
   resetFlashcards();
 };
 
@@ -726,32 +996,91 @@ const resetFlashcards = () => {
   if (flashcardContinent.value) {
     list = list.filter(c => c.continent === flashcardContinent.value);
   }
-  flashcardList.value = [...list];
+  flashcardOrderIds.value = list.map(c => c.id);
   flashcardIndex.value = 0;
   flashcardFlipped.value = false;
 };
 
 const shuffleFlashcards = () => {
-  flashcardList.value.sort(() => 0.5 - Math.random());
+  flashcardOrderIds.value = [...flashcardOrderIds.value].sort(() => 0.5 - Math.random());
   flashcardIndex.value = 0;
   flashcardFlipped.value = false;
 };
 
-const activeFlashcards = computed(() => flashcardList.value.length > 0 ? flashcardList.value : localizedCountries.value);
+const setFlashcardFilter = (mode) => {
+  flashcardFilterMode.value = mode;
+  flashcardIndex.value = 0;
+  flashcardFlipped.value = false;
+};
+
+// Liste de base (selon le continent sélectionné et l'ordre actuel)
+const baseFlashcardList = computed(() => {
+  if (flashcardOrderIds.value.length === 0) return localizedCountries.value;
+  return flashcardOrderIds.value
+    .map(id => getCountry(id))
+    .filter(Boolean);
+});
+
+const reviewCount = computed(() =>
+  baseFlashcardList.value.filter(c => flashcardStatus.value[c.iso] === 'review').length
+);
+
+const masteredCount = computed(() =>
+  baseFlashcardList.value.filter(c => flashcardStatus.value[c.iso] === 'mastered').length
+);
+
+const activeFlashcards = computed(() => {
+  if (flashcardFilterMode.value === 'review') {
+    return baseFlashcardList.value.filter(c => flashcardStatus.value[c.iso] === 'review');
+  }
+  if (flashcardFilterMode.value === 'mastered') {
+    return baseFlashcardList.value.filter(c => flashcardStatus.value[c.iso] === 'mastered');
+  }
+  return baseFlashcardList.value;
+});
+
+const currentFlashcard = computed(() => activeFlashcards.value[flashcardIndex.value] || null);
+
+const markCardStatus = (iso, status) => {
+  flashcardStatus.value[iso] = status;
+  // Passe automatiquement à la carte suivante après avoir évalué la carte
+  if (flashcardIndex.value < activeFlashcards.value.length - 1) {
+    flashcardSuivante();
+  } else {
+    flashcardFlipped.value = false;
+  }
+};
 
 const flashcardSuivante = () => { 
   if (flashcardIndex.value < activeFlashcards.value.length - 1) { 
     flashcardFlipped.value = false; 
-    setTimeout(() => { flashcardIndex.value++; }, 150); 
+    setTimeout(() => { flashcardIndex.value++; }, 160); 
   } 
 };
 
 const flashcardPrecedente = () => { 
   if (flashcardIndex.value > 0) { 
     flashcardFlipped.value = false; 
-    setTimeout(() => { flashcardIndex.value--; }, 150); 
+    setTimeout(() => { flashcardIndex.value--; }, 160); 
   } 
 };
+
+// Raccourcis clavier pour les Flashcards (Espace = Flip, Flèches = Précédent/Suivant)
+const handleFlashcardKeydown = (e) => {
+  if (currentMode.value !== 'flashcards' || !currentFlashcard.value) return;
+  if (e.code === 'Space') {
+    e.preventDefault();
+    flashcardFlipped.value = !flashcardFlipped.value;
+  } else if (e.code === 'ArrowRight') {
+    e.preventDefault();
+    flashcardSuivante();
+  } else if (e.code === 'ArrowLeft') {
+    e.preventDefault();
+    flashcardPrecedente();
+  }
+};
+
+onMounted(() => window.addEventListener('keydown', handleFlashcardKeydown));
 
 // =========================================================
 // LOGIQUE MODE 5 : CHRONO CARTE (EUROPE & MONDE)
@@ -839,7 +1168,7 @@ const verifierSaisieChrono = () => {
     if (paysTrouves.value.length === targetCountries.value.length) {
       chronoFini.value = true;
       arreterChrono();
-      sauvegarderScore(chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde', paysTrouves.value.length, targetCountries.value.length);
+      sauvegarderScore(chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde', paysTrouves.value.length, targetCountries.length);
     }
   }
 };
@@ -854,6 +1183,7 @@ const arreterChrono = () => {
 onUnmounted(() => {
   arreterChrono();
   stopFlagGridTimer();
+  window.removeEventListener('keydown', handleFlashcardKeydown);
 });
 </script>
 
@@ -865,5 +1195,42 @@ onUnmounted(() => {
 :global(.dark) .leaflet-container,
 :global(body.dark-mode) .leaflet-container {
   background-color: #1e293b !important;
+}
+
+/* ========================================================= */
+/* ANIMATION 3D FLIP POUR LES FLASHCARDS                     */
+/* ========================================================= */
+.flip-scene {
+  perspective: 1500px;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  min-height: 510px;
+  transform-style: preserve-3d;
+  transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+}
+
+.flip-card-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-card-front {
+  transform: rotateY(0deg);
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
 }
 </style>
