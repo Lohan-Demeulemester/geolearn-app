@@ -1,194 +1,218 @@
 <template>
   <div class="max-w-6xl mx-auto space-y-8 pb-12">
 
-    <!-- EN-TÊTE DE LA COLLECTION -->
+    <!-- EN-TÊTE DU CLASSEMENT -->
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div>
         <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
-          🏆 {{ locale === 'fr' ? 'Progression & Récompenses' : 'Progression & Rewards' }}
+          🌍 {{ locale === 'fr' ? 'Compétition Communautaire' : 'Community Competition' }}
         </span>
         <h2 class="text-3xl font-black text-gray-900 dark:text-white">
-          {{ locale === 'fr' ? 'Ma Collection de Badges' : 'My Badge Collection' }}
+          {{ locale === 'fr' ? 'Classement Mondial (Leaderboard)' : 'World Leaderboard' }}
         </h2>
         <p class="text-gray-600 dark:text-gray-400 mt-1">
           {{ locale === 'fr'
-            ? 'Faites évoluer vos badges du palier I (Bronze) jusqu\'au palier V (Diamant) en jouant aux différents modes.'
-            : 'Upgrade your badges from Tier I (Bronze) up to Tier V (Diamond) by playing different game modes.' }}
+            ? 'Comparez vos records avec les meilleurs joueurs de GeoLearn sur chaque mode de jeu.'
+            : 'Compare your records with the top GeoLearn players across every game mode.' }}
         </p>
+      </div>
+
+      <button
+        type="button"
+        @click="fetchLeaderboard"
+        :disabled="isLoading"
+        class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-200 hover:border-blue-500 transition cursor-pointer flex items-center gap-2 shadow-xs"
+      >
+        <i class="fas fa-sync-alt" :class="{ 'animate-spin': isLoading }"></i>
+        {{ locale === 'fr' ? 'Actualiser' : 'Refresh' }}
+      </button>
+    </div>
+
+    <!-- BARRE D'ONGLETS DES MODES DE CLASSEMENT -->
+    <div class="bg-white dark:bg-gray-800 p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-2 overflow-x-auto">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        type="button"
+        @click="activeTab = tab.id"
+        class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer whitespace-nowrap flex items-center gap-2"
+        :class="activeTab === tab.id
+          ? 'bg-blue-600 text-white shadow-sm'
+          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+      >
+        <span>{{ tab.icon }}</span>
+        <span>{{ tab.label }}</span>
+      </button>
+    </div>
+
+    <!-- BANNIÈRE DE RANG DU JOUEUR CONNECTÉ -->
+    <div
+      v-if="currentUserRank"
+      class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-2xl p-4 sm:p-5 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4"
+    >
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center font-black text-xl">
+          #{{ currentUserRank.rank }}
+        </div>
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wider text-blue-100">
+            {{ locale === 'fr' ? 'Votre position actuelle dans ce classement' : 'Your current position in this leaderboard' }}
+          </p>
+          <h3 class="text-lg font-black">
+            {{ currentUserRank.username }} — {{ currentUserRank.metricDisplay }}
+          </h3>
+        </div>
       </div>
 
       <router-link
         to="/quiz"
-        class="self-start sm:self-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition shadow-sm"
+        class="px-4 py-2 rounded-xl bg-white text-blue-700 font-extrabold text-xs sm:text-sm hover:bg-blue-50 transition shrink-0"
       >
-        🎮 {{ locale === 'fr' ? 'Jouer pour débloquer' : 'Play to unlock' }}
+        🚀 {{ locale === 'fr' ? 'Améliorer mon score' : 'Improve my score' }}
       </router-link>
     </div>
 
     <!-- ========================================================= -->
-    <!-- BANNIÈRE PROFIL RPG : NIVEAU GLOBAL, TITRE & JAUGE D'XP   -->
+    <!-- PODIUM TOP 3 (OR, ARGENT, BRONZE)                         -->
     <!-- ========================================================= -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-6 sm:p-8 shadow-xl border border-blue-500/20">
-      <div class="pointer-events-none absolute -top-20 -right-20 w-72 h-72 rounded-full bg-cyan-500/15 blur-3xl"></div>
-
-      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        
-        <!-- Avatar de Niveau + Nom + Titre honorifique -->
-        <div class="lg:col-span-5 flex items-center gap-5">
-          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex flex-col items-center justify-center shadow-lg border-2 border-white/30 shrink-0">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-950">LVL</span>
-            <strong class="text-3xl font-black text-white leading-none">{{ playerLevel.level }}</strong>
-          </div>
-
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="text-2xl font-black text-white">{{ displayUsername }}</h3>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-                {{ playerLevel.title }}
-              </span>
-            </div>
-            <p class="text-sm text-slate-300 mt-1">
-              {{ locale === 'fr'
-                ? `${totalTiersUnlocked} / ${maxTotalTiers} paliers de badges débloqués`
-                : `${totalTiersUnlocked} / ${maxTotalTiers} badge tiers unlocked` }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Barre d'XP vers le niveau suivant -->
-        <div class="lg:col-span-4 space-y-2">
-          <div class="flex justify-between text-xs font-bold">
-            <span class="text-cyan-300">{{ totalXp.toLocaleString() }} XP</span>
-            <span class="text-slate-400">
-              {{ locale === 'fr' ? `Prochain niveau : ${playerLevel.nextLevelXp.toLocaleString()} XP` : `Next level: ${playerLevel.nextLevelXp.toLocaleString()} XP` }}
-            </span>
-          </div>
-          <div class="h-3.5 w-full bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/10">
-            <div
-              class="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 rounded-full transition-all duration-500"
-              :style="{ width: `${playerLevel.progressPercent}%` }"
-            ></div>
-          </div>
-        </div>
-
-        <!-- Résumé des raretés débloquées -->
-        <div class="lg:col-span-3 grid grid-cols-3 gap-2 text-center">
-          <div class="bg-white/5 border border-white/10 rounded-2xl p-3">
-            <strong class="text-xl font-black text-amber-400 block">{{ statsSummary.totalGames }}</strong>
-            <span class="text-[11px] text-slate-300">{{ locale === 'fr' ? 'Parties' : 'Games' }}</span>
-          </div>
-          <div class="bg-white/5 border border-white/10 rounded-2xl p-3">
-            <strong class="text-xl font-black text-emerald-400 block">{{ statsSummary.perfectGames }}</strong>
-            <span class="text-[11px] text-slate-300">{{ locale === 'fr' ? 'Sans-faute' : 'Perfects' }}</span>
-          </div>
-          <div class="bg-white/5 border border-white/10 rounded-2xl p-3">
-            <strong class="text-xl font-black text-cyan-300 block">{{ diamondCount }}</strong>
-            <span class="text-[11px] text-slate-300">{{ locale === 'fr' ? 'Rang V 💎' : 'Tier V 💎' }}</span>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- MESSAGE SI NON CONNECTÉ -->
-    <div
-      v-if="!currentUser"
-      class="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4"
-    >
-      <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">
-        🔒 {{ locale === 'fr'
-          ? 'Connectez-vous à votre compte pour sauvegarder vos scores et faire évoluer vos badges du palier I au palier V !'
-          : 'Log in to your account to save your scores and upgrade your badges from Tier I to Tier V!' }}
-      </p>
-      <router-link
-        to="/profil"
-        class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shrink-0"
-      >
-        {{ locale === 'fr' ? 'Se connecter' : 'Log In' }}
-      </router-link>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- GRILLE DES 8 BADGES ÉVOLUTIFS (PALIERS I, II, III, IV, V) -->
-    <!-- ========================================================= -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div v-if="podiumPlayers.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
+      
+      <!-- 2e Place (Argent) -->
       <div
-        v-for="badge in evaluatedBadges"
-        :key="badge.id"
-        class="rounded-3xl p-6 transition-all duration-300 border-2 flex flex-col justify-between relative overflow-hidden"
-        :class="badge.cardStyle"
+        v-if="podiumPlayers[1]"
+        class="order-2 md:order-1 bg-white dark:bg-gray-800 rounded-3xl p-6 text-center border-2 border-slate-300 dark:border-slate-600 shadow-md relative"
       >
-        <!-- Ruban de Rareté en haut à droite -->
-        <div class="flex items-start justify-between gap-4 mb-4">
-          <div class="flex items-center gap-4">
-            <!-- Icône du Badge avec halo selon le palier -->
+        <div class="text-4xl mb-2">🥈</div>
+        <div class="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white font-black text-xl flex items-center justify-center mx-auto mb-3">
+          {{ getInitials(podiumPlayers[1].username) }}
+        </div>
+        <h3 class="text-lg font-black text-gray-900 dark:text-white truncate">
+          {{ podiumPlayers[1].username }}
+        </h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          {{ podiumPlayers[1].subText }}
+        </p>
+        <span class="inline-block px-4 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-black text-sm">
+          {{ podiumPlayers[1].metricDisplay }}
+        </span>
+      </div>
+
+      <!-- 1re Place (Or - Surélevé) -->
+      <div
+        v-if="podiumPlayers[0]"
+        class="order-1 md:order-2 bg-gradient-to-b from-amber-50/90 to-white dark:from-amber-950/30 dark:to-gray-800 rounded-3xl p-8 text-center border-2 border-amber-400 shadow-xl md:-translate-y-3 relative"
+      >
+        <span class="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-400 text-amber-950">
+          #1 Champion
+        </span>
+        <div class="text-5xl mb-2">👑</div>
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 text-white font-black text-2xl flex items-center justify-center mx-auto mb-3 shadow-md">
+          {{ getInitials(podiumPlayers[0].username) }}
+        </div>
+        <h3 class="text-xl font-black text-gray-900 dark:text-white truncate">
+          {{ podiumPlayers[0].username }}
+        </h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          {{ podiumPlayers[0].subText }}
+        </p>
+        <span class="inline-block px-5 py-2 rounded-xl bg-amber-400 text-amber-950 font-black text-base shadow-xs">
+          {{ podiumPlayers[0].metricDisplay }}
+        </span>
+      </div>
+
+      <!-- 3e Place (Bronze) -->
+      <div
+        v-if="podiumPlayers[2]"
+        class="order-3 bg-white dark:bg-gray-800 rounded-3xl p-6 text-center border-2 border-orange-300 dark:border-orange-700/70 shadow-md relative"
+      >
+        <div class="text-4xl mb-2">🥉</div>
+        <div class="w-14 h-14 rounded-2xl bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 font-black text-xl flex items-center justify-center mx-auto mb-3">
+          {{ getInitials(podiumPlayers[2].username) }}
+        </div>
+        <h3 class="text-lg font-black text-gray-900 dark:text-white truncate">
+          {{ podiumPlayers[2].username }}
+        </h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          {{ podiumPlayers[2].subText }}
+        </p>
+        <span class="inline-block px-4 py-1.5 rounded-xl bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 font-black text-sm">
+          {{ podiumPlayers[2].metricDisplay }}
+        </span>
+      </div>
+
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- TABLEAU COMPLET DU CLASSEMENT                             -->
+    <!-- ========================================================= -->
+    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h3 class="text-lg font-black text-gray-900 dark:text-white">
+          {{ activeTabLabel }}
+        </h3>
+
+        <input
+          v-model="playerSearch"
+          type="text"
+          :placeholder="locale === 'fr' ? 'Rechercher un joueur...' : 'Search a player...'"
+          class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+        />
+      </div>
+
+      <div v-if="filteredRanking.length === 0" class="p-12 text-center text-gray-500 dark:text-gray-400 text-sm">
+        {{ locale === 'fr' ? 'Aucun score enregistré pour ce mode pour le moment. Soyez le premier !' : 'No scores recorded for this mode yet. Be the first!' }}
+      </div>
+
+      <div v-else class="divide-y divide-gray-100 dark:divide-gray-700/70">
+        <div
+          v-for="row in filteredRanking"
+          :key="row.uniqueKey"
+          class="p-4 sm:px-6 flex items-center justify-between gap-4 transition-colors"
+          :class="isCurrentUser(row)
+            ? 'bg-blue-50/80 dark:bg-blue-950/40'
+            : 'hover:bg-gray-50 dark:hover:bg-gray-700/40'"
+        >
+          <!-- Rang + Avatar + Nom -->
+          <div class="flex items-center gap-4 min-w-0">
             <div
-              class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-md shrink-0 relative"
-              :class="badge.iconBgStyle"
+              class="w-9 h-9 rounded-xl font-black text-sm flex items-center justify-center shrink-0"
+              :class="[
+                row.rank === 1 ? 'bg-amber-400 text-amber-950' : '',
+                row.rank === 2 ? 'bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-white' : '',
+                row.rank === 3 ? 'bg-orange-200 dark:bg-orange-800 text-orange-950 dark:text-orange-100' : '',
+                row.rank > 3 ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300' : ''
+              ]"
             >
-              <span>{{ badge.icon }}</span>
-              <span
-                v-if="badge.currentTier > 0"
-                class="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 rounded-md text-[10px] font-black shadow"
-                :class="badge.romanBadgeStyle"
-              >
-                {{ toRoman(badge.currentTier) }}
-              </span>
+              #{{ row.rank }}
             </div>
 
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="text-xl font-black text-gray-900 dark:text-white">
-                  {{ badge.title }}
-                  <span v-if="badge.currentTier > 0" class="ml-1">{{ toRoman(badge.currentTier) }}</span>
-                </h3>
+            <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-gray-700 text-blue-700 dark:text-blue-300 font-bold text-sm flex items-center justify-center shrink-0">
+              {{ getInitials(row.username) }}
+            </div>
+
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <strong class="font-bold text-gray-900 dark:text-white truncate">
+                  {{ row.username }}
+                </strong>
+                <span
+                  v-if="isCurrentUser(row)"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-600 text-white"
+                >
+                  {{ locale === 'fr' ? 'Vous' : 'You' }}
+                </span>
               </div>
-              <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5">
-                {{ badge.subtitle }}
+              <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {{ row.subText }}
               </p>
             </div>
           </div>
 
-          <span
-            class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider shrink-0"
-            :class="badge.rarityPillStyle"
-          >
-            {{ badge.rarityLabel }}
-          </span>
-        </div>
-
-        <!-- Paliers I, II, III, IV, V sous forme de jetons d'étape -->
-        <div class="grid grid-cols-5 gap-2 my-4">
-          <div
-            v-for="(tierTarget, idx) in badge.tiers"
-            :key="badge.id + '-tier-' + idx"
-            class="rounded-xl p-2 text-center border transition-all"
-            :class="idx + 1 <= badge.currentTier
-              ? badge.activeStepStyle
-              : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 opacity-70'"
-          >
-            <span class="text-[11px] font-black block">{{ toRoman(idx + 1) }}</span>
-            <span class="text-[11px] font-bold block truncate">{{ tierTarget }}{{ badge.unit }}</span>
-          </div>
-        </div>
-
-        <!-- Jauge de progression vers le prochain palier -->
-        <div class="space-y-1.5 pt-2 border-t border-gray-100 dark:border-gray-700/70">
-          <div class="flex items-center justify-between text-xs font-bold">
-            <span class="text-gray-600 dark:text-gray-300">
-              {{ badge.nextTierLabel }}
+          <!-- Score / XP -->
+          <div class="text-right shrink-0">
+            <span class="px-3.5 py-1.5 rounded-xl font-black text-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">
+              {{ row.metricDisplay }}
             </span>
-            <span class="text-gray-900 dark:text-white font-extrabold">
-              {{ badge.currentValue }} / {{ badge.nextTarget }}{{ badge.unit }}
-            </span>
-          </div>
-
-          <div class="h-2.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div
-              class="h-full rounded-full transition-all duration-500"
-              :class="badge.progressBarStyle"
-              :style="{ width: `${badge.progressPercent}%` }"
-            ></div>
           </div>
         </div>
       </div>
@@ -204,295 +228,132 @@ import { useI18n } from 'vue-i18n';
 const { locale } = useI18n();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
+const activeTab = ref('general');
+const playerSearch = ref('');
+const isLoading = ref(false);
+
+const generalList = ref([]);
+const recordsList = ref([]);
 const currentUser = ref(null);
-const scoresList = ref([]);
 
-const displayUsername = computed(() => {
-  if (!currentUser.value) return locale.value === 'fr' ? 'Explorateur' : 'Explorer';
-  return (
-    currentUser.value.username ||
-    currentUser.value.pseudo ||
-    currentUser.value.name ||
-    (currentUser.value.user && (currentUser.value.user.username || currentUser.value.user.name)) ||
-    (currentUser.value.email ? currentUser.value.email.split('@')[0] : 'Explorateur')
-  );
-});
-
-const toRoman = (num) => {
-  const romans = ['', 'I', 'II', 'III', 'IV', 'V'];
-  return romans[num] || '';
-};
-
-onMounted(async () => {
-  const savedUser = localStorage.getItem('geolearn_user');
-  if (!savedUser) return;
-  try {
-    const parsed = JSON.parse(savedUser);
-    currentUser.value = parsed;
-    const userId = parsed.id || (parsed.user && parsed.user.id);
-    if (!userId) return;
-
-    const res = await fetch(`${API_URL}/api/scores/${userId}`);
-    if (res.ok) {
-      const data = await res.json();
-      scoresList.value = Array.isArray(data) ? data : (data.scores || []);
-    }
-  } catch (e) {
-    console.error('Erreur chargement collection badges:', e);
-  }
-});
-
-// Calcul des statistiques globales du joueur à partir de ses scores MySQL
-const statsSummary = computed(() => {
-  const list = scoresList.value;
-  const totalGames = list.length;
-
-  let capitalsPoints = 0;
-  let flagsPoints = 0;
-  let bestFlagGrid = 0;
-  let bestEurope = 0;
-  let bestWorld = 0;
-  let perfectGames = 0;
-  let totalPointsAllModes = 0;
-
-  for (const s of list) {
-    const mode = (s.mode || '').toLowerCase();
-    const score = Number(s.score || 0);
-    const max = Number(s.max_score || 15);
-    totalPointsAllModes += score;
-
-    if (score >= max && max > 0) {
-      perfectGames++;
-    }
-    if (mode.includes('capitale')) {
-      capitalsPoints += score;
-    }
-    if (mode.includes('drapeau')) {
-      flagsPoints += score;
-    }
-    if (mode.includes('grille')) {
-      if (score > bestFlagGrid) bestFlagGrid = score;
-    }
-    if (mode.includes('europe')) {
-      if (score > bestEurope) bestEurope = score;
-    }
-    if (mode.includes('monde')) {
-      if (score > bestWorld) bestWorld = score;
-    }
-  }
-
-  return {
-    totalGames,
-    capitalsPoints,
-    flagsPoints,
-    bestFlagGrid,
-    bestEurope,
-    bestWorld,
-    perfectGames,
-    totalPointsAllModes
-  };
-});
-
-// Définition des 8 Familles de Badges Évolutifs (5 Paliers : I, II, III, IV, V)
-const rawBadgesConfig = computed(() => {
+const tabs = computed(() => {
   const isFr = locale.value === 'fr';
-  const st = statsSummary.value;
-
   return [
-    {
-      id: 'player',
-      icon: '🎮',
-      title: isFr ? 'Joueur' : 'Player',
-      subtitle: isFr ? 'Nombre total de parties jouées sur GeoLearn' : 'Total number of games played on GeoLearn',
-      tiers: [1, 5, 25, 50, 100],
-      value: st.totalGames,
-      unit: ''
-    },
-    {
-      id: 'capitals',
-      icon: '🏛️',
-      title: isFr ? 'Maître des Capitales' : 'Capitals Master',
-      subtitle: isFr ? 'Cumul de bonnes réponses en QCM Capitales' : 'Cumulative correct answers in Capitals Quiz',
-      tiers: [10, 50, 150, 300, 500],
-      value: st.capitalsPoints,
-      unit: ''
-    },
-    {
-      id: 'vexillologist',
-      icon: '🚩',
-      title: isFr ? 'Expert des Drapeaux' : 'Flag Expert',
-      subtitle: isFr ? 'Cumul de drapeaux identifiés (QCM & Grille)' : 'Cumulative flags identified (Quiz & Grid)',
-      tiers: [15, 75, 200, 500, 1000],
-      value: st.flagsPoints,
-      unit: ''
-    },
-    {
-      id: 'flag_grid',
-      icon: '🏳️',
-      title: isFr ? 'Dompteur de la Grille' : 'Grid Conqueror',
-      subtitle: isFr ? 'Record de drapeaux trouvés en une seule Grille' : 'Record flags found in a single Flag Grid game',
-      tiers: [10, 30, 60, 120, 196],
-      value: st.bestFlagGrid,
-      unit: ''
-    },
-    {
-      id: 'europe_chrono',
-      icon: '🇪🇺',
-      title: isFr ? 'Conquérant d\'Europe' : 'Europe Conqueror',
-      subtitle: isFr ? 'Meilleur score au Défi Chrono Europe (sur 47)' : 'Best score in the Europe Timed Challenge (out of 47)',
-      tiers: [10, 20, 30, 40, 47],
-      value: st.bestEurope,
-      unit: ''
-    },
-    {
-      id: 'world_chrono',
-      icon: '🌍',
-      title: isFr ? 'Empereur du Monde' : 'World Emperor',
-      subtitle: isFr ? 'Meilleur score au Défi Chrono Monde (sur 196)' : 'Best score in the World Timed Challenge (out of 196)',
-      tiers: [15, 40, 80, 130, 196],
-      value: st.bestWorld,
-      unit: ''
-    },
-    {
-      id: 'sniper',
-      icon: '🎯',
-      title: isFr ? 'Tireur d\'Élite' : 'Sharpshooter',
-      subtitle: isFr ? 'Parties terminées avec 100 % de bonnes réponses (Sans-faute)' : 'Games completed with 100% accuracy (Perfect score)',
-      tiers: [1, 3, 10, 25, 50],
-      value: st.perfectGames,
-      unit: ''
-    },
-    {
-      id: 'scholar',
-      icon: '🧠',
-      title: isFr ? 'Grand Géographe' : 'Grand Geographer',
-      subtitle: isFr ? 'Total de bonnes réponses cumulées tous modes confondus' : 'Total correct answers accumulated across all modes',
-      tiers: [25, 100, 300, 750, 1500],
-      value: st.totalPointsAllModes,
-      unit: ''
-    }
+    { id: 'general', icon: '👑', label: isFr ? 'Général (XP)' : 'Overall (XP)' },
+    { id: 'world', icon: '🌍', label: isFr ? 'Défi Monde (196)' : 'World Challenge (196)' },
+    { id: 'europe', icon: '🇪🇺', label: isFr ? 'Défi Europe (47)' : 'Europe Challenge (47)' },
+    { id: 'grid', icon: '🏳️', label: isFr ? 'Grille Drapeaux' : 'Flag Grid' },
+    { id: 'capitals', icon: '🏛️', label: isFr ? 'QCM Capitales' : 'Capitals Quiz' },
+    { id: 'flags', icon: '🚩', label: isFr ? 'QCM Drapeaux' : 'Flags Quiz' }
   ];
 });
 
-// Styles visuels par palier (0 = Verrouillé, 1 = Bronze, 2 = Argent, 3 = Or, 4 = Platine, 5 = Diamant)
-const getTierTheme = (tier, isFr) => {
-  switch (tier) {
-    case 5:
-      return {
-        rarityLabel: isFr ? '💎 Diamant (Max)' : '💎 Diamond (Max)',
-        cardStyle: 'bg-gradient-to-br from-cyan-50/90 via-white to-blue-50/90 dark:from-cyan-950/40 dark:via-gray-800 dark:to-blue-950/40 border-cyan-400 shadow-lg',
-        iconBgStyle: 'bg-gradient-to-br from-cyan-400 to-blue-600 text-white',
-        romanBadgeStyle: 'bg-cyan-300 text-slate-950',
-        rarityPillStyle: 'bg-cyan-100 dark:bg-cyan-900/60 text-cyan-800 dark:text-cyan-200 border border-cyan-300 dark:border-cyan-700',
-        activeStepStyle: 'bg-cyan-500/15 dark:bg-cyan-500/20 border-cyan-500 text-cyan-700 dark:text-cyan-300',
-        progressBarStyle: 'bg-gradient-to-r from-cyan-400 to-blue-600'
-      };
-    case 4:
-      return {
-        rarityLabel: isFr ? '🟣 Platine (IV)' : '🟣 Platinum (IV)',
-        cardStyle: 'bg-white dark:bg-gray-800 border-purple-400/80 shadow-md',
-        iconBgStyle: 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white',
-        romanBadgeStyle: 'bg-purple-200 text-purple-950',
-        rarityPillStyle: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300',
-        activeStepStyle: 'bg-purple-500/15 border-purple-500 text-purple-700 dark:text-purple-300',
-        progressBarStyle: 'bg-gradient-to-r from-purple-500 to-indigo-500'
-      };
-    case 3:
-      return {
-        rarityLabel: isFr ? '🥇 Or (III)' : '🥇 Gold (III)',
-        cardStyle: 'bg-white dark:bg-gray-800 border-amber-400/90 shadow-md',
-        iconBgStyle: 'bg-gradient-to-br from-amber-400 to-yellow-600 text-white',
-        romanBadgeStyle: 'bg-amber-200 text-amber-950',
-        rarityPillStyle: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300',
-        activeStepStyle: 'bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300',
-        progressBarStyle: 'bg-gradient-to-r from-amber-400 to-orange-500'
-      };
-    case 2:
-      return {
-        rarityLabel: isFr ? '🥈 Argent (II)' : '🥈 Silver (II)',
-        cardStyle: 'bg-white dark:bg-gray-800 border-slate-300 dark:border-slate-500 shadow-sm',
-        iconBgStyle: 'bg-gradient-to-br from-slate-300 to-slate-500 text-white',
-        romanBadgeStyle: 'bg-slate-200 text-slate-900',
-        rarityPillStyle: 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200',
-        activeStepStyle: 'bg-slate-500/15 border-slate-400 text-slate-700 dark:text-slate-200',
-        progressBarStyle: 'bg-gradient-to-r from-slate-400 to-blue-500'
-      };
-    case 1:
-      return {
-        rarityLabel: isFr ? '🥉 Bronze (I)' : '🥉 Bronze (I)',
-        cardStyle: 'bg-white dark:bg-gray-800 border-orange-300 dark:border-orange-700/70 shadow-sm',
-        iconBgStyle: 'bg-gradient-to-br from-orange-400 to-amber-700 text-white',
-        romanBadgeStyle: 'bg-orange-200 text-orange-950',
-        rarityPillStyle: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
-        activeStepStyle: 'bg-orange-500/15 border-orange-400 text-orange-700 dark:text-orange-300',
-        progressBarStyle: 'bg-gradient-to-r from-orange-400 to-amber-600'
-      };
-    default:
-      return {
-        rarityLabel: isFr ? '🔒 Non débloqué' : '🔒 Locked',
-        cardStyle: 'bg-white/80 dark:bg-gray-800/70 border-gray-200 dark:border-gray-700',
-        iconBgStyle: 'bg-gray-100 dark:bg-gray-700 text-gray-400 grayscale',
-        romanBadgeStyle: 'bg-gray-200 text-gray-700',
-        rarityPillStyle: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
-        activeStepStyle: '',
-        progressBarStyle: 'bg-blue-600'
-      };
+const activeTabLabel = computed(() => {
+  const found = tabs.value.find(t => t.id === activeTab.value);
+  return found ? found.label : '';
+});
+
+const getInitials = (name = '') => {
+  const clean = (name || 'J').trim();
+  return clean.slice(0, 2).toUpperCase();
+};
+
+const isCurrentUser = (row) => {
+  if (!currentUser.value) return false;
+  const myId = currentUser.value.id || (currentUser.value.user && currentUser.value.user.id);
+  if (myId && Number(row.user_id) === Number(myId)) return true;
+  const myName = (currentUser.value.username || currentUser.value.name || currentUser.value.pseudo || '').toLowerCase();
+  return myName && (row.username || '').toLowerCase() === myName;
+};
+
+const fetchLeaderboard = async () => {
+  isLoading.value = true;
+  try {
+    const res = await fetch(`${API_URL}/api/leaderboard`);
+    if (res.ok) {
+      const data = await res.json();
+      generalList.value = data.general || [];
+      recordsList.value = data.records || [];
+    }
+  } catch (e) {
+    console.error('Erreur chargement leaderboard:', e);
+  } finally {
+    isLoading.value = false;
   }
 };
 
-const evaluatedBadges = computed(() => {
+onMounted(() => {
+  const saved = localStorage.getItem('geolearn_user');
+  if (saved) {
+    try { currentUser.value = JSON.parse(saved); } catch (e) {}
+  }
+  fetchLeaderboard();
+});
+
+// Construit le classement selon l'onglet actif (meilleur score unique par joueur)
+const activeRanking = computed(() => {
   const isFr = locale.value === 'fr';
-  return rawBadgesConfig.value.map(b => {
-    let currentTier = 0;
-    for (let i = 0; i < b.tiers.length; i++) {
-      if (b.value >= b.tiers[i]) currentTier = i + 1;
+
+  if (activeTab.value === 'general') {
+    return generalList.value.map((item, idx) => {
+      const xp = Number(item.total_xp || 0);
+      const lvl = Math.max(1, Math.floor(xp / 500) + 1);
+      return {
+        uniqueKey: `gen-${item.user_id}`,
+        rank: idx + 1,
+        user_id: item.user_id,
+        username: item.username,
+        metricDisplay: `${xp.toLocaleString()} XP`,
+        subText: isFr
+          ? `Niveau ${lvl} • ${item.games_played} partie(s) jouée(s)`
+          : `Level ${lvl} • ${item.games_played} game(s) played`
+      };
+    });
+  }
+
+  // Filtrage par mode de jeu en gardant le meilleur record de chaque joueur
+  const modeKeywords = {
+    world: 'monde',
+    europe: 'europe',
+    grid: 'grille',
+    capitals: 'capitale',
+    flags: 'qcm drapeaux'
+  };
+  const keyword = modeKeywords[activeTab.value] || '';
+
+  const matchingRecords = recordsList.value.filter(r =>
+    (r.mode || '').toLowerCase().includes(keyword)
+  );
+
+  const bestPerUser = new Map();
+  for (const rec of matchingRecords) {
+    const existing = bestPerUser.get(rec.user_id);
+    if (!existing || Number(rec.score) > Number(existing.score)) {
+      bestPerUser.set(rec.user_id, rec);
     }
+  }
 
-    const nextTarget = currentTier < 5 ? b.tiers[currentTier] : b.tiers[4];
-    const progressPercent = Math.min(100, Math.round((b.value / nextTarget) * 100));
+  const sorted = [...bestPerUser.values()].sort((a, b) => Number(b.score) - Number(a.score));
 
-    const nextTierLabel = currentTier >= 5
-      ? (isFr ? 'Palier maximum atteint ! 🎉' : 'Maximum tier reached! 🎉')
-      : (isFr ? `Progression vers le palier ${toRoman(currentTier + 1)}` : `Progress to Tier ${toRoman(currentTier + 1)}`);
-
-    return {
-      ...b,
-      currentValue: b.value,
-      currentTier,
-      nextTarget,
-      progressPercent,
-      nextTierLabel,
-      ...getTierTheme(currentTier, isFr)
-    };
-  });
+  return sorted.map((item, idx) => ({
+    uniqueKey: `${activeTab.value}-${item.user_id}`,
+    rank: idx + 1,
+    user_id: item.user_id,
+    username: item.username,
+    metricDisplay: `${item.score} / ${item.max_score}`,
+    subText: `${item.mode} • ${Math.round((item.score / Math.max(1, item.max_score)) * 100)}%`
+  }));
 });
 
-const totalTiersUnlocked = computed(() =>
-  evaluatedBadges.value.reduce((acc, b) => acc + b.currentTier, 0)
+const podiumPlayers = computed(() => activeRanking.value.slice(0, 3));
+
+const filteredRanking = computed(() => {
+  const q = playerSearch.value.trim().toLowerCase();
+  if (!q) return activeRanking.value;
+  return activeRanking.value.filter(r => (r.username || '').toLowerCase().includes(q));
+});
+
+const currentUserRank = computed(() =>
+  activeRanking.value.find(r => isCurrentUser(r)) || null
 );
-const maxTotalTiers = computed(() => evaluatedBadges.value.length * 5);
-const diamondCount = computed(() => evaluatedBadges.value.filter(b => b.currentTier === 5).length);
-
-// Calcul de l'XP Totale (Points + Parties + Bonus par palier de badge débloqué)
-const totalXp = computed(() => {
-  const st = statsSummary.value;
-  return (st.totalPointsAllModes * 10) + (st.totalGames * 25) + (totalTiersUnlocked.value * 100);
-});
-
-const playerLevel = computed(() => {
-  const isFr = locale.value === 'fr';
-  const xp = totalXp.value;
-  const level = Math.max(1, Math.floor(xp / 500) + 1);
-  const currentLevelStartXp = (level - 1) * 500;
-  const nextLevelXp = level * 500;
-  const progressPercent = Math.min(100, Math.round(((xp - currentLevelStartXp) / 500) * 100));
-
-  let title = isFr ? 'Apprenti Voyageur' : 'Novice Traveler';
-  if (level >= 20) title = isFr ? 'Légende de GeoLearn' : 'GeoLearn Legend';
-  else if (level >= 12) title = isFr ? 'Maître Cartographe' : 'Master Cartographer';
-  else if (level >= 7) title = isFr ? 'Globe-Trotter Émérite' : 'Seasoned Globetrotter';
-  else if (level >= 3) title = isFr ? 'Explorateur Confirmé' : 'Skilled Explorer';
-
-  return { level, nextLevelXp, progressPercent, title };
-});
 </script>
