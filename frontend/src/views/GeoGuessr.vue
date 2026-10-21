@@ -173,7 +173,6 @@
           </span>
         </div>
 
-        <!-- Chronomètre si activé -->
         <div
           v-if="selectedTimeLimit > 0 && !roundConfirmed"
           class="px-4 py-1.5 rounded-xl font-black text-base flex items-center gap-2"
@@ -183,7 +182,6 @@
           <span>{{ formatTime(roundTimeLeft) }}</span>
         </div>
 
-        <!-- Score cumulé -->
         <div class="flex items-baseline gap-1.5">
           <span class="text-xs font-bold uppercase text-gray-400">Score :</span>
           <strong class="text-xl font-black text-blue-600 dark:text-blue-400">
@@ -196,7 +194,7 @@
       <!-- ZONE PRINCIPALE : VUE 360° OU PHOTO + MINI-CARTE DE VOTE -->
       <div v-if="!roundConfirmed" class="relative h-[560px] w-full rounded-3xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-slate-950">
 
-        <!-- Écran de chargement d'un lieu aléatoire depuis l'API -->
+        <!-- Écran de chargement -->
         <div
           v-if="isLoadingLocation"
           class="absolute inset-0 z-30 bg-slate-900/95 flex flex-col items-center justify-center text-white p-6 text-center space-y-4"
@@ -266,9 +264,7 @@
           </button>
         </div>
 
-        <!-- ======================================================= -->
-        <!-- MINI-CARTE DE VOTE FLOTTANTE EN BAS À DROITE            -->
-        <!-- ======================================================= -->
+        <!-- MINI-CARTE DE VOTE FLOTTANTE EN BAS À DROITE -->
         <div
           class="absolute bottom-4 right-4 z-20 transition-all duration-300 flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-2 border-white/80 dark:border-gray-700 overflow-hidden"
           :class="miniMapExpanded
@@ -632,10 +628,10 @@ const lastRoundScore = ref(0);
 const lastRoundDistanceKm = ref(0);
 
 // ============================================================================
-// SYSTÈME ANTI-DOUBLON STRICT (URL + TITRE + DISTANCE GPS MINIMALE DE 25 KM)
+// 1. SYSTÈME ANTI-DOUBLON STRICT (URL + DISTANCE GPS MINIMALE)
 // ============================================================================
-const seenUrls = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_urls_v3') || '[]'));
-const seenCoords = JSON.parse(sessionStorage.getItem('geolearn_seen_coords_v3') || '[]');
+const seenUrls = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_urls_v4') || '[]'));
+const seenCoords = JSON.parse(sessionStorage.getItem('geolearn_seen_coords_v4') || '[]');
 
 const computeDistanceKm = (lat1, lon1, lat2, lon2) => {
   const toRad = d => (d * Math.PI) / 180;
@@ -648,17 +644,27 @@ const computeDistanceKm = (lat1, lon1, lat2, lon2) => {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
 };
 
+const computeGeoScore = (distanceKm) => {
+  if (distanceKm <= 0.05) return 5000;
+  const score = Math.round(5000 * Math.exp(-distanceKm / 2000));
+  return Math.max(0, Math.min(5000, score));
+};
+
+const lastRoundDistanceDisplay = computed(() => {
+  const d = lastRoundDistanceKm.value;
+  if (d < 1) return `${Math.round(d * 1000)} m`;
+  return `${Math.round(d).toLocaleString()} km`;
+});
+
 const isLocationAlreadyUsed = (imgUrl, lat, lng) => {
   if (!imgUrl || seenUrls.has(imgUrl)) return true;
 
-  // Vérifie par rapport aux manches de la partie en cours (interdit tout point à moins de 50 km)
   for (const r of roundHistory.value) {
     if (r.actual && computeDistanceKm(lat, lng, r.actual.lat, r.actual.lng) < 50) {
       return true;
     }
   }
 
-  // Vérifie par rapport à l'historique de la session (interdit tout point à moins de 20 km)
   for (const c of seenCoords) {
     if (computeDistanceKm(lat, lng, c.lat, c.lng) < 20) {
       return true;
@@ -670,18 +676,17 @@ const isLocationAlreadyUsed = (imgUrl, lat, lng) => {
 const markLocationAsUsed = (imgUrl, lat, lng) => {
   seenUrls.add(imgUrl);
   seenCoords.push({ lat, lng });
-  sessionStorage.setItem('geolearn_seen_urls_v3', JSON.stringify([...seenUrls].slice(-400)));
-  sessionStorage.setItem('geolearn_seen_coords_v3', JSON.stringify(seenCoords.slice(-200)));
+  sessionStorage.setItem('geolearn_seen_urls_v4', JSON.stringify([...seenUrls].slice(-400)));
+  sessionStorage.setItem('geolearn_seen_coords_v4', JSON.stringify(seenCoords.slice(-200)));
 };
 
 // ============================================================================
-// GÉOCODAGE INVERSE EXACT (CORRIGE LE BUG BAHAMAS / WASHINGTON D.C. & LES .PNG)
+// 2. GÉOCODAGE INVERSE EXACT & NETTOYAGE DES TITRES (.PNG / .JPG SUPPRIMÉS)
 // ============================================================================
 const cleanWikiTitle = (rawTitle = '') => {
   return rawTitle
     .replace(/^File:/i, '')
-    // Supprime TOUTES les extensions d'images même si elles sont au milieu du titre (.png, .jpg, .tif, etc.)
-    .replace(/\.(jpe?g|png|webp|tiff?|gif|svg|bmp)\b/gi, '')
+    .replace(/\.(jpe?g|png|webp|tiff?|gif|svg|bmp)/gi, '')
     .replace(/[_-]+/g, ' ')
     .replace(/\b(DSC|IMG|PANO|DJI|GPANO|PANORAMA|360|EQUIRECTANGULAR|CROPPED)\s*\d*\b/gi, '')
     .replace(/\(\s*\)/g, '')
@@ -703,7 +708,6 @@ const findFallbackCountry = (lat, lng) => {
   return best;
 };
 
-// Interroge le géocodeur inverse GPS pour obtenir le VRAI code ISO du pays (ex: US pour Washington D.C.) et le nom de la ville
 const resolveExactLocationFromCoords = async (lat, lng, rawWikiTitle = '') => {
   const cleanedFallbackTitle = cleanWikiTitle(rawWikiTitle);
 
@@ -745,9 +749,7 @@ const resolveExactLocationFromCoords = async (lat, lng, rawWikiTitle = '') => {
         };
       }
     }
-  } catch (e) {
-    // Passe au fallback si hors-ligne
-  }
+  } catch (e) {}
 
   const fallback = findFallbackCountry(lat, lng);
   return {
@@ -759,7 +761,7 @@ const resolveExactLocationFromCoords = async (lat, lng, rawWikiTitle = '') => {
 };
 
 // ============================================================================
-// VISIONNEUSE 360° PANNELLUM & PRÉCHARGEMENT D'IMAGE
+// 3. VISIONNEUSE 360° PANNELLUM & PRÉCHARGEMENT D'IMAGE
 // ============================================================================
 let pannellumViewer = null;
 const ensurePannellumLoaded = () => {
@@ -799,20 +801,8 @@ const preloadImage = (url) => {
   });
 };
 
-const computeGeoScore = (distanceKm) => {
-  if (distanceKm <= 0.05) return 5000;
-  const score = Math.round(5000 * Math.exp(-distanceKm / 2000));
-  return Math.max(0, Math.min(5000, score));
-};
-
-const lastRoundDistanceDisplay = computed(() => {
-  const d = lastRoundDistanceKm.value;
-  if (d < 1) return `${Math.round(d * 1000)} m`;
-  return `${Math.round(d).toLocaleString()} km`;
-});
-
 // ============================================================================
-// MOTEUR D'API GÉOLOCALISÉE (VARIÉTÉ INFINIE GARANTIE PAR RÉGION & MOTS-CLÉS)
+// 4. MOTEUR D'API GÉOLOCALISÉE (VARIÉTÉ INFINIE GARANTIE)
 // ============================================================================
 const FORBIDDEN_TITLE_WORDS = [
   'flag', 'drapeau', 'map', 'carte', 'coat of arms', 'blason', 'emblem',
@@ -826,7 +816,6 @@ const isForbiddenTitle = (title = '') => {
   return FORBIDDEN_TITLE_WORDS.some(w => lower.includes(w));
 };
 
-// Mots-clés géographiques variés pour forcer l'API 360° à explorer toute la planète et jamais les mêmes pages
 const WORLD_PANO_SEEDS = [
   'France', 'Germany', 'Italy', 'Spain', 'Switzerland', 'Austria', 'United Kingdom',
   'Poland', 'Czech', 'Norway', 'Sweden', 'Finland', 'Greece', 'Portugal', 'Netherlands',
@@ -836,7 +825,6 @@ const WORLD_PANO_SEEDS = [
   'street', 'mountain', 'beach', 'square', 'bridge', 'castle', 'harbor', 'valley', 'park', 'lake'
 ];
 
-// 1. Récupère un VRAI panorama 360° équirectangulaire unique
 const fetchRandomLive360 = async () => {
   const shuffledSeeds = [...WORLD_PANO_SEEDS].sort(() => 0.5 - Math.random());
 
@@ -867,7 +855,6 @@ const fetchRandomLive360 = async () => {
         const imgUrl = info.thumburl || info.url;
         if (!/\.(jpg|jpeg|png)$/i.test(info.url || '')) return false;
 
-        // Vérification anti-doublon stricte (URL + distance GPS)
         if (isLocationAlreadyUsed(imgUrl, Number(coord.lat), Number(coord.lon))) return false;
 
         const w = Number(info.width || 0);
@@ -904,18 +891,13 @@ const fetchRandomLive360 = async () => {
           }
         }
       }
-    } catch (e) {
-      // Passe immédiatement au seed suivant
-    }
+    } catch (e) {}
   }
 
-  // Secours : Photo panoramique large géolocalisée garantie unique
   return fetchRandomLivePhoto(true);
 };
 
-// 2. Récupère une VRAIE photo géolocalisée unique dans le monde
 const fetchRandomLivePhoto = async (widePanorama = false) => {
-  // Exclut les pays déjà tombés durant les manches précédentes de la partie
   const usedIsosInGame = new Set(roundHistory.value.map(r => r.actual?.iso).filter(Boolean));
   const availableCountries = ALL_COUNTRIES.filter(c => !usedIsosInGame.has(c.iso));
   const pool = availableCountries.length > 0 ? availableCountries : ALL_COUNTRIES;
@@ -976,13 +958,10 @@ const fetchRandomLivePhoto = async (widePanorama = false) => {
           };
         }
       }
-    } catch (e) {
-      // Continue
-    }
+    } catch (e) {}
   }
 };
 
-// Montage de la caméra 360° Pannellum
 const mountPannellum = async (imageUrl) => {
   await ensurePannellumLoaded();
   await nextTick();
@@ -1011,7 +990,7 @@ const mountPannellum = async (imageUrl) => {
 };
 
 // ============================================================================
-// GESTION DES MANCHES ET DU CHRONOMÈTRE
+// 5. GESTION DES MANCHES ET DU CHRONOMÈTRE
 // ============================================================================
 const preloadedSharedRounds = ref(null);
 
@@ -1192,7 +1171,7 @@ const formatTime = (sec) => {
 };
 
 // ============================================================================
-// PARTAGE D'UN DÉFI ENTRE AMIS
+// 6. PARTAGE D'UN DÉFI ENTRE AMIS
 // ============================================================================
 const challengeLinkCopied = ref(false);
 const sharedChallengeRounds = ref(null);
