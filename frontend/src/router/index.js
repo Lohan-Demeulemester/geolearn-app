@@ -10,6 +10,7 @@ import Feedback from '../views/Feedback.vue'
 import Admin from '../views/Admin.vue'
 import Collection from '../views/Collection.vue';
 import Leaderboard from '../views/Leaderboard.vue';
+import GeoGuessr from '../views/GeoGuessr.vue';
 
 
 const ADMIN_EMAILS = [
@@ -78,6 +79,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
   
+    {
+      path: '/geoguessr',
+      name: 'geoguessr',
+      component: GeoGuessr,
+      meta: { requiresAuth: true }
+    },
 
     // --- ROUTE ADMINISTRATEUR ---
     {

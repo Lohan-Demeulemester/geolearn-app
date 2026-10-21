@@ -94,7 +94,16 @@
             </div>
 
             <div class="form-group">
-              <label>{{ t('profil.password') }}</label>
+              <div class="label-row">
+                <label>{{ t('profil.password') }}</label>
+                <button
+                  type="button"
+                  @click="openForgotModal"
+                  class="forgot-link"
+                >
+                  {{ locale === 'fr' ? 'Mot de passe oublié ?' : 'Forgot password?' }}
+                </button>
+              </div>
               <div class="input-wrapper">
                 <input
                   type="password"
@@ -235,6 +244,119 @@
         </form>
       </div>
     </div>
+
+    <!-- ========================================== -->
+    <!-- MODALE : MOT DE PASSE OUBLIÉ               -->
+    <!-- ========================================== -->
+    <transition name="fade">
+      <div
+        v-if="showForgotModal"
+        class="modal-overlay"
+        @click.self="closeForgotModal"
+      >
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3>
+              🔒 {{ locale === 'fr' ? 'Mot de passe oublié' : 'Reset Password' }}
+            </h3>
+            <button
+              type="button"
+              class="modal-close-btn"
+              @click="closeForgotModal"
+              aria-label="Fermer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div v-if="forgotError" class="error-banner">
+            {{ forgotError }}
+          </div>
+
+          <!-- ÉTAPE 1 : SAISIR L'ADRESSE EMAIL -->
+          <form v-if="forgotStep === 1" @submit.prevent="requestPasswordReset" class="auth-form">
+            <p class="modal-desc">
+              {{ locale === 'fr'
+                ? 'Entrez l\'adresse e-mail associée à votre compte pour recevoir un code de sécurité à 6 chiffres.'
+                : 'Enter the email address associated with your account to receive a 6-digit security code.' }}
+            </p>
+
+            <div class="form-group">
+              <label>{{ t('profil.email') }}</label>
+              <div class="input-wrapper">
+                <input
+                  type="email"
+                  v-model="forgotEmail"
+                  placeholder="votre@email.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" :disabled="isLoading">
+              {{ isLoading
+                ? t('common.loading')
+                : (locale === 'fr' ? 'Envoyer le code par e-mail' : 'Send code by email') }}
+            </button>
+          </form>
+
+          <!-- ÉTAPE 2 : SAISIR LE CODE À 6 CHIFFRES + NOUVEAU MOT DE PASSE -->
+          <form v-else @submit.prevent="confirmPasswordReset" class="auth-form">
+            <p class="modal-desc">
+              {{ locale === 'fr' ? 'Un code à 6 chiffres a été envoyé à :' : 'A 6-digit code was sent to:' }}
+              <strong>{{ forgotEmail }}</strong>
+            </p>
+
+            <div class="form-group">
+              <label>{{ locale === 'fr' ? 'Code de sécurité (6 chiffres)' : 'Security Code (6 digits)' }}</label>
+              <input
+                type="text"
+                v-model="forgotCode"
+                placeholder="123456"
+                maxlength="6"
+                class="code-input"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>{{ locale === 'fr' ? 'Nouveau mot de passe' : 'New Password' }}</label>
+              <div class="input-wrapper">
+                <input
+                  type="password"
+                  v-model="forgotNewPassword"
+                  placeholder="••••••••"
+                  minlength="6"
+                  maxlength="30"
+                  required
+                />
+              </div>
+              <small class="input-hint">
+                {{ locale === 'fr'
+                  ? '6 à 30 caractères, au moins 1 majuscule et 1 chiffre'
+                  : '6 to 30 characters, at least 1 uppercase letter and 1 number' }}
+              </small>
+            </div>
+
+            <button type="submit" class="btn-primary" :disabled="isLoading">
+              {{ isLoading
+                ? t('common.loading')
+                : (locale === 'fr' ? 'Valider mon nouveau mot de passe' : 'Save new password') }}
+            </button>
+
+            <div class="verify-actions">
+              <button
+                type="button"
+                class="btn-link secondary"
+                @click="forgotStep = 1; forgotError = ''"
+              >
+                ← {{ locale === 'fr' ? 'Modifier l\'adresse e-mail' : 'Change email address' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -256,7 +378,15 @@ const showVerificationForm = ref(false);
 const verificationCode = ref('');
 const registeredEmail = ref('');
 
-const user = ref({ id: null, name: '', email: '', joinDate: '', avatar: '' });
+// État de la modale "Mot de passe oublié"
+const showForgotModal = ref(false);
+const forgotStep = ref(1);
+const forgotEmail = ref('');
+const forgotCode = ref('');
+const forgotNewPassword = ref('');
+const forgotError = ref('');
+
+const user = ref({ id: null, name: '', username: '', email: '', joinDate: '', avatar: '' });
 const loginForm = ref({ email: '', password: '' });
 const registerForm = ref({ username: '', email: '', password: '' });
 
@@ -275,7 +405,14 @@ onMounted(() => {
   const savedUser = localStorage.getItem('geolearn_user');
   if (savedUser) {
     try {
-      user.value = JSON.parse(savedUser);
+      const parsed = JSON.parse(savedUser);
+      // Garantit que name et username sont tous les deux présents
+      const displayName = parsed.name || parsed.username || '';
+      user.value = {
+        ...parsed,
+        name: displayName,
+        username: displayName
+      };
       isLoggedIn.value = true;
     } catch (e) {
       localStorage.removeItem('geolearn_user');
@@ -413,6 +550,71 @@ const login = async () => {
   }
 };
 
+// ==========================================
+// FONCTIONS : MOT DE PASSE OUBLIÉ
+// ==========================================
+const openForgotModal = () => {
+  forgotError.value = '';
+  forgotStep.value = 1;
+  forgotEmail.value = loginForm.value.email || '';
+  forgotCode.value = '';
+  forgotNewPassword.value = '';
+  showForgotModal.value = true;
+};
+
+const closeForgotModal = () => {
+  showForgotModal.value = false;
+  forgotError.value = '';
+};
+
+const requestPasswordReset = async () => {
+  forgotError.value = '';
+  isLoading.value = true;
+  try {
+    await apiCall('/api/forgot-password', { email: forgotEmail.value.trim() });
+    forgotStep.value = 2;
+    showToast(
+      locale.value === 'fr' ? 'Code envoyé par e-mail !' : 'Code sent by email!',
+      'success'
+    );
+  } catch (err) {
+    forgotError.value = err.message;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const confirmPasswordReset = async () => {
+  forgotError.value = '';
+  const pwdError = checkCredentials('UtilisateurValide', forgotNewPassword.value);
+  if (pwdError) {
+    forgotError.value = pwdError;
+    return;
+  }
+
+  isLoading.value = true;
+  try {
+    await apiCall('/api/reset-password', {
+      email: forgotEmail.value.trim(),
+      code: forgotCode.value.trim(),
+      newPassword: forgotNewPassword.value
+    });
+    showToast(
+      locale.value === 'fr'
+        ? 'Mot de passe mis à jour ! Vous pouvez vous connecter.'
+        : 'Password updated! You can now log in.',
+      'success'
+    );
+    closeForgotModal();
+    loginForm.value.email = forgotEmail.value.trim();
+    loginForm.value.password = '';
+  } catch (err) {
+    forgotError.value = err.message;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 const updateProfile = async () => {
   user.value.name = user.value.name.trim();
   const validationError = checkCredentials(user.value.name);
@@ -427,6 +629,7 @@ const updateProfile = async () => {
       email: user.value.email
     }, 'PUT');
 
+    user.value.username = user.value.name;
     user.value.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.value.name)}&background=E0F2FE&color=2563EB&size=128`;
     localStorage.setItem('geolearn_user', JSON.stringify(user.value));
     window.dispatchEvent(new Event('auth-change'));
@@ -445,12 +648,15 @@ const connectUser = (userData) => {
     }
   }
 
+  const cleanName = userData.username || userData.name || 'Explorateur';
+
   user.value = {
     id: userData.id,
-    name: userData.username,
+    name: cleanName,
+    username: cleanName,
     email: userData.email,
     joinDate: formattedDate,
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username)}&background=E0F2FE&color=2563EB&size=128`
+    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=E0F2FE&color=2563EB&size=128`
   };
   isLoggedIn.value = true;
   localStorage.setItem('geolearn_user', JSON.stringify(user.value));
@@ -460,7 +666,7 @@ const connectUser = (userData) => {
 const logout = () => {
   isLoggedIn.value = false;
   loginForm.value = { email: '', password: '' };
-  user.value = { id: null, name: '', email: '', joinDate: '', avatar: '' };
+  user.value = { id: null, name: '', username: '', email: '', joinDate: '', avatar: '' };
   localStorage.removeItem('geolearn_user');
   window.dispatchEvent(new Event('auth-change'));
 };
@@ -555,10 +761,30 @@ const logout = () => {
   gap: 0.45rem;
 }
 
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .form-group label {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-main);
+}
+
+.forgot-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
 }
 
 .input-wrapper input {
@@ -775,6 +1001,71 @@ const logout = () => {
   background: rgba(239, 68, 68, 0.22);
 }
 
+/* ========================================== */
+/* MODALE MOT DE PASSE OUBLIÉ                 */
+/* ========================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 22px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.modal-close-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-muted);
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-btn:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.modal-desc {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
 .toast-notification {
   position: fixed;
   bottom: 24px;
@@ -801,8 +1092,8 @@ const logout = () => {
     width: 100%;
   }
 
-  .profile-card, .auth-card {
-    padding: 1.5rem 1.rem;
+  .profile-card, .auth-card, .modal-card {
+    padding: 1.5rem 1rem;
     width: 100%;
     border-radius: 16px;
   }

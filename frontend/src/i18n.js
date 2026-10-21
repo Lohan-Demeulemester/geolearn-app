@@ -9,7 +9,8 @@ const messages = {
       scores: 'Mes scores',
       login: 'Connexion',
       collection: 'Collection',
-      leaderboard: 'Classement'
+      leaderboard: 'Classement',
+      geoguessr: 'GeoGuesser'
     },
     common: {
       capital: 'Capitale',
@@ -140,7 +141,8 @@ const messages = {
       scores: 'My Scores',
       login: 'Login',
       collection: 'Collection',
-      leaderboard: 'Leaderboard'
+      leaderboard: 'Leaderboard',
+      geoguessr: 'GeoGuessr'
     },
     common: {
       capital: 'Capital',

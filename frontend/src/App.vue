@@ -64,6 +64,9 @@
           <router-link to="/quiz" class="nav-item" @click="mobileMenuOpen = false">
             {{ t('nav.quiz') }}
           </router-link>
+          <router-link to="/geoguessr" class="nav-item" @click="mobileMenuOpen = false">
+            {{t('nav.geoguessr')}}
+          </router-link>
           <router-link to="/scores" class="nav-item" @click="mobileMenuOpen = false">
             {{ t('nav.scores') }}
           </router-link>
@@ -169,6 +172,7 @@
             <li><router-link to="/">{{ t('nav.home') }}</router-link></li>
             <li><router-link to="/explorer">{{ t('nav.explore') }}</router-link></li>
             <li><router-link to="/quiz">{{ t('nav.quiz') }}</router-link></li>
+            <li><router-link to="/geoguessr">{{ t('nav.geoguessr') }}</router-link></li>
             <li><router-link to="/scores">{{ t('nav.scores') }}</router-link></li>
             <li><router-link to="/collection">{{ t('nav.collection') }}</router-link></li>
             <li><router-link to="/profil">{{ t('profil.title') }}</router-link></li>

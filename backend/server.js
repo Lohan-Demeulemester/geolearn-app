@@ -226,6 +226,105 @@ app.post('/api/google-login', async (req, res) => {
   }
 });
 
+// =========================================================
+// MOT DE PASSE OUBLIÉ : DEMANDE DE CODE & RÉINITIALISATION
+// =========================================================
+
+// 1. Envoyer un code à 6 chiffres pour réinitialiser le mot de passe
+app.post('/api/forgot-password', (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Veuillez renseigner votre adresse e-mail.' });
+  }
+
+  db.query('SELECT * FROM users WHERE email = ?', [email.trim()], (err, results) => {
+    if (err) {
+      console.error('Erreur SQL forgot-password :', err);
+      return res.status(500).json({ error: 'Erreur de base de données.' });
+    }
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Aucun compte n\'est associé à cette adresse e-mail.' });
+    }
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    db.query(
+      'UPDATE users SET verification_code = ? WHERE email = ?',
+      [resetCode, email.trim()],
+      async (updateErr) => {
+        if (updateErr) {
+          return res.status(500).json({ error: 'Erreur lors de la génération du code.' });
+        }
+
+        try {
+          await resend.emails.send({
+            from: 'GeoLearn <contact@geolearn.fun>',
+            to: email.trim(),
+            subject: 'Réinitialisation de votre mot de passe GeoLearn 🔒',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px;">
+                <h2 style="color: #0f172a; margin-top: 0;">Réinitialisation du mot de passe</h2>
+                <p style="color: #475569; font-size: 15px;">Voici votre code de sécurité à 6 chiffres pour choisir un nouveau mot de passe sur <strong>GeoLearn</strong> :</p>
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; font-size: 28px; font-weight: 800; letter-spacing: 6px; text-align: center; padding: 16px; border-radius: 12px; margin: 20px 0;">
+                  ${resetCode}
+                </div>
+                <p style="color: #64748b; font-size: 13px;">Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail en toute sécurité.</p>
+              </div>
+            `
+          });
+          res.json({ message: 'Code de réinitialisation envoyé par e-mail !' });
+        } catch (mailErr) {
+          console.error('Erreur envoi mail reset password :', mailErr);
+          res.status(500).json({ error: 'Impossible d\'envoyer l\'e-mail de réinitialisation.' });
+        }
+      }
+    );
+  });
+});
+
+// 2. Valider le code à 6 chiffres et enregistrer le nouveau mot de passe
+app.post('/api/reset-password', (req, res) => {
+  const { email, code, newPassword } = req.body;
+  if (!email || !code || !newPassword) {
+    return res.status(400).json({ error: 'Tous les champs sont obligatoires.' });
+  }
+
+  if (newPassword.length < 6 || newPassword.length > 30 || !/[A-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+    return res.status(400).json({
+      error: 'Le nouveau mot de passe doit contenir entre 6 et 30 caractères, avec au moins 1 majuscule et 1 chiffre.'
+    });
+  }
+
+  db.query(
+    'SELECT * FROM users WHERE email = ? AND verification_code = ?',
+    [email.trim(), code.trim()],
+    async (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: 'Erreur de base de données.' });
+      }
+      if (results.length === 0) {
+        return res.status(400).json({ error: 'Code invalide ou expiré.' });
+      }
+
+      try {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        db.query(
+          'UPDATE users SET password = ?, verification_code = NULL, is_verified = 1 WHERE email = ?',
+          [hashedPassword, email.trim()],
+          (updateErr) => {
+            if (updateErr) {
+              return res.status(500).json({ error: 'Erreur lors de la mise à jour du mot de passe.' });
+            }
+            res.json({ message: 'Mot de passe modifié avec succès ! Vous pouvez vous connecter.' });
+          }
+        );
+      } catch (hashErr) {
+        res.status(500).json({ error: 'Erreur lors du chiffrement du mot de passe.' });
+      }
+    }
+  );
+});
+
 // 6. METTRE À JOUR LE PROFIL
 app.put('/api/users/:id', (req, res) => {
   const { name, email } = req.body;

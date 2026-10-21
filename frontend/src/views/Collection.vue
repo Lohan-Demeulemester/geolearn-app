@@ -1,39 +1,43 @@
 <template>
   <div class="max-w-6xl mx-auto space-y-8 pb-12">
 
-    <!-- EN-TÊTE DE LA COLLECTION -->
+    <!-- EN-TÊTE -->
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div>
         <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
-          🏆 {{ locale === 'fr' ? 'Progression & Récompenses' : 'Progression & Rewards' }}
+          🏆 {{ locale === 'fr' ? 'Progression & Trophées Évolutifs' : 'Progression & Evolving Trophies' }}
         </span>
         <h2 class="text-3xl font-black text-gray-900 dark:text-white">
-          {{ locale === 'fr' ? 'Ma Collection de Badges' : 'My Badge Collection' }}
+          {{ locale === 'fr' ? 'Ma Collection de Badges (I → V)' : 'My Badge Collection (I → V)' }}
         </h2>
         <p class="text-gray-600 dark:text-gray-400 mt-1">
           {{ locale === 'fr'
-            ? 'Faites évoluer vos badges du palier I (Bronze) jusqu\'au palier V (Diamant) en jouant aux différents modes.'
-            : 'Upgrade your badges from Tier I (Bronze) up to Tier V (Diamond) by playing different game modes.' }}
+            ? 'Débloquez les 12 badges officiels et faites-les évoluer du rang I (Bronze) jusqu\'au rang V (Diamant).'
+            : 'Unlock all 12 official badges and upgrade them from Tier I (Bronze) to Tier V (Diamond).' }}
         </p>
       </div>
 
-      <router-link
-        to="/quiz"
-        class="self-start sm:self-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition shadow-sm"
-      >
-        🎮 {{ locale === 'fr' ? 'Jouer pour débloquer' : 'Play to unlock' }}
-      </router-link>
+      <div class="flex items-center gap-3 self-start sm:self-auto">
+        <router-link
+          to="/geoguessr"
+          class="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-gray-700 text-white text-xs sm:text-sm font-bold transition"
+        >
+          📍 GeoGuessr
+        </router-link>
+        <router-link
+          to="/quiz"
+          class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold transition shadow-sm"
+        >
+          🎮 {{ locale === 'fr' ? 'Jouer aux Quiz' : 'Play Quizzes' }}
+        </router-link>
+      </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- BANNIÈRE PROFIL RPG : NIVEAU GLOBAL, TITRE & JAUGE D'XP   -->
-    <!-- ========================================================= -->
+    <!-- BANNIÈRE PROFIL RPG : NIVEAU GLOBAL, TITRE & JAUGE D'XP -->
     <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-6 sm:p-8 shadow-xl border border-blue-500/20">
       <div class="pointer-events-none absolute -top-20 -right-20 w-72 h-72 rounded-full bg-cyan-500/15 blur-3xl"></div>
 
       <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        
-        <!-- Avatar de Niveau + Nom + Titre honorifique -->
         <div class="lg:col-span-5 flex items-center gap-5">
           <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex flex-col items-center justify-center shadow-lg border-2 border-white/30 shrink-0">
             <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-950">LVL</span>
@@ -55,7 +59,6 @@
           </div>
         </div>
 
-        <!-- Barre d'XP vers le niveau suivant -->
         <div class="lg:col-span-4 space-y-2">
           <div class="flex justify-between text-xs font-bold">
             <span class="text-cyan-300">{{ totalXp.toLocaleString() }} XP</span>
@@ -71,7 +74,6 @@
           </div>
         </div>
 
-        <!-- Résumé des raretés débloquées -->
         <div class="lg:col-span-3 grid grid-cols-3 gap-2 text-center">
           <div class="bg-white/5 border border-white/10 rounded-2xl p-3">
             <strong class="text-xl font-black text-amber-400 block">{{ statsSummary.totalGames }}</strong>
@@ -86,31 +88,10 @@
             <span class="text-[11px] text-slate-300">{{ locale === 'fr' ? 'Rang V 💎' : 'Tier V 💎' }}</span>
           </div>
         </div>
-
       </div>
     </div>
 
-    <!-- MESSAGE SI NON CONNECTÉ -->
-    <div
-      v-if="!currentUser"
-      class="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4"
-    >
-      <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">
-        🔒 {{ locale === 'fr'
-          ? 'Connectez-vous à votre compte pour sauvegarder vos scores et faire évoluer vos badges du palier I au palier V !'
-          : 'Log in to your account to save your scores and upgrade your badges from Tier I to Tier V!' }}
-      </p>
-      <router-link
-        to="/profil"
-        class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shrink-0"
-      >
-        {{ locale === 'fr' ? 'Se connecter' : 'Log In' }}
-      </router-link>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- GRILLE DES 8 BADGES ÉVOLUTIFS (PALIERS I, II, III, IV, V) -->
-    <!-- ========================================================= -->
+    <!-- GRILLE DES 12 BADGES ÉVOLUTIFS (PALIERS I, II, III, IV, V) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div
         v-for="badge in evaluatedBadges"
@@ -118,10 +99,8 @@
         class="rounded-3xl p-6 transition-all duration-300 border-2 flex flex-col justify-between relative overflow-hidden"
         :class="badge.cardStyle"
       >
-        <!-- Ruban de Rareté en haut à droite -->
         <div class="flex items-start justify-between gap-4 mb-4">
           <div class="flex items-center gap-4">
-            <!-- Icône du Badge avec halo selon le palier -->
             <div
               class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-md shrink-0 relative"
               :class="badge.iconBgStyle"
@@ -137,12 +116,10 @@
             </div>
 
             <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="text-xl font-black text-gray-900 dark:text-white">
-                  {{ badge.title }}
-                  <span v-if="badge.currentTier > 0" class="ml-1">{{ toRoman(badge.currentTier) }}</span>
-                </h3>
-              </div>
+              <h3 class="text-xl font-black text-gray-900 dark:text-white">
+                {{ badge.title }}
+                <span v-if="badge.currentTier > 0" class="ml-1">{{ toRoman(badge.currentTier) }}</span>
+              </h3>
               <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5">
                 {{ badge.subtitle }}
               </p>
@@ -157,7 +134,7 @@
           </span>
         </div>
 
-        <!-- Paliers I, II, III, IV, V sous forme de jetons d'étape -->
+        <!-- Jetons des 5 paliers (I, II, III, IV, V) -->
         <div class="grid grid-cols-5 gap-2 my-4">
           <div
             v-for="(tierTarget, idx) in badge.tiers"
@@ -168,18 +145,18 @@
               : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 opacity-70'"
           >
             <span class="text-[11px] font-black block">{{ toRoman(idx + 1) }}</span>
-            <span class="text-[11px] font-bold block truncate">{{ tierTarget }}{{ badge.unit }}</span>
+            <span class="text-[11px] font-bold block truncate">{{ tierTarget.toLocaleString() }}{{ badge.unit }}</span>
           </div>
         </div>
 
-        <!-- Jauge de progression vers le prochain palier -->
+        <!-- Jauge vers le prochain palier -->
         <div class="space-y-1.5 pt-2 border-t border-gray-100 dark:border-gray-700/70">
           <div class="flex items-center justify-between text-xs font-bold">
             <span class="text-gray-600 dark:text-gray-300">
               {{ badge.nextTierLabel }}
             </span>
             <span class="text-gray-900 dark:text-white font-extrabold">
-              {{ badge.currentValue }} / {{ badge.nextTarget }}{{ badge.unit }}
+              {{ badge.currentValue.toLocaleString() }} / {{ badge.nextTarget.toLocaleString() }}{{ badge.unit }}
             </span>
           </div>
 
@@ -218,10 +195,7 @@ const displayUsername = computed(() => {
   );
 });
 
-const toRoman = (num) => {
-  const romans = ['', 'I', 'II', 'III', 'IV', 'V'];
-  return romans[num] || '';
-};
+const toRoman = (num) => ['', 'I', 'II', 'III', 'IV', 'V'][num] || '';
 
 onMounted(async () => {
   const savedUser = localStorage.getItem('geolearn_user');
@@ -242,42 +216,48 @@ onMounted(async () => {
   }
 });
 
-// Calcul des statistiques globales du joueur à partir de ses scores MySQL
+// Agrégation complète de tous les modes de jeu
 const statsSummary = computed(() => {
   const list = scoresList.value;
   const totalGames = list.length;
 
   let capitalsPoints = 0;
   let flagsPoints = 0;
+  let culturePoints = 0;
   let bestFlagGrid = 0;
   let bestEurope = 0;
   let bestWorld = 0;
+  let bestGeoGuessr = 0;
+  let mapClickPoints = 0;
+  let detectivePoints = 0;
+  let mysteryWins = 0;
   let perfectGames = 0;
-  let totalPointsAllModes = 0;
+  let totalNormalizedPoints = 0;
 
   for (const s of list) {
     const mode = (s.mode || '').toLowerCase();
     const score = Number(s.score || 0);
     const max = Number(s.max_score || 15);
-    totalPointsAllModes += score;
 
-    if (score >= max && max > 0) {
-      perfectGames++;
+    if (score >= max && max > 0) perfectGames++;
+
+    if (mode.includes('geoguessr')) {
+      if (score > bestGeoGuessr) bestGeoGuessr = score;
+      totalNormalizedPoints += Math.round(score / 250);
+    } else {
+      totalNormalizedPoints += score;
     }
-    if (mode.includes('capitale')) {
-      capitalsPoints += score;
-    }
-    if (mode.includes('drapeau')) {
-      flagsPoints += score;
-    }
-    if (mode.includes('grille')) {
-      if (score > bestFlagGrid) bestFlagGrid = score;
-    }
-    if (mode.includes('europe')) {
-      if (score > bestEurope) bestEurope = score;
-    }
-    if (mode.includes('monde')) {
-      if (score > bestWorld) bestWorld = score;
+
+    if (mode.includes('capitale')) capitalsPoints += score;
+    if (mode.includes('drapeau')) flagsPoints += score;
+    if (mode.includes('culture')) culturePoints += score;
+    if (mode.includes('grille') && score > bestFlagGrid) bestFlagGrid = score;
+    if (mode.includes('europe') && score > bestEurope) bestEurope = score;
+    if (mode.includes('monde') && score > bestWorld) bestWorld = score;
+    if (mode.includes('cliquez')) mapClickPoints += score;
+    if (mode.includes('enquête') || mode.includes('enquete')) detectivePoints += score;
+    if (mode.includes('mystère') || mode.includes('mystere')) {
+      if (score > 0) mysteryWins++;
     }
   }
 
@@ -285,15 +265,20 @@ const statsSummary = computed(() => {
     totalGames,
     capitalsPoints,
     flagsPoints,
+    culturePoints,
     bestFlagGrid,
     bestEurope,
     bestWorld,
+    bestGeoGuessr,
+    mapClickPoints,
+    detectivePoints,
+    mysteryWins,
     perfectGames,
-    totalPointsAllModes
+    totalNormalizedPoints
   };
 });
 
-// Définition des 8 Familles de Badges Évolutifs (5 Paliers : I, II, III, IV, V)
+// Les 12 Familles de Badges Évolutifs (I -> V)
 const rawBadgesConfig = computed(() => {
   const isFr = locale.value === 'fr';
   const st = statsSummary.value;
@@ -302,10 +287,19 @@ const rawBadgesConfig = computed(() => {
     {
       id: 'player',
       icon: '🎮',
-      title: isFr ? 'Joueur' : 'Player',
+      title: isFr ? 'Joueur Assidu' : 'Dedicated Player',
       subtitle: isFr ? 'Nombre total de parties jouées sur GeoLearn' : 'Total number of games played on GeoLearn',
       tiers: [1, 5, 25, 50, 100],
       value: st.totalGames,
+      unit: ''
+    },
+    {
+      id: 'geoguessr',
+      icon: '📍',
+      title: isFr ? 'Explorateur PinDrop 360°' : '360° PinDrop Explorer',
+      subtitle: isFr ? 'Meilleur score sur une partie de GeoGuessr (/ 25 000 pts)' : 'Best score in a 5-round GeoGuessr game (/ 25,000 pts)',
+      tiers: [5000, 12000, 18000, 22000, 24500],
+      value: st.bestGeoGuessr,
       unit: ''
     },
     {
@@ -327,12 +321,48 @@ const rawBadgesConfig = computed(() => {
       unit: ''
     },
     {
+      id: 'culture',
+      icon: '🗣️',
+      title: isFr ? 'Démographe & Polyglotte' : 'Demographer & Polyglot',
+      subtitle: isFr ? 'Bonnes réponses au QCM Population, Langues & Monnaies' : 'Correct answers in Population, Languages & Currencies Quiz',
+      tiers: [10, 40, 100, 250, 500],
+      value: st.culturePoints,
+      unit: ''
+    },
+    {
       id: 'flag_grid',
       icon: '🏳️',
       title: isFr ? 'Dompteur de la Grille' : 'Grid Conqueror',
-      subtitle: isFr ? 'Record de drapeaux trouvés en une seule Grille' : 'Record flags found in a single Flag Grid game',
+      subtitle: isFr ? 'Record de drapeaux validés en une seule Grille' : 'Record flags validated in a single Flag Grid game',
       tiers: [10, 30, 60, 120, 196],
       value: st.bestFlagGrid,
+      unit: ''
+    },
+    {
+      id: 'map_click',
+      icon: '🖱️',
+      title: isFr ? 'Boussole Chirurgicale' : 'Surgical Compass',
+      subtitle: isFr ? 'Pays localisés du 1er coup dans "Cliquez sur la Carte"' : 'Countries located on the 1st try in "Click on the Map"',
+      tiers: [15, 50, 150, 300, 600],
+      value: st.mapClickPoints,
+      unit: ''
+    },
+    {
+      id: 'detective',
+      icon: '🕵️',
+      title: isFr ? 'Détective Géographique' : 'Geographic Detective',
+      subtitle: isFr ? 'Points cumulés dans le mode "Enquête aux 5 Indices"' : 'Cumulative points in "5-Clue Detective" mode',
+      tiers: [15, 60, 150, 350, 750],
+      value: st.detectivePoints,
+      unit: ''
+    },
+    {
+      id: 'mystery',
+      icon: '🧭',
+      title: isFr ? 'Oracle du Pays Mystère' : 'Mystery Country Oracle',
+      subtitle: isFr ? 'Pays Mystères découverts en moins de 6 essais (Worldle)' : 'Mystery Countries solved within 6 tries (Worldle)',
+      tiers: [1, 5, 15, 30, 60],
+      value: st.mysteryWins,
       unit: ''
     },
     {
@@ -357,29 +387,19 @@ const rawBadgesConfig = computed(() => {
       id: 'sniper',
       icon: '🎯',
       title: isFr ? 'Tireur d\'Élite' : 'Sharpshooter',
-      subtitle: isFr ? 'Parties terminées avec 100 % de bonnes réponses (Sans-faute)' : 'Games completed with 100% accuracy (Perfect score)',
+      subtitle: isFr ? 'Parties terminées avec 100 % de réussite (Sans-faute)' : 'Games completed with 100% accuracy (Perfect score)',
       tiers: [1, 3, 10, 25, 50],
       value: st.perfectGames,
-      unit: ''
-    },
-    {
-      id: 'scholar',
-      icon: '🧠',
-      title: isFr ? 'Grand Géographe' : 'Grand Geographer',
-      subtitle: isFr ? 'Total de bonnes réponses cumulées tous modes confondus' : 'Total correct answers accumulated across all modes',
-      tiers: [25, 100, 300, 750, 1500],
-      value: st.totalPointsAllModes,
       unit: ''
     }
   ];
 });
 
-// Styles visuels par palier (0 = Verrouillé, 1 = Bronze, 2 = Argent, 3 = Or, 4 = Platine, 5 = Diamant)
 const getTierTheme = (tier, isFr) => {
   switch (tier) {
     case 5:
       return {
-        rarityLabel: isFr ? '💎 Diamant (Max)' : '💎 Diamond (Max)',
+        rarityLabel: isFr ? '💎 Diamant (V)' : '💎 Diamond (V)',
         cardStyle: 'bg-gradient-to-br from-cyan-50/90 via-white to-blue-50/90 dark:from-cyan-950/40 dark:via-gray-800 dark:to-blue-950/40 border-cyan-400 shadow-lg',
         iconBgStyle: 'bg-gradient-to-br from-cyan-400 to-blue-600 text-white',
         romanBadgeStyle: 'bg-cyan-300 text-slate-950',
@@ -447,13 +467,11 @@ const evaluatedBadges = computed(() => {
     for (let i = 0; i < b.tiers.length; i++) {
       if (b.value >= b.tiers[i]) currentTier = i + 1;
     }
-
     const nextTarget = currentTier < 5 ? b.tiers[currentTier] : b.tiers[4];
     const progressPercent = Math.min(100, Math.round((b.value / nextTarget) * 100));
-
     const nextTierLabel = currentTier >= 5
       ? (isFr ? 'Palier maximum atteint ! 🎉' : 'Maximum tier reached! 🎉')
-      : (isFr ? `Progression vers le palier ${toRoman(currentTier + 1)}` : `Progress to Tier ${toRoman(currentTier + 1)}`);
+      : (isFr ? `Prochain palier : ${toRoman(currentTier + 1)}` : `Next tier: ${toRoman(currentTier + 1)}`);
 
     return {
       ...b,
@@ -467,16 +485,13 @@ const evaluatedBadges = computed(() => {
   });
 });
 
-const totalTiersUnlocked = computed(() =>
-  evaluatedBadges.value.reduce((acc, b) => acc + b.currentTier, 0)
-);
+const totalTiersUnlocked = computed(() => evaluatedBadges.value.reduce((acc, b) => acc + b.currentTier, 0));
 const maxTotalTiers = computed(() => evaluatedBadges.value.length * 5);
 const diamondCount = computed(() => evaluatedBadges.value.filter(b => b.currentTier === 5).length);
 
-// Calcul de l'XP Totale (Points + Parties + Bonus par palier de badge débloqué)
 const totalXp = computed(() => {
   const st = statsSummary.value;
-  return (st.totalPointsAllModes * 10) + (st.totalGames * 25) + (totalTiersUnlocked.value * 100);
+  return (st.totalNormalizedPoints * 10) + (st.totalGames * 25) + (totalTiersUnlocked.value * 100);
 });
 
 const playerLevel = computed(() => {
@@ -488,9 +503,9 @@ const playerLevel = computed(() => {
   const progressPercent = Math.min(100, Math.round(((xp - currentLevelStartXp) / 500) * 100));
 
   let title = isFr ? 'Apprenti Voyageur' : 'Novice Traveler';
-  if (level >= 20) title = isFr ? 'Légende de GeoLearn' : 'GeoLearn Legend';
-  else if (level >= 12) title = isFr ? 'Maître Cartographe' : 'Master Cartographer';
-  else if (level >= 7) title = isFr ? 'Globe-Trotter Émérite' : 'Seasoned Globetrotter';
+  if (level >= 25) title = isFr ? 'Légende de GeoLearn' : 'GeoLearn Legend';
+  else if (level >= 15) title = isFr ? 'Maître Cartographe' : 'Master Cartographer';
+  else if (level >= 8) title = isFr ? 'Globe-Trotter Émérite' : 'Seasoned Globetrotter';
   else if (level >= 3) title = isFr ? 'Explorateur Confirmé' : 'Skilled Explorer';
 
   return { level, nextLevelXp, progressPercent, title };
