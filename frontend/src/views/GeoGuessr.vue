@@ -32,7 +32,7 @@
     <!-- ========================================================= -->
     <div v-if="gameState === 'menu'" class="space-y-8 mt-4">
       
-      <!-- Bandeau si un ami nous a envoyé un lien de Défi (Seed partagée) -->
+      <!-- Bandeau si un ami nous a envoyé un lien de Défi -->
       <div
         v-if="sharedChallengeRounds"
         class="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-3xl p-6 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4"
@@ -89,7 +89,7 @@
       <!-- Les 2 grands modes GeoGuessr -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        <!-- MODE A : EXPLORATION 360° IMMERSIVE -->
+        <!-- MODE A : EXPLORATION 360° NO MOVE -->
         <div
           @click="startNewGame('360')"
           class="group bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-8 shadow-xl border-2 border-blue-500/30 hover:border-cyan-400 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden"
@@ -101,17 +101,17 @@
                 🌐
               </div>
               <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-                Vue 360° Interactive
+                Vue 360° • No Move
               </span>
             </div>
 
             <h3 class="text-2xl font-black mb-2">
-              {{ locale === 'fr' ? 'Mode Panorama 360°' : '360° Panorama Mode' }}
+              {{ locale === 'fr' ? 'Mode Panorama 360° (No Move)' : '360° Panorama Mode (No Move)' }}
             </h3>
             <p class="text-sm text-slate-300 leading-relaxed mb-6">
               {{ locale === 'fr'
-                ? 'Plongez au cœur de panoramas 360° tirés aléatoirement dans le monde. Tournez la caméra à 360°, zoomez sur les indices (architecture, panneaux, végétation) et localisez l\'endroit exact !'
-                : 'Dive into random 360° panoramas around the world. Rotate the camera 360°, zoom in on clues (architecture, signs, vegetation), and pinpoint the exact location!' }}
+                ? 'Plongez au cœur de vraies photosphères 360° de rues, villes et paysages du monde entier. Tournez la caméra à 360°, zoomez sur les indices et localisez l\'endroit exact !'
+                : 'Dive into real 360° photospheres of streets, cities, and landscapes around the world. Rotate 360°, zoom in on clues, and pinpoint the exact location!' }}
             </p>
           </div>
 
@@ -132,7 +132,7 @@
                 📸
               </div>
               <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
-                196 Pays • API Live
+                196 Pays • API Spatiale
               </span>
             </div>
 
@@ -141,8 +141,8 @@
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
               {{ locale === 'fr'
-                ? 'Une photographie géolocalisée tirée au hasard parmi les 196 pays (villes, monuments, paysages, rues). Trouvez où la photo a été prise avec la plus grande précision possible !'
-                : 'A random geotagged photograph pulled live across all 196 countries (cities, monuments, landscapes, streets). Pinpoint where the photo was taken as accurately as possible!' }}
+                ? 'Une vraie photographie géolocalisée tirée au hasard dans le monde (rues, villages, reliefs, côtes). Trouvez où la photo a été prise avec la plus grande précision !'
+                : 'A real geotagged photograph pulled randomly from around the world (streets, villages, mountains, coastlines). Pinpoint where it was taken!' }}
             </p>
           </div>
 
@@ -168,7 +168,7 @@
           </span>
           <span class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400">
             {{ activeMode === '360'
-              ? (locale === 'fr' ? '🌐 Panorama 360°' : '🌐 360° Panorama')
+              ? (locale === 'fr' ? '🌐 Panorama 360° (No Move)' : '🌐 360° Panorama (No Move)')
               : (locale === 'fr' ? '📸 Photo-Localisation' : '📸 Photo-Location') }}
           </span>
         </div>
@@ -203,10 +203,12 @@
         >
           <div class="w-14 h-14 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
           <h3 class="text-xl font-black">
-            {{ locale === 'fr' ? 'Recherche d\'un lieu aléatoire dans le monde...' : 'Fetching a random location in the world...' }}
+            {{ activeMode === '360'
+              ? (locale === 'fr' ? 'Chargement d\'une photosphère 360° aléatoire...' : 'Loading a random 360° photosphere...')
+              : (locale === 'fr' ? 'Recherche d\'un lieu aléatoire dans le monde...' : 'Fetching a random location in the world...') }}
           </h3>
           <p class="text-xs text-slate-400">
-            {{ locale === 'fr' ? 'Connexion en direct à l\'API géolocalisée Wikimedia Commons' : 'Connecting live to Wikimedia Commons Geotagged API' }}
+            {{ locale === 'fr' ? 'Sélection d\'un paysage géolocalisé en haute définition' : 'Selecting a high-definition geotagged landscape' }}
           </p>
         </div>
 
@@ -222,13 +224,11 @@
           v-if="activeMode === 'photo' && currentLocation"
           class="w-full h-full flex items-center justify-center bg-slate-950 relative overflow-hidden"
         >
-          <!-- Fond flouté esthétique -->
           <img
             :src="currentLocation.imageUrl"
             alt=""
             class="absolute inset-0 w-full h-full object-cover blur-2xl opacity-35 scale-110 pointer-events-none"
           />
-          <!-- Vraie photo zoomable -->
           <img
             :src="currentLocation.imageUrl"
             :alt="locale === 'fr' ? 'Lieu mystère' : 'Mystery location'"
@@ -238,8 +238,8 @@
           />
         </div>
 
-        <!-- BARRE D'OUTILS FLOTTANTE EN HAUT À GAUCHE (INDICE + AUTRE LIEU SI IMAGE CASSÉE) -->
-        <div class="absolute top-4 left-4 z-20 flex flex-wrap items-center gap-2">
+        <!-- BARRE D'OUTILS FLOTTANTE EN HAUT À GAUCHE (DÉCALÉE DES BOUTONS + / - DE PANNELLUM) -->
+        <div class="absolute top-4 left-14 z-20 flex flex-wrap items-center gap-2">
           <button
             v-if="!hintUsed && currentLocation"
             type="button"
@@ -261,7 +261,6 @@
             @click="skipBrokenLocation"
             :disabled="isLoadingLocation"
             class="px-3 py-2 rounded-xl bg-slate-900/75 hover:bg-slate-800 text-slate-200 text-xs font-semibold backdrop-blur-md border border-white/10 transition cursor-pointer"
-            :title="locale === 'fr' ? 'Charger une autre vue si l\'image met trop de temps' : 'Load another view if image is slow'"
           >
             🔄 {{ locale === 'fr' ? 'Autre vue' : 'Skip view' }}
           </button>
@@ -276,7 +275,6 @@
             ? 'w-[92%] sm:w-[540px] h-[360px] sm:h-[400px]'
             : 'w-64 sm:w-80 h-48 sm:h-56 hover:w-72 sm:hover:w-96 hover:h-56 sm:hover:h-64'"
         >
-          <!-- En-tête de la mini-carte -->
           <div class="bg-slate-900 text-white px-3 py-1.5 flex items-center justify-between text-xs font-bold">
             <span>📍 {{ guessLatLng ? (locale === 'fr' ? 'Épingle placée !' : 'Pin placed!') : (locale === 'fr' ? 'Cliquez sur la carte' : 'Click on the map') }}</span>
             <button
@@ -288,7 +286,6 @@
             </button>
           </div>
 
-          <!-- Carte Leaflet pour poser l'épingle -->
           <div class="flex-1 w-full relative">
             <l-map
               ref="guessMapRef"
@@ -308,7 +305,6 @@
             </l-map>
           </div>
 
-          <!-- Bouton de validation du Pin -->
           <button
             type="button"
             :disabled="!guessLatLng || isLoadingLocation"
@@ -349,7 +345,6 @@
             </div>
           </div>
 
-          <!-- Distance & Points gagnés -->
           <div class="flex items-center gap-4">
             <div class="bg-gray-50 dark:bg-gray-900 px-4 py-2.5 rounded-2xl border border-gray-100 dark:border-gray-700 text-center">
               <span class="text-[11px] font-bold uppercase text-gray-400 block">
@@ -371,7 +366,6 @@
           </div>
         </div>
 
-        <!-- Barre de précision sur 5 000 pts -->
         <div class="h-3 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
             class="h-full bg-gradient-to-r from-blue-600 via-cyan-400 to-emerald-500 transition-all duration-500 rounded-full"
@@ -379,7 +373,6 @@
           ></div>
         </div>
 
-        <!-- Carte du résultat avec l'épingle du joueur, la cible et la ligne en pointillés -->
         <div class="h-[400px] w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 relative z-0">
           <l-map
             ref="resultMapRef"
@@ -394,7 +387,6 @@
               :no-wrap="true"
             ></l-tile-layer>
 
-            <!-- Ligne en pointillés entre le clic du joueur et la vraie position -->
             <l-polyline
               v-if="guessLatLng && currentLocation"
               :lat-lngs="[guessLatLng, [currentLocation.lat, currentLocation.lng]]"
@@ -403,7 +395,6 @@
               :options="{ dashArray: '8, 8' }"
             ></l-polyline>
 
-            <!-- Point bleu : Estimation du joueur -->
             <l-circle-marker
               v-if="guessLatLng"
               :lat-lng="guessLatLng"
@@ -418,7 +409,6 @@
               </l-popup>
             </l-circle-marker>
 
-            <!-- Point vert : Vraie position exacte -->
             <l-circle-marker
               v-if="currentLocation"
               :lat-lng="[currentLocation.lat, currentLocation.lng]"
@@ -473,7 +463,7 @@
       <div class="text-center space-y-2">
         <div class="text-5xl mb-2">🏆</div>
         <span class="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-300">
-          {{ activeMode === '360' ? 'GeoGuessr 360°' : 'GeoGuessr Photo' }}
+          {{ activeMode === '360' ? 'GeoGuessr 360° (No Move)' : 'GeoGuessr Photo' }}
         </span>
         <h3 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">
           {{ totalScore.toLocaleString() }} <span class="text-xl text-gray-400">/ 25 000 pts</span>
@@ -485,7 +475,6 @@
         </p>
       </div>
 
-      <!-- Carte récapitulative des 5 manches -->
       <div class="h-[380px] w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 relative z-0">
         <l-map
           :zoom="2"
@@ -535,7 +524,6 @@
         </l-map>
       </div>
 
-      <!-- Tableau détail des 5 manches -->
       <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
         <div
           v-for="(item, idx) in roundHistory"
@@ -555,7 +543,6 @@
         </div>
       </div>
 
-      <!-- Boutons Rejouer + Défier un ami -->
       <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
         <button
           type="button"
@@ -601,10 +588,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-// État général
-const gameState = ref('menu'); // 'menu' | 'playing' | 'summary'
-const activeMode = ref('photo'); // '360' | 'photo'
-const selectedTimeLimit = ref(0); // 0 = illimité, 60 = 60s, 30 = 30s
+const gameState = ref('menu');
+const activeMode = ref('photo');
+const selectedTimeLimit = ref(0);
 const roundTimeLeft = ref(0);
 let roundTimerInterval = null;
 
@@ -621,7 +607,6 @@ const roundConfirmed = ref(false);
 const currentLocation = ref(null);
 const roundHistory = ref([]);
 
-// Mini-carte & Résultat
 const guessMapRef = ref(null);
 const resultMapRef = ref(null);
 const miniMapExpanded = ref(false);
@@ -637,15 +622,15 @@ const resultCenter = ref([20, 0]);
 const lastRoundScore = ref(0);
 const lastRoundDistanceKm = ref(0);
 
-// Historique en session pour ne JAMAIS retomber sur la même image/panorama
-const seenUrls = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_pano') || '[]'));
+// Mémorise les vues déjà passées en session pour ne jamais retomber sur le même lieu
+const seenUrls = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_pano_v2') || '[]'));
 const recordSeenUrl = (url) => {
   seenUrls.add(url);
-  const arr = [...seenUrls].slice(-250);
-  sessionStorage.setItem('geolearn_seen_pano', JSON.stringify(arr));
+  const arr = [...seenUrls].slice(-300);
+  sessionStorage.setItem('geolearn_seen_pano_v2', JSON.stringify(arr));
 };
 
-// Chargement dynamique de Pannellum (Visionneuse WebGL 360° open-source)
+// Chargement de la visionneuse WebGL 360° Pannellum
 let pannellumViewer = null;
 const ensurePannellumLoaded = () => {
   return new Promise((resolve) => {
@@ -667,7 +652,24 @@ const ensurePannellumLoaded = () => {
   });
 };
 
-// Calcul de la distance exacte en km (Formule de Haversine)
+// Précharge une image pour être sûr à 100 % qu'elle est valide avant de l'afficher
+const preloadImage = (url) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const timer = setTimeout(() => resolve(false), 6500);
+    img.onload = () => {
+      clearTimeout(timer);
+      resolve(img.naturalWidth >= 800);
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      resolve(false);
+    };
+    img.src = url;
+  });
+};
+
 const computeDistanceKm = (lat1, lon1, lat2, lon2) => {
   const toRad = d => (d * Math.PI) / 180;
   const R = 6371;
@@ -679,7 +681,6 @@ const computeDistanceKm = (lat1, lon1, lat2, lon2) => {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
 };
 
-// Formule de score GeoGuessr (0 à 5 000 points par manche)
 const computeGeoScore = (distanceKm) => {
   if (distanceKm <= 0.05) return 5000;
   const score = Math.round(5000 * Math.exp(-distanceKm / 2000));
@@ -692,7 +693,6 @@ const lastRoundDistanceDisplay = computed(() => {
   return `${Math.round(d).toLocaleString()} km`;
 });
 
-// Trouve le pays de notre base le plus proche des coordonnées GPS de la photo/panorama
 const findNearestCountry = (lat, lng) => {
   let best = ALL_COUNTRIES[0];
   let minD = Infinity;
@@ -707,91 +707,154 @@ const findNearestCountry = (lat, lng) => {
 };
 
 // ============================================================================
-// MOTEUR D'API EN DIRECT (WIKIMEDIA COMMONS GEOTAGGED API - INFINI & GRATUIT)
+// MOTEUR D'API GÉOLOCALISÉE (CORRIGÉ AVEC colimit=max & coprimary=all)
 // ============================================================================
-const PHOTO_THEMES = [
-  'street', 'city', 'landscape', 'architecture', 'monument', 'road',
-  'village', 'coast', 'mountain', 'square', 'bridge', 'harbor', 'castle', 'valley'
+const FORBIDDEN_TITLE_WORDS = [
+  'flag', 'drapeau', 'map', 'carte', 'coat of arms', 'blason', 'emblem',
+  'logo', 'icon', 'symbol', 'stamp', 'diagram', 'chart', 'locator', 'blank',
+  'orthographic', 'globe', 'planet', 'mars', 'moon', 'skybox', 'fractal',
+  'render', 'blender', 'portrait', 'signature', 'seal of', 'coin', 'banknote'
 ];
 
-const PANO_QUERIES = [
-  'filetype:bitmap "equirectangular"',
-  'filetype:bitmap "360" "panorama"',
-  'filetype:bitmap incategory:"360-degree_panoramas"',
-  'filetype:bitmap incategory:"Equirectangular_projections"',
-  'filetype:bitmap "360°" panorama'
-];
+const isForbiddenTitle = (title = '') => {
+  const lower = title.toLowerCase();
+  return FORBIDDEN_TITLE_WORDS.some(w => lower.includes(w));
+};
 
 const cleanWikiTitle = (rawTitle = '') => {
   return rawTitle
     .replace(/^File:/i, '')
     .replace(/\.(jpg|jpeg|png|webp)\$/i, '')
     .replace(/[_-]+/g, ' ')
-    .replace(/\b(DSC|IMG|PANO|DJI)\s*\d+\b/gi, '')
+    .replace(/\b(DSC|IMG|PANO|DJI|GPANO|PANORAMA|360|EQUIRECTANGULAR)\s*\d*\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
     .trim()
-    .slice(0, 65) || 'Lieu Mystère';
+    .slice(0, 65) || 'Panorama Mystère';
 };
 
-// Récupère un panorama 360° géolocalisé aléatoire via l'API Wikimedia Commons
+// Requêtes ciblant les vraies photosphères 360° équirectangulaires en extérieur
+const PANO_SEARCH_QUERIES = [
+  'filetype:bitmap incategory:"Equirectangular_panoramas"',
+  'filetype:bitmap incategory:"360-degree_panoramas"',
+  'filetype:bitmap incategory:"Panoramas_by_Pano_Photographers"',
+  'filetype:bitmap "equirectangular" street OR city OR landscape OR mountain OR coast',
+  'filetype:bitmap "equirectangular" road OR bridge OR square OR village OR valley',
+  'filetype:bitmap "Photo Sphere" OR "Photosphere" street OR landscape OR city',
+  'filetype:bitmap "360" "equirectangular"',
+  'filetype:bitmap "360°" panorama street OR plaza OR beach OR mountain OR park',
+  'filetype:bitmap incategory:"360-degree_panoramas_in_Europe"',
+  'filetype:bitmap incategory:"360-degree_panoramas_in_Asia"'
+];
+
+// 1. Récupère un VRAI panorama 360° équirectangulaire (Ratio 2:1) avec coordonnées GPS
 const fetchRandomLive360 = async () => {
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < 8; attempt++) {
     try {
-      const q = PANO_QUERIES[Math.floor(Math.random() * PANO_QUERIES.length)];
-      const randomOffset = Math.floor(Math.random() * 250);
-      const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=50&gsroffset=${randomOffset}&prop=coordinates|imageinfo&iiprop=url|dimensions&iiurlwidth=2048&format=json&origin=*`;
+      const q = PANO_SEARCH_QUERIES[Math.floor(Math.random() * PANO_SEARCH_QUERIES.length)];
+      // Offset plus resserré après les premiers essais pour garantir des résultats riches
+      const maxOffset = attempt < 4 ? 120 : 25;
+      const randomOffset = Math.floor(Math.random() * maxOffset);
+
+      // IMPORTANT : colimit=max & coprimary=all garantissent que MediaWiki renvoie les coordonnées GPS des 50 images !
+      const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=50&gsroffset=${randomOffset}&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=2048&format=json&origin=*`;
 
       const res = await fetch(url);
       const data = await res.json();
       const pages = Object.values(data?.query?.pages || {});
 
+      // Filtre strictement les vraies projections 360° équirectangulaires (ratio largeur/hauteur ~ 2:1)
       const validPanos = pages.filter(p => {
         const coord = p.coordinates && p.coordinates[0];
         const info = p.imageinfo && p.imageinfo[0];
         if (!coord || !info) return false;
+        if (typeof coord.lat !== 'number' || typeof coord.lon !== 'number') return false;
+        if (isForbiddenTitle(p.title)) return false;
+
         const imgUrl = info.thumburl || info.url;
         if (!imgUrl || seenUrls.has(imgUrl)) return false;
         if (!/\.(jpg|jpeg|png)$/i.test(info.url || '')) return false;
-        const ratio = (info.width || 0) / Math.max(1, info.height || 1);
-        return ratio >= 1.7 && ratio <= 2.3 && (info.width || 0) >= 1600;
+
+        const w = Number(info.width || 0);
+        const h = Number(info.height || 1);
+        const ratio = w / h;
+        // Une vraie sphère 360° équirectangulaire a un ratio 2:1 (entre 1.82 et 2.18)
+        return w >= 1500 && ratio >= 1.82 && ratio <= 2.18;
       });
 
       if (validPanos.length > 0) {
-        const chosen = validPanos[Math.floor(Math.random() * validPanos.length)];
-        const coord = chosen.coordinates[0];
-        const info = chosen.imageinfo[0];
-        const imgUrl = info.thumburl || info.url;
-        const country = findNearestCountry(coord.lat, coord.lon);
-        recordSeenUrl(imgUrl);
+        const shuffled = validPanos.sort(() => 0.5 - Math.random());
+        for (const candidate of shuffled.slice(0, 4)) {
+          const coord = candidate.coordinates[0];
+          const info = candidate.imageinfo[0];
+          const imgUrl = info.thumburl || info.url;
 
-        return {
-          mode: '360',
-          lat: Number(coord.lat),
-          lng: Number(coord.lon),
-          imageUrl: imgUrl,
-          title: cleanWikiTitle(chosen.title),
-          countryName: locale.value === 'en' ? country.name_en : country.name_fr,
-          continent: country.continent_en,
-          iso: country.iso
-        };
+          const ok = await preloadImage(imgUrl);
+          if (ok) {
+            const country = findNearestCountry(coord.lat, coord.lon);
+            recordSeenUrl(imgUrl);
+            return {
+              mode: '360',
+              lat: Number(coord.lat),
+              lng: Number(coord.lon),
+              imageUrl: imgUrl,
+              title: cleanWikiTitle(candidate.title),
+              countryName: locale.value === 'en' ? country.name_en : country.name_fr,
+              continent: country.continent_en,
+              iso: country.iso
+            };
+          }
+        }
       }
     } catch (e) {
-      // Continue au prochain essai
+      // Passe immédiatement à l'essai suivant
     }
   }
-  // Fallback sur une photo géolocalisée si le réseau bloque le 360
+
+  // Si un pare-feu bloque la recherche par catégorie, recherche large sans offset sur equirectangular
+  try {
+    const backupUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent('filetype:bitmap equirectangular')}&gsrlimit=50&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=2048&format=json&origin=*`;
+    const res = await fetch(backupUrl);
+    const data = await res.json();
+    const pages = Object.values(data?.query?.pages || {}).filter(
+      p => p.coordinates?.[0] && p.imageinfo?.[0] && !isForbiddenTitle(p.title)
+    );
+    if (pages.length > 0) {
+      const chosen = pages[Math.floor(Math.random() * pages.length)];
+      const coord = chosen.coordinates[0];
+      const imgUrl = chosen.imageinfo[0].thumburl || chosen.imageinfo[0].url;
+      const country = findNearestCountry(coord.lat, coord.lon);
+      return {
+        mode: '360',
+        lat: Number(coord.lat),
+        lng: Number(coord.lon),
+        imageUrl: imgUrl,
+        title: cleanWikiTitle(chosen.title),
+        countryName: locale.value === 'en' ? country.name_en : country.name_fr,
+        continent: country.continent_en,
+        iso: country.iso
+      };
+    }
+  } catch (e) {}
+
   return fetchRandomLivePhoto();
 };
 
-// Récupère une photographie géolocalisée aléatoire parmi les 196 pays
+// 2. Récupère une VRAIE photo géolocalisée de paysage/rue dans le monde (Zéro drapeau !)
 const fetchRandomLivePhoto = async () => {
-  for (let attempt = 0; attempt < 6; attempt++) {
+  // Méthode principale : Recherche spatiale directe (generator=geosearch) autour d'un pays aléatoire
+  // 100 % des images retournées par geosearch possèdent des coordonnées GPS exactes !
+  for (let attempt = 0; attempt < 8; attempt++) {
     try {
       const randomCountry = ALL_COUNTRIES[Math.floor(Math.random() * ALL_COUNTRIES.length)];
-      const randomTheme = PHOTO_THEMES[Math.floor(Math.random() * PHOTO_THEMES.length)];
-      const query = `filetype:bitmap "${randomCountry.name_en}" ${randomTheme}`;
-      const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}&gsrlimit=50&prop=coordinates|imageinfo&iiprop=url|dimensions&iiurlwidth=1400&format=json&origin=*`;
+      // Léger décalage aléatoire autour du centre/capitale pour varier les villes et paysages
+      const jitterLat = (Math.random() - 0.5) * 0.4;
+      const jitterLng = (Math.random() - 0.5) * 0.4;
+      const searchLat = Math.max(-80, Math.min(80, randomCountry.lat + jitterLat));
+      const searchLng = Math.max(-179, Math.min(179, randomCountry.lng + jitterLng));
 
-      const res = await fetch(url);
+      const geoUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggsnamespace=6&ggscoord=${searchLat}|${searchLng}&ggsradius=10000&ggslimit=50&ggsprimary=all&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=1600&format=json&origin=*`;
+
+      const res = await fetch(geoUrl);
       const data = await res.json();
       const pages = Object.values(data?.query?.pages || {});
 
@@ -799,12 +862,15 @@ const fetchRandomLivePhoto = async () => {
         const coord = p.coordinates && p.coordinates[0];
         const info = p.imageinfo && p.imageinfo[0];
         if (!coord || !info) return false;
+        if (isForbiddenTitle(p.title)) return false;
+
         const imgUrl = info.thumburl || info.url;
         if (!imgUrl || seenUrls.has(imgUrl)) return false;
         if (!/\.(jpg|jpeg|png|webp)$/i.test(info.url || '')) return false;
-        const t = (p.title || '').toLowerCase();
-        if (t.includes('map') || t.includes('flag') || t.includes('coat of arms') || t.includes('locator')) return false;
-        return (info.width || 0) >= 700 && (info.width || 0) >= (info.height || 0);
+
+        const w = Number(info.width || 0);
+        const h = Number(info.height || 1);
+        return w >= 900 && w > h;
       });
 
       if (validPhotos.length > 0) {
@@ -812,40 +878,59 @@ const fetchRandomLivePhoto = async () => {
         const coord = chosen.coordinates[0];
         const info = chosen.imageinfo[0];
         const imgUrl = info.thumburl || info.url;
-        const nearest = findNearestCountry(coord.lat, coord.lon);
-        recordSeenUrl(imgUrl);
 
-        return {
-          mode: 'photo',
-          lat: Number(coord.lat),
-          lng: Number(coord.lon),
-          imageUrl: imgUrl,
-          title: cleanWikiTitle(chosen.title),
-          countryName: locale.value === 'en' ? nearest.name_en : nearest.name_fr,
-          continent: nearest.continent_en,
-          iso: nearest.iso
-        };
+        const ok = await preloadImage(imgUrl);
+        if (ok) {
+          const nearest = findNearestCountry(coord.lat, coord.lon);
+          recordSeenUrl(imgUrl);
+          return {
+            mode: 'photo',
+            lat: Number(coord.lat),
+            lng: Number(coord.lon),
+            imageUrl: imgUrl,
+            title: cleanWikiTitle(chosen.title),
+            countryName: locale.value === 'en' ? nearest.name_en : nearest.name_fr,
+            continent: nearest.continent_en,
+            iso: nearest.iso
+          };
+        }
       }
     } catch (e) {
-      // Continue au prochain essai
+      // Continue
     }
   }
 
-  // Fallback par recherche radiale GPS autour d'un pays aléatoire
-  const c = ALL_COUNTRIES[Math.floor(Math.random() * ALL_COUNTRIES.length)];
-  return {
-    mode: 'photo',
-    lat: c.lat,
-    lng: c.lng,
-    imageUrl: `https://flagcdn.com/w640/${c.iso}.png`,
-    title: locale.value === 'en' ? c.capital_en : c.capital_fr,
-    countryName: locale.value === 'en' ? c.name_en : c.name_fr,
-    continent: c.continent_en,
-    iso: c.iso
-  };
+  // Recherche secondaire par mot-clé paysage avec colimit=max & coprimary=all
+  const themes = ['landscape', 'street', 'village', 'architecture', 'coast', 'mountain', 'panorama'];
+  const randomCountry = ALL_COUNTRIES[Math.floor(Math.random() * ALL_COUNTRIES.length)];
+  const theme = themes[Math.floor(Math.random() * themes.length)];
+  const q = `filetype:bitmap "${randomCountry.name_en}" ${theme}`;
+  const fallbackUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=50&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=1600&format=json&origin=*`;
+
+  const res = await fetch(fallbackUrl);
+  const data = await res.json();
+  const pages = Object.values(data?.query?.pages || {}).filter(
+    p => p.coordinates?.[0] && p.imageinfo?.[0] && !isForbiddenTitle(p.title)
+  );
+  if (pages.length > 0) {
+    const chosen = pages[Math.floor(Math.random() * pages.length)];
+    const coord = chosen.coordinates[0];
+    const imgUrl = chosen.imageinfo[0].thumburl || chosen.imageinfo[0].url;
+    const nearest = findNearestCountry(coord.lat, coord.lon);
+    return {
+      mode: 'photo',
+      lat: Number(coord.lat),
+      lng: Number(coord.lon),
+      imageUrl: imgUrl,
+      title: cleanWikiTitle(chosen.title),
+      countryName: locale.value === 'en' ? nearest.name_en : nearest.name_fr,
+      continent: nearest.continent_en,
+      iso: nearest.iso
+    };
+  }
 };
 
-// Montage de la caméra 360° Pannellum
+// Montage de la caméra 360° Pannellum (Mode "No Move")
 const mountPannellum = async (imageUrl) => {
   await ensurePannellumLoaded();
   await nextTick();
@@ -862,11 +947,13 @@ const mountPannellum = async (imageUrl) => {
   pannellumViewer = window.pannellum.viewer('geo-pannellum-viewer', {
     type: 'equirectangular',
     panorama: imageUrl,
+    crossOrigin: 'anonymous',
     autoLoad: true,
     showControls: true,
     compass: true,
+    mouseZoom: true,
     hfov: 100,
-    minHfov: 50,
+    minHfov: 40,
     maxHfov: 120
   });
 };
@@ -907,7 +994,6 @@ const loadRoundLocation = async () => {
   guessZoom.value = 1;
   guessCenter.value = [20, 0];
 
-  // Si on joue un Défi partagé par un ami, on charge exactement son lieu !
   if (preloadedSharedRounds.value && preloadedSharedRounds.value[currentRound.value - 1]) {
     currentLocation.value = preloadedSharedRounds.value[currentRound.value - 1];
   } else {
@@ -972,7 +1058,6 @@ const confirmGuess = async () => {
   roundConfirmed.value = true;
 
   if (!guessLatLng.value) {
-    // Temps écoulé sans épingle posée -> 0 pt
     lastRoundDistanceKm.value = 20000;
     lastRoundScore.value = 0;
   } else {
@@ -996,7 +1081,6 @@ const confirmGuess = async () => {
     score: lastRoundScore.value
   });
 
-  // Recentre et ajuste le zoom sur les 2 points
   await nextTick();
   if (resultMapRef.value && resultMapRef.value.leafletObject && guessLatLng.value) {
     const bounds = L.latLngBounds([
@@ -1056,7 +1140,7 @@ const formatTime = (sec) => {
 };
 
 // ============================================================================
-// PARTAGE D'UN DÉFI ENTRE AMIS (SEED ENCODÉE DANS L'URL)
+// PARTAGE D'UN DÉFI ENTRE AMIS
 // ============================================================================
 const challengeLinkCopied = ref(false);
 const sharedChallengeRounds = ref(null);
