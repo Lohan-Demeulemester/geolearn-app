@@ -171,7 +171,6 @@
             <li><router-link to="/quiz">{{ t('nav.quiz') }}</router-link></li>
             <li><router-link to="/scores">{{ t('nav.scores') }}</router-link></li>
             <li><router-link to="/collection">{{ t('nav.collection') }}</router-link></li>
-            <li><router-link to="/classement">{{ t('nav.leaderboard') }}</router-link></li>
             <li><router-link to="/profil">{{ t('profil.title') }}</router-link></li>
           </ul>
         </div>
@@ -189,6 +188,7 @@
                 {{ t('footer.about_link') }}
               </router-link>
             </li>
+            <li><router-link to="/classement">{{ t('nav.leaderboard') }}</router-link></li>
             <li v-if="isAdmin">
               <router-link to="/admin" class="admin-footer-link">
                 {{ t('footer.admin_link') }}
