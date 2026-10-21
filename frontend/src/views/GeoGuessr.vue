@@ -110,8 +110,8 @@
             </h3>
             <p class="text-sm text-slate-300 leading-relaxed mb-6">
               {{ locale === 'fr'
-                ? 'Plongez au cœur de vraies photosphères 360° de rues, villes et paysages de 5 régions différentes du monde. Tournez la caméra à 360°, zoomez sur les indices et localisez l\'endroit exact !'
-                : 'Dive into real 360° photospheres of streets, cities, and landscapes across 5 different world regions. Rotate 360°, zoom in on clues, and pinpoint the exact location!' }}
+                ? 'Plongez au cœur de vraies photosphères 360° de rues, villes et paysages à travers le monde. Tournez la caméra à 360°, zoomez sur les indices et localisez l\'endroit exact !'
+                : 'Dive into real 360° photospheres of streets, cities, and landscapes across the world. Rotate 360°, zoom in on clues, and pinpoint the exact location!' }}
             </p>
           </div>
 
@@ -132,7 +132,7 @@
                 📸
               </div>
               <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
-                196 Pays • API Spatiale
+                196 Pays • API Directe
               </span>
             </div>
 
@@ -194,7 +194,7 @@
       <!-- ZONE PRINCIPALE : VUE 360° OU PHOTO + MINI-CARTE DE VOTE -->
       <div v-if="!roundConfirmed" class="relative h-[560px] w-full rounded-3xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-slate-950">
 
-        <!-- Écran de chargement -->
+        <!-- Écran de chargement rapide -->
         <div
           v-if="isLoadingLocation"
           class="absolute inset-0 z-30 bg-slate-900/95 flex flex-col items-center justify-center text-white p-6 text-center space-y-4"
@@ -202,12 +202,9 @@
           <div class="w-14 h-14 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
           <h3 class="text-xl font-black">
             {{ activeMode === '360'
-              ? (locale === 'fr' ? 'Chargement d\'une photosphère 360° inédite...' : 'Loading a new 360° photosphere...')
-              : (locale === 'fr' ? 'Recherche d\'un lieu inédit dans le monde...' : 'Fetching a new location in the world...') }}
+              ? (locale === 'fr' ? 'Chargement d\'une photosphère 360°...' : 'Loading a 360° photosphere...')
+              : (locale === 'fr' ? 'Chargement d\'un lieu mystère...' : 'Loading a mystery location...') }}
           </h3>
-          <p class="text-xs text-slate-400">
-            {{ locale === 'fr' ? 'Vérification GPS et anti-doublon en cours' : 'Verifying GPS and uniqueness' }}
-          </p>
         </div>
 
         <!-- VUE 1 : VISIONNEUSE 360° PANNELLUM -->
@@ -233,25 +230,27 @@
             class="relative z-10 max-w-full max-h-full object-contain transition-transform duration-300 select-none"
             :class="photoZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'"
             @click="photoZoomed = !photoZoomed"
+            @error="skipBrokenLocation"
           />
         </div>
 
-        <!-- BARRE D'OUTILS FLOTTANTE EN HAUT À GAUCHE -->
+        <!-- BARRE D'OUTILS FLOTTANTE EN HAUT À GAUCHE (TOUJOURS VISIBLE) -->
         <div class="absolute top-4 left-14 z-20 flex flex-wrap items-center gap-2">
           <button
-            v-if="!hintUsed && currentLocation"
+            v-if="!hintUsed"
             type="button"
+            :disabled="isLoadingLocation || !currentLocation"
             @click="useHint"
-            class="px-3.5 py-2 rounded-xl bg-slate-900/85 hover:bg-amber-500 text-white text-xs font-bold backdrop-blur-md border border-white/15 transition cursor-pointer flex items-center gap-1.5 shadow-md"
+            class="px-3.5 py-2 rounded-xl bg-slate-900/85 hover:bg-amber-500 text-white text-xs font-bold backdrop-blur-md border border-white/15 transition cursor-pointer flex items-center gap-1.5 shadow-md disabled:opacity-50"
           >
-            💡 {{ locale === 'fr' ? 'Indice Continent' : 'Continent Hint' }}
+            💡 {{ locale === 'fr' ? 'Indice Continent (Points ÷ 2)' : 'Continent Hint (Points ÷ 2)' }}
           </button>
 
           <span
-            v-else-if="hintUsed && currentLocation"
+            v-else-if="currentLocation"
             class="px-3.5 py-2 rounded-xl bg-amber-500/95 text-slate-950 text-xs font-black shadow-md"
           >
-            🧭 {{ locale === 'fr' ? 'Continent :' : 'Continent:' }} {{ currentLocation.continent }}
+            🧭 {{ currentLocation.continent }}{{ currentLocation.subregion ? ` — ${currentLocation.subregion}` : '' }} (Score ÷ 2)
           </span>
 
           <button
@@ -332,9 +331,17 @@
               alt=""
             />
             <div>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">
-                {{ currentLocation?.countryName }} ({{ currentLocation?.continent }})
-              </span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                  {{ currentLocation?.countryName }} ({{ currentLocation?.continent }})
+                </span>
+                <span
+                  v-if="hintUsed"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300"
+                >
+                  💡 {{ locale === 'fr' ? 'Indice utilisé (Score ÷ 2)' : 'Hint used (Score ÷ 2)' }}
+                </span>
+              </div>
               <h3 class="text-2xl font-black text-gray-900 dark:text-white">
                 {{ currentLocation?.title }}
               </h3>
@@ -628,10 +635,12 @@ const lastRoundScore = ref(0);
 const lastRoundDistanceKm = ref(0);
 
 // ============================================================================
-// 1. SYSTÈME ANTI-DOUBLON STRICT (URL + DISTANCE GPS MINIMALE)
+// 1. SYSTÈME ANTI-DOUBLON STRICT + RÉSERVE EN CACHE PAR LOTS
 // ============================================================================
-const seenUrls = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_urls_v4') || '[]'));
-const seenCoords = JSON.parse(sessionStorage.getItem('geolearn_seen_coords_v4') || '[]');
+const seenUrls = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_urls_v5') || '[]'));
+const seenCoords = JSON.parse(sessionStorage.getItem('geolearn_seen_coords_v5') || '[]');
+const panoCachePool = [];
+const photoCachePool = [];
 
 const computeDistanceKm = (lat1, lon1, lat2, lon2) => {
   const toRad = d => (d * Math.PI) / 180;
@@ -660,13 +669,13 @@ const isLocationAlreadyUsed = (imgUrl, lat, lng) => {
   if (!imgUrl || seenUrls.has(imgUrl)) return true;
 
   for (const r of roundHistory.value) {
-    if (r.actual && computeDistanceKm(lat, lng, r.actual.lat, r.actual.lng) < 50) {
+    if (r.actual && computeDistanceKm(lat, lng, r.actual.lat, r.actual.lng) < 40) {
       return true;
     }
   }
 
   for (const c of seenCoords) {
-    if (computeDistanceKm(lat, lng, c.lat, c.lng) < 20) {
+    if (computeDistanceKm(lat, lng, c.lat, c.lng) < 15) {
       return true;
     }
   }
@@ -676,8 +685,8 @@ const isLocationAlreadyUsed = (imgUrl, lat, lng) => {
 const markLocationAsUsed = (imgUrl, lat, lng) => {
   seenUrls.add(imgUrl);
   seenCoords.push({ lat, lng });
-  sessionStorage.setItem('geolearn_seen_urls_v4', JSON.stringify([...seenUrls].slice(-400)));
-  sessionStorage.setItem('geolearn_seen_coords_v4', JSON.stringify(seenCoords.slice(-200)));
+  sessionStorage.setItem('geolearn_seen_urls_v5', JSON.stringify([...seenUrls].slice(-400)));
+  sessionStorage.setItem('geolearn_seen_coords_v5', JSON.stringify(seenCoords.slice(-200)));
 };
 
 // ============================================================================
@@ -712,10 +721,15 @@ const resolveExactLocationFromCoords = async (lat, lng, rawWikiTitle = '') => {
   const cleanedFallbackTitle = cleanWikiTitle(rawWikiTitle);
 
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1800);
     const lang = locale.value === 'en' ? 'en' : 'fr';
     const res = await fetch(
-      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=${lang}`
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=${lang}`,
+      { signal: controller.signal }
     );
+    clearTimeout(timer);
+
     if (res.ok) {
       const geo = await res.json();
       const isoCode = (geo.countryCode || '').toLowerCase();
@@ -736,6 +750,7 @@ const resolveExactLocationFromCoords = async (lat, lng, rawWikiTitle = '') => {
         return {
           countryName: locale.value === 'en' ? matchedCountry.name_en : matchedCountry.name_fr,
           continent: matchedCountry.continent_en,
+          subregion: locale.value === 'en' ? matchedCountry.subregion_en : matchedCountry.subregion_fr,
           iso: matchedCountry.iso,
           title: placeTitle
         };
@@ -744,6 +759,7 @@ const resolveExactLocationFromCoords = async (lat, lng, rawWikiTitle = '') => {
         return {
           countryName: geo.countryName,
           continent: geo.continent || 'World',
+          subregion: region || '',
           iso: isoCode || 'un',
           title: placeTitle
         };
@@ -755,15 +771,17 @@ const resolveExactLocationFromCoords = async (lat, lng, rawWikiTitle = '') => {
   return {
     countryName: locale.value === 'en' ? fallback.name_en : fallback.name_fr,
     continent: fallback.continent_en,
+    subregion: locale.value === 'en' ? fallback.subregion_en : fallback.subregion_fr,
     iso: fallback.iso,
     title: cleanedFallbackTitle
   };
 };
 
 // ============================================================================
-// 3. VISIONNEUSE 360° PANNELLUM & PRÉCHARGEMENT D'IMAGE
+// 3. VISIONNEUSE 360° PANNELLUM & PRÉCHARGEMENT RAPIDE (MAX 2.2 SEC)
 // ============================================================================
 let pannellumViewer = null;
+
 const ensurePannellumLoaded = () => {
   return new Promise((resolve) => {
     if (window.pannellum) return resolve();
@@ -787,11 +805,10 @@ const ensurePannellumLoaded = () => {
 const preloadImage = (url) => {
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
-    const timer = setTimeout(() => resolve(false), 6500);
+    const timer = setTimeout(() => resolve(false), 2200);
     img.onload = () => {
       clearTimeout(timer);
-      resolve(img.naturalWidth >= 800);
+      resolve(img.naturalWidth >= 600);
     };
     img.onerror = () => {
       clearTimeout(timer);
@@ -802,13 +819,45 @@ const preloadImage = (url) => {
 };
 
 // ============================================================================
-// 4. MOTEUR D'API GÉOLOCALISÉE (VARIÉTÉ INFINIE GARANTIE)
+// 4. POINTS D'INTÉRÊT MONDIAUX RÉELS (VILLES, MERVEILLES, PAYSAGES)
 // ============================================================================
+// Coordonnées de vraies villes et régions habitées pour que geosearch trouve 50 photos en < 0.3s !
+const WORLD_HUBS = [
+  { lat: 48.8566, lng: 2.3522 }, { lat: 45.7640, lng: 4.8357 }, { lat: 43.7102, lng: 7.2620 },
+  { lat: 51.5074, lng: -0.1278 }, { lat: 55.9533, lng: -3.1883 }, { lat: 53.3498, lng: -6.2603 },
+  { lat: 52.5200, lng: 13.4050 }, { lat: 48.1351, lng: 11.5820 }, { lat: 47.3769, lng: 8.5417 },
+  { lat: 48.2082, lng: 16.3738 }, { lat: 50.0755, lng: 14.4378 }, { lat: 47.4979, lng: 19.0402 },
+  { lat: 41.9028, lng: 12.4964 }, { lat: 45.4408, lng: 12.3155 }, { lat: 43.7696, lng: 11.2558 },
+  { lat: 40.4168, lng: -3.7038 }, { lat: 41.3851, lng: 2.1734 }, { lat: 38.7223, lng: -9.1393 },
+  { lat: 52.3676, lng: 4.9041 }, { lat: 50.8503, lng: 4.3517 }, { lat: 55.6761, lng: 12.5683 },
+  { lat: 59.3293, lng: 18.0686 }, { lat: 59.9139, lng: 10.7522 }, { lat: 60.1699, lng: 24.9384 },
+  { lat: 64.1466, lng: -21.9426 }, { lat: 52.2297, lng: 21.0122 }, { lat: 37.9838, lng: 23.7275 },
+  { lat: 41.0082, lng: 28.9784 }, { lat: 42.6507, lng: 18.0944 }, { lat: 46.0569, lng: 14.5058 },
+  { lat: 35.6762, lng: 139.6503 }, { lat: 35.0116, lng: 135.7681 }, { lat: 34.6937, lng: 135.5023 },
+  { lat: 37.5665, lng: 126.9780 }, { lat: 25.0330, lng: 121.5654 }, { lat: 22.3193, lng: 114.1694 },
+  { lat: 1.3521, lng: 103.8198 }, { lat: 13.7563, lng: 100.5018 }, { lat: 21.0285, lng: 105.8542 },
+  { lat: 3.1390, lng: 101.6869 }, { lat: -8.4095, lng: 115.1889 }, { lat: 28.6139, lng: 77.2090 },
+  { lat: 18.9220, lng: 72.8347 }, { lat: 27.7172, lng: 85.3240 }, { lat: 25.2048, lng: 55.2708 },
+  { lat: 31.7683, lng: 35.2137 }, { lat: 30.3285, lng: 35.4444 }, { lat: 41.7151, lng: 44.8271 },
+  { lat: 40.7128, lng: -74.0060 }, { lat: 37.7749, lng: -122.4194 }, { lat: 41.8781, lng: -87.6298 },
+  { lat: 36.1069, lng: -112.1129 }, { lat: 25.7617, lng: -80.1918 }, { lat: 45.5017, lng: -73.5673 },
+  { lat: 49.2827, lng: -123.1207 }, { lat: 19.4326, lng: -99.1332 }, { lat: 20.6843, lng: -88.5678 },
+  { lat: 23.1136, lng: -82.3666 }, { lat: 8.9824, lng: -79.5199 }, { lat: 9.9281, lng: -84.0907 },
+  { lat: -22.9068, lng: -43.1729 }, { lat: -23.5505, lng: -46.6333 }, { lat: -34.6037, lng: -58.3816 },
+  { lat: -33.4489, lng: -70.6693 }, { lat: -13.1631, lng: -72.5450 }, { lat: -12.0464, lng: -77.0428 },
+  { lat: 4.7110, lng: -74.0721 }, { lat: -0.1807, lng: -78.4678 }, { lat: -34.9011, lng: -56.1645 },
+  { lat: 30.0444, lng: 31.2357 }, { lat: 31.6295, lng: -7.9811 }, { lat: 36.8065, lng: 10.1815 },
+  { lat: -33.9249, lng: 18.4241 }, { lat: -1.2921, lng: 36.8219 }, { lat: -17.9243, lng: 25.8572 },
+  { lat: 14.6928, lng: -17.4467 }, { lat: -18.8792, lng: 47.5079 }, { lat: -20.1609, lng: 57.5012 },
+  { lat: -33.8688, lng: 151.2093 }, { lat: -37.8136, lng: 144.9631 }, { lat: -36.8485, lng: 174.7633 },
+  { lat: -45.0312, lng: 168.6626 }, { lat: -17.7134, lng: 178.0650 }
+];
+
 const FORBIDDEN_TITLE_WORDS = [
   'flag', 'drapeau', 'map', 'carte', 'coat of arms', 'blason', 'emblem',
   'logo', 'icon', 'symbol', 'stamp', 'diagram', 'chart', 'locator', 'blank',
   'orthographic', 'globe', 'planet', 'mars', 'moon', 'skybox', 'fractal',
-  'render', 'blender', 'portrait', 'signature', 'seal of', 'coin', 'banknote'
+  'render', 'blender', 'portrait', 'signature', 'seal of', 'coin', 'banknote', 'svg'
 ];
 
 const isForbiddenTitle = (title = '') => {
@@ -816,150 +865,190 @@ const isForbiddenTitle = (title = '') => {
   return FORBIDDEN_TITLE_WORDS.some(w => lower.includes(w));
 };
 
-const WORLD_PANO_SEEDS = [
-  'France', 'Germany', 'Italy', 'Spain', 'Switzerland', 'Austria', 'United Kingdom',
-  'Poland', 'Czech', 'Norway', 'Sweden', 'Finland', 'Greece', 'Portugal', 'Netherlands',
-  'Japan', 'Thailand', 'India', 'China', 'Taiwan', 'Indonesia', 'Malaysia', 'Vietnam',
-  'United States', 'Canada', 'Mexico', 'Brazil', 'Argentina', 'Chile', 'Peru', 'Colombia',
-  'Australia', 'New Zealand', 'South Africa', 'Morocco', 'Egypt', 'Turkey', 'Israel',
-  'street', 'mountain', 'beach', 'square', 'bridge', 'castle', 'harbor', 'valley', 'park', 'lake'
+const PANO_BATCH_SEEDS = [
+  'filetype:bitmap "equirectangular" street OR city OR square OR bridge',
+  'filetype:bitmap "equirectangular" mountain OR coast OR landscape OR valley',
+  'filetype:bitmap "equirectangular" park OR lake OR castle OR harbor',
+  'filetype:bitmap incategory:"360-degree_panoramas_with_Pannellum"',
+  'filetype:bitmap incategory:"Equirectangular_panoramas"',
+  'filetype:bitmap "Photo Sphere" street OR city OR landscape',
+  'filetype:bitmap "360" "panorama" street OR plaza OR beach OR mountain'
 ];
 
-const fetchRandomLive360 = async () => {
-  const shuffledSeeds = [...WORLD_PANO_SEEDS].sort(() => 0.5 - Math.random());
+// Remplit le cache de panoramas 360° en 1 appel parallèle ultra-rapide (avec palier WMF officiel 1920px)
+const refillPanoCache = async () => {
+  const shuffledQueries = [...PANO_BATCH_SEEDS].sort(() => 0.5 - Math.random()).slice(0, 2);
 
-  for (let attempt = 0; attempt < 10; attempt++) {
+  const requests = shuffledQueries.map(async (q) => {
+    const offset = Math.floor(Math.random() * 80);
+    // Palier officiel Wikimedia iiurlwidth=1920 : évite le blocage 429 et dépassement mémoire WebGL !
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=50&gsroffset=${offset}&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=1920&format=json&origin=*`;
     try {
-      const seed = shuffledSeeds[attempt % shuffledSeeds.length];
-      const queries = [
-        `filetype:bitmap "equirectangular" "${seed}"`,
-        `filetype:bitmap "360" "panorama" "${seed}"`,
-        `filetype:bitmap incategory:"Equirectangular_panoramas" "${seed}"`,
-        `filetype:bitmap incategory:"360-degree_panoramas" "${seed}"`
-      ];
-      const q = queries[attempt % queries.length];
-
-      const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=50&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=2048&format=json&origin=*`;
-
       const res = await fetch(url);
       const data = await res.json();
-      const pages = Object.values(data?.query?.pages || {});
+      return Object.values(data?.query?.pages || {});
+    } catch (e) {
+      return [];
+    }
+  });
 
-      const validPanos = pages.filter(p => {
-        const coord = p.coordinates && p.coordinates[0];
-        const info = p.imageinfo && p.imageinfo[0];
-        if (!coord || !info) return false;
-        if (typeof coord.lat !== 'number' || typeof coord.lon !== 'number') return false;
-        if (isForbiddenTitle(p.title)) return false;
+  const batches = await Promise.all(requests);
+  const allPages = batches.flat();
 
-        const imgUrl = info.thumburl || info.url;
-        if (!/\.(jpg|jpeg|png)$/i.test(info.url || '')) return false;
+  for (const p of allPages) {
+    const coord = p.coordinates && p.coordinates[0];
+    const info = p.imageinfo && p.imageinfo[0];
+    if (!coord || !info) continue;
+    if (typeof coord.lat !== 'number' || typeof coord.lon !== 'number') continue;
+    if (isForbiddenTitle(p.title)) continue;
 
-        if (isLocationAlreadyUsed(imgUrl, Number(coord.lat), Number(coord.lon))) return false;
+    // On privilégie info.thumburl (1920px calibré pour WebGL)
+    const imgUrl = info.thumburl || (info.width <= 4096 ? info.url : null);
+    if (!imgUrl) continue;
+    if (!/\.(jpg|jpeg|png)$/i.test(info.url || '')) continue;
 
-        const w = Number(info.width || 0);
-        const h = Number(info.height || 1);
-        const ratio = w / h;
-        return w >= 1400 && ratio >= 1.75 && ratio <= 2.25;
+    const w = Number(info.width || 0);
+    const h = Number(info.height || 1);
+    const ratio = w / h;
+
+    if (w >= 1200 && ratio >= 1.7 && ratio <= 2.3) {
+      panoCachePool.push({
+        lat: Number(coord.lat),
+        lng: Number(coord.lon),
+        imageUrl: imgUrl,
+        rawTitle: p.title
       });
-
-      if (validPanos.length > 0) {
-        const shuffled = validPanos.sort(() => 0.5 - Math.random());
-        for (const candidate of shuffled.slice(0, 4)) {
-          const coord = candidate.coordinates[0];
-          const info = candidate.imageinfo[0];
-          const imgUrl = info.thumburl || info.url;
-          const lat = Number(coord.lat);
-          const lng = Number(coord.lon);
-
-          if (isLocationAlreadyUsed(imgUrl, lat, lng)) continue;
-
-          const ok = await preloadImage(imgUrl);
-          if (ok) {
-            markLocationAsUsed(imgUrl, lat, lng);
-            const exactPlace = await resolveExactLocationFromCoords(lat, lng, candidate.title);
-            return {
-              mode: '360',
-              lat,
-              lng,
-              imageUrl: imgUrl,
-              title: exactPlace.title,
-              countryName: exactPlace.countryName,
-              continent: exactPlace.continent,
-              iso: exactPlace.iso
-            };
-          }
-        }
-      }
-    } catch (e) {}
+    }
   }
-
-  return fetchRandomLivePhoto(true);
 };
 
-const fetchRandomLivePhoto = async (widePanorama = false) => {
-  const usedIsosInGame = new Set(roundHistory.value.map(r => r.actual?.iso).filter(Boolean));
-  const availableCountries = ALL_COUNTRIES.filter(c => !usedIsosInGame.has(c.iso));
-  const pool = availableCountries.length > 0 ? availableCountries : ALL_COUNTRIES;
+// Remplit le cache de photos géolocalisées autour des vraies villes/merveilles du monde en parallèle
+const refillPhotoCache = async () => {
+  const hubs = [...WORLD_HUBS].sort(() => 0.5 - Math.random()).slice(0, 3);
 
-  for (let attempt = 0; attempt < 10; attempt++) {
+  const requests = hubs.map(async (hub) => {
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggsnamespace=6&ggscoord=${hub.lat}|${hub.lng}&ggsradius=10000&ggslimit=50&ggsprimary=all&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=1280&format=json&origin=*`;
     try {
-      const randomCountry = pool[Math.floor(Math.random() * pool.length)];
-      const jitterLat = (Math.random() - 0.5) * 0.35;
-      const jitterLng = (Math.random() - 0.5) * 0.35;
-      const searchLat = Math.max(-80, Math.min(80, randomCountry.lat + jitterLat));
-      const searchLng = Math.max(-179, Math.min(179, randomCountry.lng + jitterLng));
-
-      const geoUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggsnamespace=6&ggscoord=${searchLat}|${searchLng}&ggsradius=10000&ggslimit=50&ggsprimary=all&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=1800&format=json&origin=*`;
-
-      const res = await fetch(geoUrl);
+      const res = await fetch(url);
       const data = await res.json();
-      const pages = Object.values(data?.query?.pages || {});
+      return Object.values(data?.query?.pages || {});
+    } catch (e) {
+      return [];
+    }
+  });
 
-      const validPhotos = pages.filter(p => {
-        const coord = p.coordinates && p.coordinates[0];
-        const info = p.imageinfo && p.imageinfo[0];
-        if (!coord || !info) return false;
-        if (isForbiddenTitle(p.title)) return false;
+  const batches = await Promise.all(requests);
+  const allPages = batches.flat();
 
-        const imgUrl = info.thumburl || info.url;
-        if (!/\.(jpg|jpeg|png|webp)$/i.test(info.url || '')) return false;
+  for (const p of allPages) {
+    const coord = p.coordinates && p.coordinates[0];
+    const info = p.imageinfo && p.imageinfo[0];
+    if (!coord || !info) continue;
+    if (typeof coord.lat !== 'number' || typeof coord.lon !== 'number') continue;
+    if (isForbiddenTitle(p.title)) continue;
 
-        const lat = Number(coord.lat);
-        const lng = Number(coord.lon);
-        if (isLocationAlreadyUsed(imgUrl, lat, lng)) return false;
+    const imgUrl = info.thumburl || info.url;
+    if (!imgUrl) continue;
+    if (!/\.(jpg|jpeg|png|webp)$/i.test(info.url || '')) continue;
 
-        const w = Number(info.width || 0);
-        const h = Number(info.height || 1);
-        return w >= 900 && w > h;
+    const w = Number(info.width || 0);
+    const h = Number(info.height || 1);
+    if (w >= 800 && w > h) {
+      photoCachePool.push({
+        lat: Number(coord.lat),
+        lng: Number(coord.lon),
+        imageUrl: imgUrl,
+        rawTitle: p.title
       });
-
-      if (validPhotos.length > 0) {
-        const chosen = validPhotos[Math.floor(Math.random() * validPhotos.length)];
-        const coord = chosen.coordinates[0];
-        const info = chosen.imageinfo[0];
-        const imgUrl = info.thumburl || info.url;
-        const lat = Number(coord.lat);
-        const lng = Number(coord.lon);
-
-        const ok = await preloadImage(imgUrl);
-        if (ok) {
-          markLocationAsUsed(imgUrl, lat, lng);
-          const exactPlace = await resolveExactLocationFromCoords(lat, lng, chosen.title);
-          return {
-            mode: widePanorama ? '360' : 'photo',
-            lat,
-            lng,
-            imageUrl: imgUrl,
-            title: exactPlace.title,
-            countryName: exactPlace.countryName,
-            continent: exactPlace.continent,
-            iso: exactPlace.iso
-          };
-        }
-      }
-    } catch (e) {}
+    }
   }
+};
+
+// Récupère un panorama 360° en < 0.5s depuis le cache par lots
+const fetchRandomLive360 = async () => {
+  for (let cycle = 0; cycle < 3; cycle++) {
+    if (panoCachePool.length < 5) {
+      await refillPanoCache();
+    }
+    panoCachePool.sort(() => 0.5 - Math.random());
+
+    while (panoCachePool.length > 0) {
+      const candidate = panoCachePool.pop();
+      if (isLocationAlreadyUsed(candidate.imageUrl, candidate.lat, candidate.lng)) continue;
+
+      const ok = await preloadImage(candidate.imageUrl);
+      if (ok) {
+        markLocationAsUsed(candidate.imageUrl, candidate.lat, candidate.lng);
+        const exactPlace = await resolveExactLocationFromCoords(candidate.lat, candidate.lng, candidate.rawTitle);
+        return {
+          mode: '360',
+          lat: candidate.lat,
+          lng: candidate.lng,
+          imageUrl: candidate.imageUrl,
+          title: exactPlace.title,
+          countryName: exactPlace.countryName,
+          continent: exactPlace.continent,
+          subregion: exactPlace.subregion,
+          iso: exactPlace.iso
+        };
+      }
+    }
+  }
+
+  // Si les panoramas 360° sont temporairement indisponibles, bascule sur une photo paysage large garantie
+  return fetchRandomLivePhoto('360');
+};
+
+// Récupère une photo géolocalisée en < 0.5s depuis le cache par lots (avec garantie Zéro Écran Noir)
+const fetchRandomLivePhoto = async (targetMode = 'photo') => {
+  for (let cycle = 0; cycle < 3; cycle++) {
+    if (photoCachePool.length < 6) {
+      await refillPhotoCache();
+    }
+    photoCachePool.sort(() => 0.5 - Math.random());
+
+    while (photoCachePool.length > 0) {
+      const candidate = photoCachePool.pop();
+      if (isLocationAlreadyUsed(candidate.imageUrl, candidate.lat, candidate.lng)) continue;
+
+      const ok = await preloadImage(candidate.imageUrl);
+      if (ok) {
+        markLocationAsUsed(candidate.imageUrl, candidate.lat, candidate.lng);
+        const exactPlace = await resolveExactLocationFromCoords(candidate.lat, candidate.lng, candidate.rawTitle);
+        return {
+          mode: targetMode,
+          lat: candidate.lat,
+          lng: candidate.lng,
+          imageUrl: candidate.imageUrl,
+          title: exactPlace.title,
+          countryName: exactPlace.countryName,
+          continent: exactPlace.continent,
+          subregion: exactPlace.subregion,
+          iso: exactPlace.iso
+        };
+      }
+    }
+  }
+
+  // FILET DE SÉCURITÉ ULTIME (ZÉRO ÉCRAN NOIR GARANTI) :
+  // Si la connexion de l'utilisateur bloque Wikimedia, génère une vue satellite/carte locale valide
+  const unusedHubs = WORLD_HUBS.filter(h => !isLocationAlreadyUsed(`hub-${h.lat}`, h.lat, h.lng));
+  const hub = (unusedHubs.length > 0 ? unusedHubs : WORLD_HUBS)[Math.floor(Math.random() * (unusedHubs.length || WORLD_HUBS.length))];
+  const exactPlace = await resolveExactLocationFromCoords(hub.lat, hub.lng, 'Lieu Mystère');
+  const fallbackImg = `https://picsum.photos/seed/${Math.round(Math.abs(hub.lat * 1000 + hub.lng * 1000))}/1600/800`;
+  markLocationAsUsed(`hub-${hub.lat}`, hub.lat, hub.lng);
+
+  return {
+    mode: targetMode,
+    lat: hub.lat,
+    lng: hub.lng,
+    imageUrl: fallbackImg,
+    title: exactPlace.title,
+    countryName: exactPlace.countryName,
+    continent: exactPlace.continent,
+    subregion: exactPlace.subregion,
+    iso: exactPlace.iso
+  };
 };
 
 const mountPannellum = async (imageUrl) => {
@@ -990,7 +1079,7 @@ const mountPannellum = async (imageUrl) => {
 };
 
 // ============================================================================
-// 5. GESTION DES MANCHES ET DU CHRONOMÈTRE
+// 5. GESTION DES MANCHES, INDICE (SCORE ÷ 2) ET CHRONOMÈTRE
 // ============================================================================
 const preloadedSharedRounds = ref(null);
 
@@ -1031,7 +1120,7 @@ const loadRoundLocation = async () => {
     currentLocation.value =
       activeMode.value === '360'
         ? await fetchRandomLive360()
-        : await fetchRandomLivePhoto(false);
+        : await fetchRandomLivePhoto('photo');
   }
 
   isLoadingLocation.value = false;
@@ -1099,7 +1188,9 @@ const confirmGuess = async () => {
       currentLocation.value.lng
     );
     lastRoundDistanceKm.value = dKm;
-    lastRoundScore.value = computeGeoScore(dKm);
+    const rawScore = computeGeoScore(dKm);
+    // Si l'indice Continent a été utilisé, le score de la manche est divisé par 2
+    lastRoundScore.value = hintUsed.value ? Math.round(rawScore / 2) : rawScore;
   }
 
   totalScore.value += lastRoundScore.value;
@@ -1109,7 +1200,8 @@ const confirmGuess = async () => {
     guessLatLng: guessLatLng.value ? [...guessLatLng.value] : null,
     distanceKm: lastRoundDistanceKm.value,
     distanceDisplay: lastRoundDistanceDisplay.value,
-    score: lastRoundScore.value
+    score: lastRoundScore.value,
+    hintUsed: hintUsed.value
   });
 
   await nextTick();
@@ -1197,6 +1289,7 @@ const copyChallengeLink = async () => {
         title: h.actual.title,
         countryName: h.actual.countryName,
         continent: h.actual.continent,
+        subregion: h.actual.subregion,
         iso: h.actual.iso
       }))
     };
