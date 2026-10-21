@@ -32,14 +32,14 @@
               to="/quiz"
               class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold text-base shadow-lg shadow-blue-600/30 hover:-translate-y-0.5 transition-all text-center"
             >
-              🎮 {{ locale === 'fr' ? 'Lancer un Quiz' : 'Start a Quiz' }}
+               {{ locale === 'fr' ? 'Lancer un Quiz' : 'Start a Quiz' }}
             </router-link>
 
             <router-link
               to="/explorer"
               class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-base border border-white/15 backdrop-blur-sm hover:-translate-y-0.5 transition-all text-center"
             >
-              🗺️ {{ locale === 'fr' ? 'Explorer l\'Atlas 3D' : 'Explore 3D Atlas' }}
+               {{ locale === 'fr' ? 'Explorer l\'Atlas 3D' : 'Explore 3D Atlas' }}
             </router-link>
           </div>
 
@@ -70,13 +70,13 @@
         <div class="lg:col-span-5 flex flex-col items-center">
           <div class="w-full max-w-sm">
             <div class="flex items-center justify-between text-xs font-bold text-slate-300 mb-2.5 px-1">
-              <span>✨ {{ locale === 'fr' ? 'Aperçu Fiche 3D (Cliquez dessus !)' : '3D Card Preview (Click it!)' }}</span>
+              <span> {{ locale === 'fr' ? 'Aperçu Fiche 3D (Cliquez dessus !)' : '3D Card Preview (Click it!)' }}</span>
               <button
                 type="button"
                 @click="pickRandomHeroCountry"
                 class="text-cyan-300 hover:text-white transition cursor-pointer flex items-center gap-1"
               >
-                🎲 {{ locale === 'fr' ? 'Autre pays' : 'Random' }}
+                ⟳ {{ locale === 'fr' ? 'Autre pays' : 'Random' }}
               </button>
             </div>
 
@@ -200,7 +200,7 @@
           to="/quiz"
           class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition shadow-sm"
         >
-          🚀 {{ locale === 'fr' ? 'Continuer à jouer' : 'Keep Playing' }}
+          ▷ {{ locale === 'fr' ? 'Continuer à jouer' : 'Keep Playing' }}
         </router-link>
       </div>
     </section>
