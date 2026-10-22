@@ -506,7 +506,7 @@
               {{ locale === 'fr' ? 'Indice #1 (Valeur : 5 pts)' : 'Clue #1 (Worth: 5 pts)' }}
             </span>
             <p class="text-sm font-bold text-gray-900 dark:text-white">
-              🌍 {{ detectiveTarget.subregion }} • 📐 {{ detectiveTarget.area }}
+               📐 {{ detectiveTarget.area }}
             </p>
           </div>
 
