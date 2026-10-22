@@ -20,7 +20,6 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-        <!-- Sélecteur de période ( valable sur les modes par record ) -->
         <div class="bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center text-xs font-bold">
           <button
             v-for="period in periodOptions"
@@ -438,7 +437,6 @@ const periodOptions = computed(() => {
   ];
 });
 
-// Les 11 Onglets complets (Aucun mode oublié !)
 const tabs = computed(() => {
   const isFr = locale.value === 'fr';
   return [
@@ -486,6 +484,19 @@ const getLeague = (ratioOrXp, isGeneral = false) => {
     return { icon: '🥈', name: isFr ? 'Argent' : 'Silver', badgeClass: 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200' };
   }
   return { icon: '🥉', name: isFr ? 'Bronze' : 'Bronze', badgeClass: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200' };
+};
+
+// Calcule l'XP d'une partie en normalisant les parties GeoGuessr (sur 25 000 pts)
+const computeRecordXp = (r) => {
+  const score = Number(r.score || 0);
+  const maxScore = Number(r.max_score || 15);
+  const mode = (r.mode || '').toLowerCase();
+
+  if (mode.includes('geoguessr') || maxScore >= 1000) {
+    const normalizedScore = Math.round((score / Math.max(1, maxScore)) * 20);
+    return normalizedScore * 10 + 25;
+  }
+  return score * 10 + 25;
 };
 
 const isCurrentUser = (row) => {
@@ -536,31 +547,65 @@ const periodFilteredRecords = computed(() => {
 const activeRanking = computed(() => {
   const isFr = locale.value === 'fr';
 
+  // Mode Général ("Tous les temps") avec correction automatique de l'inflation XP GeoGuessr
   if (activeTab.value === 'general' && selectedPeriod.value === 'all') {
-    return generalList.value.map((item, idx) => {
-      const xp = Number(item.total_xp || 0);
-      const lvl = Math.max(1, Math.floor(xp / 500) + 1);
+    const correctedUsers = generalList.value.map((item) => {
+      const userRecs = recordsList.value.filter(r => Number(r.user_id) === Number(item.user_id));
+      const gamesCount = Number(item.games_played || userRecs.length || 0);
+      let xp = Number(item.total_xp || 0);
+
+      if (userRecs.length > 0 && userRecs.length === gamesCount) {
+        // Si toutes les parties du joueur sont présentes dans recordsList, on calcule la somme exacte normalisée
+        xp = userRecs.reduce((sum, r) => sum + computeRecordXp(r), 0);
+      } else {
+        // Sinon, on soustrait le surplus lié aux parties GeoGuessr
+        for (const r of userRecs) {
+          const mode = (r.mode || '').toLowerCase();
+          if (mode.includes('geoguessr') || Number(r.max_score) >= 1000) {
+            const rawSqlXp = Number(r.score || 0) * 10 + 25;
+            xp -= (rawSqlXp - computeRecordXp(r));
+          }
+        }
+        // Sécurité supplémentaire si d'autres parties GeoGuessr figuraient en base
+        if (gamesCount > 0 && xp > gamesCount * 2000) {
+          xp = Math.round(xp / 1250) + gamesCount * 25;
+        }
+      }
+
+      xp = Math.max(0, Math.round(xp));
       return {
-        uniqueKey: `gen-${item.user_id}`,
-        rank: idx + 1,
         user_id: item.user_id,
         username: item.username,
-        rawMetric: xp,
-        metricDisplay: `${xp.toLocaleString()} XP`,
-        league: getLeague(xp, true),
-        subText: isFr
-          ? `Niveau ${lvl} • ${item.games_played} partie(s) jouée(s)`
-          : `Level ${lvl} • ${item.games_played} game(s) played`
+        xp,
+        games_played: gamesCount
       };
     });
+
+    return correctedUsers
+      .sort((a, b) => b.xp - a.xp)
+      .map((item, idx) => {
+        const lvl = Math.max(1, Math.floor(item.xp / 500) + 1);
+        return {
+          uniqueKey: `gen-${item.user_id}`,
+          rank: idx + 1,
+          user_id: item.user_id,
+          username: item.username,
+          rawMetric: item.xp,
+          metricDisplay: `${item.xp.toLocaleString()} XP`,
+          league: getLeague(item.xp, true),
+          subText: isFr
+            ? `Niveau ${lvl} • ${item.games_played} partie(s) jouée(s)`
+            : `Level ${lvl} • ${item.games_played} game(s) played`
+        };
+      });
   }
 
-  // Si mode Général filtré sur 30j ou Aujourd'hui, on recalcule l'XP sur la période
+  // Si mode Général filtré sur 30j ou Aujourd'hui, on recalcule l'XP normalisée sur la période
   if (activeTab.value === 'general') {
     const mapUser = new Map();
     for (const r of periodFilteredRecords.value) {
       const prev = mapUser.get(r.user_id) || { user_id: r.user_id, username: r.username, xp: 0, games: 0 };
-      prev.xp += Number(r.score || 0) * 10 + 25;
+      prev.xp += computeRecordXp(r);
       prev.games += 1;
       mapUser.set(r.user_id, prev);
     }
@@ -635,7 +680,6 @@ const currentUserRank = computed(() =>
   activeRanking.value.find(r => isCurrentUser(r)) || null
 );
 
-// Calcul de l'écart exact avec le joueur situé juste devant nous
 const nextRankGapText = computed(() => {
   const me = currentUserRank.value;
   if (!me) return '';
@@ -653,7 +697,6 @@ const nextRankGapText = computed(() => {
     : `Only ${diff.toLocaleString()} ${unit} needed to overtake ${abovePlayer.username} (#${abovePlayer.rank})!`;
 });
 
-// Face-à-Face (Modale de comparaison entre le joueur cliqué et l'utilisateur connecté)
 const openPlayerModal = (playerRow) => {
   inspectedPlayer.value = playerRow;
 };

@@ -406,7 +406,6 @@ onMounted(() => {
   if (savedUser) {
     try {
       const parsed = JSON.parse(savedUser);
-      // Garantit que name et username sont tous les deux présents
       const displayName = parsed.name || parsed.username || '';
       user.value = {
         ...parsed,
@@ -429,6 +428,7 @@ const checkCredentials = (username, password = null) => {
   if (/ {2,}/.test(cleanUsername)) {
     return "L'identifiant ne peut pas contenir plusieurs espaces à la suite.";
   }
+  // Correction de la Regex : suppression de l'antislash erroné devant \$
   if (!/^[a-zA-Z0-9À-ÿ_.\- ]+\$/.test(cleanUsername)) {
     return "Caractères autorisés pour l'identifiant : lettres, chiffres, espace, -, _ et .";
   }
@@ -550,9 +550,6 @@ const login = async () => {
   }
 };
 
-// ==========================================
-// FONCTIONS : MOT DE PASSE OUBLIÉ
-// ==========================================
 const openForgotModal = () => {
   forgotError.value = '';
   forgotStep.value = 1;
@@ -626,6 +623,7 @@ const updateProfile = async () => {
   try {
     await apiCall(`/api/users/${user.value.id}`, {
       name: user.value.name,
+      username: user.value.name,
       email: user.value.email
     }, 'PUT');
 
@@ -1001,9 +999,6 @@ const logout = () => {
   background: rgba(239, 68, 68, 0.22);
 }
 
-/* ========================================== */
-/* MODALE MOT DE PASSE OUBLIÉ                 */
-/* ========================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1098,14 +1093,12 @@ const logout = () => {
     border-radius: 16px;
   }
 
-  /* Centrer et empiler la partie avatar/infos sur mobile */
   .profile-top {
     flex-direction: column;
     text-align: center;
     gap: 1rem;
   }
 
-  /* Mettre les boutons d'action l'un sous l'autre sur mobile pour éviter qu'ils se compressent */
   .profile-actions {
     flex-direction: column;
     gap: 0.75rem;
