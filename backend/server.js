@@ -24,13 +24,13 @@ const db = mysql.createPool({
   database: process.env.DB_NAME,
   ssl: { rejectUnauthorized: false },
   waitForConnections: true,
-  connectionLimit: 5,           // Limité à 5 pour ne pas saturer l'offre gratuite Aiven
+  connectionLimit: 5,
   maxIdle: 5,
-  idleTimeout: 60000,           // Ferme proprement les connexions inactives après 60s
+  idleTimeout: 60000,
   queueLimit: 0,
-  enableKeepAlive: true,        // <-- TRÈS IMPORTANT : Garde la connexion active avec Aiven
-  keepAliveInitialDelay: 10000, // Envoie un signal toutes les 10s pour éviter la coupure
-  connectTimeout: 10000         // Évite de ramer pendant 40s si le réseau accroche
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+  connectTimeout: 10000
 });
 
 db.getConnection((err, connection) => {
@@ -46,14 +46,14 @@ const generateVerificationCode = () => Math.floor(100000 + Math.random() * 90000
 
 // --- RÈGLES DE VALIDATION ---
 const validateUsername = (username) => {
-  if (!username || username.length < 3 || username.length > 25) {
+  const clean = (username || '').trim();
+  if (!clean || clean.length < 3 || clean.length > 25) {
     return "L'identifiant doit contenir entre 3 et 25 caractères.";
   }
-  if (/\s{2,}/.test(username) || username.startsWith(' ') || username.endsWith(' ')) {
-    return "L'identifiant ne peut pas contenir deux espaces de suite ni commencer/finir par un espace.";
+  if (/\s{2,}/.test(clean)) {
+    return "L'identifiant ne peut pas contenir deux espaces de suite.";
   }
-  const usernameRegex = /^[a-zA-Z0-9À-ÿ_.\- ]+$/;
-  if (!usernameRegex.test(username)) {
+  if (/[^a-zA-Z0-9À-ÿ_.\- ]/.test(clean)) {
     return "L'identifiant ne peut contenir que des lettres, chiffres, espaces, tirets (-), underscores (_) et points (.).";
   }
   return null;
@@ -75,14 +75,16 @@ const validatePassword = (password) => {
 
 // 1. INSCRIPTION CLASSIQUE
 app.post('/api/register', async (req, res) => {
-  const { username, email, password } = req.body;
+  const username = (req.body.username || '').trim();
+  const email = (req.body.email || '').trim();
+  const { password } = req.body;
 
-  // Vérification des règles strictes
   const usernameError = validateUsername(username);
   if (usernameError) return res.status(400).json({ error: usernameError });
 
   const passwordError = validatePassword(password);
   if (passwordError) return res.status(400).json({ error: passwordError });
+
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationCode = generateVerificationCode();
@@ -95,9 +97,9 @@ app.post('/api/register', async (req, res) => {
       }
 
       try {
-        const { data, error } = await resend.emails.send({
+        const { error } = await resend.emails.send({
           from: 'GeoLearn <geolearn-webapp@gmail.com>',
-          to: email, // Doit être ton email validé sur Resend
+          to: email,
           subject: 'Ton code de vérification GeoLearn 🌍',
           html: `<div style="text-align: center; font-family: Arial, sans-serif;"><h2>Bienvenue ${username} !</h2><p>Ton code de vérification :</p><h1 style="letter-spacing: 5px; color: #2563eb;">${verificationCode}</h1></div>`
         });
@@ -141,7 +143,7 @@ app.post('/api/resend-code', (req, res) => {
     if (err || results.affectedRows === 0) return res.status(400).json({ error: 'Impossible de renvoyer le code.' });
     
     try {
-      const { data, error } = await resend.emails.send({
+      const { error } = await resend.emails.send({
         from: 'GeoLearn <geolearn-webapp@gmail.com>',
         to: email,
         subject: 'Nouveau code GeoLearn 🌍',
@@ -204,7 +206,7 @@ app.post('/api/google-login', async (req, res) => {
           if (insertErr) return res.status(500).json({ error: 'Erreur de création de compte.' });
           
           try {
-            const { data, error } = await resend.emails.send({
+            const { error } = await resend.emails.send({
               from: 'GeoLearn <geolearn-webapp@gmail.com>',
               to: email,
               subject: 'Bienvenue sur GeoLearn ! 🌍',
@@ -230,7 +232,6 @@ app.post('/api/google-login', async (req, res) => {
 // MOT DE PASSE OUBLIÉ : DEMANDE DE CODE & RÉINITIALISATION
 // =========================================================
 
-// 1. Envoyer un code à 6 chiffres pour réinitialiser le mot de passe
 app.post('/api/forgot-password', (req, res) => {
   const { email } = req.body;
   if (!email) {
@@ -282,7 +283,6 @@ app.post('/api/forgot-password', (req, res) => {
   });
 });
 
-// 2. Valider le code à 6 chiffres et enregistrer le nouveau mot de passe
 app.post('/api/reset-password', (req, res) => {
   const { email, code, newPassword } = req.body;
   if (!email || !code || !newPassword) {
@@ -327,23 +327,24 @@ app.post('/api/reset-password', (req, res) => {
 
 // 6. METTRE À JOUR LE PROFIL
 app.put('/api/users/:id', (req, res) => {
-  const { name, email } = req.body;
+  const rawName = req.body.name || req.body.username || '';
+  const cleanName = rawName.trim();
+  const cleanEmail = (req.body.email || '').trim();
 
-  const usernameError = validateUsername(name);
+  const usernameError = validateUsername(cleanName);
   if (usernameError) return res.status(400).json({ error: usernameError });
 
-  db.query('UPDATE users SET username = ?, email = ? WHERE id = ?', [name, email, req.params.id], (err) => {
+  db.query('UPDATE users SET username = ?, email = ? WHERE id = ?', [cleanName, cleanEmail, req.params.id], (err) => {
     if (err) {
       if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Email ou pseudo déjà pris.' });
       return res.status(500).json({ error: 'Erreur de mise à jour.' });
     }
-    res.json({ message: 'Profil mis à jour !', username: name, email: email });
+    res.json({ message: 'Profil mis à jour !', username: cleanName, email: cleanEmail });
   });
 });
 
 // =========================================================
-// RÉCUPÉRATION DES SCORES D'UN UTILISATEUR
-// (Note : si tu avais déjà une route app.get('/api/scores/:userId') plus haut dans ton fichier, ne garde qu'une seule des deux)
+// RÉCUPÉRATION & ENREGISTREMENT DES SCORES
 // =========================================================
 app.get('/api/scores/:userId', (req, res) => {
   const userId = req.params.userId;
@@ -359,9 +360,7 @@ app.get('/api/scores/:userId', (req, res) => {
     }
   );
 });
-// =========================================================
-// ENREGISTREMENT D'UN SCORE DE PARTIE
-// =========================================================
+
 app.post('/api/scores', (req, res) => {
   const { user_id, mode, score, max_score } = req.body;
   
@@ -383,16 +382,21 @@ app.post('/api/scores', (req, res) => {
 });
 
 // =========================================================
-// CLASSEMENT MONDIAL (LEADERBOARD GLOBAL & PAR MODE)
+// CLASSEMENT MONDIAL (AVEC XP GEOGUESSR NORMALISÉE EN SQL)
 // =========================================================
 app.get('/api/leaderboard', (req, res) => {
-  // 1. Classement général (XP cumulée, parties jouées, moyenne et meilleur score par joueur)
   const generalSql = `
     SELECT 
       u.id AS user_id,
       u.username,
       COUNT(s.id) AS games_played,
-      COALESCE(SUM(s.score * 10), 0) + (COUNT(s.id) * 25) AS total_xp,
+      COALESCE(SUM(
+        CASE 
+          WHEN s.mode LIKE '%GeoGuessr%' OR s.max_score >= 1000 
+          THEN ROUND((s.score / GREATEST(s.max_score, 1)) * 20) * 10
+          ELSE s.score * 10 
+        END
+      ), 0) + (COUNT(s.id) * 25) AS total_xp,
       COALESCE(SUM(s.score), 0) AS total_points,
       MAX(CASE WHEN s.mode LIKE '%Capitales%' THEN s.score ELSE 0 END) AS best_capitals,
       MAX(CASE WHEN s.mode LIKE '%QCM Drapeaux%' THEN s.score ELSE 0 END) AS best_flags_qcm,
@@ -407,7 +411,6 @@ app.get('/api/leaderboard', (req, res) => {
     LIMIT 50
   `;
 
-  // 2. Meilleurs records individuels par mode de jeu
   const recordsSql = `
     SELECT 
       s.id,
@@ -444,7 +447,6 @@ app.get('/api/leaderboard', (req, res) => {
   });
 });
 
-
 // =========================================================
 // GESTION DES RETOURS COMMUNAUTAIRES & ADMIN (FEEDBACKS)
 // =========================================================
@@ -454,7 +456,6 @@ const ADMIN_EMAILS = [
   'lohan.demeulemester@efrei.net'
 ];
 
-// Création automatique de la table feedbacks (Version Callback compatible mysql2)
 db.query(
   `CREATE TABLE IF NOT EXISTS feedbacks (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -476,7 +477,6 @@ db.query(
   }
 );
 
-// 1. Envoyer un retour (Accessible à tous les utilisateurs)
 app.post('/api/feedbacks', (req, res) => {
   const { userId, username, email, type, subject, message } = req.body;
   if (!username || !email || !subject || !message) {
@@ -496,7 +496,6 @@ app.post('/api/feedbacks', (req, res) => {
   );
 });
 
-// 2. Récupérer tous les retours (Réservé à l'Admin)
 app.get('/api/admin/feedbacks', (req, res) => {
   const adminEmail = (req.query.email || '').toLowerCase();
   if (!ADMIN_EMAILS.includes(adminEmail)) {
@@ -512,7 +511,6 @@ app.get('/api/admin/feedbacks', (req, res) => {
   });
 });
 
-// 3. Mettre à jour le statut d'un retour (Réservé à l'Admin)
 app.put('/api/admin/feedbacks/:id', (req, res) => {
   const adminEmail = (req.body.email || '').toLowerCase();
   const { status } = req.body;
@@ -533,7 +531,6 @@ app.put('/api/admin/feedbacks/:id', (req, res) => {
   );
 });
 
-// 4. Supprimer un retour (Réservé à l'Admin)
 app.delete('/api/admin/feedbacks/:id', (req, res) => {
   const adminEmail = (req.query.email || '').toLowerCase();
   if (!ADMIN_EMAILS.includes(adminEmail)) {

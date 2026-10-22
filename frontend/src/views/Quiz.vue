@@ -151,7 +151,7 @@
           </p>
         </div>
 
-        <!-- 4. NOUVEAU : Enquête aux 5 Indices -->
+        <!-- 4. Enquête aux 5 Indices -->
         <div @click="lancerMode('detective')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-indigo-500/30 hover:border-indigo-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
           <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
             {{ locale === 'fr' ? 'Inédit' : 'Unique' }}
@@ -165,7 +165,7 @@
           </p>
         </div>
 
-        <!-- 5. NOUVEAU : Cliquez sur la Carte (Style Seterra) -->
+        <!-- 5. Cliquez sur la Carte (Style Seterra) -->
         <div @click="lancerMode('map-click')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-cyan-500/30 hover:border-cyan-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
           <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300">
             Mobile & PC
@@ -204,7 +204,7 @@
             {{ locale === 'fr' ? 'Défis Chrono (Clavier)' : 'Timed Map Typing' }}
           </h3>
           <p class="text-gray-500 dark:text-gray-400 text-xs">
-            {{ locale === 'fr' ? 'Tapez un maximum de pays au clavier en temps limité (Europe 47 ou Monde 196).' : 'Type as many countries as possible against the clock (Europe 47 or World 196).' }}
+            {{ locale === 'fr' ? 'Tapez un maximum de pays au clavier avec grille par continent (Europe 47 ou Monde 196).' : 'Type as many countries as possible with continent grids (Europe 47 or World 196).' }}
           </p>
         </div>
       </div>
@@ -339,7 +339,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- NOUVEAU MODE : LE PAYS MYSTÈRE (STYLE WORLDLE QUOTIDIEN & INFINI)         -->
+    <!-- MODE : LE PAYS MYSTÈRE (STYLE WORLDLE QUOTIDIEN & INFINI)                 -->
     <!-- ========================================================================= -->
     <div v-if="currentMode === 'mystery'" class="max-w-2xl mx-auto mt-6 space-y-6">
       <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
@@ -477,7 +477,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- NOUVEAU MODE : ENQUÊTE GÉOGRAPHIQUE AUX 5 INDICES                         -->
+    <!-- MODE : ENQUÊTE GÉOGRAPHIQUE AUX 5 INDICES                                 -->
     <!-- ========================================================================= -->
     <div v-if="currentMode === 'detective'" class="max-w-3xl mx-auto mt-6 space-y-6">
       <div v-if="!detectiveFinished && detectiveTarget" class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
@@ -606,7 +606,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- NOUVEAU MODE : CLIQUEZ SUR LA CARTE (STYLE SETERRA SANS CLAVIER)          -->
+    <!-- MODE : CLIQUEZ SUR LA CARTE (STYLE SETERRA SANS CLAVIER)                  -->
     <!-- ========================================================================= -->
     <div v-if="currentMode === 'map-click'" class="max-w-5xl mx-auto mt-6 space-y-5">
       <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-7 shadow-sm border border-gray-100 dark:border-gray-700 space-y-5">
@@ -978,52 +978,312 @@
       </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODE CHRONO CARTE (CLAVIER EUROPE & MONDE) -->
-    <!-- ========================================== -->
-    <div v-if="currentMode === 'chrono'" class="max-w-4xl mx-auto mt-8">
+    <!-- ========================================================================= -->
+    <!-- MODE CHRONO CARTE (CLAVIER EUROPE 47 & MONDE 196 + GRILLES JETPUNK)       -->
+    <!-- ========================================================================= -->
+    <div v-if="currentMode === 'chrono'" class="max-w-6xl mx-auto mt-8">
       <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div v-if="!isChronoStarted && !chronoFini" class="text-center py-4 space-y-6">
-          <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ locale === 'fr' ? 'Choisissez votre Défi Chrono' : 'Choose Your Timed Challenge' }}</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mt-6">
-            <div @click="selectChronoMode('europe')" class="p-6 rounded-2xl border-2 transition-all cursor-pointer text-left flex flex-col gap-3" :class="chronoRegion === 'europe' ? 'border-brandBlue bg-blue-50/50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'">
+        
+        <!-- ÉCRAN DE CONFIGURATION AVANT LANCEMENT (CHOIX RÉGION + CHOIX TEMPS) -->
+        <div v-if="!isChronoStarted && !chronoFini" class="text-center py-4 space-y-8">
+          <div>
+            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              {{ locale === 'fr' ? 'Choisissez votre Défi Chrono' : 'Choose Your Timed Challenge' }}
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              {{ locale === 'fr'
+                ? 'Sélectionnez la carte puis votre limite de temps avant de lancer la partie.'
+                : 'Select the map and your time limit before starting the game.' }}
+            </p>
+          </div>
+
+          <!-- 1. Choix Europe (47) ou Monde (196) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <div
+              @click="selectChronoMode('europe')"
+              class="p-6 rounded-2xl border-2 transition-all cursor-pointer text-left flex flex-col gap-3"
+              :class="chronoRegion === 'europe' ? 'border-brandBlue bg-blue-50/50 dark:bg-blue-900/20 shadow-sm' : 'border-gray-200 dark:border-gray-700'"
+            >
               <div class="text-3xl">🇪🇺</div>
               <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ t('home.mode_chrono_title') }}</h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">{{ locale === 'fr' ? 'Retrouvez les 47 pays d\'Europe en 3 minutes.' : 'Find all 47 European countries in 3 minutes.' }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                {{ locale === 'fr' ? 'Retrouvez les 47 pays d\'Europe au clavier (grille alphabétique incluse).' : 'Find all 47 European countries by typing (alphabetical grid included).' }}
+              </p>
             </div>
-            <div @click="selectChronoMode('world')" class="p-6 rounded-2xl border-2 transition-all cursor-pointer text-left flex flex-col gap-3" :class="chronoRegion === 'world' ? 'border-brandBlue bg-blue-50/50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'">
+
+            <div
+              @click="selectChronoMode('world')"
+              class="p-6 rounded-2xl border-2 transition-all cursor-pointer text-left flex flex-col gap-3"
+              :class="chronoRegion === 'world' ? 'border-brandBlue bg-blue-50/50 dark:bg-blue-900/20 shadow-sm' : 'border-gray-200 dark:border-gray-700'"
+            >
               <div class="text-3xl">🌍</div>
               <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ locale === 'fr' ? 'Défi Monde (196 pays)' : 'World Challenge (196 countries)' }}</h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">{{ locale === 'fr' ? 'Retrouvez le maximum de pays en 15 minutes !' : 'Find as many countries as possible in 15 minutes!' }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                {{ locale === 'fr' ? 'Retrouvez les 196 pays du monde classés par continent comme sur JetPunk !' : 'Find all 196 world countries sorted by continent just like JetPunk!' }}
+              </p>
             </div>
           </div>
-          <button @click="demarrerChrono" class="bg-brandBlue text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-700 transition shadow-md cursor-pointer mt-6">
+
+          <!-- 2. Choix de la durée (3 min / 5 min / Illimité pour Europe | 15 min / Illimité pour Monde) -->
+          <div class="max-w-2xl mx-auto bg-gray-50 dark:bg-gray-900/60 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3">
+            <h4 class="text-sm font-extrabold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+              ⏱️ {{ locale === 'fr' ? 'Limite de temps & Calcul des points' : 'Time Limit & Scoring' }}
+            </h4>
+
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <button
+                v-for="opt in chronoTimerOptions"
+                :key="opt.seconds"
+                type="button"
+                @click="selectChronoDuration(opt.seconds)"
+                class="px-5 py-3 rounded-xl border-2 font-bold text-xs sm:text-sm transition-all cursor-pointer flex flex-col items-center gap-0.5"
+                :class="chronoTimeLimit === opt.seconds
+                  ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white hover:border-blue-400'"
+              >
+                <span class="text-sm sm:text-base font-black">{{ opt.label }}</span>
+                <span
+                  class="text-[11px] font-semibold"
+                  :class="chronoTimeLimit === opt.seconds ? 'text-blue-100' : 'text-gray-400'"
+                >
+                  {{ opt.subLabel }}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <button
+            @click="demarrerChrono"
+            class="bg-brandBlue text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-700 transition shadow-md cursor-pointer"
+          >
             {{ t('quiz.start_timer') }}
           </button>
         </div>
 
-        <div v-else>
-          <div class="w-full h-[460px] bg-[#aad3df] dark:bg-[#1e293b] rounded-2xl overflow-hidden shadow-inner border border-gray-200 dark:border-gray-700 relative z-0 mb-6">
+        <!-- ÉCRAN DE JEU CHRONO ACTIF OU TERMINÉ -->
+        <div v-else class="space-y-6">
+          
+          <!-- Carte Leaflet -->
+          <div class="w-full h-[460px] bg-[#aad3df] dark:bg-[#1e293b] rounded-2xl overflow-hidden shadow-inner border border-gray-200 dark:border-gray-700 relative z-0">
             <l-map ref="map" v-model:zoom="mapZoom" v-model:center="mapCenter" :min-zoom="2" :max-zoom="7" :use-global-leaflet="false">
               <l-tile-layer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" :no-wrap="true"></l-tile-layer>
-              <l-circle-marker v-for="country in targetCountries" :key="'marker-' + country.id" :lat-lng="[country.lat, country.lng]" :radius="getMarkerRadius(country.iso)" :color="'#9ca3af'" :weight="1.5" :fill-color="paysTrouves.includes(country.iso) ? '#22c55e' : '#ffffff'" :fill-opacity="0.9"></l-circle-marker>
+              <l-circle-marker
+                v-for="country in targetCountries"
+                :key="'marker-' + country.id"
+                :lat-lng="[country.lat, country.lng]"
+                :radius="getMarkerRadius(country.iso)"
+                :color="paysTrouves.includes(country.iso) ? '#15803d' : (chronoFini ? '#b91c1c' : '#9ca3af')"
+                :weight="1.5"
+                :fill-color="paysTrouves.includes(country.iso) ? '#22c55e' : (chronoFini ? '#ef4444' : '#ffffff')"
+                :fill-opacity="0.9"
+              >
+                <l-popup v-if="paysTrouves.includes(country.iso) || chronoFini">
+                  <strong>{{ country.name }}</strong>
+                </l-popup>
+              </l-circle-marker>
             </l-map>
           </div>
 
-          <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-8 bg-white dark:bg-gray-800 border-2 border-brandBlue/20 p-4 rounded-2xl shadow-sm">
-            <div class="flex items-center gap-4">
-              <div class="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold text-white" :class="chronoTemps <= 20 && !chronoFini ? 'bg-red-500 animate-pulse' : 'bg-brandBlue'">
-                {{ formatTime(chronoTemps) }}
-              </div>
-              <div>
-                <p class="text-gray-500 dark:text-gray-400 text-sm">{{ t('quiz.progression') }}</p>
-                <h3 class="font-bold text-gray-900 dark:text-white text-xl">{{ t('quiz.found', { current: paysTrouves.length, total: targetCountries.length }) }}</h3>
+          <!-- Barre de contrôle : Chronomètre, Progression, Points/XP, Saisie & Alerte Doublon -->
+          <div class="flex flex-col lg:flex-row justify-between items-center gap-4 bg-white dark:bg-gray-800 border-2 border-brandBlue/20 p-4 sm:p-5 rounded-2xl shadow-sm">
+            
+            <!-- Chronomètre + Progression + Points calculés -->
+            <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-start">
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-16 h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold text-white shrink-0"
+                  :class="chronoTimeLimit > 0 && chronoTemps <= 20 && !chronoFini ? 'bg-red-500 animate-pulse' : 'bg-brandBlue'"
+                >
+                  {{ chronoTimeLimit === 0 ? '∞' : formatTime(chronoTemps) }}
+                </div>
+
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-semibold">{{ t('quiz.progression') }}</p>
+                    <span
+                      class="px-2 py-0.5 rounded-full text-[11px] font-extrabold"
+                      :class="chronoMultiplier === 1
+                        ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300'"
+                    >
+                      {{ chronoMultiplierBadge }}
+                    </span>
+                  </div>
+                  <h3 class="font-bold text-gray-900 dark:text-white text-xl">
+                    {{ t('quiz.found', { current: paysTrouves.length, total: targetCountries.length }) }}
+                  </h3>
+                  <p class="text-xs font-extrabold text-blue-600 dark:text-blue-400">
+                    🏆 {{ chronoAdjustedScore }} / {{ targetCountries.length }} pts • +{{ chronoEarnedXp }} XP
+                  </p>
+                </div>
               </div>
             </div>
-            <div class="w-full md:w-1/2">
-              <input v-model="chronoInput" @input="verifierSaisieChrono" :disabled="chronoFini" type="text" :placeholder="locale === 'fr' ? 'Tapez le nom d\'un pays...' : 'Type a country name...'" class="w-full pl-6 pr-4 py-4 rounded-xl border-2 border-brandBlue/40 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-lg font-bold">
+
+            <!-- Champ de saisie + Alerte "Pays déjà trouvé" -->
+            <div class="w-full lg:w-1/2 space-y-2">
+              <div class="flex gap-2">
+                <input
+                  v-model="chronoInput"
+                  @input="verifierSaisieChrono"
+                  :disabled="chronoFini"
+                  type="text"
+                  :placeholder="locale === 'fr' ? 'Tapez le nom d\'un pays...' : 'Type a country name...'"
+                  autocomplete="off"
+                  spellcheck="false"
+                  class="flex-1 pl-5 pr-4 py-3.5 rounded-xl border-2 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-base sm:text-lg font-bold transition-colors focus:outline-none"
+                  :class="chronoDuplicateMsg
+                    ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/30'
+                    : 'border-brandBlue/40 focus:border-brandBlue'"
+                />
+
+                <button
+                  v-if="!chronoFini"
+                  type="button"
+                  @click="terminerChrono"
+                  class="px-4 py-3.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-bold transition cursor-pointer shrink-0"
+                >
+                  {{ locale === 'fr' ? 'Révéler les pays manquants' : 'Reveal missing countries' }}
+                </button>
+
+                <button
+                  v-else
+                  type="button"
+                  @click="demarrerChrono"
+                  class="px-5 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold transition cursor-pointer shrink-0"
+                >
+                  ↻ {{ locale === 'fr' ? 'Rejouer' : 'Play Again' }}
+                </button>
+              </div>
+
+              <!-- Message d'alerte si le pays tapé a déjà été trouvé -->
+              <transition name="fade">
+                <div
+                  v-if="chronoDuplicateMsg"
+                  class="px-3.5 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/60 border border-amber-400 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs sm:text-sm font-extrabold flex items-center justify-between"
+                >
+                  <span>⚠️ {{ chronoDuplicateMsg }}</span>
+                  <button
+                    type="button"
+                    @click="chronoDuplicateMsg = ''; chronoInput = ''"
+                    class="text-xs underline ml-2 cursor-pointer"
+                  >
+                    {{ locale === 'fr' ? 'Effacer' : 'Clear' }}
+                  </button>
+                </div>
+              </transition>
             </div>
           </div>
+
+          <!-- Bannière de bilan final quand la partie est terminée -->
+          <div
+            v-if="chronoFini"
+            class="p-5 rounded-2xl border text-center space-y-2"
+            :class="paysTrouves.length === targetCountries.length
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-900 dark:text-emerald-200'
+              : 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-200'"
+          >
+            <h4 class="text-2xl font-black">
+              {{ paysTrouves.length === targetCountries.length
+                ? (locale === 'fr' ? 'Sans-faute légendaire ! 🏆' : 'Legendary Perfect Score! 🏆')
+                : (locale === 'fr' ? 'Défi terminé !' : 'Challenge Finished!') }}
+            </h4>
+            <p class="text-sm font-bold">
+              {{ locale === 'fr'
+                ? `Pays trouvés : ${paysTrouves.length} / ${targetCountries.length} • Score comptabilisé (${chronoMultiplierBadge}) : ${chronoAdjustedScore} pts • +${chronoEarnedXp} XP`
+                : `Countries found: ${paysTrouves.length} / ${targetCountries.length} • Final Score (${chronoMultiplierBadge}): ${chronoAdjustedScore} pts • +${chronoEarnedXp} XP` }}
+            </p>
+          </div>
+
+          <!-- =================================================================== -->
+          <!-- GRILLES PAR CONTINENT STYLE JETPUNK (REMPLISSAGE ALPHABÉTIQUE)      -->
+          <!-- =================================================================== -->
+          
+          <!-- CAS 1 : DÉFI MONDE (6 COLONNES PAR CONTINENT COMME SUR JETPUNK) -->
+          <div v-if="chronoRegion === 'world'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 pt-2">
+            <div
+              v-for="group in worldContinentGroups"
+              :key="group.key"
+              class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900 shadow-2xs flex flex-col"
+            >
+              <!-- En-tête bleu style JetPunk -->
+              <div class="bg-[#2b579a] text-white font-bold text-xs sm:text-sm py-2 px-3 text-center flex items-center justify-between">
+                <span class="truncate">{{ group.label }}</span>
+                <span class="text-[11px] bg-black/25 px-2 py-0.5 rounded-full font-extrabold">
+                  {{ group.foundCount }}/{{ group.countries.length }}
+                </span>
+              </div>
+
+              <!-- Lignes alphabétiques du continent -->
+              <div class="divide-y divide-gray-200 dark:divide-gray-700/80 text-xs">
+                <div
+                  v-for="country in group.countries"
+                  :key="'jp-w-' + country.id"
+                  class="h-7 px-2.5 flex items-center justify-between transition-colors"
+                  :class="[
+                    paysTrouves.includes(country.iso)
+                      ? 'bg-emerald-50/90 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold'
+                      : chronoFini
+                        ? 'bg-red-50/70 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-semibold'
+                        : 'bg-white dark:bg-gray-900 text-transparent select-none'
+                  ]"
+                >
+                  <template v-if="paysTrouves.includes(country.iso) || chronoFini">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <img :src="`https://flagcdn.com/w20/${country.iso}.png`" class="h-3 w-auto rounded-2xs shrink-0" alt="" />
+                      <span class="truncate" :title="country.name">{{ country.name }}</span>
+                    </div>
+                    <span v-if="paysTrouves.includes(country.iso)" class="text-[10px] text-emerald-600 dark:text-emerald-400">✓</span>
+                  </template>
+                  <template v-else>
+                    <span>&nbsp;</span>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CAS 2 : DÉFI EUROPE (EN-TÊTE EUROPE + 4 COLONNES ALPHABÉTIQUES JETPUNK) -->
+          <div v-else class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900 shadow-2xs">
+            <div class="bg-[#2b579a] text-white font-bold text-sm py-2.5 px-4 flex items-center justify-between">
+              <span>🇪🇺 Europe</span>
+              <span class="text-xs bg-black/25 px-2.5 py-0.5 rounded-full font-extrabold">
+                {{ paysTrouves.length }} / {{ targetCountries.length }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 dark:divide-gray-700">
+              <div
+                v-for="(col, colIdx) in europeColumns"
+                :key="'eur-col-' + colIdx"
+                class="divide-y divide-gray-200 dark:divide-gray-700/80 text-xs sm:text-sm"
+              >
+                <div
+                  v-for="country in col"
+                  :key="'jp-e-' + country.id"
+                  class="h-8 px-3 flex items-center justify-between transition-colors"
+                  :class="[
+                    paysTrouves.includes(country.iso)
+                      ? 'bg-emerald-50/90 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold'
+                      : chronoFini
+                        ? 'bg-red-50/70 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-semibold'
+                        : 'bg-white dark:bg-gray-900 text-transparent select-none'
+                  ]"
+                >
+                  <template v-if="paysTrouves.includes(country.iso) || chronoFini">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <img :src="`https://flagcdn.com/w20/${country.iso}.png`" class="h-3.5 w-auto rounded-2xs shrink-0" alt="" />
+                      <span class="truncate" :title="country.name">{{ country.name }}</span>
+                    </div>
+                    <span v-if="paysTrouves.includes(country.iso)" class="text-xs text-emerald-600 dark:text-emerald-400">✓</span>
+                  </template>
+                  <template v-else>
+                    <span>&nbsp;</span>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1146,7 +1406,13 @@ const lancerMode = (mode, type = null) => {
   if (mode === 'map-click') initMapClickGame();
   if (mode === 'flag-grid') initFlagGrid();
   if (mode === 'flashcards') initFlashcards();
-  if (mode === 'chrono') { isChronoStarted.value = false; paysTrouves.value = []; chronoFini.value = false; }
+  if (mode === 'chrono') {
+    isChronoStarted.value = false;
+    paysTrouves.value = [];
+    chronoFini.value = false;
+    chronoDuplicateMsg.value = '';
+    selectChronoMode(chronoRegion.value);
+  }
 };
 
 const sauvegarderScore = async (mode, score, maxScore) => {
@@ -1397,7 +1663,7 @@ const mapClickScope = ref('europe');
 const mapClickCountriesPool = ref([]);
 const mapClickQueue = ref([]);
 const mapClickIndex = ref(0);
-const mapClickStatus = ref({}); // { iso: 'first' | 'second' | 'late' }
+const mapClickStatus = ref({});
 const mapClickWrongTries = ref(0);
 const mapClickScore = ref(0);
 const mapClickFinished = ref(false);
@@ -1432,18 +1698,18 @@ const initMapClickGame = () => {
 
 const getMapClickRadius = (country) => {
   if (currentMapClickTarget.value && mapClickWrongTries.value >= 3 && country.iso === currentMapClickTarget.value.iso) {
-    return 14; // Grossit le point cible si le joueur s'est trompé 3 fois pour l'aider !
+    return 14;
   }
   return mapClickScope.value === 'europe' ? 8 : 7;
 };
 
 const getMapClickFillColor = (country) => {
   const st = mapClickStatus.value[country.iso];
-  if (st === 'first') return '#10b981'; // Vert du 1er coup
-  if (st === 'second') return '#f59e0b'; // Jaune au 2e essai
-  if (st === 'late') return '#ef4444'; // Rouge à partir du 3e essai
+  if (st === 'first') return '#10b981';
+  if (st === 'second') return '#f59e0b';
+  if (st === 'late') return '#ef4444';
   if (currentMapClickTarget.value && mapClickWrongTries.value >= 3 && country.iso === currentMapClickTarget.value.iso) {
-    return '#3b82f6'; // Indice visuel bleu
+    return '#3b82f6';
   }
   return '#ffffff';
 };
@@ -1781,7 +2047,7 @@ const activeFlashcards = computed(() => {
 const currentFlashcard = computed(() => activeFlashcards.value[flashcardIndex.value] || null);
 
 const flashcardSuivante = () => { 
-  if (flashcardIndex.value < activeFlashcards.value.length - 1) { 
+  if (flashcardIndex.value < activeFlashcards.length - 1) { 
     flashcardFlipped.value = false; 
     setTimeout(() => { flashcardIndex.value++; }, 160); 
   } 
@@ -1795,37 +2061,148 @@ const flashcardPrecedente = () => {
 };
 
 // =========================================================
-// MODE CHRONO CARTE (CLAVIER EUROPE & MONDE)
+// MODE CHRONO CARTE (CLAVIER EUROPE & MONDE + JETPUNK GRIDS)
 // =========================================================
 const isChronoStarted = ref(false);
 const chronoRegion = ref('europe');
+const chronoTimeLimit = ref(180); // 180 (3m), 300 (5m), 900 (15m), ou 0 (Illimité)
 const chronoTemps = ref(180);
 const chronoInput = ref('');
 const paysTrouves = ref([]);
 const chronoFini = ref(false);
+const chronoDuplicateMsg = ref('');
 let intervalId = null;
+let duplicateTimer = null;
 
 const mapZoom = ref(3.8);
 const mapCenter = ref([50.0, 10.0]);
 
+// Options de temps dynamiques selon le défi sélectionné :
+// - Europe : 3 min (100%), 5 min (-25%), Illimité (÷ 2)
+// - Monde  : 15 min (100%), Illimité (÷ 2)
+const chronoTimerOptions = computed(() => {
+  const isFr = locale.value === 'fr';
+  if (chronoRegion.value === 'europe') {
+    return [
+      {
+        seconds: 180,
+        label: '⏱️ 3 min',
+        subLabel: isFr ? '100% des points & XP' : '100% points & XP'
+      },
+      {
+        seconds: 300,
+        label: '⏱️ 5 min',
+        subLabel: isFr ? '-25% sur les points' : '-25% points'
+      },
+      {
+        seconds: 0,
+        label: isFr ? '∞ Illimité' : '∞ Unlimited',
+        subLabel: isFr ? 'Points & XP ÷ 2' : 'Points & XP ÷ 2'
+      }
+    ];
+  }
+  return [
+    {
+      seconds: 900,
+      label: '⏱️ 15 min',
+      subLabel: isFr ? '100% des points & XP' : '100% points & XP'
+    },
+    {
+      seconds: 0,
+      label: isFr ? '∞ Illimité' : '∞ Unlimited',
+      subLabel: isFr ? 'Points & XP ÷ 2' : 'Points & XP ÷ 2'
+    }
+  ];
+});
+
+// Multiplicateur de points et d'XP selon l'option de temps choisie
+const chronoMultiplier = computed(() => {
+  if (chronoTimeLimit.value === 0) return 0.5;
+  if (chronoRegion.value === 'europe' && chronoTimeLimit.value === 300) return 0.75;
+  return 1;
+});
+
+const chronoMultiplierBadge = computed(() => {
+  if (chronoMultiplier.value === 0.5) return locale.value === 'fr' ? 'Temps illimité (Score ÷ 2)' : 'Unlimited (Score ÷ 2)';
+  if (chronoMultiplier.value === 0.75) return locale.value === 'fr' ? 'Mode 5 min (-25% pts)' : '5 min mode (-25% pts)';
+  return locale.value === 'fr' ? 'Points 100%' : '100% Points';
+});
+
+const chronoAdjustedScore = computed(() =>
+  Math.round(paysTrouves.value.length * chronoMultiplier.value)
+);
+
+const chronoEarnedXp = computed(() => {
+  if (paysTrouves.value.length === 0) return 0;
+  const baseBonus = Math.round(25 * chronoMultiplier.value);
+  return chronoAdjustedScore.value * 10 + baseBonus;
+});
+
 const selectChronoMode = (region) => {
   chronoRegion.value = region;
   if (region === 'europe') {
+    chronoTimeLimit.value = 180;
     chronoTemps.value = 180;
     mapCenter.value = [54.0, 15.0];
     mapZoom.value = 3.8;
   } else {
+    chronoTimeLimit.value = 900;
     chronoTemps.value = 900;
     mapCenter.value = [20.0, 10.0];
     mapZoom.value = 2;
   }
 };
 
+const selectChronoDuration = (seconds) => {
+  chronoTimeLimit.value = seconds;
+  chronoTemps.value = seconds;
+};
+
 const targetCountries = computed(() => {
   if (chronoRegion.value === 'europe') {
-    return localizedCountries.value.filter(c => c.continent === 'Europe').sort((a, b) => a.name.localeCompare(b.name));
+    return localizedCountries.value
+      .filter(c => c.continent === 'Europe')
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
   return [...localizedCountries.value].sort((a, b) => a.name.localeCompare(b.name));
+});
+
+// Colonnes alphabétiques par continent pour le Défi Monde (style JetPunk)
+const worldContinentGroups = computed(() => {
+  const isFr = locale.value === 'fr';
+  const defs = [
+    { key: 'Europe', label: 'Europe' },
+    { key: 'Asia', label: isFr ? 'Asie' : 'Asia' },
+    { key: 'Africa', label: isFr ? 'Afrique' : 'Africa' },
+    { key: 'North America', label: isFr ? 'Amérique du Nord' : 'North America' },
+    { key: 'South America', label: isFr ? 'Amérique du Sud' : 'South America' },
+    { key: 'Oceania', label: isFr ? 'Océanie' : 'Oceania' }
+  ];
+
+  return defs.map(d => {
+    const list = targetCountries.value
+      .filter(c => c.continent === d.key)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const foundCount = list.filter(c => paysTrouves.value.includes(c.iso)).length;
+    return {
+      key: d.key,
+      label: d.label,
+      countries: list,
+      foundCount
+    };
+  });
+});
+
+// 4 colonnes alphabétiques équilibrées pour le Défi Europe (47 pays)
+const europeColumns = computed(() => {
+  const list = targetCountries.value;
+  const cols = [[], [], [], []];
+  const perCol = Math.ceil(list.length / 4);
+  list.forEach((country, idx) => {
+    const colIdx = Math.min(3, Math.floor(idx / perCol));
+    cols[colIdx].push(country);
+  });
+  return cols;
 });
 
 const getMarkerRadius = (iso) => {
@@ -1839,23 +2216,34 @@ const getMarkerRadius = (iso) => {
   return 6;
 };
 
+const terminerChrono = () => {
+  if (chronoFini.value) return;
+  chronoFini.value = true;
+  chronoDuplicateMsg.value = '';
+  arreterChrono();
+  playSound('victory');
+  const modeLabel = chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde';
+  sauvegarderScore(modeLabel, chronoAdjustedScore.value, targetCountries.value.length);
+};
+
 const demarrerChrono = () => {
   isChronoStarted.value = true;
   arreterChrono();
   chronoInput.value = '';
+  chronoDuplicateMsg.value = '';
   paysTrouves.value = [];
   chronoFini.value = false;
-  
-  intervalId = setInterval(() => {
-    if (chronoTemps.value > 0) {
-      chronoTemps.value--;
-    } else {
-      chronoFini.value = true;
-      arreterChrono();
-      playSound('victory');
-      sauvegarderScore(chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde', paysTrouves.value.length, targetCountries.length);
-    }
-  }, 1000);
+  chronoTemps.value = chronoTimeLimit.value;
+
+  if (chronoTimeLimit.value > 0) {
+    intervalId = setInterval(() => {
+      if (chronoTemps.value > 0) {
+        chronoTemps.value--;
+      } else {
+        terminerChrono();
+      }
+    }, 1000);
+  }
 };
 
 const formatTime = (seconds) => {
@@ -1867,24 +2255,41 @@ const formatTime = (seconds) => {
 const verifierSaisieChrono = () => {
   if (chronoFini.value) return;
   const inputNormalise = normalizeStr(chronoInput.value);
-  
+  if (!inputNormalise) {
+    chronoDuplicateMsg.value = '';
+    return;
+  }
+
   const pays = targetCountries.value.find(c => {
     const mainName = normalizeStr(c.name);
     const altNames = (c.aliases || []).map(a => normalizeStr(a));
     return mainName === inputNormalise || altNames.includes(inputNormalise);
   });
 
-  if (pays && !paysTrouves.value.includes(pays.iso)) {
-    paysTrouves.value.push(pays.iso); 
-    chronoInput.value = ''; 
-    playSound('correct');
-    
-    if (paysTrouves.value.length === targetCountries.value.length) {
-      chronoFini.value = true;
-      arreterChrono();
-      playSound('victory');
-      sauvegarderScore(chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde', paysTrouves.value.length, targetCountries.length);
-    }
+  if (!pays) return;
+
+  // Si le pays a déjà été trouvé : affiche le message d'alerte et vide le champ
+  if (paysTrouves.value.includes(pays.iso)) {
+    chronoDuplicateMsg.value = locale.value === 'fr'
+      ? `Pays déjà trouvé : ${pays.name} !`
+      : `Country already found: ${pays.name}!`;
+    chronoInput.value = '';
+    playSound('wrong');
+    if (duplicateTimer) clearTimeout(duplicateTimer);
+    duplicateTimer = setTimeout(() => {
+      chronoDuplicateMsg.value = '';
+    }, 2800);
+    return;
+  }
+
+  // Nouveau pays valide trouvé
+  paysTrouves.value.push(pays.iso);
+  chronoInput.value = '';
+  chronoDuplicateMsg.value = '';
+  playSound('correct');
+
+  if (paysTrouves.value.length === targetCountries.value.length) {
+    terminerChrono();
   }
 };
 
@@ -1892,6 +2297,10 @@ const arreterChrono = () => {
   if (intervalId) {
     clearInterval(intervalId);
     intervalId = null;
+  }
+  if (duplicateTimer) {
+    clearTimeout(duplicateTimer);
+    duplicateTimer = null;
   }
 };
 
