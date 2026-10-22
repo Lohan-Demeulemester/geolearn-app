@@ -606,7 +606,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODE : CLIQUEZ SUR LA CARTE (STYLE SETERRA SANS CLAVIER)                  -->
+    <!-- MODE : CLIQUEZ SUR LA CARTE (STYLE SETERRA SANS CLAVIER - CARTE MUETTE)   -->
     <!-- ========================================================================= -->
     <div v-if="currentMode === 'map-click'" class="max-w-5xl mx-auto mt-6 space-y-5">
       <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-7 shadow-sm border border-gray-100 dark:border-gray-700 space-y-5">
@@ -652,7 +652,7 @@
           {{ mapClickFeedback }}
         </div>
 
-        <!-- Carte muette interactive Seterra -->
+        <!-- Carte muette interactive Seterra (Zéro nom de pays affiché) -->
         <div class="h-[500px] w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 relative z-0 bg-[#aad3df] dark:bg-[#1e293b]">
           <l-map
             v-model:zoom="mapClickZoom"
@@ -662,7 +662,7 @@
             :use-global-leaflet="false"
           >
             <l-tile-layer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
               :no-wrap="true"
             ></l-tile-layer>
 
@@ -861,7 +861,7 @@
           <option value="">{{ locale === 'fr' ? 'Tous les continents (196)' : 'All Continents (196)' }}</option>
           <option value="Europe">Europe (47)</option>
           <option value="Asia">{{ locale === 'fr' ? 'Asie (46)' : 'Asia (46)' }}</option>
-          <option value="Africa">{{ locale === 'fr' ? 'Afrique (54)' : 'Africa (54)' }}</option>
+          <option value="Africa">{{ locale === 'fr' ? 'Afrique (54)' : 'Afrique (54)' }}</option>
           <option value="North America">{{ locale === 'fr' ? 'Amérique du Nord (23)' : 'North America (23)' }}</option>
           <option value="South America">{{ locale === 'fr' ? 'Amérique du Sud (12)' : 'South America (12)' }}</option>
           <option value="Oceania">{{ locale === 'fr' ? 'Océanie (14)' : 'Oceania (14)' }}</option>
@@ -1007,7 +1007,7 @@
               <div class="text-3xl">🇪🇺</div>
               <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ t('home.mode_chrono_title') }}</h4>
               <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ locale === 'fr' ? 'Retrouvez les 47 pays d\'Europe au clavier (grille alphabétique incluse).' : 'Find all 47 European countries by typing (alphabetical grid included).' }}
+                {{ locale === 'fr' ? 'Retrouvez les 47 pays d\'Europe sur carte muette (grille alphabétique incluse).' : 'Find all 47 European countries on a blank map (alphabetical grid included).' }}
               </p>
             </div>
 
@@ -1019,7 +1019,7 @@
               <div class="text-3xl">🌍</div>
               <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ locale === 'fr' ? 'Défi Monde (196 pays)' : 'World Challenge (196 countries)' }}</h4>
               <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ locale === 'fr' ? 'Retrouvez les 196 pays du monde classés par continent comme sur JetPunk !' : 'Find all 196 world countries sorted by continent just like JetPunk!' }}
+                {{ locale === 'fr' ? 'Retrouvez les 196 pays du monde sur carte muette classés par continent comme sur JetPunk !' : 'Find all 196 world countries on a blank map sorted by continent just like JetPunk!' }}
               </p>
             </div>
           </div>
@@ -1063,19 +1063,22 @@
         <!-- ÉCRAN DE JEU CHRONO ACTIF OU TERMINÉ -->
         <div v-else class="space-y-6">
           
-          <!-- Carte Leaflet -->
+          <!-- Carte Leaflet Muette (Sans aucun nom de pays ni de ville !) -->
           <div class="w-full h-[460px] bg-[#aad3df] dark:bg-[#1e293b] rounded-2xl overflow-hidden shadow-inner border border-gray-200 dark:border-gray-700 relative z-0">
             <l-map ref="map" v-model:zoom="mapZoom" v-model:center="mapCenter" :min-zoom="2" :max-zoom="7" :use-global-leaflet="false">
-              <l-tile-layer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" :no-wrap="true"></l-tile-layer>
+              <l-tile-layer
+                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
+                :no-wrap="true"
+              ></l-tile-layer>
               <l-circle-marker
                 v-for="country in targetCountries"
                 :key="'marker-' + country.id"
                 :lat-lng="[country.lat, country.lng]"
                 :radius="getMarkerRadius(country.iso)"
-                :color="paysTrouves.includes(country.iso) ? '#15803d' : (chronoFini ? '#b91c1c' : '#9ca3af')"
+                :color="paysTrouves.includes(country.iso) ? '#15803d' : (chronoFini ? '#b91c1c' : '#64748b')"
                 :weight="1.5"
                 :fill-color="paysTrouves.includes(country.iso) ? '#22c55e' : (chronoFini ? '#ef4444' : '#ffffff')"
-                :fill-opacity="0.9"
+                :fill-opacity="0.95"
               >
                 <l-popup v-if="paysTrouves.includes(country.iso) || chronoFini">
                   <strong>{{ country.name }}</strong>
@@ -1124,7 +1127,8 @@
               <div class="flex gap-2">
                 <input
                   v-model="chronoInput"
-                  @input="verifierSaisieChrono"
+                  @input="verifierSaisieChrono(false)"
+                  @keydown.enter.prevent="verifierSaisieChrono(true)"
                   :disabled="chronoFini"
                   type="text"
                   :placeholder="locale === 'fr' ? 'Tapez le nom d\'un pays...' : 'Type a country name...'"
@@ -2252,44 +2256,95 @@ const formatTime = (seconds) => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
-const verifierSaisieChrono = () => {
+// Vérifie si un pays correspond à la saisie de l'utilisateur
+const countryMatchesInput = (country, inputNormalise) => {
+  const mainFr = normalizeStr(country.name_fr);
+  const mainEn = normalizeStr(country.name_en);
+  const altNames = (country.aliases || []).map(a => normalizeStr(a));
+  return mainFr === inputNormalise || mainEn === inputNormalise || altNames.includes(inputNormalise);
+};
+
+// Vérifie si un autre pays non trouvé commence par la saisie actuelle (ex: "uk" -> "ukraine", "niger" -> "nigeria", "inde" -> "indonesie")
+const anotherUnfoundCountryStartsWith = (inputNormalise, excludeIso = null) => {
+  return targetCountries.value.some(c => {
+    if (paysTrouves.value.includes(c.iso)) return false;
+    if (excludeIso && c.iso === excludeIso) return false;
+    const names = [
+      normalizeStr(c.name_fr),
+      normalizeStr(c.name_en),
+      ...(c.aliases || []).map(a => normalizeStr(a))
+    ];
+    return names.some(n => n.length > inputNormalise.length && n.startsWith(inputNormalise));
+  });
+};
+
+const verifierSaisieChrono = (forcedByEnter = false) => {
   if (chronoFini.value) return;
-  const inputNormalise = normalizeStr(chronoInput.value);
+  const rawValue = chronoInput.value || '';
+  const endedWithSpace = /\s$/.test(rawValue);
+  const inputNormalise = normalizeStr(rawValue);
+
   if (!inputNormalise) {
     chronoDuplicateMsg.value = '';
     return;
   }
 
-  const pays = targetCountries.value.find(c => {
-    const mainName = normalizeStr(c.name);
-    const altNames = (c.aliases || []).map(a => normalizeStr(a));
-    return mainName === inputNormalise || altNames.includes(inputNormalise);
-  });
+  // 1. On cherche d'abord parmi les pays NON TROUVÉS
+  const unfoundMatch = targetCountries.value.find(
+    c => !paysTrouves.value.includes(c.iso) && countryMatchesInput(c, inputNormalise)
+  );
 
-  if (!pays) return;
+  if (unfoundMatch) {
+    const isMainNameMatch =
+      normalizeStr(unfoundMatch.name_fr) === inputNormalise ||
+      normalizeStr(unfoundMatch.name_en) === inputNormalise;
 
-  // Si le pays a déjà été trouvé : affiche le message d'alerte et vide le champ
-  if (paysTrouves.value.includes(pays.iso)) {
+    // Si la correspondance vient d'un alias très court (ex: "uk" pour Royaume-Uni)
+    // et qu'un autre pays non trouvé commence par ces lettres (ex: "ukraine"),
+    // on attend que l'utilisateur appuie sur Entrée ou Espace pour valider l'alias court,
+    // afin de lui laisser écrire "ukraine" librement !
+    if (
+      !isMainNameMatch &&
+      inputNormalise.length <= 3 &&
+      !forcedByEnter &&
+      !endedWithSpace &&
+      anotherUnfoundCountryStartsWith(inputNormalise, unfoundMatch.iso)
+    ) {
+      return;
+    }
+
+    paysTrouves.value.push(unfoundMatch.iso);
+    chronoInput.value = '';
+    chronoDuplicateMsg.value = '';
+    playSound('correct');
+
+    if (paysTrouves.value.length === targetCountries.value.length) {
+      terminerChrono();
+    }
+    return;
+  }
+
+  // 2. Sinon, on vérifie si la saisie correspond à un pays DÉJÀ TROUVÉ
+  const alreadyFoundMatch = targetCountries.value.find(
+    c => paysTrouves.value.includes(c.iso) && countryMatchesInput(c, inputNormalise)
+  );
+
+  if (alreadyFoundMatch) {
+    // Si un pays non trouvé commence par ce préfixe (ex: "uk" déjà trouvé mais l'utilisateur tape "ukraine",
+    // ou "niger" déjà trouvé mais l'utilisateur tape "nigeria"), on NE bloque PAS et on N'EFFACE PAS la saisie !
+    if (!forcedByEnter && anotherUnfoundCountryStartsWith(inputNormalise, alreadyFoundMatch.iso)) {
+      return;
+    }
+
     chronoDuplicateMsg.value = locale.value === 'fr'
-      ? `Pays déjà trouvé : ${pays.name} !`
-      : `Country already found: ${pays.name}!`;
+      ? `Pays déjà trouvé : ${alreadyFoundMatch.name} !`
+      : `Country already found: ${alreadyFoundMatch.name}!`;
     chronoInput.value = '';
     playSound('wrong');
     if (duplicateTimer) clearTimeout(duplicateTimer);
     duplicateTimer = setTimeout(() => {
       chronoDuplicateMsg.value = '';
     }, 2800);
-    return;
-  }
-
-  // Nouveau pays valide trouvé
-  paysTrouves.value.push(pays.iso);
-  chronoInput.value = '';
-  chronoDuplicateMsg.value = '';
-  playSound('correct');
-
-  if (paysTrouves.value.length === targetCountries.value.length) {
-    terminerChrono();
   }
 };
 
