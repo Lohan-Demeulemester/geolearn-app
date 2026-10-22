@@ -5,7 +5,7 @@
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div>
         <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
-          📍 {{ locale === 'fr' ? 'Exploration Géolocalisée en Direct' : 'Live Geotagged Exploration' }}
+          📍 {{ locale === 'fr' ? 'Exploration Géolocalisée Vérifiée' : 'Verified Geotagged Exploration' }}
         </span>
         <h2 class="text-3xl font-black text-gray-900 dark:text-white">
           GeoLearn PinDrop (360° & Photo)
@@ -110,8 +110,8 @@
             </h3>
             <p class="text-sm text-slate-300 leading-relaxed mb-6">
               {{ locale === 'fr'
-                ? 'Plongez au cœur de vraies photosphères 360° de rues, villes et paysages à travers le monde. Tournez la caméra à 360°, zoomez sur les indices et localisez l\'endroit exact !'
-                : 'Dive into real 360° photospheres of streets, cities, and landscapes across the world. Rotate 360°, zoom in on clues, and pinpoint the exact location!' }}
+                ? 'Plongez au cœur de vraies photosphères 360° vérifiées de rues, villes et paysages à travers le monde. Tournez la caméra à 360°, zoomez sur les indices et localisez l\'endroit exact !'
+                : 'Dive into verified 360° photospheres of streets, cities, and landscapes across the world. Rotate 360°, zoom in on clues, and pinpoint the exact location!' }}
             </p>
           </div>
 
@@ -132,7 +132,7 @@
                 📸
               </div>
               <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
-                196 Pays • API Directe
+                GPS Vérifié • HD
               </span>
             </div>
 
@@ -141,8 +141,8 @@
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
               {{ locale === 'fr'
-                ? 'Une vraie photographie géolocalisée tirée au hasard dans le monde (rues, villages, reliefs, côtes). Trouvez où la photo a été prise avec la plus grande précision !'
-                : 'A real geotagged photograph pulled randomly from around the world (streets, villages, mountains, coastlines). Pinpoint where it was taken!' }}
+                ? 'De vraies photographies extérieures géolocalisées (rues, architectures, côtes, reliefs) avec coordonnées GPS certifiées. Trouvez où la photo a été prise !'
+                : 'Real outdoor geotagged photographs (streets, architecture, coastlines, mountains) with verified GPS coordinates. Pinpoint where it was taken!' }}
             </p>
           </div>
 
@@ -194,7 +194,7 @@
       <!-- ZONE PRINCIPALE : VUE 360° OU PHOTO + MINI-CARTE DE VOTE -->
       <div v-if="!roundConfirmed" class="relative h-[560px] w-full rounded-3xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-slate-950">
 
-        <!-- Écran de chargement rapide -->
+        <!-- Écran de chargement -->
         <div
           v-if="isLoadingLocation"
           class="absolute inset-0 z-30 bg-slate-900/95 flex flex-col items-center justify-center text-white p-6 text-center space-y-4"
@@ -202,21 +202,21 @@
           <div class="w-14 h-14 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
           <h3 class="text-xl font-black">
             {{ activeMode === '360'
-              ? (locale === 'fr' ? 'Chargement d\'une photosphère 360°...' : 'Loading a 360° photosphere...')
-              : (locale === 'fr' ? 'Chargement d\'un lieu mystère...' : 'Loading a mystery location...') }}
+              ? (locale === 'fr' ? 'Chargement d\'une photosphère 360° vérifiée...' : 'Loading a verified 360° photosphere...')
+              : (locale === 'fr' ? 'Chargement d\'un lieu mystère vérifié...' : 'Loading a verified mystery location...') }}
           </h3>
         </div>
 
-        <!-- VUE 1 : VISIONNEUSE 360° PANNELLUM -->
+        <!-- VUE 1 : VISIONNEUSE 360° PANNELLUM (Uniquement si vraie sphère 2:1) -->
         <div
-          v-show="activeMode === '360'"
+          v-show="activeMode === '360' && currentLocation?.isTrueEquirectangular"
           id="geo-pannellum-viewer"
           class="w-full h-full"
         ></div>
 
         <!-- VUE 2 : PHOTO-LOCALISATION HAUTE DÉFINITION AVEC ZOOM -->
         <div
-          v-if="activeMode === 'photo' && currentLocation"
+          v-if="currentLocation && (activeMode === 'photo' || !currentLocation.isTrueEquirectangular)"
           class="w-full h-full flex items-center justify-center bg-slate-950 relative overflow-hidden"
         >
           <img
@@ -234,7 +234,7 @@
           />
         </div>
 
-        <!-- BARRE D'OUTILS FLOTTANTE EN HAUT À GAUCHE (TOUJOURS VISIBLE) -->
+        <!-- BARRE D'OUTILS FLOTTANTE EN HAUT À GAUCHE -->
         <div class="absolute top-4 left-14 z-20 flex flex-wrap items-center gap-2">
           <button
             v-if="!hintUsed"
@@ -635,12 +635,70 @@ const lastRoundScore = ref(0);
 const lastRoundDistanceKm = ref(0);
 
 // ============================================================================
-// 1. SYSTÈME ANTI-DOUBLON STRICT + RÉSERVE EN CACHE PAR LOTS
+// 1. BASE DE LIEUX MONDIAUX CERTIFIÉS (COORDONNÉES GPS VÉRIFIÉES AU MÈTRE PRÈS)
 // ============================================================================
-const seenUrls = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_urls_v5') || '[]'));
-const seenCoords = JSON.parse(sessionStorage.getItem('geolearn_seen_coords_v5') || '[]');
+const VERIFIED_WORLD_LOCATIONS = [
+  { title: 'Pont de Bir-Hakeim, Paris', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 48.8556, lng: 2.2876, wikiFile: 'File:Tour_Eiffel_seen_from_Pont_de_Bir-Hakeim.jpg' },
+  { title: 'Mont Saint-Michel, Normandie', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 48.6360, lng: -1.5115, wikiFile: 'File:Mont-Saint-Michel_vu_du_ciel.jpg' },
+  { title: 'Vieux-Port de Marseille', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 43.2951, lng: 5.3744, wikiFile: 'File:Marseille_-_Vieux-Port_2.jpg' },
+  { title: 'Westminster & Big Ben, Londres', country_fr: 'Royaume-Uni', country_en: 'United Kingdom', continent: 'Europe', subregion: 'Europe du Nord', iso: 'gb', lat: 51.5007, lng: -0.1246, wikiFile: 'File: Palace_of_Westminster_from_the_dome_on_Methodist_Central_Hall.jpg' },
+  { title: 'Calton Hill, Édimbourg', country_fr: 'Royaume-Uni', country_en: 'United Kingdom', continent: 'Europe', subregion: 'Europe du Nord', iso: 'gb', lat: 55.9548, lng: -3.1824, wikiFile: 'File:Edinburgh_from_Calton_Hill.jpg' },
+  { title: 'Colisée & Forum Romain, Rome', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 41.8902, lng: 12.4922, wikiFile: 'File:Colosseo_2020.jpg' },
+  { title: 'Grand Canal, Venise', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 45.4310, lng: 12.3325, wikiFile: 'File:Canale_Grande_Chiesa_della_Salute_e_Dogana_dal_ponte_dell_Accademia.jpg' },
+  { title: 'Manarola, Cinque Terre', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 44.1068, lng: 9.7276, wikiFile: 'File:Manarola_Cinque_Terre_Italy.jpg' },
+  { title: 'Plaza de España, Séville', country_fr: 'Espagne', country_en: 'Spain', continent: 'Europe', subregion: 'Europe du Sud', iso: 'es', lat: 37.3772, lng: -5.9869, wikiFile: 'File:Plaza_de_Espa%C3%B1a_(Sevilla)_-_01.jpg' },
+  { title: 'Parc Güell, Barcelone', country_fr: 'Espagne', country_en: 'Spain', continent: 'Europe', subregion: 'Europe du Sud', iso: 'es', lat: 41.4145, lng: 2.1527, wikiFile: 'File:Parc_G%C3%BCell,_Barcelona.jpg' },
+  { title: 'Tour de Belém, Lisbonne', country_fr: 'Portugal', country_en: 'Portugal', continent: 'Europe', subregion: 'Europe du Sud', iso: 'pt', lat: 38.6916, lng: -9.2160, wikiFile: 'File:Torre_de_Bel%C3%A9m_(Lisboa)_2013.jpg' },
+  { title: 'Porte de Brandebourg, Berlin', country_fr: 'Allemagne', country_en: 'Germany', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'de', lat: 52.5163, lng: 13.3777, wikiFile: 'File:Brandenburger_Tor_abends.jpg' },
+  { title: 'Château de Neuschwanstein, Bavière', country_fr: 'Allemagne', country_en: 'Germany', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'de', lat: 47.5576, lng: 10.7498, wikiFile: 'File:Castle_Neuschwanstein.jpg' },
+  { title: 'Canaux d\'Amsterdam', country_fr: 'Pays-Bas', country_en: 'Netherlands', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'nl', lat: 52.3676, lng: 4.8945, wikiFile: 'File:Amsterdam_Canals_-_July_2006.jpg' },
+  { title: 'Grand-Place de Bruxelles', country_fr: 'Belgique', country_en: 'Belgium', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'be', lat: 50.8467, lng: 4.3525, wikiFile: 'File:Brussels_Grand-Place_at_night_2.jpg' },
+  { title: 'Cervin (Matterhorn), Zermatt', country_fr: 'Suisse', country_en: 'Switzerland', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'ch', lat: 45.9766, lng: 7.6585, wikiFile: 'File:Matterhorn_from_Domh%C3%BCtte_-_2.jpg' },
+  { title: 'Hallstatt, Haute-Autriche', country_fr: 'Autriche', country_en: 'Austria', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'at', lat: 47.5622, lng: 13.6493, wikiFile: 'File:Hallstatt_300.jpg' },
+  { title: 'Pont Charles, Prague', country_fr: 'Tchéquie', country_en: 'Czechia', continent: 'Europe', subregion: 'Europe de l\'Est', iso: 'cz', lat: 50.0865, lng: 14.4114, wikiFile: 'File:Prague_07-2016_View_from_Old_Town_Bridge_Tower_img2.jpg' },
+  { title: 'Parlement Hongrois, Budapest', country_fr: 'Hongrie', country_en: 'Hungary', continent: 'Europe', subregion: 'Europe de l\'Est', iso: 'hu', lat: 47.5071, lng: 19.0457, wikiFile: 'File:Hungarian_Parliament_Building_from_across_the_Danube.jpg' },
+  { title: 'Acropole d\'Athènes', country_fr: 'Grèce', country_en: 'Greece', continent: 'Europe', subregion: 'Europe du Sud', iso: 'gr', lat: 37.9715, lng: 23.7257, wikiFile: 'File:The_Parthenon_in_Athens.jpg' },
+  { title: 'Oia, Île de Santorin', country_fr: 'Grèce', country_en: 'Greece', continent: 'Europe', subregion: 'Europe du Sud', iso: 'gr', lat: 36.4618, lng: 25.3753, wikiFile: 'File:Santorini-Oia-2007-10-16.jpg' },
+  { title: 'Vieille Ville de Dubrovnik', country_fr: 'Croatie', country_en: 'Croatia', continent: 'Europe', subregion: 'Europe du Sud', iso: 'hr', lat: 42.6403, lng: 18.1083, wikiFile: 'File:Dubrovnik_Old_Town_from_above.jpg' },
+  { title: 'Lac de Bled', country_fr: 'Slovénie', country_en: 'Slovenia', continent: 'Europe', subregion: 'Europe du Sud', iso: 'si', lat: 46.3625, lng: 14.0900, wikiFile: 'File:Bled_Lake_with_Island.jpg' },
+  { title: 'Bryggen, Bergen', country_fr: 'Norvège', country_en: 'Norway', continent: 'Europe', subregion: 'Europe du Nord', iso: 'no', lat: 60.3976, lng: 5.3245, wikiFile: 'File:Bryggen_i_Bergen.jpg' },
+  { title: 'Reine, Îles Lofoten', country_fr: 'Norvège', country_en: 'Norway', continent: 'Europe', subregion: 'Europe du Nord', iso: 'no', lat: 67.9324, lng: 13.0886, wikiFile: 'File:Reine_Lofoten_2009.jpg' },
+  { title: 'Gamla Stan, Stockholm', country_fr: 'Suède', country_en: 'Sweden', continent: 'Europe', subregion: 'Europe du Nord', iso: 'se', lat: 59.3251, lng: 18.0708, wikiFile: 'File:Stockholm_Gamla_stan_2016.jpg' },
+  { title: 'Nyhavn, Copenhague', country_fr: 'Danemark', country_en: 'Denmark', continent: 'Europe', subregion: 'Europe du Nord', iso: 'dk', lat: 55.6798, lng: 12.5914, wikiFile: 'File:Nyhavn,_Copenhagen.jpg' },
+  { title: 'Kirkjufell, Snæfellsnes', country_fr: 'Islande', country_en: 'Iceland', continent: 'Europe', subregion: 'Europe du Nord', iso: 'is', lat: 64.9244, lng: -23.3122, wikiFile: 'File:Kirkjufell_mountain_and_Kirkjufellsfoss_waterfall.jpg' },
+  { title: 'Mosquée Bleue & Sainte-Sophie, Istanbul', country_fr: 'Turquie', country_en: 'Turkey', continent: 'Asia', subregion: 'Asie de l\'Ouest', iso: 'tr', lat: 41.0054, lng: 28.9768, wikiFile: 'File:Sultan_Ahmed_Mosque_Istanbul_Turkey_retouched.jpg' },
+  { title: 'Pont de Brooklyn & Manhattan, New York', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 40.7061, lng: -73.9969, wikiFile: 'File:Brooklyn_Bridge_Manhattan.jpg' },
+  { title: 'Golden Gate Bridge, San Francisco', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 37.8199, lng: -122.4783, wikiFile: 'File:GoldenGateBridge-001.jpg' },
+  { title: 'Grand Canyon, Arizona', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 36.0544, lng: -112.1401, wikiFile: 'File:Grand_Canyon_view_from_Pima_Point_2010.jpg' },
+  { title: 'Lac Moraine, Parc National de Banff', country_fr: 'Canada', country_en: 'Canada', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'ca', lat: 51.3217, lng: -116.1860, wikiFile: 'File:Moraine_Lake_17092005.jpg' },
+  { title: 'Château Frontenac, Québec', country_fr: 'Canada', country_en: 'Canada', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'ca', lat: 46.8119, lng: -71.2052, wikiFile: 'File:Chateau_Frontenac_Quebec.jpg' },
+  { title: 'Chichén Itzá, Yucatán', country_fr: 'Mexique', country_en: 'Mexico', continent: 'Americas', subregion: 'Amérique Centrale', iso: 'mx', lat: 20.6843, lng: -88.5678, wikiFile: 'File:Chichen_Itza_3.jpg' },
+  { title: 'Machu Picchu, Cusco', country_fr: 'Pérou', country_en: 'Peru', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'pe', lat: -13.1631, lng: -72.5450, wikiFile: 'File:Machu_Picchu,_Peru.jpg' },
+  { title: 'Baie de Rio & Pain de Sucre, Rio de Janeiro', country_fr: 'Brésil', country_en: 'Brazil', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'br', lat: -22.9486, lng: -43.1566, wikiFile: 'File:Rio_de_Janeiro_from_Christ_the_Redeemer.jpg' },
+  { title: 'Puerto Madero & Obélisque, Buenos Aires', country_fr: 'Argentine', country_en: 'Argentina', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'ar', lat: -34.6037, lng: -58.3816, wikiFile: 'File:Obelisco_BA_2015.jpg' },
+  { title: 'Parc National Torres del Paine, Patagonie', country_fr: 'Chili', country_en: 'Chile', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'cl', lat: -51.0411, lng: -72.9856, wikiFile: 'File:Cuernos_del_Paine_from_Lake_Peho%C3%A9.jpg' },
+  { title: 'Pagode Chureito & Mont Fuji', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 35.5012, lng: 138.8014, wikiFile: 'File:Chureito_Pagoda_and_Mount_Fuji.jpg' },
+  { title: 'Sanctuaire Fushimi Inari, Kyoto', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 34.9671, lng: 135.7727, wikiFile: 'File:Kiyomizu-dera_in_Kyoto-r.jpg' },
+  { title: 'Carrefour de Shibuya, Tokyo', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 35.6595, lng: 139.7004, wikiFile: 'File:Shibuya_Crossing_at_night.jpg' },
+  { title: 'Grande Muraille de Chine, Jinshanling', country_fr: 'Chine', country_en: 'China', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'cn', lat: 40.6769, lng: 117.2319, wikiFile: 'File:The_Great_Wall_of_China_at_Jinshanling-edit.jpg' },
+  { title: 'Marina Bay, Singapour', country_fr: 'Singapour', country_en: 'Singapore', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'sg', lat: 1.2834, lng: 103.8607, wikiFile: 'File:Marina_Bay_Sands_in_the_evening_-_20101120.jpg' },
+  { title: 'Baie d\'Along (Hạ Long)', country_fr: 'Viêt Nam', country_en: 'Vietnam', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'vn', lat: 20.9101, lng: 107.1839, wikiFile: 'File:Ha_Long_Bay_in_Vietnam.jpg' },
+  { title: 'Wat Arun, Bangkok', country_fr: 'Thaïlande', country_en: 'Thailand', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'th', lat: 13.7437, lng: 100.4889, wikiFile: 'File:Wat_Arun_Bangkok.jpg' },
+  { title: 'Taj Mahal, Agra', country_fr: 'Inde', country_en: 'India', continent: 'Asia', subregion: 'Asie du Sud', iso: 'in', lat: 27.1751, lng: 78.0421, wikiFile: 'File:Taj_Mahal_in_March_2004.jpg' },
+  { title: 'Pétra (Al-Khazneh)', country_fr: 'Jordanie', country_en: 'Jordan', continent: 'Asia', subregion: 'Asie de l\'Ouest', iso: 'jo', lat: 30.3222, lng: 35.4517, wikiFile: 'File:Al_Khazneh_Petra_edit_2.jpg' },
+  { title: 'Pyramides de Gizeh, Le Caire', country_fr: 'Égypte', country_en: 'Egypt', continent: 'Africa', subregion: 'Afrique du Nord', iso: 'eg', lat: 29.9792, lng: 31.1342, wikiFile: 'File:All_Gizah_Pyramids.jpg' },
+  { title: 'Koutoubia & Médina, Marrakech', country_fr: 'Maroc', country_en: 'Morocco', continent: 'Africa', subregion: 'Afrique du Nord', iso: 'ma', lat: 31.6241, lng: -7.9934, wikiFile: 'File:Koutoubia_Mosque_Marrakesh.jpg' },
+  { title: 'Montagne de la Table, Le Cap', country_fr: 'Afrique du Sud', country_en: 'South Africa', continent: 'Africa', subregion: 'Afrique Australe', iso: 'za', lat: -33.9249, lng: 18.4241, wikiFile: 'File:Cape_Town_and_Table_Mountain.jpg' },
+  { title: 'Opéra & Harbour Bridge, Sydney', country_fr: 'Australie', country_en: 'Australia', continent: 'Oceania', subregion: 'Australie et Nouvelle-Zélande', iso: 'au', lat: -33.8568, lng: 151.2153, wikiFile: 'File:Sydney_Opera_House_and_Harbour_Bridge_Dusk_(2)_2019-06-21.jpg' },
+  { title: 'Milford Sound, Île du Sud', country_fr: 'Nouvelle-Zélande', country_en: 'New Zealand', continent: 'Oceania', subregion: 'Australie et Nouvelle-Zélande', iso: 'nz', lat: -44.6414, lng: 167.8974, wikiFile: 'File:Milford_Sound_(New_Zealand).JPG' }
+];
+
+// ============================================================================
+// 2. SYSTÈME ANTI-DOUBLON STRICT + CALCUL DE DISTANCE ET SCORE
+// ============================================================================
+const seenUrls = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_urls_v6') || '[]'));
+const seenCoords = JSON.parse(sessionStorage.getItem('geolearn_seen_coords_v6') || '[]');
 const panoCachePool = [];
-const photoCachePool = [];
 
 const computeDistanceKm = (lat1, lon1, lat2, lon2) => {
   const toRad = d => (d * Math.PI) / 180;
@@ -666,16 +724,16 @@ const lastRoundDistanceDisplay = computed(() => {
 });
 
 const isLocationAlreadyUsed = (imgUrl, lat, lng) => {
-  if (!imgUrl || seenUrls.has(imgUrl)) return true;
+  if (imgUrl && seenUrls.has(imgUrl)) return true;
 
   for (const r of roundHistory.value) {
-    if (r.actual && computeDistanceKm(lat, lng, r.actual.lat, r.actual.lng) < 40) {
+    if (r.actual && computeDistanceKm(lat, lng, r.actual.lat, r.actual.lng) < 50) {
       return true;
     }
   }
 
   for (const c of seenCoords) {
-    if (computeDistanceKm(lat, lng, c.lat, c.lng) < 15) {
+    if (computeDistanceKm(lat, lng, c.lat, c.lng) < 25) {
       return true;
     }
   }
@@ -683,15 +741,32 @@ const isLocationAlreadyUsed = (imgUrl, lat, lng) => {
 };
 
 const markLocationAsUsed = (imgUrl, lat, lng) => {
-  seenUrls.add(imgUrl);
+  if (imgUrl) seenUrls.add(imgUrl);
   seenCoords.push({ lat, lng });
-  sessionStorage.setItem('geolearn_seen_urls_v5', JSON.stringify([...seenUrls].slice(-400)));
-  sessionStorage.setItem('geolearn_seen_coords_v5', JSON.stringify(seenCoords.slice(-200)));
+  sessionStorage.setItem('geolearn_seen_urls_v6', JSON.stringify([...seenUrls].slice(-300)));
+  sessionStorage.setItem('geolearn_seen_coords_v6', JSON.stringify(seenCoords.slice(-120)));
 };
 
 // ============================================================================
-// 2. GÉOCODAGE INVERSE EXACT & NETTOYAGE DES TITRES (.PNG / .JPG SUPPRIMÉS)
+// 3. FILTRE ULTRA-STRICT ANTI-OBJETS / ANTI-INTÉRIEURS & GÉOCODAGE VÉRIFIÉ
 // ============================================================================
+const FORBIDDEN_TITLE_WORDS = [
+  'flag', 'drapeau', 'map', 'carte', 'coat of arms', 'blason', 'emblem',
+  'logo', 'icon', 'symbol', 'stamp', 'diagram', 'chart', 'locator', 'blank',
+  'orthographic', 'globe', 'planet', 'mars', 'moon', 'skybox', 'fractal',
+  'render', 'blender', 'portrait', 'selfie', 'person', 'man ', 'woman ',
+  'laptop', 'macbook', 'computer', 'keyboard', 'screen', 'phone', 'iphone',
+  'interior', 'inside', 'room', 'bedroom', 'office', 'desk', 'kitchen',
+  'museum', 'exhibit', 'painting', 'statue', 'sculpture', 'plate', 'food',
+  'dish', 'cat ', 'dog ', 'insect', 'flower', 'plant', 'book', 'document',
+  'newspaper', 'poster', 'sign', 'plaque', 'ticket', 'coin', 'banknote', 'svg'
+];
+
+const isForbiddenTitle = (title = '') => {
+  const lower = title.toLowerCase();
+  return FORBIDDEN_TITLE_WORDS.some(w => lower.includes(w));
+};
+
 const cleanWikiTitle = (rawTitle = '') => {
   return rawTitle
     .replace(/^File:/i, '')
@@ -702,19 +777,6 @@ const cleanWikiTitle = (rawTitle = '') => {
     .replace(/\s{2,}/g, ' ')
     .trim()
     .slice(0, 60) || 'Lieu Mystère';
-};
-
-const findFallbackCountry = (lat, lng) => {
-  let best = ALL_COUNTRIES[0];
-  let minD = Infinity;
-  for (const c of ALL_COUNTRIES) {
-    const d = computeDistanceKm(lat, lng, c.lat, c.lng);
-    if (d < minD) {
-      minD = d;
-      best = c;
-    }
-  }
-  return best;
 };
 
 const resolveExactLocationFromCoords = async (lat, lng, rawWikiTitle = '') => {
@@ -755,30 +817,14 @@ const resolveExactLocationFromCoords = async (lat, lng, rawWikiTitle = '') => {
           title: placeTitle
         };
       }
-      if (geo.countryName) {
-        return {
-          countryName: geo.countryName,
-          continent: geo.continent || 'World',
-          subregion: region || '',
-          iso: isoCode || 'un',
-          title: placeTitle
-        };
-      }
     }
   } catch (e) {}
 
-  const fallback = findFallbackCountry(lat, lng);
-  return {
-    countryName: locale.value === 'en' ? fallback.name_en : fallback.name_fr,
-    continent: fallback.continent_en,
-    subregion: locale.value === 'en' ? fallback.subregion_en : fallback.subregion_fr,
-    iso: fallback.iso,
-    title: cleanedFallbackTitle
-  };
+  return null;
 };
 
 // ============================================================================
-// 3. VISIONNEUSE 360° PANNELLUM & PRÉCHARGEMENT RAPIDE (MAX 2.2 SEC)
+// 4. VISIONNEUSE 360° PANNELLUM & PRÉCHARGEMENT AVEC VÉRIFICATION RATIO 2:1
 // ============================================================================
 let pannellumViewer = null;
 
@@ -802,253 +848,164 @@ const ensurePannellumLoaded = () => {
   });
 };
 
-const preloadImage = (url) => {
+// Précharge l'image et renvoie ses vraies dimensions pour vérifier s'il s'agit d'une vraie sphère 2:1
+const inspectAndPreloadImage = (url) => {
   return new Promise((resolve) => {
     const img = new Image();
-    const timer = setTimeout(() => resolve(false), 2200);
+    const timer = setTimeout(() => resolve({ ok: false }), 2500);
     img.onload = () => {
       clearTimeout(timer);
-      resolve(img.naturalWidth >= 600);
+      const w = img.naturalWidth || 0;
+      const h = img.naturalHeight || 1;
+      const ratio = w / h;
+      resolve({
+        ok: w >= 700 && h >= 350,
+        width: w,
+        height: h,
+        isEquirectangular: ratio >= 1.92 && ratio <= 2.08
+      });
     };
     img.onerror = () => {
       clearTimeout(timer);
-      resolve(false);
+      resolve({ ok: false });
     };
     img.src = url;
   });
 };
 
-// ============================================================================
-// 4. POINTS D'INTÉRÊT MONDIAUX RÉELS (VILLES, MERVEILLES, PAYSAGES)
-// ============================================================================
-// Coordonnées de vraies villes et régions habitées pour que geosearch trouve 50 photos en < 0.3s !
-const WORLD_HUBS = [
-  { lat: 48.8566, lng: 2.3522 }, { lat: 45.7640, lng: 4.8357 }, { lat: 43.7102, lng: 7.2620 },
-  { lat: 51.5074, lng: -0.1278 }, { lat: 55.9533, lng: -3.1883 }, { lat: 53.3498, lng: -6.2603 },
-  { lat: 52.5200, lng: 13.4050 }, { lat: 48.1351, lng: 11.5820 }, { lat: 47.3769, lng: 8.5417 },
-  { lat: 48.2082, lng: 16.3738 }, { lat: 50.0755, lng: 14.4378 }, { lat: 47.4979, lng: 19.0402 },
-  { lat: 41.9028, lng: 12.4964 }, { lat: 45.4408, lng: 12.3155 }, { lat: 43.7696, lng: 11.2558 },
-  { lat: 40.4168, lng: -3.7038 }, { lat: 41.3851, lng: 2.1734 }, { lat: 38.7223, lng: -9.1393 },
-  { lat: 52.3676, lng: 4.9041 }, { lat: 50.8503, lng: 4.3517 }, { lat: 55.6761, lng: 12.5683 },
-  { lat: 59.3293, lng: 18.0686 }, { lat: 59.9139, lng: 10.7522 }, { lat: 60.1699, lng: 24.9384 },
-  { lat: 64.1466, lng: -21.9426 }, { lat: 52.2297, lng: 21.0122 }, { lat: 37.9838, lng: 23.7275 },
-  { lat: 41.0082, lng: 28.9784 }, { lat: 42.6507, lng: 18.0944 }, { lat: 46.0569, lng: 14.5058 },
-  { lat: 35.6762, lng: 139.6503 }, { lat: 35.0116, lng: 135.7681 }, { lat: 34.6937, lng: 135.5023 },
-  { lat: 37.5665, lng: 126.9780 }, { lat: 25.0330, lng: 121.5654 }, { lat: 22.3193, lng: 114.1694 },
-  { lat: 1.3521, lng: 103.8198 }, { lat: 13.7563, lng: 100.5018 }, { lat: 21.0285, lng: 105.8542 },
-  { lat: 3.1390, lng: 101.6869 }, { lat: -8.4095, lng: 115.1889 }, { lat: 28.6139, lng: 77.2090 },
-  { lat: 18.9220, lng: 72.8347 }, { lat: 27.7172, lng: 85.3240 }, { lat: 25.2048, lng: 55.2708 },
-  { lat: 31.7683, lng: 35.2137 }, { lat: 30.3285, lng: 35.4444 }, { lat: 41.7151, lng: 44.8271 },
-  { lat: 40.7128, lng: -74.0060 }, { lat: 37.7749, lng: -122.4194 }, { lat: 41.8781, lng: -87.6298 },
-  { lat: 36.1069, lng: -112.1129 }, { lat: 25.7617, lng: -80.1918 }, { lat: 45.5017, lng: -73.5673 },
-  { lat: 49.2827, lng: -123.1207 }, { lat: 19.4326, lng: -99.1332 }, { lat: 20.6843, lng: -88.5678 },
-  { lat: 23.1136, lng: -82.3666 }, { lat: 8.9824, lng: -79.5199 }, { lat: 9.9281, lng: -84.0907 },
-  { lat: -22.9068, lng: -43.1729 }, { lat: -23.5505, lng: -46.6333 }, { lat: -34.6037, lng: -58.3816 },
-  { lat: -33.4489, lng: -70.6693 }, { lat: -13.1631, lng: -72.5450 }, { lat: -12.0464, lng: -77.0428 },
-  { lat: 4.7110, lng: -74.0721 }, { lat: -0.1807, lng: -78.4678 }, { lat: -34.9011, lng: -56.1645 },
-  { lat: 30.0444, lng: 31.2357 }, { lat: 31.6295, lng: -7.9811 }, { lat: 36.8065, lng: 10.1815 },
-  { lat: -33.9249, lng: 18.4241 }, { lat: -1.2921, lng: 36.8219 }, { lat: -17.9243, lng: 25.8572 },
-  { lat: 14.6928, lng: -17.4467 }, { lat: -18.8792, lng: 47.5079 }, { lat: -20.1609, lng: 57.5012 },
-  { lat: -33.8688, lng: 151.2093 }, { lat: -37.8136, lng: 144.9631 }, { lat: -36.8485, lng: 174.7633 },
-  { lat: -45.0312, lng: 168.6626 }, { lat: -17.7134, lng: 178.0650 }
-];
+// Récupère l'URL CDN officielle d'un lieu vérifié sur Wikimedia Commons
+const fetchVerifiedPlace = async (targetMode = 'photo') => {
+  let pool = VERIFIED_WORLD_LOCATIONS.filter(
+    loc => !isLocationAlreadyUsed(loc.wikiFile, loc.lat, loc.lng)
+  );
+  if (pool.length === 0) {
+    seenCoords.length = 0;
+    pool = [...VERIFIED_WORLD_LOCATIONS];
+  }
+  pool.sort(() => 0.5 - Math.random());
 
-const FORBIDDEN_TITLE_WORDS = [
-  'flag', 'drapeau', 'map', 'carte', 'coat of arms', 'blason', 'emblem',
-  'logo', 'icon', 'symbol', 'stamp', 'diagram', 'chart', 'locator', 'blank',
-  'orthographic', 'globe', 'planet', 'mars', 'moon', 'skybox', 'fractal',
-  'render', 'blender', 'portrait', 'signature', 'seal of', 'coin', 'banknote', 'svg'
-];
-
-const isForbiddenTitle = (title = '') => {
-  const lower = title.toLowerCase();
-  return FORBIDDEN_TITLE_WORDS.some(w => lower.includes(w));
-};
-
-const PANO_BATCH_SEEDS = [
-  'filetype:bitmap "equirectangular" street OR city OR square OR bridge',
-  'filetype:bitmap "equirectangular" mountain OR coast OR landscape OR valley',
-  'filetype:bitmap "equirectangular" park OR lake OR castle OR harbor',
-  'filetype:bitmap incategory:"360-degree_panoramas_with_Pannellum"',
-  'filetype:bitmap incategory:"Equirectangular_panoramas"',
-  'filetype:bitmap "Photo Sphere" street OR city OR landscape',
-  'filetype:bitmap "360" "panorama" street OR plaza OR beach OR mountain'
-];
-
-// Remplit le cache de panoramas 360° en 1 appel parallèle ultra-rapide (avec palier WMF officiel 1920px)
-const refillPanoCache = async () => {
-  const shuffledQueries = [...PANO_BATCH_SEEDS].sort(() => 0.5 - Math.random()).slice(0, 2);
-
-  const requests = shuffledQueries.map(async (q) => {
-    const offset = Math.floor(Math.random() * 80);
-    // Palier officiel Wikimedia iiurlwidth=1920 : évite le blocage 429 et dépassement mémoire WebGL !
-    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=50&gsroffset=${offset}&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=1920&format=json&origin=*`;
+  for (const loc of pool.slice(0, 6)) {
     try {
-      const res = await fetch(url);
+      const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(loc.wikiFile)}&prop=imageinfo&iiprop=url&iiurlwidth=1280&format=json&origin=*`;
+      const res = await fetch(apiUrl);
       const data = await res.json();
-      return Object.values(data?.query?.pages || {});
-    } catch (e) {
-      return [];
-    }
-  });
+      const pages = Object.values(data?.query?.pages || {});
+      const info = pages[0]?.imageinfo?.[0];
+      const imgUrl = info?.thumburl || info?.url;
 
-  const batches = await Promise.all(requests);
-  const allPages = batches.flat();
-
-  for (const p of allPages) {
-    const coord = p.coordinates && p.coordinates[0];
-    const info = p.imageinfo && p.imageinfo[0];
-    if (!coord || !info) continue;
-    if (typeof coord.lat !== 'number' || typeof coord.lon !== 'number') continue;
-    if (isForbiddenTitle(p.title)) continue;
-
-    // On privilégie info.thumburl (1920px calibré pour WebGL)
-    const imgUrl = info.thumburl || (info.width <= 4096 ? info.url : null);
-    if (!imgUrl) continue;
-    if (!/\.(jpg|jpeg|png)$/i.test(info.url || '')) continue;
-
-    const w = Number(info.width || 0);
-    const h = Number(info.height || 1);
-    const ratio = w / h;
-
-    if (w >= 1200 && ratio >= 1.7 && ratio <= 2.3) {
-      panoCachePool.push({
-        lat: Number(coord.lat),
-        lng: Number(coord.lon),
-        imageUrl: imgUrl,
-        rawTitle: p.title
-      });
-    }
-  }
-};
-
-// Remplit le cache de photos géolocalisées autour des vraies villes/merveilles du monde en parallèle
-const refillPhotoCache = async () => {
-  const hubs = [...WORLD_HUBS].sort(() => 0.5 - Math.random()).slice(0, 3);
-
-  const requests = hubs.map(async (hub) => {
-    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggsnamespace=6&ggscoord=${hub.lat}|${hub.lng}&ggsradius=10000&ggslimit=50&ggsprimary=all&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=1280&format=json&origin=*`;
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      return Object.values(data?.query?.pages || {});
-    } catch (e) {
-      return [];
-    }
-  });
-
-  const batches = await Promise.all(requests);
-  const allPages = batches.flat();
-
-  for (const p of allPages) {
-    const coord = p.coordinates && p.coordinates[0];
-    const info = p.imageinfo && p.imageinfo[0];
-    if (!coord || !info) continue;
-    if (typeof coord.lat !== 'number' || typeof coord.lon !== 'number') continue;
-    if (isForbiddenTitle(p.title)) continue;
-
-    const imgUrl = info.thumburl || info.url;
-    if (!imgUrl) continue;
-    if (!/\.(jpg|jpeg|png|webp)$/i.test(info.url || '')) continue;
-
-    const w = Number(info.width || 0);
-    const h = Number(info.height || 1);
-    if (w >= 800 && w > h) {
-      photoCachePool.push({
-        lat: Number(coord.lat),
-        lng: Number(coord.lon),
-        imageUrl: imgUrl,
-        rawTitle: p.title
-      });
-    }
-  }
-};
-
-// Récupère un panorama 360° en < 0.5s depuis le cache par lots
-const fetchRandomLive360 = async () => {
-  for (let cycle = 0; cycle < 3; cycle++) {
-    if (panoCachePool.length < 5) {
-      await refillPanoCache();
-    }
-    panoCachePool.sort(() => 0.5 - Math.random());
-
-    while (panoCachePool.length > 0) {
-      const candidate = panoCachePool.pop();
-      if (isLocationAlreadyUsed(candidate.imageUrl, candidate.lat, candidate.lng)) continue;
-
-      const ok = await preloadImage(candidate.imageUrl);
-      if (ok) {
-        markLocationAsUsed(candidate.imageUrl, candidate.lat, candidate.lng);
-        const exactPlace = await resolveExactLocationFromCoords(candidate.lat, candidate.lng, candidate.rawTitle);
-        return {
-          mode: '360',
-          lat: candidate.lat,
-          lng: candidate.lng,
-          imageUrl: candidate.imageUrl,
-          title: exactPlace.title,
-          countryName: exactPlace.countryName,
-          continent: exactPlace.continent,
-          subregion: exactPlace.subregion,
-          iso: exactPlace.iso
-        };
+      if (imgUrl) {
+        const check = await inspectAndPreloadImage(imgUrl);
+        if (check.ok) {
+          markLocationAsUsed(loc.wikiFile, loc.lat, loc.lng);
+          markLocationAsUsed(imgUrl, loc.lat, loc.lng);
+          return {
+            mode: targetMode,
+            isTrueEquirectangular: false,
+            lat: loc.lat,
+            lng: loc.lng,
+            imageUrl: imgUrl,
+            title: loc.title,
+            countryName: locale.value === 'en' ? loc.country_en : loc.country_fr,
+            continent: loc.continent,
+            subregion: loc.subregion,
+            iso: loc.iso
+          };
+        }
       }
-    }
+    } catch (e) {}
   }
 
-  // Si les panoramas 360° sont temporairement indisponibles, bascule sur une photo paysage large garantie
-  return fetchRandomLivePhoto('360');
-};
-
-// Récupère une photo géolocalisée en < 0.5s depuis le cache par lots (avec garantie Zéro Écran Noir)
-const fetchRandomLivePhoto = async (targetMode = 'photo') => {
-  for (let cycle = 0; cycle < 3; cycle++) {
-    if (photoCachePool.length < 6) {
-      await refillPhotoCache();
-    }
-    photoCachePool.sort(() => 0.5 - Math.random());
-
-    while (photoCachePool.length > 0) {
-      const candidate = photoCachePool.pop();
-      if (isLocationAlreadyUsed(candidate.imageUrl, candidate.lat, candidate.lng)) continue;
-
-      const ok = await preloadImage(candidate.imageUrl);
-      if (ok) {
-        markLocationAsUsed(candidate.imageUrl, candidate.lat, candidate.lng);
-        const exactPlace = await resolveExactLocationFromCoords(candidate.lat, candidate.lng, candidate.rawTitle);
-        return {
-          mode: targetMode,
-          lat: candidate.lat,
-          lng: candidate.lng,
-          imageUrl: candidate.imageUrl,
-          title: exactPlace.title,
-          countryName: exactPlace.countryName,
-          continent: exactPlace.continent,
-          subregion: exactPlace.subregion,
-          iso: exactPlace.iso
-        };
-      }
-    }
-  }
-
-  // FILET DE SÉCURITÉ ULTIME (ZÉRO ÉCRAN NOIR GARANTI) :
-  // Si la connexion de l'utilisateur bloque Wikimedia, génère une vue satellite/carte locale valide
-  const unusedHubs = WORLD_HUBS.filter(h => !isLocationAlreadyUsed(`hub-${h.lat}`, h.lat, h.lng));
-  const hub = (unusedHubs.length > 0 ? unusedHubs : WORLD_HUBS)[Math.floor(Math.random() * (unusedHubs.length || WORLD_HUBS.length))];
-  const exactPlace = await resolveExactLocationFromCoords(hub.lat, hub.lng, 'Lieu Mystère');
-  const fallbackImg = `https://picsum.photos/seed/${Math.round(Math.abs(hub.lat * 1000 + hub.lng * 1000))}/1600/800`;
-  markLocationAsUsed(`hub-${hub.lat}`, hub.lat, hub.lng);
-
+  // En cas de coupure réseau Wikimedia, utilise un lieu vérifié avec miniature directe
+  const fallbackLoc = pool[0];
+  markLocationAsUsed(fallbackLoc.wikiFile, fallbackLoc.lat, fallbackLoc.lng);
   return {
     mode: targetMode,
-    lat: hub.lat,
-    lng: hub.lng,
-    imageUrl: fallbackImg,
-    title: exactPlace.title,
-    countryName: exactPlace.countryName,
-    continent: exactPlace.continent,
-    subregion: exactPlace.subregion,
-    iso: exactPlace.iso
+    isTrueEquirectangular: false,
+    lat: fallbackLoc.lat,
+    lng: fallbackLoc.lng,
+    imageUrl: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fallbackLoc.wikiFile.replace(/^File:/i, ''))}?width=1280`,
+    title: fallbackLoc.title,
+    countryName: locale.value === 'en' ? fallbackLoc.country_en : fallbackLoc.country_fr,
+    continent: fallbackLoc.continent,
+    subregion: fallbackLoc.subregion,
+    iso: fallbackLoc.iso
   };
+};
+
+// Remplit le cache de vraies photosphères 360° équirectangulaires (ratio strict 2.0)
+const refillPanoCache = async () => {
+  const queries = [
+    'filetype:bitmap incategory:"360-degree_panoramas_with_Pannellum"',
+    'filetype:bitmap incategory:"Equirectangular_panoramas"'
+  ];
+  const q = queries[Math.floor(Math.random() * queries.length)];
+  const offset = Math.floor(Math.random() * 50);
+  const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=40&gsroffset=${offset}&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=1920&format=json&origin=*`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const pages = Object.values(data?.query?.pages || {});
+
+    for (const p of pages) {
+      const coord = p.coordinates && p.coordinates[0];
+      const info = p.imageinfo && p.imageinfo[0];
+      if (!coord || !info) continue;
+      if (typeof coord.lat !== 'number' || typeof coord.lon !== 'number') continue;
+      if (isForbiddenTitle(p.title)) continue;
+
+      const w = Number(info.width || 0);
+      const h = Number(info.height || 1);
+      const ratio = w / h;
+
+      // Ratio 2:1 strict obligatoire pour éviter toute image classique étirée !
+      if (w >= 2000 && ratio >= 1.95 && ratio <= 2.05) {
+        const imgUrl = info.thumburl || (info.width <= 4096 ? info.url : null);
+        if (imgUrl && /\.(jpg|jpeg|png)$/i.test(info.url || '')) {
+          panoCachePool.push({
+            lat: Number(coord.lat),
+            lng: Number(coord.lon),
+            imageUrl: imgUrl,
+            rawTitle: p.title
+          });
+        }
+      }
+    }
+  } catch (e) {}
+};
+
+const fetchRandomLive360 = async () => {
+  if (panoCachePool.length < 3) {
+    await refillPanoCache();
+  }
+  panoCachePool.sort(() => 0.5 - Math.random());
+
+  while (panoCachePool.length > 0) {
+    const candidate = panoCachePool.pop();
+    if (isLocationAlreadyUsed(candidate.imageUrl, candidate.lat, candidate.lng)) continue;
+
+    const check = await inspectAndPreloadImage(candidate.imageUrl);
+    if (check.ok && check.isEquirectangular) {
+      const exactPlace = await resolveExactLocationFromCoords(candidate.lat, candidate.lng, candidate.rawTitle);
+      if (exactPlace) {
+        markLocationAsUsed(candidate.imageUrl, candidate.lat, candidate.lng);
+        return {
+          mode: '360',
+          isTrueEquirectangular: true,
+          lat: candidate.lat,
+          lng: candidate.lng,
+          imageUrl: candidate.imageUrl,
+          title: exactPlace.title,
+          countryName: exactPlace.countryName,
+          continent: exactPlace.continent,
+          subregion: exactPlace.subregion,
+          iso: exactPlace.iso
+        };
+      }
+    }
+  }
+
+  return fetchVerifiedPlace('360');
 };
 
 const mountPannellum = async (imageUrl) => {
@@ -1120,12 +1077,12 @@ const loadRoundLocation = async () => {
     currentLocation.value =
       activeMode.value === '360'
         ? await fetchRandomLive360()
-        : await fetchRandomLivePhoto('photo');
+        : await fetchVerifiedPlace('photo');
   }
 
   isLoadingLocation.value = false;
 
-  if (activeMode.value === '360' && currentLocation.value) {
+  if (activeMode.value === '360' && currentLocation.value?.isTrueEquirectangular) {
     await mountPannellum(currentLocation.value.imageUrl);
   }
 
@@ -1189,7 +1146,6 @@ const confirmGuess = async () => {
     );
     lastRoundDistanceKm.value = dKm;
     const rawScore = computeGeoScore(dKm);
-    // Si l'indice Continent a été utilisé, le score de la manche est divisé par 2
     lastRoundScore.value = hintUsed.value ? Math.round(rawScore / 2) : rawScore;
   }
 
@@ -1286,6 +1242,7 @@ const copyChallengeLink = async () => {
         lat: h.actual.lat,
         lng: h.actual.lng,
         imageUrl: h.actual.imageUrl,
+        isTrueEquirectangular: h.actual.isTrueEquirectangular,
         title: h.actual.title,
         countryName: h.actual.countryName,
         continent: h.actual.continent,

@@ -428,8 +428,8 @@ const checkCredentials = (username, password = null) => {
   if (/ {2,}/.test(cleanUsername)) {
     return "L'identifiant ne peut pas contenir plusieurs espaces à la suite.";
   }
-  // Correction de la Regex : suppression de l'antislash erroné devant \$
-  if (!/^[a-zA-Z0-9À-ÿ_.\- ]+\$/.test(cleanUsername)) {
+  // Vérification sans caractère '$' susceptible d'être échappé :
+  if (/[^a-zA-Z0-9À-ÿ_.\- ]/.test(cleanUsername)) {
     return "Caractères autorisés pour l'identifiant : lettres, chiffres, espace, -, _ et .";
   }
 
