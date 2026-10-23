@@ -8,12 +8,12 @@
           📍 {{ locale === 'fr' ? 'Exploration Géolocalisée Vérifiée' : 'Verified Geotagged Exploration' }}
         </span>
         <h2 class="text-3xl font-black text-gray-900 dark:text-white">
-          GeoLearn PinDrop (360° & Photo)
+          GeoLearn PinDrop (Satellite & Photo)
         </h2>
         <p class="text-sm text-gray-600 dark:text-gray-400">
           {{ locale === 'fr'
-            ? 'Observez le lieu, placez votre épingle sur la carte mondiale et visez les 25 000 points en 5 manches !'
-            : 'Observe the location, drop your pin on the world map, and aim for 25,000 points across 5 rounds!' }}
+            ? 'Observez le lieu depuis l\'espace ou en photo, placez votre épingle sur la carte mondiale et visez les 25 000 points en 5 manches !'
+            : 'Observe the location from space or via photo, drop your pin on the world map, and aim for 25,000 points across 5 rounds!' }}
         </p>
       </div>
 
@@ -89,35 +89,35 @@
       <!-- Les 2 grands modes GeoGuessr -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        <!-- MODE A : EXPLORATION 360° NO MOVE -->
+        <!-- MODE A : SATELLITE ESPION (VUE DU CIEL INTERACTIVE) -->
         <div
-          @click="startNewGame('360')"
+          @click="startNewGame('satellite')"
           class="group bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-8 shadow-xl border-2 border-blue-500/30 hover:border-cyan-400 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden"
         >
           <div class="pointer-events-none absolute -top-20 -right-20 w-64 h-64 rounded-full bg-cyan-400/15 blur-3xl"></div>
           <div>
             <div class="flex items-center justify-between mb-6">
               <div class="w-16 h-16 rounded-2xl bg-cyan-400/20 border border-cyan-400/30 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
-                🌐
+                🛰️
               </div>
               <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-                Vue 360° • No Move
+                Vue Orbitale • Sans Texte
               </span>
             </div>
 
             <h3 class="text-2xl font-black mb-2">
-              {{ locale === 'fr' ? 'Mode Panorama 360° (No Move)' : '360° Panorama Mode (No Move)' }}
+              {{ locale === 'fr' ? 'Mode Satellite Espion (Vue du Ciel)' : 'Spy Satellite Mode (Aerial View)' }}
             </h3>
             <p class="text-sm text-slate-300 leading-relaxed mb-6">
               {{ locale === 'fr'
-                ? 'Plongez au cœur de vraies photosphères 360° vérifiées de rues, villes et paysages à travers le monde. Tournez la caméra à 360°, zoomez sur les indices et localisez l\'endroit exact !'
-                : 'Dive into verified 360° photospheres of streets, cities, and landscapes across the world. Rotate 360°, zoom in on clues, and pinpoint the exact location!' }}
+                ? 'Parachuté en vue satellite haute définition au-dessus d\'une ville, d\'un port ou d\'une merveille naturelle sans aucun nom affiché. Analysez l\'urbanisme, les toits, le climat et les côtes pour localiser la cible !'
+                : 'Dropped into a high-resolution satellite view above a city, harbor, or natural wonder with zero labels. Analyze urban grids, roofs, climate, and coastlines to pinpoint the target!' }}
             </p>
           </div>
 
           <div class="pt-4 border-t border-white/10 flex items-center justify-between text-sm font-extrabold text-cyan-300">
-            <span>5 {{ locale === 'fr' ? 'lieux uniques • 25 000 pts max' : 'unique locations • 25,000 pts max' }}</span>
-            <span class="group-hover:translate-x-1 transition-transform">{{ locale === 'fr' ? 'Jouer en 360° →' : 'Play 360° →' }}</span>
+            <span>5 {{ locale === 'fr' ? 'zones satellites • 25 000 pts max' : 'satellite zones • 25,000 pts max' }}</span>
+            <span class="group-hover:translate-x-1 transition-transform">{{ locale === 'fr' ? 'Lancer le Satellite →' : 'Launch Satellite →' }}</span>
           </div>
         </div>
 
@@ -167,8 +167,8 @@
             {{ locale === 'fr' ? `Manche ${currentRound} / 5` : `Round ${currentRound} / 5` }}
           </span>
           <span class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400">
-            {{ activeMode === '360'
-              ? (locale === 'fr' ? '🌐 Panorama 360° (No Move)' : '🌐 360° Panorama (No Move)')
+            {{ activeMode === 'satellite'
+              ? (locale === 'fr' ? '🛰️ Satellite Espion (Périmètre Verrouillé)' : '🛰️ Spy Satellite (Locked Perimeter)')
               : (locale === 'fr' ? '📸 Photo-Localisation' : '📸 Photo-Location') }}
           </span>
         </div>
@@ -191,7 +191,7 @@
         </div>
       </div>
 
-      <!-- ZONE PRINCIPALE : VUE 360° OU PHOTO + MINI-CARTE DE VOTE -->
+      <!-- ZONE PRINCIPALE : VUE SATELLITE OU PHOTO + MINI-CARTE DE VOTE -->
       <div v-if="!roundConfirmed" class="relative h-[560px] w-full rounded-3xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-slate-950">
 
         <!-- Écran de chargement -->
@@ -201,22 +201,60 @@
         >
           <div class="w-14 h-14 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
           <h3 class="text-xl font-black">
-            {{ activeMode === '360'
-              ? (locale === 'fr' ? 'Chargement d\'une photosphère 360° vérifiée...' : 'Loading a verified 360° photosphere...')
+            {{ activeMode === 'satellite'
+              ? (locale === 'fr' ? 'Acquisition du signal satellite orbital...' : 'Acquiring orbital satellite signal...')
               : (locale === 'fr' ? 'Chargement d\'un lieu mystère vérifié...' : 'Loading a verified mystery location...') }}
           </h3>
         </div>
 
-        <!-- VUE 1 : VISIONNEUSE 360° PANNELLUM (Uniquement si vraie sphère 2:1) -->
+        <!-- VUE 1 : MODE SATELLITE ESPION INTERACTIF (ESRI WORLD IMAGERY SANS TEXTE) -->
         <div
-          v-show="activeMode === '360' && currentLocation?.isTrueEquirectangular"
-          id="geo-pannellum-viewer"
-          class="w-full h-full"
-        ></div>
+          v-if="activeMode === 'satellite' && currentLocation"
+          class="w-full h-full relative"
+        >
+          <l-map
+            ref="satMapRef"
+            v-model:zoom="satZoom"
+            v-model:center="satCenter"
+            :min-zoom="13"
+            :max-zoom="17"
+            :max-bounds="satBounds"
+            :max-bounds-viscosity="1.0"
+            :use-global-leaflet="false"
+            class="w-full h-full"
+          >
+            <l-tile-layer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              :no-wrap="true"
+            ></l-tile-layer>
+
+            <!-- Cible radar sur le point exact à deviner -->
+            <l-circle-marker
+              :lat-lng="[currentLocation.lat, currentLocation.lng]"
+              :radius="12"
+              :color="'#22d3ee'"
+              :weight="3"
+              :fill-color="'#06b6d4'"
+              :fill-opacity="0.25"
+            >
+              <l-popup>
+                <strong>🎯 {{ locale === 'fr' ? 'Cible Satellite à localiser' : 'Satellite Target to locate' }}</strong>
+              </l-popup>
+            </l-circle-marker>
+          </l-map>
+
+          <!-- Bandeau HUD Satellite en bas à gauche -->
+          <div class="pointer-events-none absolute bottom-4 left-4 z-20 hidden sm:flex items-center gap-3 px-3.5 py-2 rounded-xl bg-slate-950/80 border border-cyan-400/30 text-cyan-300 text-xs font-mono backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            <span>SAT-ZOOM: {{ satZoom }}x (MAX 17x)</span>
+            <span class="text-slate-400">|</span>
+            <span>{{ locale === 'fr' ? 'Déplacez la vue pour inspecter les alentours' : 'Pan around to inspect surroundings' }}</span>
+          </div>
+        </div>
 
         <!-- VUE 2 : PHOTO-LOCALISATION HAUTE DÉFINITION AVEC ZOOM -->
         <div
-          v-if="currentLocation && (activeMode === 'photo' || !currentLocation.isTrueEquirectangular)"
+          v-else-if="activeMode === 'photo' && currentLocation"
           class="w-full h-full flex items-center justify-center bg-slate-950 relative overflow-hidden"
         >
           <img
@@ -252,6 +290,16 @@
           >
             🧭 {{ currentLocation.continent }}{{ currentLocation.subregion ? ` — ${currentLocation.subregion}` : '' }} (Score ÷ 2)
           </span>
+
+          <!-- Bouton spécifique au mode Satellite pour revenir sur la cible -->
+          <button
+            v-if="activeMode === 'satellite' && currentLocation"
+            type="button"
+            @click="recenterSatelliteTarget"
+            class="px-3 py-2 rounded-xl bg-cyan-950/90 hover:bg-cyan-800 text-cyan-200 text-xs font-bold backdrop-blur-md border border-cyan-400/30 transition cursor-pointer shadow-md"
+          >
+            🎯 {{ locale === 'fr' ? 'Recentrer cible' : 'Recenter target' }}
+          </button>
 
           <button
             type="button"
@@ -466,7 +514,7 @@
       <div class="text-center space-y-2">
         <div class="text-5xl mb-2">🏆</div>
         <span class="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-300">
-          {{ activeMode === '360' ? 'GeoGuessr 360° (No Move)' : 'GeoGuessr Photo' }}
+          {{ activeMode === 'satellite' ? 'GeoGuessr Satellite Espion' : 'GeoGuessr Photo' }}
         </span>
         <h3 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">
           {{ totalScore.toLocaleString() }} <span class="text-xl text-gray-400">/ 25 000 pts</span>
@@ -583,7 +631,6 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import ALL_COUNTRIES from '../data/countries.js';
 
 import "leaflet/dist/leaflet.css";
 import { LMap, LTileLayer, LMarker, LPopup, LPolyline, LCircleMarker } from "@vue-leaflet/vue-leaflet";
@@ -619,11 +666,17 @@ const roundConfirmed = ref(false);
 const currentLocation = ref(null);
 const roundHistory = ref([]);
 
+const satMapRef = ref(null);
 const guessMapRef = ref(null);
 const resultMapRef = ref(null);
 const miniMapExpanded = ref(false);
 const photoZoomed = ref(false);
 const hintUsed = ref(false);
+
+// Paramètres de la caméra Satellite Espion
+const satZoom = ref(15);
+const satCenter = ref([20, 0]);
+const satBounds = ref([[-90, -180], [90, 180]]);
 
 const guessZoom = ref(1);
 const guessCenter = ref([20, 0]);
@@ -635,9 +688,70 @@ const lastRoundScore = ref(0);
 const lastRoundDistanceKm = ref(0);
 
 // ============================================================================
-// 1. BASE DE LIEUX MONDIAUX CERTIFIÉS (COORDONNÉES GPS VÉRIFIÉES AU MÈTRE PRÈS)
+// 1A. BASE DÉDIÉE AU MODE SATELLITE ESPION (55 ZONES AÉRIENNES DISTINCTIVES)
 // ============================================================================
-const VERIFIED_WORLD_LOCATIONS = [
+const VERIFIED_SATELLITE_LOCATIONS = [
+  { title: 'Palm Jumeirah, Dubaï', country_fr: 'Émirats arabes unis', country_en: 'United Arab Emirates', continent: 'Asia', subregion: 'Asie de l\'Ouest', iso: 'ae', lat: 25.1124, lng: 55.1390 },
+  { title: 'Quartier de l\'Eixample, Barcelone', country_fr: 'Espagne', country_en: 'Spain', continent: 'Europe', subregion: 'Europe du Sud', iso: 'es', lat: 41.3954, lng: 2.1660 },
+  { title: 'Place de l\'Étoile & Arc de Triomphe, Paris', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 48.8738, lng: 2.2950 },
+  { title: 'Lagune & Place Saint-Marc, Venise', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 45.4342, lng: 12.3385 },
+  { title: 'Ceinture des Canaux (Grachtengordel), Amsterdam', country_fr: 'Pays-Bas', country_en: 'Netherlands', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'nl', lat: 52.3667, lng: 4.8860 },
+  { title: 'Pyramides de Gizeh, Le Caire', country_fr: 'Égypte', country_en: 'Egypt', continent: 'Africa', subregion: 'Afrique du Nord', iso: 'eg', lat: 29.9792, lng: 31.1342 },
+  { title: 'Central Park & Manhattan, New York', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 40.7711, lng: -73.9742 },
+  { title: 'Pentagone & Potomac, Washington D.C.', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 38.8719, lng: -77.0563 },
+  { title: 'Golden Gate & Baie de San Francisco', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 37.8199, lng: -122.4783 },
+  { title: 'Hoover Dam & Lac Mead, Nevada', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 36.0161, lng: -114.7377 },
+  { title: 'Chutes du Niagara, Ontario', country_fr: 'Canada', country_en: 'Canada', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'ca', lat: 43.0799, lng: -79.0747 },
+  { title: 'Vieux-Québec & Fleuve Saint-Laurent', country_fr: 'Canada', country_en: 'Canada', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'ca', lat: 46.8123, lng: -71.2045 },
+  { title: 'Écluses de Miraflores, Canal de Panama', country_fr: 'Panama', country_en: 'Panama', continent: 'Americas', subregion: 'Amérique Centrale', iso: 'pa', lat: 8.9967, lng: -79.5911 },
+  { title: 'Plano Piloto (Ville-Avion), Brasília', country_fr: 'Brésil', country_en: 'Brazil', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'br', lat: -15.7998, lng: -47.8645 },
+  { title: 'Plage de Copacabana & Pain de Sucre, Rio', country_fr: 'Brésil', country_en: 'Brazil', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'br', lat: -22.9688, lng: -43.1786 },
+  { title: 'Chutes d\'Iguazú, Misiones', country_fr: 'Argentine', country_en: 'Argentina', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'ar', lat: -25.6953, lng: -54.4367 },
+  { title: 'Puerto Madero & Avenue 9 de Julio, Buenos Aires', country_fr: 'Argentine', country_en: 'Argentina', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'ar', lat: -34.6061, lng: -58.3635 },
+  { title: 'Citadelle Inca de Machu Picchu, Andes', country_fr: 'Pérou', country_en: 'Peru', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'pe', lat: -13.1631, lng: -72.5450 },
+  { title: 'Falaises de Miraflores, Lima', country_fr: 'Pérou', country_en: 'Peru', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'pe', lat: -12.1319, lng: -77.0305 },
+  { title: 'Teotihuacán (Pyramides du Soleil et de la Lune)', country_fr: 'Mexique', country_en: 'Mexico', continent: 'Americas', subregion: 'Amérique Centrale', iso: 'mx', lat: 19.6925, lng: -98.8438 },
+  { title: 'Cité Interdite, Pékin (Beijing)', country_fr: 'Chine', country_en: 'China', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'cn', lat: 39.9163, lng: 116.3972 },
+  { title: 'Lujiazui & Bund, Shanghai', country_fr: 'Chine', country_en: 'China', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'cn', lat: 31.2397, lng: 121.4998 },
+  { title: 'Victoria Harbour & Kowloon, Hong Kong', country_fr: 'Chine', country_en: 'China', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'cn', lat: 22.2855, lng: 114.1577 },
+  { title: 'Palais Impérial de Tokyo, Chiyoda', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 35.6852, lng: 139.7528 },
+  { title: 'Cratère du Mont Fuji, Honshū', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 35.3606, lng: 138.7274 },
+  { title: 'Château d\'Osaka & Douves', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 34.6873, lng: 135.5262 },
+  { title: 'Marina Bay & Gardens by the Bay, Singapour', country_fr: 'Singapour', country_en: 'Singapore', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'sg', lat: 1.2816, lng: 103.8636 },
+  { title: 'Temples d\'Angkor Wat, Siem Reap', country_fr: 'Cambodge', country_en: 'Cambodia', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'kh', lat: 13.4125, lng: 103.8670 },
+  { title: 'Taj Mahal & Rivière Yamuna, Agra', country_fr: 'Inde', country_en: 'India', continent: 'Asia', subregion: 'Asie du Sud', iso: 'in', lat: 27.1751, lng: 78.0421 },
+  { title: 'Connaught Place (Cercle de New Delhi)', country_fr: 'Inde', country_en: 'India', continent: 'Asia', subregion: 'Asie du Sud', iso: 'in', lat: 28.6315, lng: 77.2167 },
+  { title: 'Fleuve Chao Phraya & Grand Palais, Bangkok', country_fr: 'Thaïlande', country_en: 'Thailand', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'th', lat: 13.7500, lng: 100.4913 },
+  { title: 'Tours Petronas & Parc KLCC, Kuala Lumpur', country_fr: 'Malaisie', country_en: 'Malaysia', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'my', lat: 3.1579, lng: 101.7116 },
+  { title: 'Corne d\'Or & Détroit du Bosphore, Istanbul', country_fr: 'Turquie', country_en: 'Turkey', continent: 'Asia', subregion: 'Asie de l\'Ouest', iso: 'tr', lat: 41.0082, lng: 28.9784 },
+  { title: 'Opéra de Sydney & Circular Quay', country_fr: 'Australie', country_en: 'Australia', continent: 'Oceania', subregion: 'Australie et Nouvelle-Zélande', iso: 'au', lat: -33.8568, lng: 151.2153 },
+  { title: 'Rocher d\'Uluru (Ayers Rock), Territoire du Nord', country_fr: 'Australie', country_en: 'Australia', continent: 'Oceania', subregion: 'Australie et Nouvelle-Zélande', iso: 'au', lat: -25.3444, lng: 131.0369 },
+  { title: 'Port d\'Auckland & Pont du Harbour', country_fr: 'Nouvelle-Zélande', country_en: 'New Zealand', continent: 'Oceania', subregion: 'Australie et Nouvelle-Zélande', iso: 'nz', lat: -36.8406, lng: 174.7645 },
+  { title: 'Victoria & Alfred Waterfront, Le Cap', country_fr: 'Afrique du Sud', country_en: 'South Africa', continent: 'Africa', subregion: 'Afrique Australe', iso: 'za', lat: -33.9036, lng: 18.4205 },
+  { title: 'Mosquée Hassan II & Corniche, Casablanca', country_fr: 'Maroc', country_en: 'Morocco', continent: 'Africa', subregion: 'Afrique du Nord', iso: 'ma', lat: 33.6084, lng: -7.6326 },
+  { title: 'Médina & Place Jemaa el-Fna, Marrakech', country_fr: 'Maroc', country_en: 'Morocco', continent: 'Africa', subregion: 'Afrique du Nord', iso: 'ma', lat: 31.6258, lng: -7.9891 },
+  { title: 'Île de Gorée & Port de Dakar', country_fr: 'Sénégal', country_en: 'Senegal', continent: 'Africa', subregion: 'Afrique de l\'Ouest', iso: 'sn', lat: 14.6669, lng: -17.3986 },
+  { title: 'Chutes Victoria (Fleuve Zambèze)', country_fr: 'Zambie', country_en: 'Zambia', continent: 'Africa', subregion: 'Afrique de l\'Est', iso: 'zm', lat: -17.9243, lng: 25.8572 },
+  { title: 'Cité du Vatican & Place Saint-Pierre, Rome', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 41.9022, lng: 12.4568 },
+  { title: 'Cratère du Vésuve, Baie de Naples', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 40.8224, lng: 14.4289 },
+  { title: 'Rocher & Port Hercule, Monaco', country_fr: 'Monaco', country_en: 'Monaco', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'mc', lat: 43.7347, lng: 7.4206 },
+  { title: 'Baie du Mont-Saint-Michel, Normandie', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 48.6360, lng: -1.5115 },
+  { title: 'Vieux-Port & Notre-Dame de la Garde, Marseille', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 43.2951, lng: 5.3744 },
+  { title: 'Tamise, Tower Bridge & City, Londres', country_fr: 'Royaume-Uni', country_en: 'United Kingdom', continent: 'Europe', subregion: 'Europe du Nord', iso: 'gb', lat: 51.5055, lng: -0.0754 },
+  { title: 'Acropole & Parthénon, Athènes', country_fr: 'Grèce', country_en: 'Greece', continent: 'Europe', subregion: 'Europe du Sud', iso: 'gr', lat: 37.9715, lng: 23.7257 },
+  { title: 'Remparts & Vieille Ville de Dubrovnik', country_fr: 'Croatie', country_en: 'Croatia', continent: 'Europe', subregion: 'Europe du Sud', iso: 'hr', lat: 42.6403, lng: 18.1083 },
+  { title: 'Citadelle Kastellet (Étoile), Copenhague', country_fr: 'Danemark', country_en: 'Denmark', continent: 'Europe', subregion: 'Europe du Nord', iso: 'dk', lat: 55.6914, lng: 12.5942 },
+  { title: 'Île de Gamla Stan, Stockholm', country_fr: 'Suède', country_en: 'Sweden', continent: 'Europe', subregion: 'Europe du Nord', iso: 'se', lat: 59.3251, lng: 18.0708 },
+  { title: 'Forteresse maritime de Suomenlinna, Helsinki', country_fr: 'Finlande', country_en: 'Finland', continent: 'Europe', subregion: 'Europe du Nord', iso: 'fi', lat: 60.1454, lng: 24.9881 },
+  { title: 'Place du Commerce & Tage, Lisbonne', country_fr: 'Portugal', country_en: 'Portugal', continent: 'Europe', subregion: 'Europe du Sud', iso: 'pt', lat: 38.7075, lng: -9.1364 },
+  { title: 'Île Marguerite & Parlement sur le Danube, Budapest', country_fr: 'Hongrie', country_en: 'Hungary', continent: 'Europe', subregion: 'Europe de l\'Est', iso: 'hu', lat: 47.5071, lng: 19.0457 },
+  { title: 'Kremlin & Place Rouge, Moscou', country_fr: 'Russie', country_en: 'Russia', continent: 'Europe', subregion: 'Europe de l\'Est', iso: 'ru', lat: 55.7520, lng: 37.6175 }
+];
+
+// ============================================================================
+// 1B. BASE DÉDIÉE AU MODE PHOTO-LOCALISATION (MONUMENTS & PAYSAGES VÉRIFIÉS)
+// ============================================================================
+const VERIFIED_PHOTO_LOCATIONS = [
   { title: 'Pont de Bir-Hakeim, Paris', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 48.8556, lng: 2.2876, wikiFile: 'File:Tour_Eiffel_seen_from_Pont_de_Bir-Hakeim.jpg' },
   { title: 'Mont Saint-Michel, Normandie', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 48.6360, lng: -1.5115, wikiFile: 'File:Mont-Saint-Michel_vu_du_ciel.jpg' },
   { title: 'Vieux-Port de Marseille', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 43.2951, lng: 5.3744, wikiFile: 'File:Marseille_-_Vieux-Port_2.jpg' },
@@ -696,9 +810,8 @@ const VERIFIED_WORLD_LOCATIONS = [
 // ============================================================================
 // 2. SYSTÈME ANTI-DOUBLON STRICT + CALCUL DE DISTANCE ET SCORE
 // ============================================================================
-const seenUrls = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_urls_v6') || '[]'));
-const seenCoords = JSON.parse(sessionStorage.getItem('geolearn_seen_coords_v6') || '[]');
-const panoCachePool = [];
+const seenKeys = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_keys_v7') || '[]'));
+const seenCoords = JSON.parse(sessionStorage.getItem('geolearn_seen_coords_v7') || '[]');
 
 const computeDistanceKm = (lat1, lon1, lat2, lon2) => {
   const toRad = d => (d * Math.PI) / 180;
@@ -723,132 +836,57 @@ const lastRoundDistanceDisplay = computed(() => {
   return `${Math.round(d).toLocaleString()} km`;
 });
 
-const isLocationAlreadyUsed = (imgUrl, lat, lng) => {
-  if (imgUrl && seenUrls.has(imgUrl)) return true;
+const isLocationAlreadyUsed = (keyStr, lat, lng) => {
+  if (keyStr && seenKeys.has(keyStr)) return true;
 
   for (const r of roundHistory.value) {
-    if (r.actual && computeDistanceKm(lat, lng, r.actual.lat, r.actual.lng) < 50) {
+    if (r.actual && computeDistanceKm(lat, lng, r.actual.lat, r.actual.lng) < 40) {
       return true;
     }
   }
 
   for (const c of seenCoords) {
-    if (computeDistanceKm(lat, lng, c.lat, c.lng) < 25) {
+    if (computeDistanceKm(lat, lng, c.lat, c.lng) < 20) {
       return true;
     }
   }
   return false;
 };
 
-const markLocationAsUsed = (imgUrl, lat, lng) => {
-  if (imgUrl) seenUrls.add(imgUrl);
+const markLocationAsUsed = (keyStr, lat, lng) => {
+  if (keyStr) seenKeys.add(keyStr);
   seenCoords.push({ lat, lng });
-  sessionStorage.setItem('geolearn_seen_urls_v6', JSON.stringify([...seenUrls].slice(-300)));
-  sessionStorage.setItem('geolearn_seen_coords_v6', JSON.stringify(seenCoords.slice(-120)));
+  sessionStorage.setItem('geolearn_seen_keys_v7', JSON.stringify([...seenKeys].slice(-300)));
+  sessionStorage.setItem('geolearn_seen_coords_v7', JSON.stringify(seenCoords.slice(-120)));
 };
 
 // ============================================================================
-// 3. FILTRE ULTRA-STRICT ANTI-OBJETS / ANTI-INTÉRIEURS & GÉOCODAGE VÉRIFIÉ
+// 3. SÉLECTION D'UNE CIBLE SATELLITE OU D'UN LIEU PHOTO VÉRIFIÉ
 // ============================================================================
-const FORBIDDEN_TITLE_WORDS = [
-  'flag', 'drapeau', 'map', 'carte', 'coat of arms', 'blason', 'emblem',
-  'logo', 'icon', 'symbol', 'stamp', 'diagram', 'chart', 'locator', 'blank',
-  'orthographic', 'globe', 'planet', 'mars', 'moon', 'skybox', 'fractal',
-  'render', 'blender', 'portrait', 'selfie', 'person', 'man ', 'woman ',
-  'laptop', 'macbook', 'computer', 'keyboard', 'screen', 'phone', 'iphone',
-  'interior', 'inside', 'room', 'bedroom', 'office', 'desk', 'kitchen',
-  'museum', 'exhibit', 'painting', 'statue', 'sculpture', 'plate', 'food',
-  'dish', 'cat ', 'dog ', 'insect', 'flower', 'plant', 'book', 'document',
-  'newspaper', 'poster', 'sign', 'plaque', 'ticket', 'coin', 'banknote', 'svg'
-];
+const pickVerifiedSatelliteZone = () => {
+  let pool = VERIFIED_SATELLITE_LOCATIONS.filter(
+    loc => !isLocationAlreadyUsed(`sat:${loc.title}`, loc.lat, loc.lng)
+  );
+  if (pool.length === 0) {
+    seenCoords.length = 0;
+    pool = [...VERIFIED_SATELLITE_LOCATIONS];
+  }
+  const chosen = pool[Math.floor(Math.random() * pool.length)];
+  markLocationAsUsed(`sat:${chosen.title}`, chosen.lat, chosen.lng);
 
-const isForbiddenTitle = (title = '') => {
-  const lower = title.toLowerCase();
-  return FORBIDDEN_TITLE_WORDS.some(w => lower.includes(w));
+  return {
+    mode: 'satellite',
+    lat: chosen.lat,
+    lng: chosen.lng,
+    imageUrl: '',
+    title: chosen.title,
+    countryName: locale.value === 'en' ? chosen.country_en : chosen.country_fr,
+    continent: chosen.continent,
+    subregion: chosen.subregion,
+    iso: chosen.iso
+  };
 };
 
-const cleanWikiTitle = (rawTitle = '') => {
-  return rawTitle
-    .replace(/^File:/i, '')
-    .replace(/\.(jpe?g|png|webp|tiff?|gif|svg|bmp)/gi, '')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\b(DSC|IMG|PANO|DJI|GPANO|PANORAMA|360|EQUIRECTANGULAR|CROPPED)\s*\d*\b/gi, '')
-    .replace(/\(\s*\)/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    .slice(0, 60) || 'Lieu Mystère';
-};
-
-const resolveExactLocationFromCoords = async (lat, lng, rawWikiTitle = '') => {
-  const cleanedFallbackTitle = cleanWikiTitle(rawWikiTitle);
-
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1800);
-    const lang = locale.value === 'en' ? 'en' : 'fr';
-    const res = await fetch(
-      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=${lang}`,
-      { signal: controller.signal }
-    );
-    clearTimeout(timer);
-
-    if (res.ok) {
-      const geo = await res.json();
-      const isoCode = (geo.countryCode || '').toLowerCase();
-      const matchedCountry = ALL_COUNTRIES.find(c => c.iso === isoCode);
-
-      const city = (geo.city || geo.locality || '').trim();
-      const region = (geo.principalSubdivision || '').trim();
-      let placeTitle = '';
-      if (city && region && city !== region) {
-        placeTitle = `${city}, ${region}`;
-      } else if (city || region) {
-        placeTitle = city || region;
-      } else {
-        placeTitle = cleanedFallbackTitle;
-      }
-
-      if (matchedCountry) {
-        return {
-          countryName: locale.value === 'en' ? matchedCountry.name_en : matchedCountry.name_fr,
-          continent: matchedCountry.continent_en,
-          subregion: locale.value === 'en' ? matchedCountry.subregion_en : matchedCountry.subregion_fr,
-          iso: matchedCountry.iso,
-          title: placeTitle
-        };
-      }
-    }
-  } catch (e) {}
-
-  return null;
-};
-
-// ============================================================================
-// 4. VISIONNEUSE 360° PANNELLUM & PRÉCHARGEMENT AVEC VÉRIFICATION RATIO 2:1
-// ============================================================================
-let pannellumViewer = null;
-
-const ensurePannellumLoaded = () => {
-  return new Promise((resolve) => {
-    if (window.pannellum) return resolve();
-
-    if (!document.getElementById('pannellum-css')) {
-      const link = document.createElement('link');
-      link.id = 'pannellum-css';
-      link.rel = 'stylesheet';
-      link.href = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css';
-      document.head.appendChild(link);
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js';
-    script.onload = () => resolve();
-    script.onerror = () => resolve();
-    document.head.appendChild(script);
-  });
-};
-
-// Précharge l'image et renvoie ses vraies dimensions pour vérifier s'il s'agit d'une vraie sphère 2:1
 const inspectAndPreloadImage = (url) => {
   return new Promise((resolve) => {
     const img = new Image();
@@ -857,13 +895,7 @@ const inspectAndPreloadImage = (url) => {
       clearTimeout(timer);
       const w = img.naturalWidth || 0;
       const h = img.naturalHeight || 1;
-      const ratio = w / h;
-      resolve({
-        ok: w >= 700 && h >= 350,
-        width: w,
-        height: h,
-        isEquirectangular: ratio >= 1.92 && ratio <= 2.08
-      });
+      resolve({ ok: w >= 700 && h >= 350 });
     };
     img.onerror = () => {
       clearTimeout(timer);
@@ -873,14 +905,13 @@ const inspectAndPreloadImage = (url) => {
   });
 };
 
-// Récupère l'URL CDN officielle d'un lieu vérifié sur Wikimedia Commons
-const fetchVerifiedPlace = async (targetMode = 'photo') => {
-  let pool = VERIFIED_WORLD_LOCATIONS.filter(
+const fetchVerifiedPhoto = async () => {
+  let pool = VERIFIED_PHOTO_LOCATIONS.filter(
     loc => !isLocationAlreadyUsed(loc.wikiFile, loc.lat, loc.lng)
   );
   if (pool.length === 0) {
     seenCoords.length = 0;
-    pool = [...VERIFIED_WORLD_LOCATIONS];
+    pool = [...VERIFIED_PHOTO_LOCATIONS];
   }
   pool.sort(() => 0.5 - Math.random());
 
@@ -899,8 +930,7 @@ const fetchVerifiedPlace = async (targetMode = 'photo') => {
           markLocationAsUsed(loc.wikiFile, loc.lat, loc.lng);
           markLocationAsUsed(imgUrl, loc.lat, loc.lng);
           return {
-            mode: targetMode,
-            isTrueEquirectangular: false,
+            mode: 'photo',
             lat: loc.lat,
             lng: loc.lng,
             imageUrl: imgUrl,
@@ -915,12 +945,10 @@ const fetchVerifiedPlace = async (targetMode = 'photo') => {
     } catch (e) {}
   }
 
-  // En cas de coupure réseau Wikimedia, utilise un lieu vérifié avec miniature directe
   const fallbackLoc = pool[0];
   markLocationAsUsed(fallbackLoc.wikiFile, fallbackLoc.lat, fallbackLoc.lng);
   return {
-    mode: targetMode,
-    isTrueEquirectangular: false,
+    mode: 'photo',
     lat: fallbackLoc.lat,
     lng: fallbackLoc.lng,
     imageUrl: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fallbackLoc.wikiFile.replace(/^File:/i, ''))}?width=1280`,
@@ -932,111 +960,8 @@ const fetchVerifiedPlace = async (targetMode = 'photo') => {
   };
 };
 
-// Remplit le cache de vraies photosphères 360° équirectangulaires (ratio strict 2.0)
-const refillPanoCache = async () => {
-  const queries = [
-    'filetype:bitmap incategory:"360-degree_panoramas_with_Pannellum"',
-    'filetype:bitmap incategory:"Equirectangular_panoramas"'
-  ];
-  const q = queries[Math.floor(Math.random() * queries.length)];
-  const offset = Math.floor(Math.random() * 50);
-  const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=40&gsroffset=${offset}&prop=coordinates|imageinfo&colimit=max&coprimary=all&iiprop=url|dimensions&iiurlwidth=1920&format=json&origin=*`;
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    const pages = Object.values(data?.query?.pages || {});
-
-    for (const p of pages) {
-      const coord = p.coordinates && p.coordinates[0];
-      const info = p.imageinfo && p.imageinfo[0];
-      if (!coord || !info) continue;
-      if (typeof coord.lat !== 'number' || typeof coord.lon !== 'number') continue;
-      if (isForbiddenTitle(p.title)) continue;
-
-      const w = Number(info.width || 0);
-      const h = Number(info.height || 1);
-      const ratio = w / h;
-
-      // Ratio 2:1 strict obligatoire pour éviter toute image classique étirée !
-      if (w >= 2000 && ratio >= 1.95 && ratio <= 2.05) {
-        const imgUrl = info.thumburl || (info.width <= 4096 ? info.url : null);
-        if (imgUrl && /\.(jpg|jpeg|png)$/i.test(info.url || '')) {
-          panoCachePool.push({
-            lat: Number(coord.lat),
-            lng: Number(coord.lon),
-            imageUrl: imgUrl,
-            rawTitle: p.title
-          });
-        }
-      }
-    }
-  } catch (e) {}
-};
-
-const fetchRandomLive360 = async () => {
-  if (panoCachePool.length < 3) {
-    await refillPanoCache();
-  }
-  panoCachePool.sort(() => 0.5 - Math.random());
-
-  while (panoCachePool.length > 0) {
-    const candidate = panoCachePool.pop();
-    if (isLocationAlreadyUsed(candidate.imageUrl, candidate.lat, candidate.lng)) continue;
-
-    const check = await inspectAndPreloadImage(candidate.imageUrl);
-    if (check.ok && check.isEquirectangular) {
-      const exactPlace = await resolveExactLocationFromCoords(candidate.lat, candidate.lng, candidate.rawTitle);
-      if (exactPlace) {
-        markLocationAsUsed(candidate.imageUrl, candidate.lat, candidate.lng);
-        return {
-          mode: '360',
-          isTrueEquirectangular: true,
-          lat: candidate.lat,
-          lng: candidate.lng,
-          imageUrl: candidate.imageUrl,
-          title: exactPlace.title,
-          countryName: exactPlace.countryName,
-          continent: exactPlace.continent,
-          subregion: exactPlace.subregion,
-          iso: exactPlace.iso
-        };
-      }
-    }
-  }
-
-  return fetchVerifiedPlace('360');
-};
-
-const mountPannellum = async (imageUrl) => {
-  await ensurePannellumLoaded();
-  await nextTick();
-  if (!window.pannellum) return;
-  try {
-    if (pannellumViewer && typeof pannellumViewer.destroy === 'function') {
-      pannellumViewer.destroy();
-    }
-  } catch (e) {}
-
-  const container = document.getElementById('geo-pannellum-viewer');
-  if (!container) return;
-
-  pannellumViewer = window.pannellum.viewer('geo-pannellum-viewer', {
-    type: 'equirectangular',
-    panorama: imageUrl,
-    crossOrigin: 'anonymous',
-    autoLoad: true,
-    showControls: true,
-    compass: true,
-    mouseZoom: true,
-    hfov: 100,
-    minHfov: 40,
-    maxHfov: 120
-  });
-};
-
 // ============================================================================
-// 5. GESTION DES MANCHES, INDICE (SCORE ÷ 2) ET CHRONOMÈTRE
+// 4. GESTION DES MANCHES, CAMÉRA SATELLITE, INDICE (SCORE ÷ 2) & CHRONOMÈTRE
 // ============================================================================
 const preloadedSharedRounds = ref(null);
 
@@ -1061,6 +986,34 @@ const startRoundTimer = () => {
   }, 1000);
 };
 
+const configureSatelliteViewport = async (lat, lng) => {
+  const delta = 0.085; // Verrouille le périmètre à ~9 km autour de la cible
+  satBounds.value = [
+    [lat - delta, lng - delta],
+    [lat + delta, lng + delta]
+  ];
+  satCenter.value = [lat, lng];
+  satZoom.value = 15;
+
+  await nextTick();
+  setTimeout(() => {
+    if (satMapRef.value && satMapRef.value.leafletObject) {
+      satMapRef.value.leafletObject.invalidateSize();
+      satMapRef.value.leafletObject.setView([lat, lng], 15);
+    }
+  }, 120);
+};
+
+const recenterSatelliteTarget = () => {
+  if (!currentLocation.value) return;
+  const { lat, lng } = currentLocation.value;
+  satCenter.value = [lat, lng];
+  satZoom.value = 15;
+  if (satMapRef.value && satMapRef.value.leafletObject) {
+    satMapRef.value.leafletObject.setView([lat, lng], 15);
+  }
+};
+
 const loadRoundLocation = async () => {
   isLoadingLocation.value = true;
   roundConfirmed.value = false;
@@ -1075,15 +1028,15 @@ const loadRoundLocation = async () => {
     currentLocation.value = preloadedSharedRounds.value[currentRound.value - 1];
   } else {
     currentLocation.value =
-      activeMode.value === '360'
-        ? await fetchRandomLive360()
-        : await fetchVerifiedPlace('photo');
+      activeMode.value === 'satellite'
+        ? pickVerifiedSatelliteZone()
+        : await fetchVerifiedPhoto();
   }
 
   isLoadingLocation.value = false;
 
-  if (activeMode.value === '360' && currentLocation.value?.isTrueEquirectangular) {
-    await mountPannellum(currentLocation.value.imageUrl);
+  if (activeMode.value === 'satellite' && currentLocation.value) {
+    await configureSatelliteViewport(currentLocation.value.lat, currentLocation.value.lng);
   }
 
   await nextTick();
@@ -1096,7 +1049,7 @@ const loadRoundLocation = async () => {
 
 const startNewGame = (mode) => {
   preloadedSharedRounds.value = null;
-  activeMode.value = mode;
+  activeMode.value = mode === '360' ? 'satellite' : mode;
   currentRound.value = 1;
   totalScore.value = 0;
   roundHistory.value = [];
@@ -1181,7 +1134,7 @@ const saveFinalGeoScore = async () => {
     const parsed = JSON.parse(savedUser);
     const userId = parsed.id || (parsed.user && parsed.user.id);
     if (!userId) return;
-    const modeLabel = activeMode.value === '360' ? 'GeoGuessr 360' : 'GeoGuessr Photo';
+    const modeLabel = activeMode.value === 'satellite' ? 'GeoGuessr Satellite' : 'GeoGuessr Photo';
     await fetch(`${API_URL}/api/scores`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1219,7 +1172,7 @@ const formatTime = (sec) => {
 };
 
 // ============================================================================
-// 6. PARTAGE D'UN DÉFI ENTRE AMIS
+// 5. PARTAGE D'UN DÉFI ENTRE AMIS
 // ============================================================================
 const challengeLinkCopied = ref(false);
 const sharedChallengeRounds = ref(null);
@@ -1242,7 +1195,6 @@ const copyChallengeLink = async () => {
         lat: h.actual.lat,
         lng: h.actual.lng,
         imageUrl: h.actual.imageUrl,
-        isTrueEquirectangular: h.actual.isTrueEquirectangular,
         title: h.actual.title,
         countryName: h.actual.countryName,
         continent: h.actual.continent,
@@ -1261,7 +1213,8 @@ const copyChallengeLink = async () => {
 const startSharedChallenge = () => {
   if (!sharedChallengeRounds.value) return;
   preloadedSharedRounds.value = sharedChallengeRounds.value;
-  activeMode.value = sharedChallengeRounds.value[0]?.mode || 'photo';
+  const rawMode = sharedChallengeRounds.value[0]?.mode || 'photo';
+  activeMode.value = rawMode === '360' ? 'satellite' : rawMode;
   currentRound.value = 1;
   totalScore.value = 0;
   roundHistory.value = [];
@@ -1274,7 +1227,8 @@ onMounted(() => {
     try {
       const decoded = JSON.parse(decodeURIComponent(atob(route.query.seed)));
       if (decoded && Array.isArray(decoded.r) && decoded.r.length === 5) {
-        sharedChallengeRounds.value = decoded.r.map(item => ({ ...item, mode: decoded.m || 'photo' }));
+        const m = decoded.m === '360' ? 'satellite' : (decoded.m || 'photo');
+        sharedChallengeRounds.value = decoded.r.map(item => ({ ...item, mode: m }));
         sharedChallengerName.value = decoded.from || '';
         sharedTargetScore.value = Number(decoded.s || 0);
       }
@@ -1284,18 +1238,16 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopRoundTimer();
-  try {
-    if (pannellumViewer && typeof pannellumViewer.destroy === 'function') {
-      pannellumViewer.destroy();
-    }
-  } catch (e) {}
 });
 </script>
 
 <style scoped>
 .leaflet-container {
   z-index: 10;
-  background-color: #aad3df !important;
-  cursor: crosshair !important;
+  background-color: #0f172a !important;
+  cursor: grab !important;
+}
+.leaflet-container:active {
+  cursor: grabbing !important;
 }
 </style>
