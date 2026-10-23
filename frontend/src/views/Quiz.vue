@@ -965,15 +965,29 @@
         </div>
       </div>
 
-      <div v-if="currentFlashcard" class="flex items-center justify-center gap-5 pt-2">
-        <button @click="flashcardPrecedente" :disabled="flashcardIndex === 0" class="w-12 h-12 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-full disabled:opacity-40 cursor-pointer flex items-center justify-center">
-          <i class="fas fa-arrow-left"></i>
+      <div v-if="currentFlashcard" class="relative z-20 flex items-center justify-center gap-5 pt-2">
+        <button
+          type="button"
+          @click.stop="flashcardPrecedente"
+          class="w-12 h-12 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-full cursor-pointer flex items-center justify-center transition shadow-xs"
+        >
+          <span class="pointer-events-none text-xl font-black leading-none">←</span>
         </button>
-        <button type="button" @click="toggleFlashcardFlip" class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white font-bold text-sm cursor-pointer">
+
+        <button
+          type="button"
+          @click.stop="toggleFlashcardFlip"
+          class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white font-bold text-sm cursor-pointer hover:border-blue-500 transition shadow-xs"
+        >
           ↻ {{ flashcardFlipped ? (locale === 'fr' ? 'Recto' : 'Front') : (locale === 'fr' ? 'Verso' : 'Back') }}
         </button>
-        <button @click="flashcardSuivante" :disabled="flashcardIndex >= activeFlashcards.length - 1" class="w-12 h-12 bg-brandBlue text-white rounded-full disabled:opacity-40 cursor-pointer flex items-center justify-center">
-          <i class="fas fa-arrow-right"></i>
+
+        <button
+          type="button"
+          @click.stop="flashcardSuivante"
+          class="w-12 h-12 bg-brandBlue hover:bg-blue-700 text-white rounded-full cursor-pointer flex items-center justify-center transition shadow-xs"
+        >
+          <span class="pointer-events-none text-xl font-black leading-none">→</span>
         </button>
       </div>
     </div>
@@ -2009,13 +2023,13 @@ const verifierReponseQcm = (choixId) => {
 };
 
 // =========================================================
-// MODE FLASHCARDS 3D
+// MODE FLASHCARDS 3D (BOUTONS + FLÈCHES DU CLAVIER)
 // =========================================================
 const flashcardIndex = ref(0);
 const flashcardFlipped = ref(false);
 const flashcardContinent = ref('');
 const flashcardFrontPrompt = ref('flag');
-const flashcardOrderIds = ref([]);
+const flashcardOrderIsos = ref([]);
 
 const toggleFlashcardFlip = () => {
   flashcardFlipped.value = !flashcardFlipped.value;
@@ -2032,37 +2046,76 @@ const resetFlashcards = () => {
   if (flashcardContinent.value) {
     list = list.filter(c => c.continent === flashcardContinent.value);
   }
-  flashcardOrderIds.value = list.map(c => c.id);
+  flashcardOrderIsos.value = list.map(c => c.iso);
   flashcardIndex.value = 0;
   flashcardFlipped.value = false;
 };
 
 const shuffleFlashcards = () => {
-  flashcardOrderIds.value = [...flashcardOrderIds.value].sort(() => 0.5 - Math.random());
+  if (flashcardOrderIsos.value.length === 0) {
+    resetFlashcards();
+  }
+  flashcardOrderIsos.value = [...flashcardOrderIsos.value].sort(() => 0.5 - Math.random());
   flashcardIndex.value = 0;
   flashcardFlipped.value = false;
+  playSound('flip');
 };
 
 const activeFlashcards = computed(() => {
-  if (flashcardOrderIds.value.length === 0) return localizedCountries.value;
-  return flashcardOrderIds.value.map(id => getCountry(id)).filter(Boolean);
+  if (flashcardOrderIsos.value.length === 0) return localizedCountries.value;
+  const mapByIso = new Map(localizedCountries.value.map(c => [c.iso, c]));
+  return flashcardOrderIsos.value.map(iso => mapByIso.get(iso)).filter(Boolean);
 });
 
 const currentFlashcard = computed(() => activeFlashcards.value[flashcardIndex.value] || null);
 
-const flashcardSuivante = () => { 
-  if (flashcardIndex.value < activeFlashcards.length - 1) { 
-    flashcardFlipped.value = false; 
-    setTimeout(() => { flashcardIndex.value++; }, 160); 
-  } 
+const flashcardSuivante = () => {
+  const total = activeFlashcards.value.length;
+  if (total === 0) return;
+  const nextIdx = (flashcardIndex.value + 1) % total;
+
+  if (flashcardFlipped.value) {
+    flashcardFlipped.value = false;
+    setTimeout(() => { flashcardIndex.value = nextIdx; }, 150);
+  } else {
+    flashcardIndex.value = nextIdx;
+  }
 };
 
-const flashcardPrecedente = () => { 
-  if (flashcardIndex.value > 0) { 
-    flashcardFlipped.value = false; 
-    setTimeout(() => { flashcardIndex.value--; }, 160); 
-  } 
+const flashcardPrecedente = () => {
+  const total = activeFlashcards.value.length;
+  if (total === 0) return;
+  const prevIdx = (flashcardIndex.value - 1 + total) % total;
+
+  if (flashcardFlipped.value) {
+    flashcardFlipped.value = false;
+    setTimeout(() => { flashcardIndex.value = prevIdx; }, 150);
+  } else {
+    flashcardIndex.value = prevIdx;
+  }
 };
+
+// Navigation au clavier (Flèche Droite = suivante, Flèche Gauche = précédente, Espace = retourner)
+const handleFlashcardKeydown = (e) => {
+  if (currentMode.value !== 'flashcards') return;
+  const tag = (e.target?.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    flashcardSuivante();
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    flashcardPrecedente();
+  } else if (e.key === ' ') {
+    e.preventDefault();
+    toggleFlashcardFlip();
+  }
+};
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', handleFlashcardKeydown);
+}
 
 // =========================================================
 // MODE CHRONO CARTE (CLAVIER EUROPE & MONDE + JETPUNK GRIDS)
@@ -2380,6 +2433,7 @@ onMounted(() => {
 onUnmounted(() => {
   arreterChrono();
   stopFlagGridTimer();
+  window.removeEventListener('keydown', handleFlashcardKeydown);
 });
 </script>
 
