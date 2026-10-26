@@ -12,17 +12,23 @@
         </h2>
         <p class="text-gray-600 dark:text-gray-400 mt-1">
           {{ locale === 'fr'
-            ? 'Débloquez les 12 badges officiels et faites-les évoluer du rang I (Bronze) jusqu\'au rang V (Diamant).'
-            : 'Unlock all 12 official badges and upgrade them from Tier I (Bronze) to Tier V (Diamond).' }}
+            ? 'Débloquez les 14 badges officiels et faites-les évoluer du rang I (Bronze) jusqu\'au rang V (Diamant).'
+            : 'Unlock all 14 official badges and upgrade them from Tier I (Bronze) to Tier V (Diamond).' }}
         </p>
       </div>
 
       <div class="flex items-center gap-3 self-start sm:self-auto">
         <router-link
+          to="/leaderboard"
+          class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold transition shadow-xs"
+        >
+          🏆 {{ locale === 'fr' ? 'Ligues & Classement' : 'Leagues & Leaderboard' }}
+        </router-link>
+        <router-link
           to="/geoguessr"
           class="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-gray-700 text-white text-xs sm:text-sm font-bold transition"
         >
-          📍 GeoGuessr
+          🛰️ PinDrop
         </router-link>
         <router-link
           to="/quiz"
@@ -33,7 +39,7 @@
       </div>
     </div>
 
-    <!-- BANNIÈRE PROFIL RPG : NIVEAU GLOBAL, TITRE & JAUGE D'XP -->
+    <!-- BANNIÈRE PROFIL RPG : NIVEAU GLOBAL, TITRE, BADGE ÉPINGLÉ & JAUGE D'XP -->
     <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-6 sm:p-8 shadow-xl border border-blue-500/20">
       <div class="pointer-events-none absolute -top-20 -right-20 w-72 h-72 rounded-full bg-cyan-500/15 blur-3xl"></div>
 
@@ -44,17 +50,24 @@
             <strong class="text-3xl font-black text-white leading-none">{{ playerLevel.level }}</strong>
           </div>
 
-          <div>
+          <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="text-2xl font-black text-white">{{ displayUsername }}</h3>
+              <h3 class="text-2xl font-black text-white truncate">{{ displayUsername }}</h3>
               <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
                 {{ playerLevel.title }}
               </span>
             </div>
-            <p class="text-sm text-slate-300 mt-1">
+
+            <!-- Badge favori équipé par le joueur -->
+            <div v-if="pinnedBadgeObj" class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-xs font-bold text-amber-300">
+              <span>{{ pinnedBadgeObj.icon }}</span>
+              <span>{{ pinnedBadgeObj.title }} {{ toRoman(pinnedBadgeObj.currentTier) }}</span>
+            </div>
+
+            <p class="text-xs sm:text-sm text-slate-300 mt-1">
               {{ locale === 'fr'
-                ? `${totalTiersUnlocked} / ${maxTotalTiers} paliers de badges débloqués`
-                : `${totalTiersUnlocked} / ${maxTotalTiers} badge tiers unlocked` }}
+                ? `${totalTiersUnlocked} / ${maxTotalTiers} paliers débloqués (${unlockedBadgesCount}/${evaluatedBadges.length} badges actifs)`
+                : `${totalTiersUnlocked} / ${maxTotalTiers} tiers unlocked (${unlockedBadgesCount}/${evaluatedBadges.length} active badges)` }}
             </p>
           </div>
         </div>
@@ -72,6 +85,11 @@
               :style="{ width: `${playerLevel.progressPercent}%` }"
             ></div>
           </div>
+          <p class="text-[11px] text-slate-400">
+            {{ locale === 'fr'
+              ? 'Chaque palier de badge débloqué vous rapporte +100 XP bonus !'
+              : 'Each unlocked badge tier grants you +100 bonus XP!' }}
+          </p>
         </div>
 
         <div class="lg:col-span-3 grid grid-cols-3 gap-2 text-center">
@@ -91,10 +109,40 @@
       </div>
     </div>
 
-    <!-- GRILLE DES 12 BADGES ÉVOLUTIFS (PALIERS I, II, III, IV, V) -->
+    <!-- BARRE DE FILTRES & TRI DE LA COLLECTION -->
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          v-for="f in filterTabs"
+          :key="f.id"
+          type="button"
+          @click="activeFilter = f.id"
+          class="px-3.5 py-2 rounded-xl text-xs font-extrabold transition cursor-pointer border"
+          :class="activeFilter === f.id
+            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+            : 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400'"
+        >
+          {{ f.label }}
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <span class="text-xs font-bold text-gray-400">{{ locale === 'fr' ? 'Trier par :' : 'Sort by:' }}</span>
+        <select
+          v-model="sortBy"
+          class="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white text-xs font-bold focus:outline-none"
+        >
+          <option value="default">{{ locale === 'fr' ? 'Ordre officiel' : 'Official order' }}</option>
+          <option value="tier-desc">{{ locale === 'fr' ? 'Rang le plus élevé (V → I)' : 'Highest Tier (V → I)' }}</option>
+          <option value="progress-desc">{{ locale === 'fr' ? 'Proche du prochain palier' : 'Closest to next tier' }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- GRILLE DES 14 BADGES ÉVOLUTIFS (PALIERS I, II, III, IV, V) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div
-        v-for="badge in evaluatedBadges"
+        v-for="badge in filteredAndSortedBadges"
         :key="badge.id"
         class="rounded-3xl p-6 transition-all duration-300 border-2 flex flex-col justify-between relative overflow-hidden"
         :class="badge.cardStyle"
@@ -126,12 +174,27 @@
             </div>
           </div>
 
-          <span
-            class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider shrink-0"
-            :class="badge.rarityPillStyle"
-          >
-            {{ badge.rarityLabel }}
-          </span>
+          <div class="flex flex-col items-end gap-1.5 shrink-0">
+            <span
+              class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider"
+              :class="badge.rarityPillStyle"
+            >
+              {{ badge.rarityLabel }}
+            </span>
+
+            <!-- Bouton pour épingler le badge sur sa bannière RPG -->
+            <button
+              v-if="badge.currentTier > 0"
+              type="button"
+              @click="togglePinBadge(badge.id)"
+              class="text-[11px] font-bold px-2 py-0.5 rounded-lg transition cursor-pointer"
+              :class="pinnedBadgeId === badge.id
+                ? 'bg-amber-400/20 text-amber-700 dark:text-amber-300 border border-amber-400/50'
+                : 'text-gray-400 hover:text-amber-500'"
+            >
+              {{ pinnedBadgeId === badge.id ? (locale === 'fr' ? '★ Épinglé' : '★ Pinned') : (locale === 'fr' ? '☆ Épingler' : '☆ Pin') }}
+            </button>
+          </div>
         </div>
 
         <!-- Jetons des 5 paliers (I, II, III, IV, V) -->
@@ -149,8 +212,8 @@
           </div>
         </div>
 
-        <!-- Jauge vers le prochain palier -->
-        <div class="space-y-1.5 pt-2 border-t border-gray-100 dark:border-gray-700/70">
+        <!-- Jauge vers le prochain palier + Lien direct vers le mode -->
+        <div class="space-y-2.5 pt-2 border-t border-gray-100 dark:border-gray-700/70">
           <div class="flex items-center justify-between text-xs font-bold">
             <span class="text-gray-600 dark:text-gray-300">
               {{ badge.nextTierLabel }}
@@ -166,6 +229,19 @@
               :class="badge.progressBarStyle"
               :style="{ width: `${badge.progressPercent}%` }"
             ></div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-[11px] font-semibold text-gray-400">
+              +{{ badge.currentTier * 100 }} XP bonus acquis
+            </span>
+            <router-link
+              :to="badge.playLink"
+              class="text-xs font-extrabold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+            >
+              <span>{{ locale === 'fr' ? 'S\'entraîner sur ce mode' : 'Train on this mode' }}</span>
+              <span>→</span>
+            </router-link>
           </div>
         </div>
       </div>
@@ -183,6 +259,19 @@ const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 const currentUser = ref(null);
 const scoresList = ref([]);
+const activeFilter = ref('all');
+const sortBy = ref('default');
+const pinnedBadgeId = ref(localStorage.getItem('geolearn_pinned_badge') || '');
+
+const togglePinBadge = (id) => {
+  if (pinnedBadgeId.value === id) {
+    pinnedBadgeId.value = '';
+    localStorage.removeItem('geolearn_pinned_badge');
+  } else {
+    pinnedBadgeId.value = id;
+    localStorage.setItem('geolearn_pinned_badge', id);
+  }
+};
 
 const displayUsername = computed(() => {
   if (!currentUser.value) return locale.value === 'fr' ? 'Explorateur' : 'Explorer';
@@ -216,7 +305,7 @@ onMounted(async () => {
   }
 });
 
-// Agrégation complète de tous les modes de jeu
+// Agrégation complète de tous les modes de jeu (incluant QCM Flash 60s et Satellite)
 const statsSummary = computed(() => {
   const list = scoresList.value;
   const totalGames = list.length;
@@ -228,17 +317,20 @@ const statsSummary = computed(() => {
   let bestEurope = 0;
   let bestWorld = 0;
   let bestGeoGuessr = 0;
+  let bestFlash60 = 0;
   let mapClickPoints = 0;
   let detectivePoints = 0;
   let mysteryWins = 0;
   let perfectGames = 0;
   let totalNormalizedPoints = 0;
+  const distinctModesSet = new Set();
 
   for (const s of list) {
     const mode = (s.mode || '').toLowerCase();
     const score = Number(s.score || 0);
     const max = Number(s.max_score || 15);
 
+    if (mode) distinctModesSet.add(mode);
     if (score >= max && max > 0) perfectGames++;
 
     if (mode.includes('geoguessr')) {
@@ -254,6 +346,7 @@ const statsSummary = computed(() => {
     if (mode.includes('grille') && score > bestFlagGrid) bestFlagGrid = score;
     if (mode.includes('europe') && score > bestEurope) bestEurope = score;
     if (mode.includes('monde') && score > bestWorld) bestWorld = score;
+    if (mode.includes('flash') && score > bestFlash60) bestFlash60 = score;
     if (mode.includes('cliquez')) mapClickPoints += score;
     if (mode.includes('enquête') || mode.includes('enquete')) detectivePoints += score;
     if (mode.includes('mystère') || mode.includes('mystere')) {
@@ -270,15 +363,17 @@ const statsSummary = computed(() => {
     bestEurope,
     bestWorld,
     bestGeoGuessr,
+    bestFlash60,
     mapClickPoints,
     detectivePoints,
     mysteryWins,
     perfectGames,
+    distinctModesCount: distinctModesSet.size,
     totalNormalizedPoints
   };
 });
 
-// Les 12 Familles de Badges Évolutifs (I -> V)
+// Les 14 Familles de Badges Évolutifs (I -> V)
 const rawBadgesConfig = computed(() => {
   const isFr = locale.value === 'fr';
   const st = statsSummary.value;
@@ -291,16 +386,18 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Nombre total de parties jouées sur GeoLearn' : 'Total number of games played on GeoLearn',
       tiers: [1, 5, 25, 50, 100],
       value: st.totalGames,
-      unit: ''
+      unit: '',
+      playLink: '/quiz'
     },
     {
       id: 'geoguessr',
-      icon: '📍',
-      title: isFr ? 'Explorateur PinDrop 360°' : '360° PinDrop Explorer',
+      icon: '🛰️',
+      title: isFr ? 'Explorateur PinDrop (Satellite & Photo)' : 'PinDrop Explorer (Satellite & Photo)',
       subtitle: isFr ? 'Meilleur score sur une partie de GeoGuessr (/ 25 000 pts)' : 'Best score in a 5-round GeoGuessr game (/ 25,000 pts)',
       tiers: [5000, 12000, 18000, 22000, 24500],
       value: st.bestGeoGuessr,
-      unit: ''
+      unit: '',
+      playLink: '/geoguessr'
     },
     {
       id: 'capitals',
@@ -309,7 +406,8 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Cumul de bonnes réponses en QCM Capitales' : 'Cumulative correct answers in Capitals Quiz',
       tiers: [10, 50, 150, 300, 500],
       value: st.capitalsPoints,
-      unit: ''
+      unit: '',
+      playLink: { path: '/quiz', query: { mode: 'qcm', type: 'capital' } }
     },
     {
       id: 'vexillologist',
@@ -318,7 +416,8 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Cumul de drapeaux identifiés (QCM & Grille)' : 'Cumulative flags identified (Quiz & Grid)',
       tiers: [15, 75, 200, 500, 1000],
       value: st.flagsPoints,
-      unit: ''
+      unit: '',
+      playLink: { path: '/quiz', query: { mode: 'qcm', type: 'flag' } }
     },
     {
       id: 'culture',
@@ -327,7 +426,18 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Bonnes réponses au QCM Population, Langues & Monnaies' : 'Correct answers in Population, Languages & Currencies Quiz',
       tiers: [10, 40, 100, 250, 500],
       value: st.culturePoints,
-      unit: ''
+      unit: '',
+      playLink: { path: '/quiz', query: { mode: 'qcm', type: 'culture' } }
+    },
+    {
+      id: 'flash60',
+      icon: '⚡',
+      title: isFr ? 'Éclair du Sprint (60s)' : '60s Sprint Lightning',
+      subtitle: isFr ? 'Meilleur score en mode Contre-la-montre 60 secondes (QCM Flash)' : 'Best score in 60-Second Flash Quiz mode',
+      tiers: [10, 20, 30, 45, 60],
+      value: st.bestFlash60,
+      unit: ' pts',
+      playLink: { path: '/quiz', query: { mode: 'flash60' } }
     },
     {
       id: 'flag_grid',
@@ -336,7 +446,8 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Record de drapeaux validés en une seule Grille' : 'Record flags validated in a single Flag Grid game',
       tiers: [10, 30, 60, 120, 196],
       value: st.bestFlagGrid,
-      unit: ''
+      unit: '',
+      playLink: { path: '/quiz', query: { mode: 'flag-grid' } }
     },
     {
       id: 'map_click',
@@ -345,7 +456,8 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Pays localisés du 1er coup dans "Cliquez sur la Carte"' : 'Countries located on the 1st try in "Click on the Map"',
       tiers: [15, 50, 150, 300, 600],
       value: st.mapClickPoints,
-      unit: ''
+      unit: '',
+      playLink: { path: '/quiz', query: { mode: 'map-click' } }
     },
     {
       id: 'detective',
@@ -354,7 +466,8 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Points cumulés dans le mode "Enquête aux 5 Indices"' : 'Cumulative points in "5-Clue Detective" mode',
       tiers: [15, 60, 150, 350, 750],
       value: st.detectivePoints,
-      unit: ''
+      unit: '',
+      playLink: { path: '/quiz', query: { mode: 'detective' } }
     },
     {
       id: 'mystery',
@@ -363,7 +476,8 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Pays Mystères découverts en moins de 6 essais (Worldle)' : 'Mystery Countries solved within 6 tries (Worldle)',
       tiers: [1, 5, 15, 30, 60],
       value: st.mysteryWins,
-      unit: ''
+      unit: '',
+      playLink: { path: '/quiz', query: { mode: 'mystery' } }
     },
     {
       id: 'europe_chrono',
@@ -372,7 +486,8 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Meilleur score au Défi Chrono Europe (sur 47)' : 'Best score in the Europe Timed Challenge (out of 47)',
       tiers: [10, 20, 30, 40, 47],
       value: st.bestEurope,
-      unit: ''
+      unit: '',
+      playLink: { path: '/quiz', query: { mode: 'chrono' } }
     },
     {
       id: 'world_chrono',
@@ -381,7 +496,18 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Meilleur score au Défi Chrono Monde (sur 196)' : 'Best score in the World Timed Challenge (out of 196)',
       tiers: [15, 40, 80, 130, 196],
       value: st.bestWorld,
-      unit: ''
+      unit: '',
+      playLink: { path: '/quiz', query: { mode: 'chrono' } }
+    },
+    {
+      id: 'polyvalent',
+      icon: '🌟',
+      title: isFr ? 'Explorateur Polyvalent' : 'Versatile Explorer',
+      subtitle: isFr ? 'Nombre de modes de jeu différents joués sur GeoLearn' : 'Number of distinct game modes played on GeoLearn',
+      tiers: [2, 4, 6, 8, 10],
+      value: st.distinctModesCount,
+      unit: '',
+      playLink: '/quiz'
     },
     {
       id: 'sniper',
@@ -390,7 +516,8 @@ const rawBadgesConfig = computed(() => {
       subtitle: isFr ? 'Parties terminées avec 100 % de réussite (Sans-faute)' : 'Games completed with 100% accuracy (Perfect score)',
       tiers: [1, 3, 10, 25, 50],
       value: st.perfectGames,
-      unit: ''
+      unit: '',
+      playLink: '/quiz'
     }
   ];
 });
@@ -485,9 +612,44 @@ const evaluatedBadges = computed(() => {
   });
 });
 
+const unlockedBadgesCount = computed(() => evaluatedBadges.value.filter(b => b.currentTier > 0).length);
 const totalTiersUnlocked = computed(() => evaluatedBadges.value.reduce((acc, b) => acc + b.currentTier, 0));
 const maxTotalTiers = computed(() => evaluatedBadges.value.length * 5);
 const diamondCount = computed(() => evaluatedBadges.value.filter(b => b.currentTier === 5).length);
+
+const pinnedBadgeObj = computed(() =>
+  evaluatedBadges.value.find(b => b.id === pinnedBadgeId.value && b.currentTier > 0) ||
+  evaluatedBadges.value.find(b => b.currentTier > 0) ||
+  null
+);
+
+const filterTabs = computed(() => {
+  const isFr = locale.value === 'fr';
+  return [
+    { id: 'all', label: isFr ? `Tous (${evaluatedBadges.value.length})` : `All (${evaluatedBadges.value.length})` },
+    { id: 'unlocked', label: isFr ? `Débloqués (${unlockedBadgesCount.value})` : `Unlocked (${unlockedBadgesCount.value})` },
+    { id: 'locked', label: isFr ? 'À débloquer' : 'Locked' },
+    { id: 'diamond', label: isFr ? `Rang V 💎 (${diamondCount.value})` : `Tier V 💎 (${diamondCount.value})` }
+  ];
+});
+
+const filteredAndSortedBadges = computed(() => {
+  let list = [...evaluatedBadges.value];
+  if (activeFilter.value === 'unlocked') list = list.filter(b => b.currentTier > 0);
+  else if (activeFilter.value === 'locked') list = list.filter(b => b.currentTier === 0);
+  else if (activeFilter.value === 'diamond') list = list.filter(b => b.currentTier === 5);
+
+  if (sortBy.value === 'tier-desc') {
+    list.sort((a, b) => b.currentTier - a.currentTier || b.progressPercent - a.progressPercent);
+  } else if (sortBy.value === 'progress-desc') {
+    list.sort((a, b) => {
+      const aDone = a.currentTier >= 5 ? -1 : a.progressPercent;
+      const bDone = b.currentTier >= 5 ? -1 : b.progressPercent;
+      return bDone - aDone;
+    });
+  }
+  return list;
+});
 
 const totalXp = computed(() => {
   const st = statsSummary.value;

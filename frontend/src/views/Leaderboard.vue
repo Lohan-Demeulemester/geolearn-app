@@ -7,20 +7,20 @@
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div>
         <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
-          🌍 {{ locale === 'fr' ? 'Compétition Communautaire Officielle' : 'Official Community Competition' }}
+          🌍 {{ locale === 'fr' ? 'Compétition Communautaire & Ligues' : 'Official Community Competition & Leagues' }}
         </span>
         <h2 class="text-3xl font-black text-gray-900 dark:text-white">
-          {{ locale === 'fr' ? 'Classement Mondial (Leaderboard)' : 'World Leaderboard' }}
+          {{ locale === 'fr' ? 'Classement Mondial & Ligues' : 'World Leaderboard & Leagues' }}
         </h2>
         <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base">
           {{ locale === 'fr'
-            ? 'Comparez vos records avec les meilleurs joueurs sur les 11 modes et cliquez sur un joueur pour lancer un Face-à-Face.'
-            : 'Compare your records with top players across all 11 modes and click any player to view a Head-to-Head comparison.' }}
+            ? 'Comparez vos records sur les 12 modes, progressez de la ligue Bronze jusqu\'au rang Diamant et cliquez sur un joueur pour lancer un Face-à-Face.'
+            : 'Compare your records across all 12 modes, climb from Bronze to Diamond league, and click any player for a Head-to-Head comparison.' }}
         </p>
       </div>
 
       <div class="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-        <div class="bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center text-xs font-bold">
+        <div class="bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-wrap items-center text-xs font-bold">
           <button
             v-for="period in periodOptions"
             :key="period.id"
@@ -41,8 +41,98 @@
           :disabled="isLoading"
           class="px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 hover:border-blue-500 transition cursor-pointer flex items-center gap-2 shadow-2xs"
         >
-          <i class="fas fa-sync-alt" :class="{ 'animate-spin': isLoading }"></i>
+          <span :class="{ 'animate-spin': isLoading }">↻</span>
           <span>{{ locale === 'fr' ? 'Actualiser' : 'Refresh' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- BANNIÈRE SAISON MENSUELLE & FILTRE PAR DIVISION DE LIGUE  -->
+    <!-- ========================================================= -->
+    <div class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-blue-500/20 space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-white/10">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-cyan-400/20 border border-cyan-400/30 flex items-center justify-center text-3xl shrink-0">
+            🏆
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
+                {{ currentSeasonLabel }}
+              </span>
+              <span class="text-xs font-bold text-amber-300">
+                ⏳ {{ seasonResetCountdown }}
+              </span>
+            </div>
+            <h3 class="text-xl font-black mt-1">
+              {{ locale === 'fr' ? 'Ligues Officielles GeoLearn (Bronze → Diamant)' : 'Official GeoLearn Leagues (Bronze → Diamond)' }}
+            </h3>
+            <p class="text-xs text-slate-300">
+              {{ locale === 'fr'
+                ? 'Cliquez sur une division ci-dessous pour filtrer les joueurs appartenant à cette ligue.'
+                : 'Click on any division below to filter players belonging to that league.' }}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          @click="selectedPeriod = selectedPeriod === 'season' ? 'all' : 'season'"
+          class="px-4 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer border shrink-0"
+          :class="selectedPeriod === 'season'
+            ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-md'
+            : 'bg-white/10 hover:bg-white/20 text-white border-white/20'"
+        >
+          calendar_month {{ selectedPeriod === 'season'
+            ? (locale === 'fr' ? '✓ Classement de la Saison Mensuelle actif' : '✓ Monthly Season Ranking Active')
+            : (locale === 'fr' ? 'Voir le Classement de la Saison du Mois' : 'View Current Month Season Ranking') }}
+        </button>
+      </div>
+
+      <!-- Les 5 paliers de Ligues cliquables -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        <button
+          type="button"
+          @click="selectedLeagueFilter = 'all'"
+          class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between"
+          :class="selectedLeagueFilter === 'all'
+            ? 'bg-blue-600 border-blue-400 text-white shadow-md scale-[1.02]'
+            : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-200'"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-lg">🌍</span>
+            <span class="text-xs font-black px-2 py-0.5 rounded-full bg-black/25">{{ activeRanking.length }}</span>
+          </div>
+          <div class="mt-2">
+            <strong class="text-xs font-black block">{{ locale === 'fr' ? 'Toutes Ligues' : 'All Leagues' }}</strong>
+            <span class="text-[10px] opacity-75">{{ locale === 'fr' ? 'Classement complet' : 'Full ranking' }}</span>
+          </div>
+        </button>
+
+        <button
+          v-for="lg in leagueTiersOverview"
+          :key="lg.key"
+          type="button"
+          @click="selectedLeagueFilter = selectedLeagueFilter === lg.key ? 'all' : lg.key"
+          class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between"
+          :class="selectedLeagueFilter === lg.key
+            ? 'bg-white text-slate-900 border-cyan-400 shadow-md scale-[1.02]'
+            : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-lg">{{ lg.icon }}</span>
+            <span
+              class="text-xs font-black px-2 py-0.5 rounded-full"
+              :class="selectedLeagueFilter === lg.key ? 'bg-slate-900 text-white' : 'bg-black/30 text-cyan-300'"
+            >
+              {{ lg.count }}
+            </span>
+          </div>
+          <div class="mt-2">
+            <strong class="text-xs font-black block">{{ lg.name }}</strong>
+            <span class="text-[10px] opacity-75 block truncate">{{ lg.requirement }}</span>
+          </div>
         </button>
       </div>
     </div>
@@ -76,7 +166,7 @@
           👑
         </div>
         <div class="min-w-0">
-          <span class="text-xs font-bold text-gray-400 block">{{ locale === 'fr' ? ' N°1 Actuel' : 'Current #1' }}</span>
+          <span class="text-xs font-bold text-gray-400 block">{{ locale === 'fr' ? 'N°1 Actuel' : 'Current #1' }}</span>
           <strong class="text-base sm:text-lg font-black text-gray-900 dark:text-white truncate block">
             {{ activeRanking[0] ? activeRanking[0].username : '—' }}
           </strong>
@@ -97,7 +187,7 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- BARRE DES 11 ONGLETS DE CLASSEMENT                        -->
+    <!-- BARRE DES 12 ONGLETS DE CLASSEMENT                        -->
     <!-- ========================================================= -->
     <div class="bg-white dark:bg-gray-800 p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-2 overflow-x-auto">
       <button
@@ -156,7 +246,7 @@
     <!-- ========================================================= -->
     <!-- PODIUM TOP 3 (OR, ARGENT, BRONZE)                         -->
     <!-- ========================================================= -->
-    <div v-if="podiumPlayers.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
+    <div v-if="podiumPlayers.length > 0 && selectedLeagueFilter === 'all'" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
       
       <!-- 2e Place (Argent) -->
       <div
@@ -240,22 +330,30 @@
     <!-- ========================================================= -->
     <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
       <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h3 class="text-lg font-black text-gray-900 dark:text-white">
-            {{ activeTabLabel }}
-          </h3>
-          <p class="text-xs text-gray-400">
-            {{ locale === 'fr' ? 'Cliquez sur un joueur pour comparer vos profils en Face-à-Face' : 'Click any player to compare profiles Head-to-Head' }}
-          </p>
+        <div class="flex items-center gap-3 flex-wrap">
+          <div>
+            <h3 class="text-lg font-black text-gray-900 dark:text-white">
+              {{ activeTabLabel }}
+            </h3>
+            <p class="text-xs text-gray-400">
+              {{ locale === 'fr' ? 'Cliquez sur un joueur pour comparer vos profils en Face-à-Face' : 'Click any player to compare profiles Head-to-Head' }}
+            </p>
+          </div>
+          <span
+            v-if="selectedLeagueFilter !== 'all'"
+            class="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5"
+          >
+            <span>{{ locale === 'fr' ? 'Filtre ligue actif' : 'League filter active' }}</span>
+            <button type="button" @click="selectedLeagueFilter = 'all'" class="hover:text-red-500 cursor-pointer">✕</button>
+          </span>
         </div>
 
         <div class="relative w-full sm:w-64">
-          <i class="fas fa-search absolute left-3.5 top-3 text-gray-400 text-xs"></i>
           <input
             v-model="playerSearch"
             type="text"
-            :placeholder="locale === 'fr' ? 'Rechercher un joueur...' : 'Search a player...'"
-            class="w-full pl-9 pr-8 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+            :placeholder="locale === 'fr' ? '🔍 Rechercher un joueur...' : '🔍 Search a player...'"
+            class="w-full pl-4 pr-8 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
           />
           <button
             v-if="playerSearch"
@@ -347,7 +445,7 @@
       class="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-md"
       @click.self="inspectedPlayer = null"
     >
-      <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-gray-100 dark:border-gray-700 space-y-6">
+      <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-gray-100 dark:border-gray-700 space-y-6 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
           <div class="flex items-center gap-3.5">
             <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white font-black text-lg flex items-center justify-center">
@@ -357,9 +455,14 @@
               <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">
                 ⚔️ {{ locale === 'fr' ? 'Fiche & Face-à-Face' : 'Player Card & Head-to-Head' }}
               </span>
-              <h3 class="text-2xl font-black text-gray-900 dark:text-white">
-                {{ inspectedPlayer.username }}
-              </h3>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+                  {{ inspectedPlayer.username }}
+                </h3>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold" :class="inspectedPlayer.league?.badgeClass">
+                  {{ inspectedPlayer.league?.icon }} {{ inspectedPlayer.league?.name }}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -372,31 +475,54 @@
           </button>
         </div>
 
+        <!-- Bilan global du duel Face-à-Face -->
+        <div class="bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-gray-900 dark:to-gray-900 p-4 rounded-2xl border border-blue-100 dark:border-gray-700 flex items-center justify-between text-xs sm:text-sm font-black">
+          <span class="text-blue-600 dark:text-blue-400">
+            {{ inspectedPlayer.username }} : {{ headToHeadSummary.theirWins }}
+          </span>
+          <span class="text-gray-400 uppercase text-[11px]">{{ locale === 'fr' ? 'Modes dominés' : 'Modes led' }}</span>
+          <span class="text-emerald-600 dark:text-emerald-400">
+            {{ locale === 'fr' ? 'Vous' : 'You' }} : {{ headToHeadSummary.myWins }}
+          </span>
+        </div>
+
         <!-- Comparatif des records par mode -->
-        <div class="space-y-2.5">
+        <div class="space-y-2">
           <div class="grid grid-cols-3 text-xs font-extrabold uppercase text-gray-400 px-3 pb-1">
             <span>Mode</span>
-            <span class="text-center text-blue-600 dark:text-blue-400">{{ inspectedPlayer.username }}</span>
+            <span class="text-center text-blue-600 dark:text-blue-400 truncate">{{ inspectedPlayer.username }}</span>
             <span class="text-right text-emerald-600 dark:text-emerald-400">{{ locale === 'fr' ? 'Vous' : 'You' }}</span>
           </div>
 
           <div
             v-for="comp in headToHeadStats"
             :key="comp.label"
-            class="grid grid-cols-3 items-center bg-gray-50 dark:bg-gray-900/70 px-4 py-3 rounded-xl border border-gray-100 dark:border-gray-700/70 text-xs sm:text-sm"
+            class="grid grid-cols-3 items-center bg-gray-50 dark:bg-gray-900/70 px-4 py-2.5 rounded-xl border border-gray-100 dark:border-gray-700/70 text-xs sm:text-sm"
           >
             <span class="font-bold text-gray-700 dark:text-gray-300 truncate">{{ comp.icon }} {{ comp.label }}</span>
-            <strong class="text-center font-black text-gray-900 dark:text-white">{{ comp.theirBest }}</strong>
+            <strong
+              class="text-center font-black"
+              :class="comp.theirNumeric > comp.myNumeric ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'"
+            >
+              {{ comp.theirBest }}
+            </strong>
             <strong
               class="text-right font-black"
-              :class="comp.myNumeric >= comp.theirNumeric ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'"
+              :class="comp.myNumeric >= comp.theirNumeric && comp.myNumeric >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'"
             >
               {{ comp.myBest }}
             </strong>
           </div>
         </div>
 
-        <div class="flex justify-end pt-2">
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <router-link
+            :to="{ path: '/quiz', query: { mode: 'custom-builder' } }"
+            class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs sm:text-sm transition"
+          >
+            ⚔️ {{ locale === 'fr' ? 'Créer un Défi sur-mesure' : 'Create Custom Duel' }}
+          </router-link>
+
           <button
             type="button"
             @click="inspectedPlayer = null"
@@ -419,7 +545,8 @@ const { locale } = useI18n();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 const activeTab = ref('general');
-const selectedPeriod = ref('all'); // 'all' | 'month' | 'today'
+const selectedPeriod = ref('all'); // 'all' | 'season' | 'month' | 'today'
+const selectedLeagueFilter = ref('all'); // 'all' | 'diamond' | 'platinum' | 'gold' | 'silver' | 'bronze'
 const playerSearch = ref('');
 const isLoading = ref(false);
 
@@ -432,17 +559,42 @@ const periodOptions = computed(() => {
   const isFr = locale.value === 'fr';
   return [
     { id: 'all', label: isFr ? 'Tous les temps' : 'All-Time' },
+    { id: 'season', label: isFr ? '🏆 Saison du Mois' : '🏆 Monthly Season' },
     { id: 'month', label: isFr ? '30 jours' : '30 Days' },
     { id: 'today', label: isFr ? 'Aujourd\'hui' : 'Today' }
   ];
+});
+
+// Nom de la saison mensuelle en cours + compte à rebours avant le 1er du mois suivant
+const currentSeasonLabel = computed(() => {
+  const now = new Date();
+  const monthName = now.toLocaleDateString(locale.value === 'fr' ? 'fr-FR' : 'en-US', {
+    month: 'long',
+    year: 'numeric'
+  });
+  return locale.value === 'fr'
+    ? `Saison ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`
+    : `Season ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
+});
+
+const seasonResetCountdown = computed(() => {
+  const now = new Date();
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
+  const diffMs = Math.max(0, nextMonth.getTime() - now.getTime());
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+  return locale.value === 'fr'
+    ? `Réinitialisation mensuelle dans ${days}j ${hours}h`
+    : `Monthly reset in ${days}d ${hours}h`;
 });
 
 const tabs = computed(() => {
   const isFr = locale.value === 'fr';
   return [
     { id: 'general', icon: '👑', label: isFr ? 'Général (XP)' : 'Overall (XP)' },
-    { id: 'geoguessr', icon: '📍', label: 'GeoGuessr (25 000)' },
+    { id: 'geoguessr', icon: '🛰️', label: 'PinDrop (25 000)' },
     { id: 'mystery', icon: '🧭', label: isFr ? 'Pays Mystère' : 'Mystery Country' },
+    { id: 'flash60', icon: '⚡', label: isFr ? 'QCM Flash (60s)' : '60s Flash Quiz' },
     { id: 'detective', icon: '🕵️', label: isFr ? 'Enquête 5 Indices' : '5-Clue Detective' },
     { id: 'mapclick', icon: '🖱️', label: isFr ? 'Cliquez Carte' : 'Map Click' },
     { id: 'world', icon: '🌍', label: isFr ? 'Défi Monde (196)' : 'World Challenge (196)' },
@@ -472,18 +624,18 @@ const getLeague = (ratioOrXp, isGeneral = false) => {
   const isFr = locale.value === 'fr';
   const scoreVal = isGeneral ? ratioOrXp / 10000 : ratioOrXp;
   if (scoreVal >= 0.85) {
-    return { icon: '💎', name: isFr ? 'Diamant' : 'Diamond', badgeClass: 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-800 dark:text-cyan-200' };
+    return { key: 'diamond', icon: '💎', name: isFr ? 'Diamant' : 'Diamond', badgeClass: 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-800 dark:text-cyan-200' };
   }
   if (scoreVal >= 0.65) {
-    return { icon: '🟣', name: isFr ? 'Platine' : 'Platinum', badgeClass: 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200' };
+    return { key: 'platinum', icon: '🟣', name: isFr ? 'Platine' : 'Platinum', badgeClass: 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200' };
   }
   if (scoreVal >= 0.45) {
-    return { icon: '🥇', name: isFr ? 'Or' : 'Gold', badgeClass: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' };
+    return { key: 'gold', icon: '🥇', name: isFr ? 'Or' : 'Gold', badgeClass: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' };
   }
   if (scoreVal >= 0.25) {
-    return { icon: '🥈', name: isFr ? 'Argent' : 'Silver', badgeClass: 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200' };
+    return { key: 'silver', icon: '🥈', name: isFr ? 'Argent' : 'Silver', badgeClass: 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200' };
   }
-  return { icon: '🥉', name: isFr ? 'Bronze' : 'Bronze', badgeClass: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200' };
+  return { key: 'bronze', icon: '🥉', name: isFr ? 'Bronze' : 'Bronze', badgeClass: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200' };
 };
 
 // Calcule l'XP d'une partie en normalisant les parties GeoGuessr (sur 25 000 pts)
@@ -531,14 +683,23 @@ onMounted(() => {
   fetchLeaderboard();
 });
 
-// Filtre par période (Tous les temps, 30 jours, Aujourd'hui)
+// Filtre par période (Tous les temps, Saison du mois en cours, 30 jours, Aujourd'hui)
 const periodFilteredRecords = computed(() => {
   if (selectedPeriod.value === 'all') return recordsList.value;
-  const now = Date.now();
+  const now = new Date();
+
+  if (selectedPeriod.value === 'season') {
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    return recordsList.value.filter(r => {
+      if (!r.played_at) return true;
+      return new Date(r.played_at).getTime() >= startOfMonth;
+    });
+  }
+
   const maxAgeMs = selectedPeriod.value === 'today' ? 24 * 3600 * 1000 : 30 * 24 * 3600 * 1000;
   return recordsList.value.filter(r => {
     if (!r.played_at) return true;
-    const diff = now - new Date(r.played_at).getTime();
+    const diff = now.getTime() - new Date(r.played_at).getTime();
     return diff <= maxAgeMs;
   });
 });
@@ -555,10 +716,8 @@ const activeRanking = computed(() => {
       let xp = Number(item.total_xp || 0);
 
       if (userRecs.length > 0 && userRecs.length === gamesCount) {
-        // Si toutes les parties du joueur sont présentes dans recordsList, on calcule la somme exacte normalisée
         xp = userRecs.reduce((sum, r) => sum + computeRecordXp(r), 0);
       } else {
-        // Sinon, on soustrait le surplus lié aux parties GeoGuessr
         for (const r of userRecs) {
           const mode = (r.mode || '').toLowerCase();
           if (mode.includes('geoguessr') || Number(r.max_score) >= 1000) {
@@ -566,7 +725,6 @@ const activeRanking = computed(() => {
             xp -= (rawSqlXp - computeRecordXp(r));
           }
         }
-        // Sécurité supplémentaire si d'autres parties GeoGuessr figuraient en base
         if (gamesCount > 0 && xp > gamesCount * 2000) {
           xp = Math.round(xp / 1250) + gamesCount * 25;
         }
@@ -600,7 +758,7 @@ const activeRanking = computed(() => {
       });
   }
 
-  // Si mode Général filtré sur 30j ou Aujourd'hui, on recalcule l'XP normalisée sur la période
+  // Si mode Général filtré sur Saison du Mois, 30j ou Aujourd'hui
   if (activeTab.value === 'general') {
     const mapUser = new Map();
     for (const r of periodFilteredRecords.value) {
@@ -626,6 +784,7 @@ const activeRanking = computed(() => {
   const modeKeywords = {
     geoguessr: 'geoguessr',
     mystery: 'myst',
+    flash60: 'flash',
     detective: 'enqu',
     mapclick: 'cliquez',
     world: 'monde',
@@ -654,7 +813,7 @@ const activeRanking = computed(() => {
   return sorted.map((item, idx) => {
     const sc = Number(item.score || 0);
     const mx = Math.max(1, Number(item.max_score || 15));
-    const ratio = sc / mx;
+    const ratio = Math.min(1, sc / mx);
     return {
       uniqueKey: `${activeTab.value}-${item.user_id}`,
       rank: idx + 1,
@@ -668,12 +827,66 @@ const activeRanking = computed(() => {
   });
 });
 
+// Vue d'ensemble des 5 Ligues avec nombre de joueurs dans chacune
+const leagueTiersOverview = computed(() => {
+  const isFr = locale.value === 'fr';
+  const isGen = activeTab.value === 'general';
+  const list = activeRanking.value;
+
+  const countByKey = (k) => list.filter(r => r.league.key === k).length;
+
+  return [
+    {
+      key: 'diamond',
+      icon: '💎',
+      name: isFr ? 'Diamant' : 'Diamond',
+      requirement: isGen ? '8 500+ XP' : '85%+ score',
+      count: countByKey('diamond')
+    },
+    {
+      key: 'platinum',
+      icon: '🟣',
+      name: isFr ? 'Platine' : 'Platinum',
+      requirement: isGen ? '6 500+ XP' : '65%+ score',
+      count: countByKey('platinum')
+    },
+    {
+      key: 'gold',
+      icon: '🥇',
+      name: isFr ? 'Or' : 'Gold',
+      requirement: isGen ? '4 500+ XP' : '45%+ score',
+      count: countByKey('gold')
+    },
+    {
+      key: 'silver',
+      icon: '🥈',
+      name: isFr ? 'Argent' : 'Silver',
+      requirement: isGen ? '2 500+ XP' : '25%+ score',
+      count: countByKey('silver')
+    },
+    {
+      key: 'bronze',
+      icon: '🥉',
+      name: 'Bronze',
+      requirement: isFr ? 'Départ (<25%)' : 'Starter (<25%)',
+      count: countByKey('bronze')
+    }
+  ];
+});
+
 const podiumPlayers = computed(() => activeRanking.value.slice(0, 3));
 
 const filteredRanking = computed(() => {
   const q = playerSearch.value.trim().toLowerCase();
-  if (!q) return activeRanking.value;
-  return activeRanking.value.filter(r => (r.username || '').toLowerCase().includes(q));
+  return activeRanking.value.filter(r => {
+    if (selectedLeagueFilter.value !== 'all' && r.league.key !== selectedLeagueFilter.value) {
+      return false;
+    }
+    if (q && !(r.username || '').toLowerCase().includes(q)) {
+      return false;
+    }
+    return true;
+  });
 });
 
 const currentUserRank = computed(() =>
@@ -720,7 +933,11 @@ const headToHeadStats = computed(() => {
   const isFr = locale.value === 'fr';
 
   const modesToCompare = [
-    { kw: 'geoguessr', icon: '📍', label: 'GeoGuessr' },
+    { kw: 'geoguessr', icon: '🛰️', label: 'PinDrop' },
+    { kw: 'myst', icon: '🧭', label: isFr ? 'Pays Mystère' : 'Mystery Country' },
+    { kw: 'flash', icon: '⚡', label: 'QCM Flash 60s' },
+    { kw: 'enqu', icon: '🕵️', label: isFr ? 'Enquête 5 Indices' : '5-Clue Detective' },
+    { kw: 'cliquez', icon: '🖱️', label: isFr ? 'Cliquez Carte' : 'Map Click' },
     { kw: 'monde', icon: '🌍', label: isFr ? 'Défi Monde' : 'World Challenge' },
     { kw: 'europe', icon: '🇪🇺', label: isFr ? 'Défi Europe' : 'Europe Challenge' },
     { kw: 'grille', icon: '🏳️', label: isFr ? 'Grille Drapeaux' : 'Flag Grid' },
@@ -741,5 +958,16 @@ const headToHeadStats = computed(() => {
       myNumeric: mine.num
     };
   });
+});
+
+const headToHeadSummary = computed(() => {
+  let myWins = 0;
+  let theirWins = 0;
+  for (const s of headToHeadStats.value) {
+    if (s.myNumeric < 0 && s.theirNumeric < 0) continue;
+    if (s.myNumeric > s.theirNumeric) myWins++;
+    else if (s.theirNumeric > s.myNumeric) theirWins++;
+  }
+  return { myWins, theirWins };
 });
 </script>
