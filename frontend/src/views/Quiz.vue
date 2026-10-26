@@ -27,15 +27,16 @@
 
         <button 
           v-if="currentMode !== 'menu'" 
+          type="button"
           @click="retourMenu"
           class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-5 py-2 rounded-full font-medium transition-colors flex items-center gap-2 cursor-pointer"
         >
-          <i class="fas fa-arrow-left"></i> {{ t('quiz.back') }}
+          <span>←</span> {{ t('quiz.back') }}
         </button>
       </div>
     </div>
 
-    <!-- BANNIÈRE SI UN AMI NOUS A ENVOYÉ UN LIEN DE DUEL QCM -->
+    <!-- BANNIÈRE SI UN AMI NOUS A ENVOYÉ UN LIEN DE DUEL OU DÉFI PERSONNALISÉ -->
     <div
       v-if="duelChallenge && currentMode === 'menu'"
       class="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-3xl p-6 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4"
@@ -44,12 +45,18 @@
         <div class="text-4xl">⚔️</div>
         <div>
           <span class="text-xs font-extrabold uppercase tracking-wider bg-black/20 px-2.5 py-0.5 rounded-full">
-            {{ locale === 'fr' ? 'Duel QCM reçu !' : 'Quiz Duel Received!' }}
+            {{ duelChallenge.isCustom
+              ? (locale === 'fr' ? 'Défi sur-mesure reçu !' : 'Custom Challenge Received!')
+              : (locale === 'fr' ? 'Duel QCM reçu !' : 'Quiz Duel Received!') }}
           </span>
           <h3 class="text-xl font-black mt-1">
-            {{ locale === 'fr'
-              ? `${duelChallenge.from} vous défie de battre son score de ${duelChallenge.score}/15 !`
-              : `${duelChallenge.from} challenges you to beat their score of ${duelChallenge.score}/15!` }}
+            {{ duelChallenge.isCustom
+              ? (locale === 'fr'
+                  ? `${duelChallenge.from} vous lance un défi personnalisé sur ${duelChallenge.ids.length} pays !`
+                  : `${duelChallenge.from} sent you a custom challenge on ${duelChallenge.ids.length} countries!`)
+              : (locale === 'fr'
+                  ? `${duelChallenge.from} vous défie de battre son score de ${duelChallenge.score}/${duelChallenge.ids.length} !`
+                  : `${duelChallenge.from} challenges you to beat their score of ${duelChallenge.score}/${duelChallenge.ids.length}!`) }}
           </h3>
         </div>
       </div>
@@ -58,16 +65,16 @@
         @click="startDuelQcm"
         class="px-6 py-3 rounded-xl bg-white text-orange-600 font-black text-sm hover:bg-orange-50 transition shadow cursor-pointer shrink-0"
       >
-        🚀 {{ locale === 'fr' ? 'Relever le Duel' : 'Accept Duel' }}
+        🚀 {{ locale === 'fr' ? 'Relever le Défi' : 'Accept Challenge' }}
       </button>
     </div>
 
     <!-- ========================================================== -->
-    <!-- MENU PRINCIPAL : LES 9 MODES DE JEU + PASSERELLE GEOGUESSR -->
+    <!-- MENU PRINCIPAL : TOUS LES MODES DE JEU + NOUVEAUTÉS        -->
     <!-- ========================================================== -->
     <div v-if="currentMode === 'menu'" class="space-y-8 mt-6">
       
-      <!-- Bannière mise en avant : Pays Mystère du Jour + GeoGuessr PinDrop -->
+      <!-- Bannière mise en avant : Pays Mystère + GeoGuessr PinDrop -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Pays Mystère du Jour (Style Worldle) -->
         <div
@@ -96,14 +103,14 @@
           </div>
         </div>
 
-        <!-- Passerelle directe vers GeoGuessr 360° & Photo -->
+        <!-- Passerelle directe vers GeoGuessr Satellite & Photo -->
         <router-link
           to="/geoguessr"
           class="group bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-6 sm:p-7 rounded-3xl shadow-lg border border-cyan-400/30 hover:border-cyan-400 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between relative overflow-hidden"
         >
           <div class="flex items-center justify-between mb-4">
             <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-              🌐 {{ locale === 'fr' ? 'Exploration 360° & Photo' : '360° & Photo Exploration' }}
+              🛰️ {{ locale === 'fr' ? 'Satellite Espion & Photo' : 'Spy Satellite & Photo' }}
             </span>
             <span class="text-3xl group-hover:scale-110 transition-transform">📍</span>
           </div>
@@ -113,8 +120,8 @@
             </h3>
             <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
               {{ locale === 'fr'
-                ? 'Explorez un panorama 360° ou une photo géolocalisée tirée en direct dans le monde et placez votre épingle sur la carte !'
-                : 'Explore a live 360° panorama or geotagged photo around the world and drop your pin on the map!' }}
+                ? 'Explorez une vue satellite orbitale ou une photo géolocalisée tirée dans le monde et placez votre épingle sur la carte !'
+                : 'Explore an orbital satellite view or geotagged photo around the world and drop your pin on the map!' }}
             </p>
           </div>
           <div class="mt-5 pt-3 border-t border-white/15 flex items-center justify-between text-xs font-black text-cyan-300">
@@ -124,8 +131,8 @@
         </router-link>
       </div>
 
-      <!-- Grille des 8 autres modes de jeu -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Grille des modes de jeu -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
         <!-- 1. QCM Capitales -->
         <div @click="lancerMode('qcm', 'capital')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
           <div class="w-14 h-14 bg-blue-100 dark:bg-gray-700 text-brandBlue dark:text-blue-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏛️</div>
@@ -151,7 +158,21 @@
           </p>
         </div>
 
-        <!-- 4. Enquête aux 5 Indices -->
+        <!-- 4. NOUVEAU : Contre-la-montre 60 secondes (QCM Flash + Combo) -->
+        <div @click="lancerMode('flash60')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-amber-500/40 hover:border-amber-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
+          <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300">
+            ⚡ Combo
+          </span>
+          <div class="w-14 h-14 bg-amber-100 dark:bg-gray-700 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🔥</div>
+          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
+            {{ locale === 'fr' ? 'QCM Flash (60s)' : '60s Flash Quiz' }}
+          </h3>
+          <p class="text-gray-500 dark:text-gray-400 text-xs">
+            {{ locale === 'fr' ? 'Enchaînez un maximum de réponses en 60 secondes avec multiplicateur de combo et bonus de temps !' : 'Chain as many answers as possible in 60 seconds with combo multipliers and time bonuses!' }}
+          </p>
+        </div>
+
+        <!-- 5. Enquête aux 5 Indices -->
         <div @click="lancerMode('detective')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-indigo-500/30 hover:border-indigo-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
           <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
             {{ locale === 'fr' ? 'Inédit' : 'Unique' }}
@@ -165,7 +186,7 @@
           </p>
         </div>
 
-        <!-- 5. Cliquez sur la Carte (Style Seterra) -->
+        <!-- 6. Cliquez sur la Carte (Style Seterra) -->
         <div @click="lancerMode('map-click')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-cyan-500/30 hover:border-cyan-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
           <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300">
             Mobile & PC
@@ -179,7 +200,7 @@
           </p>
         </div>
 
-        <!-- 6. Grille des Drapeaux -->
+        <!-- 7. Grille des Drapeaux -->
         <div @click="lancerMode('flag-grid')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
           <div class="w-14 h-14 bg-emerald-100 dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏳️</div>
           <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
@@ -190,14 +211,14 @@
           </p>
         </div>
 
-        <!-- 7. Flashcards 3D -->
+        <!-- 8. Flashcards 3D -->
         <div @click="lancerMode('flashcards')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
           <div class="w-14 h-14 bg-green-100 dark:bg-gray-700 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🃏</div>
           <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_flash_title') }}</h3>
           <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_flash_desc') }}</p>
         </div>
 
-        <!-- 8. Défis Chronométrés Carte (Clavier) -->
+        <!-- 9. Défis Chronométrés Carte (Clavier) -->
         <div @click="lancerMode('chrono')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
           <div class="w-14 h-14 bg-red-100 dark:bg-gray-700 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">⏱️</div>
           <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
@@ -205,6 +226,20 @@
           </h3>
           <p class="text-gray-500 dark:text-gray-400 text-xs">
             {{ locale === 'fr' ? 'Tapez un maximum de pays au clavier avec grille par continent (Europe 47 ou Monde 196).' : 'Type as many countries as possible with continent grids (Europe 47 or World 196).' }}
+          </p>
+        </div>
+
+        <!-- 10. NOUVEAU : Créateur de Défis Personnalisés -->
+        <div @click="lancerMode('custom-builder')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-pink-500/30 hover:border-pink-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
+          <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-300">
+            Sur-mesure
+          </span>
+          <div class="w-14 h-14 bg-pink-100 dark:bg-gray-700 text-pink-600 dark:text-pink-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🛠️</div>
+          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
+            {{ locale === 'fr' ? 'Créateur de Défis' : 'Challenge Builder' }}
+          </h3>
+          <p class="text-gray-500 dark:text-gray-400 text-xs">
+            {{ locale === 'fr' ? 'Sélectionnez vos propres pays (5 à 15) pour générer un lien de défi sur-mesure à envoyer à vos amis !' : 'Select your own countries (5 to 15) to generate a custom challenge link to send to your friends!' }}
           </p>
         </div>
       </div>
@@ -217,18 +252,18 @@
       <div v-if="!qcmFini" class="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
         <!-- Bandeau si Duel actif -->
         <div v-if="activeDuelTarget !== null" class="mb-4 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-bold text-center">
-          ⚔️ {{ locale === 'fr' ? `Duel contre ${activeDuelFrom} — Score à battre : ${activeDuelTarget} / 15` : `Duel vs ${activeDuelFrom} — Target score: ${activeDuelTarget} / 15` }}
+          ⚔️ {{ locale === 'fr' ? `Défi de ${activeDuelFrom} — Score à battre : ${activeDuelTarget} / ${qcmQuestionsList.length}` : `Challenge from ${activeDuelFrom} — Target score: ${activeDuelTarget} / ${qcmQuestionsList.length}` }}
         </div>
 
         <div class="flex justify-between items-center mb-6 text-sm font-medium text-gray-500 dark:text-gray-400">
-          <span>{{ t('quiz.question_x_of_y', { current: qcmIndex + 1, total: qcmMaxQuestions }) }}</span>
+          <span>{{ t('quiz.question_x_of_y', { current: qcmIndex + 1, total: qcmQuestionsList.length }) }}</span>
           <span class="font-bold text-blue-600 dark:text-blue-400">{{ t('quiz.score', { score: qcmScore }) }}</span>
         </div>
 
         <div class="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden mb-8">
           <div
             class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-300"
-            :style="{ width: `${((qcmIndex + 1) / qcmMaxQuestions) * 100}%` }"
+            :style="{ width: `${((qcmIndex + 1) / qcmQuestionsList.length) * 100}%` }"
           ></div>
         </div>
         
@@ -314,7 +349,7 @@
         <div>
           <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ t('quiz.finished') }}</h3>
           <p class="text-xl text-gray-600 dark:text-gray-300">
-            {{ t('quiz.your_score', { score: qcmScore, total: qcmMaxQuestions }) }}
+            {{ t('quiz.your_score', { score: qcmScore, total: qcmQuestionsList.length }) }}
           </p>
         </div>
 
@@ -324,7 +359,7 @@
             @click="copyDuelQcmLink"
             class="px-6 py-3 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm transition cursor-pointer shadow-sm"
           >
-            ⚔️ {{ duelLinkCopied ? (locale === 'fr' ? 'Lien de duel copié !' : 'Duel link copied!') : (locale === 'fr' ? 'Défier un ami sur ces 15 questions' : 'Challenge a friend on these 15 questions') }}
+            ⚔️ {{ duelLinkCopied ? (locale === 'fr' ? 'Lien de duel copié !' : 'Duel link copied!') : (locale === 'fr' ? `Défier un ami sur ces ${qcmQuestionsList.length} questions` : `Challenge a friend on these ${qcmQuestionsList.length} questions`) }}
           </button>
 
           <button
@@ -334,6 +369,265 @@
           >
             ↻ {{ t('quiz.replay') }}
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- NOUVEAU MODE : CONTRE-LA-MONTRE 60 SECONDES (QCM FLASH + COMBO)           -->
+    <!-- ========================================================================= -->
+    <div v-if="currentMode === 'flash60'" class="max-w-2xl mx-auto mt-6 space-y-6">
+      <!-- Écran de configuration avant départ -->
+      <div v-if="!flash60Running && !flash60Finished" class="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 text-center space-y-6">
+        <div class="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-3xl mx-auto">
+          🔥
+        </div>
+        <div>
+          <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+            {{ locale === 'fr' ? 'Contre-la-montre 60 secondes (QCM Flash)' : '60-Second Time Trial (Flash Quiz)' }}
+          </h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-lg mx-auto">
+            {{ locale === 'fr'
+              ? 'Enchaînez un maximum de bonnes réponses en 60 secondes ! Chaque série de 5 réponses sans erreur active un bonus de +2 secondes et multiplie vos points jusqu\'à x4.'
+              : 'Chain as many correct answers as possible in 60 seconds! Every 5-streak gives a +2s time bonus and multiplies your points up to x4.' }}
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <button
+            v-for="sub in [
+              { id: 'mix', label: locale === 'fr' ? '🎲 Mix Capitales & Drapeaux' : '🎲 Capitals & Flags Mix' },
+              { id: 'capital', label: locale === 'fr' ? '🏛️ Capitales uniquement' : '🏛️ Capitals only' },
+              { id: 'flag', label: locale === 'fr' ? '🚩 Drapeaux uniquement' : '🚩 Flags only' }
+            ]"
+            :key="sub.id"
+            type="button"
+            @click="flash60Topic = sub.id"
+            class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm border-2 transition cursor-pointer"
+            :class="flash60Topic === sub.id
+              ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+              : 'bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'"
+          >
+            {{ sub.label }}
+          </button>
+        </div>
+
+        <button
+          type="button"
+          @click="startFlash60"
+          class="px-10 py-4 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-black text-base shadow-lg cursor-pointer transition"
+        >
+          ⚡ {{ locale === 'fr' ? 'Lancer les 60 secondes !' : 'Start 60 Seconds!' }}
+        </button>
+      </div>
+
+      <!-- Jeu actif 60 secondes -->
+      <div v-else-if="flash60Running && flash60Question" class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
+        <div class="flex items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+          <div class="flex items-center gap-3">
+            <div
+              class="px-4 py-2 rounded-xl font-black text-xl text-white flex items-center gap-2"
+              :class="flash60TimeLeft <= 10 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'"
+            >
+              <span>⏱️</span>
+              <span>{{ flash60TimeLeft }}s</span>
+            </div>
+            <span
+              v-if="flash60BonusToast"
+              class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-black animate-bounce"
+            >
+              +2s BONUS !
+            </span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span
+              class="px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm"
+              :class="flash60Streak >= 3
+                ? 'bg-orange-500 text-white shadow-xs'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+            >
+              🔥 Combo x{{ flash60Multiplier }} ({{ flash60Streak }})
+            </span>
+
+            <div class="text-right">
+              <span class="text-[11px] uppercase font-bold text-gray-400 block">Points</span>
+              <strong class="text-xl font-black text-blue-600 dark:text-blue-400">{{ flash60Score }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center space-y-4 py-2">
+          <template v-if="flash60Question.qType === 'capital'">
+            <img :src="`https://flagcdn.com/w80/${flash60Question.target.iso}.png`" class="h-12 w-auto mx-auto rounded shadow-xs border border-gray-200 dark:border-gray-700" alt="" />
+            <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+              {{ t('quiz.ask_capital', { country: flash60Question.target.name }) }}
+            </h3>
+          </template>
+          <template v-else>
+            <img :src="`https://flagcdn.com/w160/${flash60Question.target.iso}.png`" class="h-24 w-auto mx-auto rounded-lg shadow-md border border-gray-200 dark:border-gray-700" alt="" />
+            <h3 class="text-xl font-black text-gray-900 dark:text-white">
+              {{ t('quiz.ask_flag') }}
+            </h3>
+          </template>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <button
+            v-for="opt in flash60Question.options"
+            :key="'f60-' + opt.id"
+            type="button"
+            @click="answerFlash60(opt)"
+            class="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-amber-500 hover:bg-amber-50/40 dark:hover:bg-gray-700 font-bold text-gray-900 dark:text-white transition cursor-pointer"
+          >
+            {{ flash60Question.qType === 'capital' ? opt.capital : opt.name }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Bilan final QCM Flash 60s -->
+      <div v-else class="bg-white dark:bg-gray-800 rounded-3xl p-8 text-center shadow-sm border border-gray-100 dark:border-gray-700 space-y-5">
+        <div class="text-6xl">⚡</div>
+        <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+          {{ locale === 'fr' ? 'Temps écoulé !' : 'Time is up!' }}
+        </h3>
+        <div class="flex flex-wrap justify-center gap-4">
+          <div class="px-5 py-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+            <span class="text-xs text-gray-500 block">{{ locale === 'fr' ? 'Score Total' : 'Total Score' }}</span>
+            <strong class="text-2xl font-black text-amber-600 dark:text-amber-400">{{ flash60Score }} pts</strong>
+          </div>
+          <div class="px-5 py-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
+            <span class="text-xs text-gray-500 block">{{ locale === 'fr' ? 'Bonnes réponses' : 'Correct answers' }}</span>
+            <strong class="text-2xl font-black text-blue-600 dark:text-blue-400">{{ flash60CorrectCount }}</strong>
+          </div>
+          <div class="px-5 py-3 rounded-2xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800">
+            <span class="text-xs text-gray-500 block">{{ locale === 'fr' ? 'Meilleur Combo' : 'Best Streak' }}</span>
+            <strong class="text-2xl font-black text-orange-600 dark:text-orange-400">🔥 {{ flash60BestStreak }}</strong>
+          </div>
+        </div>
+        <button
+          type="button"
+          @click="startFlash60"
+          class="px-8 py-3.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-black text-sm cursor-pointer transition"
+        >
+          ↻ {{ locale === 'fr' ? 'Rejouer le Sprint 60s' : 'Play 60s Sprint Again' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- NOUVEAU MODE : CRÉATEUR DE DÉFIS PERSONNALISÉS (5 À 15 PAYS)              -->
+    <!-- ========================================================================= -->
+    <div v-if="currentMode === 'custom-builder'" class="max-w-5xl mx-auto mt-6 space-y-6">
+      <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-pink-600 dark:text-pink-400 block">
+              🛠️ {{ locale === 'fr' ? 'Défi sur-mesure entre amis' : 'Custom Friend Challenge' }}
+            </span>
+            <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+              {{ locale === 'fr' ? 'Créez votre propre sélection de pays (5 à 15)' : 'Build your own country selection (5 to 15)' }}
+            </h3>
+          </div>
+
+          <div class="flex items-center gap-3 flex-wrap">
+            <select
+              v-model="customBuilderType"
+              class="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-xs sm:text-sm font-bold"
+            >
+              <option value="capital">🏛️ {{ locale === 'fr' ? 'Épreuve : Capitales' : 'Mode: Capitals' }}</option>
+              <option value="flag">🚩 {{ locale === 'fr' ? 'Épreuve : Drapeaux' : 'Mode: Flags' }}</option>
+              <option value="culture">🗣️ {{ locale === 'fr' ? 'Épreuve : Population & Langues' : 'Mode: Culture' }}</option>
+            </select>
+
+            <button
+              type="button"
+              @click="pickRandomCustomCountries(10)"
+              class="px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-xs font-bold cursor-pointer transition"
+            >
+              🎲 {{ locale === 'fr' ? 'Sélection aléatoire (10)' : 'Random Pick (10)' }}
+            </button>
+
+            <button
+              v-if="customSelectedIds.length > 0"
+              type="button"
+              @click="customSelectedIds = []"
+              class="px-3 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-300 text-xs font-bold cursor-pointer"
+            >
+              ✕ {{ locale === 'fr' ? 'Tout vider' : 'Clear all' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtres de recherche -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input
+            v-model="customSearchQuery"
+            type="text"
+            :placeholder="locale === 'fr' ? 'Rechercher un pays à ajouter...' : 'Search a country to add...'"
+            class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm font-semibold focus:outline-none focus:border-pink-500"
+          />
+          <select
+            v-model="customContinentFilter"
+            class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm font-semibold"
+          >
+            <option value="">{{ locale === 'fr' ? 'Tous les continents (196)' : 'All Continents (196)' }}</option>
+            <option value="Europe">Europe</option>
+            <option value="Asia">{{ locale === 'fr' ? 'Asie' : 'Asia' }}</option>
+            <option value="Africa">{{ locale === 'fr' ? 'Afrique' : 'Africa' }}</option>
+            <option value="North America">{{ locale === 'fr' ? 'Amérique du Nord' : 'North America' }}</option>
+            <option value="South America">{{ locale === 'fr' ? 'Amérique du Sud' : 'South America' }}</option>
+            <option value="Oceania">{{ locale === 'fr' ? 'Océanie' : 'Oceania' }}</option>
+          </select>
+        </div>
+
+        <!-- Grille de sélection des pays -->
+        <div class="max-h-80 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+          <button
+            v-for="country in filteredCustomCountries"
+            :key="'cb-' + country.id"
+            type="button"
+            @click="toggleCustomCountry(country.id)"
+            class="p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition cursor-pointer"
+            :class="customSelectedIds.includes(country.id)
+              ? 'bg-pink-50 dark:bg-pink-950/50 border-pink-500 text-pink-900 dark:text-pink-200 font-black shadow-2xs'
+              : 'bg-gray-50/70 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:border-pink-400'"
+          >
+            <img :src="`https://flagcdn.com/w40/${country.iso}.png`" class="h-4 w-auto rounded-2xs shrink-0" alt="" />
+            <span class="text-xs truncate flex-1">{{ country.name }}</span>
+            <span v-if="customSelectedIds.includes(country.id)" class="text-pink-600 dark:text-pink-400 text-xs font-black">✓</span>
+          </button>
+        </div>
+
+        <!-- Barre d'actions du défi personnalisé -->
+        <div class="pt-4 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-xs sm:text-sm font-bold text-gray-600 dark:text-gray-300">
+            {{ locale === 'fr'
+              ? `Pays sélectionnés : ${customSelectedIds.length} / 15 (minimum 5 requis)`
+              : `Selected countries: ${customSelectedIds.length} / 15 (minimum 5 required)` }}
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              :disabled="customSelectedIds.length < 5"
+              @click="copyCustomChallengeLink"
+              class="px-5 py-3 rounded-xl bg-pink-600 hover:bg-pink-700 disabled:opacity-40 text-white font-black text-xs sm:text-sm transition cursor-pointer"
+            >
+              🔗 {{ customLinkCopied
+                ? (locale === 'fr' ? 'Lien copié dans le presse-papiers !' : 'Link copied to clipboard!')
+                : (locale === 'fr' ? 'Copier le lien du Défi' : 'Copy Challenge Link') }}
+            </button>
+
+            <button
+              type="button"
+              :disabled="customSelectedIds.length < 5"
+              @click="playCustomChallengeNow"
+              class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-black text-xs sm:text-sm transition cursor-pointer"
+            >
+              🚀 {{ locale === 'fr' ? 'Jouer ce Défi maintenant' : 'Play This Challenge Now' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -500,7 +794,6 @@
 
         <!-- Les 5 cartes d'indices progressifs (de 5 pts à 1 pt) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <!-- Indice 1 (Toujours visible : 5 pts) -->
           <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
             <span class="text-[11px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-1">
               {{ locale === 'fr' ? 'Indice #1 (Valeur : 5 pts)' : 'Clue #1 (Worth: 5 pts)' }}
@@ -510,7 +803,6 @@
             </p>
           </div>
 
-          <!-- Indice 2 (4 pts) -->
           <div class="p-4 rounded-2xl border transition-all" :class="detectiveCluesRevealed >= 2 ? 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'">
             <span class="text-[11px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-1">
               {{ locale === 'fr' ? 'Indice #2 (Valeur : 4 pts)' : 'Clue #2 (Worth: 4 pts)' }}
@@ -523,7 +815,6 @@
             </button>
           </div>
 
-          <!-- Indice 3 : Fun Fact masqué (3 pts) -->
           <div class="sm:col-span-2 p-4 rounded-2xl border transition-all" :class="detectiveCluesRevealed >= 3 ? 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'">
             <span class="text-[11px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-1">
               {{ locale === 'fr' ? 'Indice #3 — Anecdote (Valeur : 3 pts)' : 'Clue #3 — Fun Fact (Worth: 3 pts)' }}
@@ -536,7 +827,6 @@
             </button>
           </div>
 
-          <!-- Indice 4 : Langue & Capitale (2 pts) -->
           <div class="p-4 rounded-2xl border transition-all" :class="detectiveCluesRevealed >= 4 ? 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'">
             <span class="text-[11px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-1">
               {{ locale === 'fr' ? 'Indice #4 (Valeur : 2 pts)' : 'Clue #4 (Worth: 2 pts)' }}
@@ -549,7 +839,6 @@
             </button>
           </div>
 
-          <!-- Indice 5 : Drapeau (1 pt) -->
           <div class="p-4 rounded-2xl border transition-all flex items-center justify-between" :class="detectiveCluesRevealed >= 5 ? 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'">
             <div>
               <span class="text-[11px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-1">
@@ -564,7 +853,6 @@
           </div>
         </div>
 
-        <!-- 4 Choix de réponse pour l'enquête -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
           <button
             v-for="optId in detectiveOptions"
@@ -586,7 +874,6 @@
 
       </div>
 
-      <!-- Fin des 5 Enquêtes -->
       <div v-else class="text-center py-12 px-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-5">
         <div class="text-6xl">🕵️</div>
         <h3 class="text-2xl font-black text-gray-900 dark:text-white">
@@ -611,7 +898,6 @@
     <div v-if="currentMode === 'map-click'" class="max-w-5xl mx-auto mt-6 space-y-5">
       <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-7 shadow-sm border border-gray-100 dark:border-gray-700 space-y-5">
         
-        <!-- Barre de consigne : Pays sur lequel cliquer -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-cyan-50/80 dark:bg-gray-900 p-4 rounded-2xl border border-cyan-200 dark:border-gray-700">
           <div class="flex items-center gap-3">
             <select
@@ -628,7 +914,6 @@
             </span>
           </div>
 
-          <!-- Cible actuelle à cliquer -->
           <div v-if="!mapClickFinished && currentMapClickTarget" class="flex items-center gap-3">
             <span class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400">
               {{ locale === 'fr' ? 'Cliquez sur :' : 'Click on:' }}
@@ -647,12 +932,10 @@
           </div>
         </div>
 
-        <!-- Feedback du dernier clic erroné -->
         <div v-if="mapClickFeedback" class="text-center text-xs sm:text-sm font-bold text-red-500">
           {{ mapClickFeedback }}
         </div>
 
-        <!-- Carte muette interactive Seterra (Zéro nom de pays affiché) -->
         <div class="h-[500px] w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 relative z-0 bg-[#aad3df] dark:bg-[#1e293b]">
           <l-map
             v-model:zoom="mapClickZoom"
@@ -849,7 +1132,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODE FLASHCARDS 3D ENRICHIES                                              -->
+    <!-- MODE FLASHCARDS 3D ENRICHIES (NAVIGATION BOUTONS & FLÈCHES CLAVIER)       -->
     <!-- ========================================================================= -->
     <div v-if="currentMode === 'flashcards'" class="max-w-xl mx-auto mt-6 space-y-6">
       <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
@@ -861,7 +1144,7 @@
           <option value="">{{ locale === 'fr' ? 'Tous les continents (196)' : 'All Continents (196)' }}</option>
           <option value="Europe">Europe (47)</option>
           <option value="Asia">{{ locale === 'fr' ? 'Asie (46)' : 'Asia (46)' }}</option>
-          <option value="Africa">{{ locale === 'fr' ? 'Afrique (54)' : 'Afrique (54)' }}</option>
+          <option value="Africa">{{ locale === 'fr' ? 'Afrique (54)' : 'Africa (54)' }}</option>
           <option value="North America">{{ locale === 'fr' ? 'Amérique du Nord (23)' : 'North America (23)' }}</option>
           <option value="South America">{{ locale === 'fr' ? 'Amérique du Sud (12)' : 'South America (12)' }}</option>
           <option value="Oceania">{{ locale === 'fr' ? 'Océanie (14)' : 'Oceania (14)' }}</option>
@@ -882,7 +1165,7 @@
           @click="shuffleFlashcards"
           class="bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-gray-600 text-gray-800 dark:text-white hover:text-blue-600 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-2"
         >
-          <i class="fas fa-random"></i> {{ locale === 'fr' ? 'Mélanger' : 'Shuffle' }}
+          <span>🔀</span> {{ locale === 'fr' ? 'Mélanger' : 'Shuffle' }}
         </button>
       </div>
 
@@ -919,7 +1202,7 @@
             </div>
 
             <div class="w-full pt-4 border-t border-gray-100 dark:border-gray-700/70 text-xs font-bold text-blue-600 dark:text-blue-400">
-              {{ locale === 'fr' ? 'Cliquez pour retourner la fiche complète ↻' : 'Click to flip for full country card ↻' }}
+              {{ locale === 'fr' ? 'Cliquez ou appuyez sur Espace pour retourner ↻' : 'Click or press Space to flip ↻' }}
             </div>
           </div>
 
@@ -998,7 +1281,6 @@
     <div v-if="currentMode === 'chrono'" class="max-w-6xl mx-auto mt-8">
       <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-700">
         
-        <!-- ÉCRAN DE CONFIGURATION AVANT LANCEMENT (CHOIX RÉGION + CHOIX TEMPS) -->
         <div v-if="!isChronoStarted && !chronoFini" class="text-center py-4 space-y-8">
           <div>
             <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -1011,7 +1293,6 @@
             </p>
           </div>
 
-          <!-- 1. Choix Europe (47) ou Monde (196) -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             <div
               @click="selectChronoMode('europe')"
@@ -1038,7 +1319,6 @@
             </div>
           </div>
 
-          <!-- 2. Choix de la durée (3 min / 5 min / Illimité pour Europe | 15 min / Illimité pour Monde) -->
           <div class="max-w-2xl mx-auto bg-gray-50 dark:bg-gray-900/60 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3">
             <h4 class="text-sm font-extrabold uppercase tracking-wider text-gray-600 dark:text-gray-300">
               ⏱️ {{ locale === 'fr' ? 'Limite de temps & Calcul des points' : 'Time Limit & Scoring' }}
@@ -1074,10 +1354,8 @@
           </button>
         </div>
 
-        <!-- ÉCRAN DE JEU CHRONO ACTIF OU TERMINÉ -->
         <div v-else class="space-y-6">
           
-          <!-- Carte Leaflet Muette (Sans aucun nom de pays ni de ville !) -->
           <div class="w-full h-[460px] bg-[#aad3df] dark:bg-[#1e293b] rounded-2xl overflow-hidden shadow-inner border border-gray-200 dark:border-gray-700 relative z-0">
             <l-map ref="map" v-model:zoom="mapZoom" v-model:center="mapCenter" :min-zoom="2" :max-zoom="7" :use-global-leaflet="false">
               <l-tile-layer
@@ -1101,10 +1379,8 @@
             </l-map>
           </div>
 
-          <!-- Barre de contrôle : Chronomètre, Progression, Points/XP, Saisie & Alerte Doublon -->
           <div class="flex flex-col lg:flex-row justify-between items-center gap-4 bg-white dark:bg-gray-800 border-2 border-brandBlue/20 p-4 sm:p-5 rounded-2xl shadow-sm">
             
-            <!-- Chronomètre + Progression + Points calculés -->
             <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-start">
               <div class="flex items-center gap-4">
                 <div
@@ -1136,7 +1412,6 @@
               </div>
             </div>
 
-            <!-- Champ de saisie + Alerte "Pays déjà trouvé" -->
             <div class="w-full lg:w-1/2 space-y-2">
               <div class="flex gap-2">
                 <input
@@ -1173,7 +1448,6 @@
                 </button>
               </div>
 
-              <!-- Message d'alerte si le pays tapé a déjà été trouvé -->
               <transition name="fade">
                 <div
                   v-if="chronoDuplicateMsg"
@@ -1192,7 +1466,6 @@
             </div>
           </div>
 
-          <!-- Bannière de bilan final quand la partie est terminée -->
           <div
             v-if="chronoFini"
             class="p-5 rounded-2xl border text-center space-y-2"
@@ -1212,10 +1485,6 @@
             </p>
           </div>
 
-          <!-- =================================================================== -->
-          <!-- GRILLES PAR CONTINENT STYLE JETPUNK (REMPLISSAGE ALPHABÉTIQUE)      -->
-          <!-- =================================================================== -->
-          
           <!-- CAS 1 : DÉFI MONDE (6 COLONNES PAR CONTINENT COMME SUR JETPUNK) -->
           <div v-if="chronoRegion === 'world'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 pt-2">
             <div
@@ -1223,7 +1492,6 @@
               :key="group.key"
               class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900 shadow-2xs flex flex-col"
             >
-              <!-- En-tête bleu style JetPunk -->
               <div class="bg-[#2b579a] text-white font-bold text-xs sm:text-sm py-2 px-3 text-center flex items-center justify-between">
                 <span class="truncate">{{ group.label }}</span>
                 <span class="text-[11px] bg-black/25 px-2 py-0.5 rounded-full font-extrabold">
@@ -1231,7 +1499,6 @@
                 </span>
               </div>
 
-              <!-- Lignes alphabétiques du continent -->
               <div class="divide-y divide-gray-200 dark:divide-gray-700/80 text-xs">
                 <div
                   v-for="country in group.countries"
@@ -1260,7 +1527,7 @@
             </div>
           </div>
 
-          <!-- CAS 2 : DÉFI EUROPE (EN-TÊTE EUROPE + 4 COLONNES ALPHABÉTIQUES JETPUNK) -->
+          <!-- CAS 2 : DÉFI EUROPE (4 COLONNES ALPHABÉTIQUES JETPUNK) -->
           <div v-else class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900 shadow-2xs">
             <div class="bg-[#2b579a] text-white font-bold text-sm py-2.5 px-4 flex items-center justify-between">
               <span>🇪🇺 Europe</span>
@@ -1411,19 +1678,28 @@ const retourMenu = () => {
   currentMode.value = 'menu';
   arreterChrono();
   stopFlagGridTimer();
+  stopFlash60Timer();
 };
 
 const lancerMode = (mode, type = null) => {
   arreterChrono();
   stopFlagGridTimer();
+  stopFlash60Timer();
   activeDuelTarget.value = null;
   currentMode.value = mode;
-  if (mode === 'qcm') initQcm(type);
+  if (mode === 'qcm') initQcm(type || 'capital');
   if (mode === 'mystery') initDailyMystery();
   if (mode === 'detective') initDetectiveGame();
   if (mode === 'map-click') initMapClickGame();
   if (mode === 'flag-grid') initFlagGrid();
   if (mode === 'flashcards') initFlashcards();
+  if (mode === 'flash60') {
+    flash60Running.value = false;
+    flash60Finished.value = false;
+  }
+  if (mode === 'custom-builder') {
+    customLinkCopied.value = false;
+  }
   if (mode === 'chrono') {
     isChronoStarted.value = false;
     paysTrouves.value = [];
@@ -1465,8 +1741,9 @@ const parseNumericPopulation = (popStr = '') => {
 
 const localizedCountries = computed(() => {
   const isEn = locale.value === 'en';
-  return countriesData.value.map(c => ({
+  return countriesData.value.map((c, idx) => ({
     ...c,
+    id: c.id ?? idx + 1,
     name: isEn ? c.name_en : c.name_fr,
     capital: isEn ? c.capital_en : c.capital_fr,
     continent: c.continent_en,
@@ -1480,7 +1757,6 @@ const localizedCountries = computed(() => {
 
 const getCountry = (id) => localizedCountries.value.find(c => c.id === id);
 const getLocalizedName = (id) => getCountry(id)?.name || '';
-const getLocalizedCapital = (id) => getCountry(id)?.capital || '';
 const getIso = (id) => getCountry(id)?.iso || '';
 
 // Formule de Haversine + Direction Boussole 🧭
@@ -1504,6 +1780,147 @@ const computeCompassDirection = (lat1, lon1, lat2, lon2) => {
   const dirsEn = ['⬆️ N', '↗️ NE', '➡️ E', '↘️ SE', '⬇️ S', '↙️ SW', '⬅️ W', '↖️ NW'];
   const idx = Math.round(brng / 45) % 8;
   return locale.value === 'fr' ? dirsFr[idx] : dirsEn[idx];
+};
+
+// =========================================================
+// NOUVEAU MODE : CONTRE-LA-MONTRE 60 SECONDES (QCM FLASH)
+// =========================================================
+const flash60Topic = ref('mix');
+const flash60Running = ref(false);
+const flash60Finished = ref(false);
+const flash60TimeLeft = ref(60);
+const flash60Score = ref(0);
+const flash60CorrectCount = ref(0);
+const flash60Streak = ref(0);
+const flash60BestStreak = ref(0);
+const flash60Question = ref(null);
+const flash60BonusToast = ref(false);
+let flash60Interval = null;
+
+const flash60Multiplier = computed(() => Math.min(4, 1 + Math.floor(flash60Streak.value / 3)));
+
+const stopFlash60Timer = () => {
+  if (flash60Interval) {
+    clearInterval(flash60Interval);
+    flash60Interval = null;
+  }
+};
+
+const nextFlash60Question = () => {
+  const shuffled = [...localizedCountries.value].sort(() => 0.5 - Math.random());
+  const target = shuffled[0];
+  const distractors = shuffled.slice(1, 4);
+  const options = [target, ...distractors].sort(() => 0.5 - Math.random());
+  const qType =
+    flash60Topic.value === 'mix'
+      ? (Math.random() < 0.5 ? 'capital' : 'flag')
+      : flash60Topic.value;
+
+  flash60Question.value = { target, options, qType };
+};
+
+const startFlash60 = () => {
+  stopFlash60Timer();
+  flash60Score.value = 0;
+  flash60CorrectCount.value = 0;
+  flash60Streak.value = 0;
+  flash60BestStreak.value = 0;
+  flash60TimeLeft.value = 60;
+  flash60Finished.value = false;
+  flash60Running.value = true;
+  nextFlash60Question();
+
+  flash60Interval = setInterval(() => {
+    if (flash60TimeLeft.value > 0) {
+      flash60TimeLeft.value--;
+    } else {
+      stopFlash60Timer();
+      flash60Running.value = false;
+      flash60Finished.value = true;
+      playSound('victory');
+      sauvegarderScore('QCM Flash 60s', flash60Score.value, 40);
+    }
+  }, 1000);
+};
+
+const answerFlash60 = (chosenCountry) => {
+  if (!flash60Running.value || !flash60Question.value) return;
+  if (chosenCountry.id === flash60Question.value.target.id) {
+    flash60Streak.value++;
+    if (flash60Streak.value > flash60BestStreak.value) {
+      flash60BestStreak.value = flash60Streak.value;
+    }
+    flash60CorrectCount.value++;
+    flash60Score.value += flash60Multiplier.value;
+
+    // Bonus de +2 secondes toutes les 5 bonnes réponses consécutives
+    if (flash60Streak.value % 5 === 0) {
+      flash60TimeLeft.value += 2;
+      flash60BonusToast.value = true;
+      setTimeout(() => { flash60BonusToast.value = false; }, 1200);
+    }
+    playSound('correct');
+  } else {
+    flash60Streak.value = 0;
+    playSound('wrong');
+  }
+  nextFlash60Question();
+};
+
+// =========================================================
+// NOUVEAU MODE : CRÉATEUR DE DÉFIS PERSONNALISÉS
+// =========================================================
+const customBuilderType = ref('capital');
+const customSearchQuery = ref('');
+const customContinentFilter = ref('');
+const customSelectedIds = ref([]);
+const customLinkCopied = ref(false);
+
+const filteredCustomCountries = computed(() => {
+  const q = normalizeStr(customSearchQuery.value);
+  return localizedCountries.value.filter(c => {
+    if (customContinentFilter.value && c.continent !== customContinentFilter.value) return false;
+    if (q && !normalizeStr(c.name).includes(q)) return false;
+    return true;
+  });
+});
+
+const toggleCustomCountry = (id) => {
+  const idx = customSelectedIds.value.indexOf(id);
+  if (idx !== -1) {
+    customSelectedIds.value.splice(idx, 1);
+  } else if (customSelectedIds.value.length < 15) {
+    customSelectedIds.value.push(id);
+  }
+};
+
+const pickRandomCustomCountries = (count = 10) => {
+  const pool = [...filteredCustomCountries.value].sort(() => 0.5 - Math.random());
+  customSelectedIds.value = pool.slice(0, Math.min(15, count)).map(c => c.id);
+};
+
+const copyCustomChallengeLink = async () => {
+  if (customSelectedIds.value.length < 5) return;
+  try {
+    const savedUser = localStorage.getItem('geolearn_user');
+    let myName = 'Joueur';
+    if (savedUser) {
+      const p = JSON.parse(savedUser);
+      myName = p.username || p.name || p.pseudo || 'Joueur';
+    }
+    const payload = `${customBuilderType.value}:${customSelectedIds.value.join('-')}:0:${encodeURIComponent(myName)}:custom`;
+    const link = `${window.location.origin}/quiz?duel=${btoa(payload)}`;
+    await navigator.clipboard.writeText(link);
+    customLinkCopied.value = true;
+    setTimeout(() => { customLinkCopied.value = false; }, 3500);
+  } catch (e) {}
+};
+
+const playCustomChallengeNow = () => {
+  if (customSelectedIds.value.length < 5) return;
+  activeDuelTarget.value = null;
+  currentMode.value = 'qcm';
+  initQcm(customBuilderType.value, [...customSelectedIds.value]);
 };
 
 // =========================================================
@@ -1535,8 +1952,8 @@ const initDailyMystery = () => {
   for (let i = 0; i < todayStr.length; i++) {
     hash = (hash * 31 + todayStr.charCodeAt(i)) % 100000;
   }
-  const idx = hash % countriesData.value.length;
-  mysteryTargetId.value = countriesData.value[idx].id;
+  const idx = hash % localizedCountries.value.length;
+  mysteryTargetId.value = localizedCountries.value[idx].id;
   mysteryGuesses.value = [];
   mysteryQuery.value = '';
   mysteryFinished.value = false;
@@ -1545,7 +1962,7 @@ const initDailyMystery = () => {
 
 const startInfiniteMystery = () => {
   mysteryIsDaily.value = false;
-  const randomCountry = countriesData.value[Math.floor(Math.random() * countriesData.value.length)];
+  const randomCountry = localizedCountries.value[Math.floor(Math.random() * localizedCountries.value.length)];
   mysteryTargetId.value = randomCountry.id;
   mysteryGuesses.value = [];
   mysteryQuery.value = '';
@@ -1888,7 +2305,7 @@ const initQcm = (type, customQuestionIds = null) => {
   if (customQuestionIds && customQuestionIds.length > 0) {
     qcmQuestionsList.value = customQuestionIds;
   } else {
-    const shuffled = [...countriesData.value].sort(() => 0.5 - Math.random());
+    const shuffled = [...localizedCountries.value].sort(() => 0.5 - Math.random());
     qcmQuestionsList.value = shuffled.slice(0, Math.min(qcmMaxQuestions, shuffled.length)).map(c => c.id);
   }
   qcmIndex.value = 0; 
@@ -1915,7 +2332,7 @@ const copyDuelQcmLink = async () => {
 
 const startDuelQcm = () => {
   if (!duelChallenge.value) return;
-  activeDuelTarget.value = duelChallenge.value.score;
+  activeDuelTarget.value = duelChallenge.value.isCustom ? null : duelChallenge.value.score;
   activeDuelFrom.value = duelChallenge.value.from;
   currentMode.value = 'qcm';
   initQcm(duelChallenge.value.type, duelChallenge.value.ids);
@@ -1926,6 +2343,7 @@ const genererOptionsQcm = () => {
   qcmSelected.value = null;
   const baseId = qcmQuestionsList.value[qcmIndex.value];
   const baseCountry = getCountry(baseId);
+  if (!baseCountry) return;
 
   if (qcmCurrentType.value === 'culture') {
     const cycle = ['population', 'lang', 'currency'];
@@ -1966,14 +2384,14 @@ const genererOptionsQcm = () => {
   }
 
   qcmCorrectAnswer.value = baseId;
-  const sameContinent = countriesData.value
+  const sameContinent = localizedCountries.value
     .filter(c => c.id !== baseId && c.continent_en === baseCountry.continent_en)
     .map(c => c.id);
     
   const distractors = [...sameContinent].sort(() => 0.5 - Math.random()).slice(0, 3);
   
   while (distractors.length < 3) {
-    const randomC = countriesData.value[Math.floor(Math.random() * countriesData.value.length)].id;
+    const randomC = localizedCountries.value[Math.floor(Math.random() * localizedCountries.value.length)].id;
     if (randomC !== baseId && !distractors.includes(randomC)) {
       distractors.push(randomC);
     }
@@ -2005,7 +2423,7 @@ const verifierReponseQcm = (choixId) => {
   }
 
   setTimeout(() => {
-    if (qcmIndex.value < qcmMaxQuestions - 1) {
+    if (qcmIndex.value < qcmQuestionsList.length - 1) {
       qcmIndex.value++;
       genererOptionsQcm();
     } else {
@@ -2017,7 +2435,7 @@ const verifierReponseQcm = (choixId) => {
           : qcmCurrentType.value === 'flag'
             ? 'QCM Drapeaux'
             : 'QCM Culture';
-      sauvegarderScore(modeName, qcmScore.value, qcmMaxQuestions);
+      sauvegarderScore(modeName, qcmScore.value, qcmQuestionsList.length);
     }
   }, 1150);
 };
@@ -2095,7 +2513,6 @@ const flashcardPrecedente = () => {
   }
 };
 
-// Navigation au clavier (Flèche Droite = suivante, Flèche Gauche = précédente, Espace = retourner)
 const handleFlashcardKeydown = (e) => {
   if (currentMode.value !== 'flashcards') return;
   const tag = (e.target?.tagName || '').toLowerCase();
@@ -2113,16 +2530,12 @@ const handleFlashcardKeydown = (e) => {
   }
 };
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('keydown', handleFlashcardKeydown);
-}
-
 // =========================================================
 // MODE CHRONO CARTE (CLAVIER EUROPE & MONDE + JETPUNK GRIDS)
 // =========================================================
 const isChronoStarted = ref(false);
 const chronoRegion = ref('europe');
-const chronoTimeLimit = ref(180); // 180 (3m), 300 (5m), 900 (15m), ou 0 (Illimité)
+const chronoTimeLimit = ref(180);
 const chronoTemps = ref(180);
 const chronoInput = ref('');
 const paysTrouves = ref([]);
@@ -2134,9 +2547,6 @@ let duplicateTimer = null;
 const mapZoom = ref(3.8);
 const mapCenter = ref([50.0, 10.0]);
 
-// Options de temps dynamiques selon le défi sélectionné :
-// - Europe : 3 min (100%), 5 min (-25%), Illimité (÷ 2)
-// - Monde  : 15 min (100%), Illimité (÷ 2)
 const chronoTimerOptions = computed(() => {
   const isFr = locale.value === 'fr';
   if (chronoRegion.value === 'europe') {
@@ -2172,7 +2582,6 @@ const chronoTimerOptions = computed(() => {
   ];
 });
 
-// Multiplicateur de points et d'XP selon l'option de temps choisie
 const chronoMultiplier = computed(() => {
   if (chronoTimeLimit.value === 0) return 0.5;
   if (chronoRegion.value === 'europe' && chronoTimeLimit.value === 300) return 0.75;
@@ -2224,7 +2633,6 @@ const targetCountries = computed(() => {
   return [...localizedCountries.value].sort((a, b) => a.name.localeCompare(b.name));
 });
 
-// Colonnes alphabétiques par continent pour le Défi Monde (style JetPunk)
 const worldContinentGroups = computed(() => {
   const isFr = locale.value === 'fr';
   const defs = [
@@ -2250,7 +2658,6 @@ const worldContinentGroups = computed(() => {
   });
 });
 
-// 4 colonnes alphabétiques équilibrées pour le Défi Europe (47 pays)
 const europeColumns = computed(() => {
   const list = targetCountries.value;
   const cols = [[], [], [], []];
@@ -2309,7 +2716,6 @@ const formatTime = (seconds) => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
-// Vérifie si un pays correspond à la saisie de l'utilisateur
 const countryMatchesInput = (country, inputNormalise) => {
   const mainFr = normalizeStr(country.name_fr);
   const mainEn = normalizeStr(country.name_en);
@@ -2317,7 +2723,6 @@ const countryMatchesInput = (country, inputNormalise) => {
   return mainFr === inputNormalise || mainEn === inputNormalise || altNames.includes(inputNormalise);
 };
 
-// Vérifie si un autre pays non trouvé commence par la saisie actuelle (ex: "uk" -> "ukraine", "niger" -> "nigeria", "inde" -> "indonesie")
 const anotherUnfoundCountryStartsWith = (inputNormalise, excludeIso = null) => {
   return targetCountries.value.some(c => {
     if (paysTrouves.value.includes(c.iso)) return false;
@@ -2342,7 +2747,6 @@ const verifierSaisieChrono = (forcedByEnter = false) => {
     return;
   }
 
-  // 1. On cherche d'abord parmi les pays NON TROUVÉS
   const unfoundMatch = targetCountries.value.find(
     c => !paysTrouves.value.includes(c.iso) && countryMatchesInput(c, inputNormalise)
   );
@@ -2352,10 +2756,6 @@ const verifierSaisieChrono = (forcedByEnter = false) => {
       normalizeStr(unfoundMatch.name_fr) === inputNormalise ||
       normalizeStr(unfoundMatch.name_en) === inputNormalise;
 
-    // Si la correspondance vient d'un alias très court (ex: "uk" pour Royaume-Uni)
-    // et qu'un autre pays non trouvé commence par ces lettres (ex: "ukraine"),
-    // on attend que l'utilisateur appuie sur Entrée ou Espace pour valider l'alias court,
-    // afin de lui laisser écrire "ukraine" librement !
     if (
       !isMainNameMatch &&
       inputNormalise.length <= 3 &&
@@ -2377,14 +2777,11 @@ const verifierSaisieChrono = (forcedByEnter = false) => {
     return;
   }
 
-  // 2. Sinon, on vérifie si la saisie correspond à un pays DÉJÀ TROUVÉ
   const alreadyFoundMatch = targetCountries.value.find(
     c => paysTrouves.value.includes(c.iso) && countryMatchesInput(c, inputNormalise)
   );
 
   if (alreadyFoundMatch) {
-    // Si un pays non trouvé commence par ce préfixe (ex: "uk" déjà trouvé mais l'utilisateur tape "ukraine",
-    // ou "niger" déjà trouvé mais l'utilisateur tape "nigeria"), on NE bloque PAS et on N'EFFACE PAS la saisie !
     if (!forcedByEnter && anotherUnfoundCountryStartsWith(inputNormalise, alreadyFoundMatch.iso)) {
       return;
     }
@@ -2413,27 +2810,41 @@ const arreterChrono = () => {
 };
 
 onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', handleFlashcardKeydown);
+  }
+
+  // Réception d'un lien de Duel ou Défi Personnalisé
   if (route.query.duel) {
     try {
       const decoded = atob(route.query.duel);
-      const [type, idsStr, targetScore, fromName] = decoded.split(':');
+      const [type, idsStr, targetScore, fromName, flagCustom] = decoded.split(':');
       const ids = idsStr.split('-').map(Number).filter(Boolean);
       if (ids.length > 0) {
         duelChallenge.value = {
           type: type || 'capital',
           ids,
           score: Number(targetScore || 0),
-          from: decodeURIComponent(fromName || 'Ami')
+          from: decodeURIComponent(fromName || 'Ami'),
+          isCustom: flagCustom === 'custom'
         };
       }
     } catch (e) {}
+  }
+
+  // Ouverture automatique d'un mode cliqué depuis Accueil.vue (?mode=...)
+  if (route.query.mode) {
+    lancerMode(String(route.query.mode), route.query.type ? String(route.query.type) : null);
   }
 });
 
 onUnmounted(() => {
   arreterChrono();
   stopFlagGridTimer();
-  window.removeEventListener('keydown', handleFlashcardKeydown);
+  stopFlash60Timer();
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('keydown', handleFlashcardKeydown);
+  }
 });
 </script>
 
