@@ -2,36 +2,38 @@
   <div class="max-w-6xl mx-auto space-y-8 pb-12">
 
     <!-- ========================================================= -->
-    <!-- EN-TÊTE DU CLASSEMENT + FILTRE TEMPOREL + ACTUALISER      -->
+    <!-- EN-TÊTE DU CLASSEMENT + FILTRE TEMPOREL SUR UNE LIGNE     -->
     <!-- ========================================================= -->
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5">
       <div>
         <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
           🌍 {{ locale === 'fr' ? 'Compétition Communautaire & Ligues' : 'Official Community Competition & Leagues' }}
         </span>
-        <h2 class="text-3xl font-black text-gray-900 dark:text-white">
+        <h2 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
           {{ locale === 'fr' ? 'Classement Mondial & Ligues' : 'World Leaderboard & Leagues' }}
         </h2>
-        <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base">
+        <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base max-w-2xl">
           {{ locale === 'fr'
             ? 'Comparez vos records sur les 12 modes, progressez de la ligue Bronze jusqu\'au rang Diamant et cliquez sur un joueur pour lancer un Face-à-Face.'
             : 'Compare your records across all 12 modes, climb from Bronze to Diamond league, and click any player for a Head-to-Head comparison.' }}
         </p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-        <div class="bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-wrap items-center text-xs font-bold">
+      <!-- Sélecteur de période + Bouton Actualiser alignés proprement -->
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2.5 self-start xl:self-auto shrink-0">
+        <div class="bg-white dark:bg-gray-800/90 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-700/80 flex items-center gap-1 text-xs font-bold shadow-2xs overflow-x-auto no-scrollbar">
           <button
             v-for="period in periodOptions"
             :key="period.id"
             type="button"
             @click="selectedPeriod = period.id"
-            class="px-3 py-1.5 rounded-lg transition cursor-pointer"
+            class="px-3.5 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
             :class="selectedPeriod === period.id
-              ? 'bg-blue-600 text-white shadow-2xs'
-              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+              ? 'bg-blue-600 text-white shadow-xs font-extrabold'
+              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60'"
           >
-            {{ period.label }}
+            <span v-if="period.icon">{{ period.icon }}</span>
+            <span>{{ period.label }}</span>
           </button>
         </div>
 
@@ -39,9 +41,9 @@
           type="button"
           @click="fetchLeaderboard"
           :disabled="isLoading"
-          class="px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 hover:border-blue-500 transition cursor-pointer flex items-center gap-2 shadow-2xs"
+          class="px-4 py-3 rounded-2xl bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/80 text-xs font-extrabold text-gray-700 dark:text-gray-200 hover:border-blue-500 dark:hover:border-blue-400 transition cursor-pointer flex items-center gap-2 shadow-2xs whitespace-nowrap shrink-0"
         >
-          <span :class="{ 'animate-spin': isLoading }">↻</span>
+          <span class="text-sm leading-none inline-block" :class="{ 'animate-spin': isLoading }">↻</span>
           <span>{{ locale === 'fr' ? 'Actualiser' : 'Refresh' }}</span>
         </button>
       </div>
@@ -50,25 +52,28 @@
     <!-- ========================================================= -->
     <!-- BANNIÈRE SAISON MENSUELLE & FILTRE PAR DIVISION DE LIGUE  -->
     <!-- ========================================================= -->
-    <div class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-blue-500/20 space-y-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-white/10">
-        <div class="flex items-center gap-4">
-          <div class="w-14 h-14 rounded-2xl bg-cyan-400/20 border border-cyan-400/30 flex items-center justify-center text-3xl shrink-0">
+    <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-blue-500/25 space-y-6">
+      <div class="pointer-events-none absolute -top-24 -right-24 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl"></div>
+
+      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-white/10">
+        <div class="flex items-start sm:items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400/25 to-orange-500/20 border border-amber-400/35 flex items-center justify-center text-3xl shrink-0 shadow-inner">
             🏆
           </div>
           <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span class="px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
                 {{ currentSeasonLabel }}
               </span>
-              <span class="text-xs font-bold text-amber-300">
-                ⏳ {{ seasonResetCountdown }}
+              <span class="text-xs font-bold text-amber-300 flex items-center gap-1">
+                <span>⏳</span>
+                <span>{{ seasonResetCountdown }}</span>
               </span>
             </div>
-            <h3 class="text-xl font-black mt-1">
+            <h3 class="text-xl sm:text-2xl font-black mt-1">
               {{ locale === 'fr' ? 'Ligues Officielles GeoLearn (Bronze → Diamant)' : 'Official GeoLearn Leagues (Bronze → Diamond)' }}
             </h3>
-            <p class="text-xs text-slate-300">
+            <p class="text-xs sm:text-sm text-slate-300 mt-0.5">
               {{ locale === 'fr'
                 ? 'Cliquez sur une division ci-dessous pour filtrer les joueurs appartenant à cette ligue.'
                 : 'Click on any division below to filter players belonging to that league.' }}
@@ -79,34 +84,39 @@
         <button
           type="button"
           @click="selectedPeriod = selectedPeriod === 'season' ? 'all' : 'season'"
-          class="px-4 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer border shrink-0"
+          class="self-start lg:self-center px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer border shrink-0 flex items-center gap-2"
           :class="selectedPeriod === 'season'
             ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-md'
-            : 'bg-white/10 hover:bg-white/20 text-white border-white/20'"
+            : 'bg-white/10 hover:bg-white/15 text-white border-white/20'"
         >
-          calendar_month {{ selectedPeriod === 'season'
-            ? (locale === 'fr' ? '✓ Classement de la Saison Mensuelle actif' : '✓ Monthly Season Ranking Active')
-            : (locale === 'fr' ? 'Voir le Classement de la Saison du Mois' : 'View Current Month Season Ranking') }}
+          <span>📅</span>
+          <span>
+            {{ selectedPeriod === 'season'
+              ? (locale === 'fr' ? '✓ Classement de la Saison Mensuelle actif' : '✓ Monthly Season Ranking Active')
+              : (locale === 'fr' ? 'Filtrer sur la Saison du Mois' : 'Filter by Current Month Season') }}
+          </span>
         </button>
       </div>
 
-      <!-- Les 5 paliers de Ligues cliquables -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      <!-- Les 6 cartes de filtrage de Ligues -->
+      <div class="relative z-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <button
           type="button"
           @click="selectedLeagueFilter = 'all'"
-          class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between"
+          class="p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between"
           :class="selectedLeagueFilter === 'all'
-            ? 'bg-blue-600 border-blue-400 text-white shadow-md scale-[1.02]'
+            ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-600/25 scale-[1.02]'
             : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-200'"
         >
-          <div class="flex items-center justify-between">
-            <span class="text-lg">🌍</span>
-            <span class="text-xs font-black px-2 py-0.5 rounded-full bg-black/25">{{ activeRanking.length }}</span>
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xl">🌍</span>
+            <span class="text-xs font-black px-2.5 py-0.5 rounded-full bg-black/30 text-white">
+              {{ activeRanking.length }}
+            </span>
           </div>
-          <div class="mt-2">
-            <strong class="text-xs font-black block">{{ locale === 'fr' ? 'Toutes Ligues' : 'All Leagues' }}</strong>
-            <span class="text-[10px] opacity-75">{{ locale === 'fr' ? 'Classement complet' : 'Full ranking' }}</span>
+          <div class="mt-3">
+            <strong class="text-xs sm:text-sm font-black block">{{ locale === 'fr' ? 'Toutes Ligues' : 'All Leagues' }}</strong>
+            <span class="text-[11px] opacity-75 block mt-0.5">{{ locale === 'fr' ? 'Classement complet' : 'Full ranking' }}</span>
           </div>
         </button>
 
@@ -115,23 +125,23 @@
           :key="lg.key"
           type="button"
           @click="selectedLeagueFilter = selectedLeagueFilter === lg.key ? 'all' : lg.key"
-          class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between"
+          class="p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between"
           :class="selectedLeagueFilter === lg.key
-            ? 'bg-white text-slate-900 border-cyan-400 shadow-md scale-[1.02]'
+            ? 'bg-white text-slate-900 border-cyan-400 shadow-lg scale-[1.02]'
             : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'"
         >
-          <div class="flex items-center justify-between">
-            <span class="text-lg">{{ lg.icon }}</span>
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xl">{{ lg.icon }}</span>
             <span
-              class="text-xs font-black px-2 py-0.5 rounded-full"
+              class="text-xs font-black px-2.5 py-0.5 rounded-full"
               :class="selectedLeagueFilter === lg.key ? 'bg-slate-900 text-white' : 'bg-black/30 text-cyan-300'"
             >
               {{ lg.count }}
             </span>
           </div>
-          <div class="mt-2">
-            <strong class="text-xs font-black block">{{ lg.name }}</strong>
-            <span class="text-[10px] opacity-75 block truncate">{{ lg.requirement }}</span>
+          <div class="mt-3">
+            <strong class="text-xs sm:text-sm font-black block">{{ lg.name }}</strong>
+            <span class="text-[11px] opacity-75 block truncate mt-0.5">{{ lg.requirement }}</span>
           </div>
         </button>
       </div>
@@ -141,40 +151,43 @@
     <!-- CARTES KPI DE LA COMMUNAUTÉ                               -->
     <!-- ========================================================= -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-2xs flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shrink-0">
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/80 shadow-2xs flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shrink-0">
           👥
         </div>
-        <div>
+        <div class="min-w-0">
           <span class="text-xs font-bold text-gray-400 block">{{ locale === 'fr' ? 'Joueurs classés' : 'Ranked Players' }}</span>
           <strong class="text-2xl font-black text-gray-900 dark:text-white">{{ generalList.length }}</strong>
         </div>
       </div>
 
-      <div class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-2xs flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/80 shadow-2xs flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
           🎮
         </div>
-        <div>
+        <div class="min-w-0">
           <span class="text-xs font-bold text-gray-400 block">{{ locale === 'fr' ? 'Parties disputées' : 'Total Games' }}</span>
           <strong class="text-2xl font-black text-gray-900 dark:text-white">{{ totalCommunityGames.toLocaleString() }}</strong>
         </div>
       </div>
 
-      <div class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-2xs flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0">
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/80 shadow-2xs flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0">
           👑
         </div>
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1">
           <span class="text-xs font-bold text-gray-400 block">{{ locale === 'fr' ? 'N°1 Actuel' : 'Current #1' }}</span>
-          <strong class="text-base sm:text-lg font-black text-gray-900 dark:text-white truncate block">
+          <strong
+            class="text-sm sm:text-base font-black text-gray-900 dark:text-white truncate block"
+            :title="activeRanking[0] ? activeRanking[0].username : ''"
+          >
             {{ activeRanking[0] ? activeRanking[0].username : '—' }}
           </strong>
         </div>
       </div>
 
-      <div class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-2xs flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl shrink-0">
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/80 shadow-2xs flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl shrink-0">
           🔥
         </div>
         <div class="min-w-0">
@@ -187,22 +200,24 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- BARRE DES 12 ONGLETS DE CLASSEMENT                        -->
+    <!-- GRILLE DES 12 ONGLETS DE MODES (SANS SCROLLBAR BLANCHE)   -->
     <!-- ========================================================= -->
-    <div class="bg-white dark:bg-gray-800 p-2 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-2 overflow-x-auto">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        @click="activeTab = tab.id"
-        class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer whitespace-nowrap flex items-center gap-2"
-        :class="activeTab === tab.id
-          ? 'bg-blue-600 text-white shadow-sm'
-          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
-      >
-        <span>{{ tab.icon }}</span>
-        <span>{{ tab.label }}</span>
-      </button>
+    <div class="bg-white dark:bg-gray-800 p-3 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700/80">
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          type="button"
+          @click="activeTab = tab.id"
+          class="px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 border"
+          :class="activeTab === tab.id
+            ? 'bg-blue-600 text-white border-blue-500 shadow-sm scale-[1.02]'
+            : 'bg-gray-50/80 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300 border-gray-200/70 dark:border-gray-700/70 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'"
+        >
+          <span>{{ tab.icon }}</span>
+          <span>{{ tab.label }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- ========================================================= -->
@@ -210,7 +225,7 @@
     <!-- ========================================================= -->
     <div
       v-if="currentUserRank"
-      class="bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 text-white rounded-3xl p-5 sm:p-6 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4"
+      class="bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 text-white rounded-3xl p-5 sm:p-6 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 border border-blue-400/30"
     >
       <div class="flex items-center gap-4">
         <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center font-black border border-white/25 shrink-0">
@@ -252,16 +267,19 @@
       <div
         v-if="podiumPlayers[1]"
         @click="openPlayerModal(podiumPlayers[1])"
-        class="order-2 md:order-1 bg-white dark:bg-gray-800 rounded-3xl p-6 text-center border-2 border-slate-300 dark:border-slate-600 shadow-md hover:-translate-y-1 transition-all cursor-pointer relative"
+        class="order-2 md:order-1 bg-white dark:bg-gray-800 rounded-3xl p-6 text-center border-2 border-slate-300 dark:border-slate-600 shadow-md hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center"
       >
-        <span class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-          {{ podiumPlayers[1].league.icon }} {{ podiumPlayers[1].league.name }}
-        </span>
-        <div class="text-4xl mb-2 mt-2">🥈</div>
+        <div class="w-full flex items-center justify-between mb-3">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+            {{ podiumPlayers[1].league.icon }} {{ podiumPlayers[1].league.name }}
+          </span>
+          <span class="text-xs font-black text-slate-400">#2</span>
+        </div>
+        <div class="text-4xl mb-2">🥈</div>
         <div class="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white font-black text-xl flex items-center justify-center mx-auto mb-3 shadow-xs">
           {{ getInitials(podiumPlayers[1].username) }}
         </div>
-        <h3 class="text-lg font-black text-gray-900 dark:text-white truncate">
+        <h3 class="text-lg font-black text-gray-900 dark:text-white truncate max-w-full">
           {{ podiumPlayers[1].username }}
         </h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
@@ -276,19 +294,21 @@
       <div
         v-if="podiumPlayers[0]"
         @click="openPlayerModal(podiumPlayers[0])"
-        class="order-1 md:order-2 bg-gradient-to-b from-amber-50/90 to-white dark:from-amber-950/30 dark:to-gray-800 rounded-3xl p-8 text-center border-2 border-amber-400 shadow-xl md:-translate-y-3 hover:-translate-y-4 transition-all cursor-pointer relative"
+        class="order-1 md:order-2 bg-gradient-to-b from-amber-50/90 to-white dark:from-amber-950/30 dark:to-gray-800 rounded-3xl p-7 text-center border-2 border-amber-400 shadow-xl md:-translate-y-3 hover:-translate-y-4 transition-all cursor-pointer flex flex-col items-center"
       >
-        <span class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200">
-          {{ podiumPlayers[0].league.icon }} {{ podiumPlayers[0].league.name }}
-        </span>
-        <span class="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-400 text-amber-950">
-          #1 Champion
-        </span>
-        <div class="text-5xl mb-2 mt-2">👑</div>
+        <div class="w-full flex items-center justify-between mb-3">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200">
+            {{ podiumPlayers[0].league.icon }} {{ podiumPlayers[0].league.name }}
+          </span>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-400 text-amber-950">
+            #1 Champion
+          </span>
+        </div>
+        <div class="text-5xl mb-2">👑</div>
         <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 text-white font-black text-2xl flex items-center justify-center mx-auto mb-3 shadow-md">
           {{ getInitials(podiumPlayers[0].username) }}
         </div>
-        <h3 class="text-xl font-black text-gray-900 dark:text-white truncate">
+        <h3 class="text-xl font-black text-gray-900 dark:text-white truncate max-w-full">
           {{ podiumPlayers[0].username }}
         </h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
@@ -303,16 +323,19 @@
       <div
         v-if="podiumPlayers[2]"
         @click="openPlayerModal(podiumPlayers[2])"
-        class="order-3 bg-white dark:bg-gray-800 rounded-3xl p-6 text-center border-2 border-orange-300 dark:border-orange-700/70 shadow-md hover:-translate-y-1 transition-all cursor-pointer relative"
+        class="order-3 bg-white dark:bg-gray-800 rounded-3xl p-6 text-center border-2 border-orange-300 dark:border-orange-700/70 shadow-md hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center"
       >
-        <span class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200">
-          {{ podiumPlayers[2].league.icon }} {{ podiumPlayers[2].league.name }}
-        </span>
-        <div class="text-4xl mb-2 mt-2">🥉</div>
+        <div class="w-full flex items-center justify-between mb-3">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200">
+            {{ podiumPlayers[2].league.icon }} {{ podiumPlayers[2].league.name }}
+          </span>
+          <span class="text-xs font-black text-orange-400">#3</span>
+        </div>
+        <div class="text-4xl mb-2">🥉</div>
         <div class="w-14 h-14 rounded-2xl bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 font-black text-xl flex items-center justify-center mx-auto mb-3 shadow-xs">
           {{ getInitials(podiumPlayers[2].username) }}
         </div>
-        <h3 class="text-lg font-black text-gray-900 dark:text-white truncate">
+        <h3 class="text-lg font-black text-gray-900 dark:text-white truncate max-w-full">
           {{ podiumPlayers[2].username }}
         </h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
@@ -558,10 +581,10 @@ const inspectedPlayer = ref(null);
 const periodOptions = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'all', label: isFr ? 'Tous les temps' : 'All-Time' },
-    { id: 'season', label: isFr ? '🏆 Saison du Mois' : '🏆 Monthly Season' },
-    { id: 'month', label: isFr ? '30 jours' : '30 Days' },
-    { id: 'today', label: isFr ? 'Aujourd\'hui' : 'Today' }
+    { id: 'all', icon: '', label: isFr ? 'Tous les temps' : 'All-Time' },
+    { id: 'season', icon: '🏆', label: isFr ? 'Saison du Mois' : 'Monthly Season' },
+    { id: 'month', icon: '', label: isFr ? '30 jours' : '30 Days' },
+    { id: 'today', icon: '', label: isFr ? 'Aujourd\'hui' : 'Today' }
   ];
 });
 
@@ -635,7 +658,7 @@ const getLeague = (ratioOrXp, isGeneral = false) => {
   if (scoreVal >= 0.25) {
     return { key: 'silver', icon: '🥈', name: isFr ? 'Argent' : 'Silver', badgeClass: 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200' };
   }
-  return { key: 'bronze', icon: '🥉', name: isFr ? 'Bronze' : 'Bronze', badgeClass: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200' };
+  return { key: 'bronze', icon: '🥉', name: 'Bronze', badgeClass: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200' };
 };
 
 // Calcule l'XP d'une partie en normalisant les parties GeoGuessr (sur 25 000 pts)
@@ -971,3 +994,13 @@ const headToHeadSummary = computed(() => {
   return { myWins, theirWins };
 });
 </script>
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>
