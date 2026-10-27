@@ -3,6 +3,7 @@ import Accueil from '../views/Accueil.vue'
 import Explorer from '../views/Explorer.vue'
 import Quiz from '../views/Quiz.vue'
 import Scores from '../views/Scores.vue'
+import Duel from '../views/Duel.vue'
 import Profil from '../views/Profil.vue'
 import Confidentialite from '../views/Confidentialite.vue'
 import APropos from '../views/APropos.vue'
@@ -83,6 +84,13 @@ const router = createRouter({
       path: '/geoguessr',
       name: 'geoguessr',
       component: GeoGuessr,
+      meta: { requiresAuth: true }
+    },
+
+    {
+      path: '/duel',
+      name: 'Duel',
+      component: Duel,
       meta: { requiresAuth: true }
     },
 

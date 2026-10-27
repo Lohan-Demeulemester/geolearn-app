@@ -27,35 +27,42 @@
 
           <p class="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
             {{ locale === 'fr'
-              ? 'Défis quotidiens Worldle, exploration Satellite & Photo PinDrop, enquêtes aux 5 indices, grilles par continent style JetPunk et flashcards 3D pour réviser et progresser à votre rythme.'
-              : 'Daily Worldle challenges, Satellite & Photo PinDrop exploration, 5-clue detective cases, JetPunk-style continent grids, and 3D flashcards to learn and progress at your own pace.' }}
+              ? 'Défis quotidiens Worldle, exploration Satellite & Photo PinDrop, arène Duel 1v1 en direct, sprint 60s, enquêtes aux 5 indices, grilles style JetPunk et flashcards 3D.'
+              : 'Daily Worldle challenges, Satellite & Photo PinDrop exploration, live 1v1 Duel arena, 60s sprint, 5-clue detective cases, JetPunk-style grids, and 3D flashcards.' }}
           </p>
 
           <!-- Boutons d'action principaux -->
-          <div class="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-3.5 pt-2">
+          <div class="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
             <router-link
               to="/quiz"
-              class="w-full sm:w-auto px-7 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold text-base shadow-lg shadow-blue-600/30 hover:-translate-y-0.5 transition-all text-center"
+              class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-blue-600/30 hover:-translate-y-0.5 transition-all text-center"
             >
               🎮 {{ locale === 'fr' ? 'Lancer un Quiz' : 'Start a Quiz' }}
             </router-link>
 
             <router-link
               to="/geoguessr"
-              class="w-full sm:w-auto px-7 py-4 rounded-2xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 font-extrabold text-base border border-cyan-400/40 backdrop-blur-sm hover:-translate-y-0.5 transition-all text-center"
+              class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 font-extrabold text-sm sm:text-base border border-cyan-400/40 backdrop-blur-sm hover:-translate-y-0.5 transition-all text-center"
             >
-              🛰️ {{ locale === 'fr' ? 'GeoLearn PinDrop' : 'GeoLearn PinDrop' }}
+              🛰️ GeoLearn PinDrop
+            </router-link>
+
+            <router-link
+              to="/duel"
+              class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-extrabold text-sm sm:text-base border border-rose-400/40 backdrop-blur-sm hover:-translate-y-0.5 transition-all text-center"
+            >
+              ⚔️ {{ locale === 'fr' ? 'Duel 1v1' : '1v1 Duel' }}
             </router-link>
 
             <router-link
               to="/explorer"
-              class="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-base border border-white/15 backdrop-blur-sm hover:-translate-y-0.5 transition-all text-center"
+              class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-sm sm:text-base border border-white/15 backdrop-blur-sm hover:-translate-y-0.5 transition-all text-center"
             >
               🗺️ {{ locale === 'fr' ? 'Atlas 3D' : '3D Atlas' }}
             </router-link>
           </div>
 
-          <!-- Chiffres clés mis à jour (196 Pays / 10 Modes / 100% Bilingue) -->
+          <!-- Chiffres clés mis à jour (196 Pays / 12 Modes / 100% Bilingue) -->
           <div class="grid grid-cols-3 gap-4 pt-6 border-t border-white/10 max-w-lg mx-auto lg:mx-0">
             <div>
               <strong class="text-2xl sm:text-3xl font-black text-white block">196</strong>
@@ -64,9 +71,9 @@
               </span>
             </div>
             <div>
-              <strong class="text-2xl sm:text-3xl font-black text-cyan-300 block">10</strong>
+              <strong class="text-2xl sm:text-3xl font-black text-cyan-300 block">12</strong>
               <span class="text-xs sm:text-sm text-slate-400 font-medium">
-                {{ locale === 'fr' ? 'Modes de jeu' : 'Game Modes' }}
+                {{ locale === 'fr' ? 'Modes & Défis' : 'Modes & Challenges' }}
               </span>
             </div>
             <div>
@@ -188,9 +195,12 @@
               <h2 class="text-xl font-black text-gray-900 dark:text-white">
                 {{ locale === 'fr' ? `Bon retour parmi nous, ${displayUsername} !` : `Welcome back, ${displayUsername}!` }}
               </h2>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300">
+              <router-link
+                to="/collection"
+                class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 hover:scale-105 transition"
+              >
                 🏅 {{ unlockedBadgesCount }} / {{ userBadges.length }} {{ locale === 'fr' ? 'Trophées' : 'Trophies' }}
-              </span>
+              </router-link>
             </div>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
               <template v-if="userStats.totalGames > 0">
@@ -207,12 +217,18 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3 w-full md:w-auto justify-end shrink-0">
+        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end shrink-0">
           <router-link
-            to="/leaderboard"
+            to="/collection"
+            class="px-4 py-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-sm font-bold transition"
+          >
+            🏅 {{ locale === 'fr' ? 'Badges (I→V)' : 'Badges (I→V)' }}
+          </router-link>
+          <router-link
+            to="/classement"
             class="px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-sm font-bold transition"
           >
-            🏆 {{ locale === 'fr' ? 'Classement' : 'Leaderboard' }}
+            🏆 {{ locale === 'fr' ? 'Ligues' : 'Leagues' }}
           </router-link>
           <router-link
             to="/scores"
@@ -233,14 +249,18 @@
       <div class="pt-5 border-t border-gray-100 dark:border-gray-700/70">
         <div class="flex items-center justify-between mb-3">
           <span class="text-xs font-extrabold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-            🏅 {{ locale === 'fr' ? 'Vos Badges de Succès GeoLearn' : 'Your GeoLearn Achievement Badges' }}
+            🏅 {{ locale === 'fr' ? 'Aperçu rapide de vos Succès' : 'Quick Achievements Overview' }}
           </span>
+          <router-link to="/collection" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+            {{ locale === 'fr' ? 'Voir les 14 badges évolutifs (I → V) →' : 'View all 14 evolving badges (I → V) →' }}
+          </router-link>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-          <div
+          <router-link
             v-for="badge in userBadges"
             :key="badge.id"
-            class="p-3 rounded-2xl border flex items-center gap-2.5 transition-all"
+            to="/collection"
+            class="p-3 rounded-2xl border flex items-center gap-2.5 transition-all hover:-translate-y-0.5"
             :class="badge.unlocked
               ? 'bg-gradient-to-br from-amber-50/90 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/20 border-amber-300 dark:border-amber-700/80 shadow-2xs'
               : 'bg-gray-50/60 dark:bg-gray-900/40 border-gray-200/70 dark:border-gray-700/60 opacity-55 grayscale'"
@@ -254,7 +274,7 @@
                 {{ badge.desc }}
               </span>
             </div>
-          </div>
+          </router-link>
         </div>
       </div>
     </section>
@@ -266,15 +286,15 @@
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-6">
         <div>
           <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
-            {{ locale === 'fr' ? '10 Modes de Jeu & Atlas' : '10 Game Modes & Atlas' }}
+            {{ locale === 'fr' ? '12 Modes de Jeu, Duel & Atlas' : '12 Game Modes, Duel & Atlas' }}
           </span>
           <h2 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">
             {{ locale === 'fr' ? 'Choisissez votre façon d\'apprendre' : 'Choose Your Way to Learn' }}
           </h2>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
             {{ locale === 'fr'
-              ? 'Nos modes sont organisés en 4 univers complémentaires : Défis Phares, Classiques, Innovations et Révision sans pression.'
-              : 'Our modes are organized into 4 complementary universes: Featured Challenges, Classics, Innovations, and Stress-free Review.' }}
+              ? 'Nos modes sont organisés en 4 univers complémentaires : À la Une & Duel, Classiques & Sprint, Innovations et Révision.'
+              : 'Our modes are organized into 4 complementary universes: Featured & Duel, Classics & Sprint, Innovations, and Review.' }}
           </p>
         </div>
 
@@ -296,7 +316,7 @@
       </div>
 
       <!-- ======================================================= -->
-      <!-- RUBRIQUE 1 : 🌟 À LA UNE & DÉFIS D'EXPLORATION          -->
+      <!-- RUBRIQUE 1 : 🌟 À LA UNE, EXPLORATION & DUEL 1V1        -->
       <!-- ======================================================= -->
       <section v-if="selectedCategory === 'all' || selectedCategory === 'featured'" class="space-y-5">
         <div class="flex items-center justify-between">
@@ -306,24 +326,24 @@
             </span>
             <div>
               <h3 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
-                {{ locale === 'fr' ? 'À la Une & Exploration Géolocalisée' : 'Featured & Geotagged Exploration' }}
+                {{ locale === 'fr' ? 'À la Une, PinDrop & Arène Duel 1v1' : 'Featured, PinDrop & 1v1 Duel Arena' }}
               </h3>
               <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                {{ locale === 'fr' ? 'Les deux expériences phares de GeoLearn pour tester votre sens de l\'orientation.' : 'The two flagship GeoLearn experiences to test your sense of direction.' }}
+                {{ locale === 'fr' ? 'Les trois expériences phares de GeoLearn : défi quotidien, exploration satellite et affrontement en direct.' : 'The three flagship GeoLearn experiences: daily challenge, satellite exploration, and live head-to-head battle.' }}
               </p>
             </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Mode 1 : Le Pays Mystère (Worldle) -->
           <router-link
             :to="{ path: '/quiz', query: { mode: 'mystery' } }"
-            class="group bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 text-white p-7 sm:p-8 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all flex flex-col justify-between relative overflow-hidden"
+            class="group bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 text-white p-7 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all flex flex-col justify-between relative overflow-hidden"
           >
             <div class="flex items-center justify-between mb-4">
               <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-black/20 text-white">
-                🔥 {{ locale === 'fr' ? 'Défi Quotidien & Infini' : 'Daily & Infinite Challenge' }}
+                🔥 {{ locale === 'fr' ? 'Quotidien & Infini' : 'Daily & Infinite' }}
               </span>
               <span class="text-3xl group-hover:scale-110 transition-transform">🧭</span>
             </div>
@@ -333,24 +353,24 @@
               </h4>
               <p class="text-sm text-white/90 leading-relaxed">
                 {{ locale === 'fr'
-                  ? '6 essais pour deviner le pays secret grâce à la distance en kilomètres, la flèche de boussole (🧭 ↗️) et le pourcentage de proximité. Partagez votre grille d\'émojis avec vos amis !'
-                  : '6 tries to guess the secret country using distance in km, compass direction (🧭 ↗️), and proximity percentage. Share your emoji grid with friends!' }}
+                  ? '6 essais pour deviner le pays secret grâce à la distance en kilomètres, la flèche de boussole (🧭 ↗️) et le pourcentage de proximité.'
+                  : '6 tries to guess the secret country using distance in km, compass direction (🧭 ↗️), and proximity percentage.' }}
               </p>
             </div>
             <div class="mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs sm:text-sm font-black">
-              <span>{{ locale === 'fr' ? 'Partageable sur Discord / WhatsApp' : 'Shareable on Discord / WhatsApp' }}</span>
-              <span class="group-hover:translate-x-1 transition-transform">{{ locale === 'fr' ? 'Jouer maintenant →' : 'Play now →' }}</span>
+              <span>{{ locale === 'fr' ? 'Grille d\'émojis partageable' : 'Shareable emoji grid' }}</span>
+              <span class="group-hover:translate-x-1 transition-transform">{{ locale === 'fr' ? 'Jouer →' : 'Play →' }}</span>
             </div>
           </router-link>
 
           <!-- Mode 2 : GeoLearn PinDrop (Satellite Espion & Photo) -->
           <router-link
             to="/geoguessr"
-            class="group bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-7 sm:p-8 rounded-3xl shadow-lg border-2 border-cyan-400/30 hover:border-cyan-400 hover:shadow-2xl hover:-translate-y-1 transition-all flex flex-col justify-between relative overflow-hidden"
+            class="group bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-7 rounded-3xl shadow-lg border-2 border-cyan-400/30 hover:border-cyan-400 hover:shadow-2xl hover:-translate-y-1 transition-all flex flex-col justify-between relative overflow-hidden"
           >
             <div class="flex items-center justify-between mb-4">
               <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-                🛰️ {{ locale === 'fr' ? 'Satellite Espion & Photo HD' : 'Spy Satellite & HD Photo' }}
+                🛰️ {{ locale === 'fr' ? 'Satellite & Photo HD' : 'Satellite & HD Photo' }}
               </span>
               <span class="text-3xl group-hover:scale-110 transition-transform">📍</span>
             </div>
@@ -360,20 +380,47 @@
               </h4>
               <p class="text-sm text-slate-300 leading-relaxed">
                 {{ locale === 'fr'
-                  ? 'Inspectez une zone en vue satellite orbitale sans texte ou une photographie extérieure vérifiée dans le monde, placez votre épingle sur la carte et défiez vos amis sur les 5 mêmes manches !'
-                  : 'Inspect an orbital satellite zone with zero labels or a verified outdoor photo around the world, drop your pin on the map, and challenge friends on the same 5 rounds!' }}
+                  ? 'Inspectez une zone en vue satellite orbitale sans texte ou une photo extérieure vérifiée, placez votre épingle et visez les 25 000 points en 5 manches !'
+                  : 'Inspect an orbital satellite zone with zero labels or a verified outdoor photo, drop your pin, and aim for 25,000 points across 5 rounds!' }}
               </p>
             </div>
             <div class="mt-6 pt-4 border-t border-white/15 flex items-center justify-between text-xs sm:text-sm font-black text-cyan-300">
-              <span>{{ locale === 'fr' ? '5 manches • 2 Modes • Défi entre amis' : '5 rounds • 2 Modes • Friend Duel' }}</span>
-              <span class="group-hover:translate-x-1 transition-transform">{{ locale === 'fr' ? 'Ouvrir PinDrop →' : 'Open PinDrop →' }}</span>
+              <span>{{ locale === 'fr' ? '5 manches • 2 Modes' : '5 rounds • 2 Modes' }}</span>
+              <span class="group-hover:translate-x-1 transition-transform">{{ locale === 'fr' ? 'Explorer →' : 'Explore →' }}</span>
+            </div>
+          </router-link>
+
+          <!-- Mode 3 : Arène Duel & Face-à-Face en direct (/duel) -->
+          <router-link
+            to="/duel"
+            class="group bg-gradient-to-br from-rose-900 via-slate-900 to-indigo-950 text-white p-7 rounded-3xl shadow-lg border-2 border-rose-500/40 hover:border-rose-400 hover:shadow-2xl hover:-translate-y-1 transition-all flex flex-col justify-between relative overflow-hidden"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-rose-500/25 text-rose-200 border border-rose-400/30">
+                ⚔️ {{ locale === 'fr' ? 'Nouveau • Multijoueur' : 'New • Multiplayer' }}
+              </span>
+              <span class="text-3xl group-hover:scale-110 transition-transform">⚡</span>
+            </div>
+            <div>
+              <h4 class="text-2xl font-black mb-2">
+                {{ locale === 'fr' ? 'Arène Duel & Face-à-Face' : '1v1 Live Duel Arena' }}
+              </h4>
+              <p class="text-sm text-slate-200 leading-relaxed">
+                {{ locale === 'fr'
+                  ? 'Affrontez un ami à distance via un lien Salon, jouez à 2 sur le même écran (clavier scindé) ou défiez un Rival en direct en Blitz QCM, Sniper Carte ou Sprint Clavier !'
+                  : 'Challenge a friend remotely via Room Link, play 2P split-keyboard on one screen, or battle a live Rival in Blitz QCM, Map Sniper, or Type Race!' }}
+              </p>
+            </div>
+            <div class="mt-6 pt-4 border-t border-white/15 flex items-center justify-between text-xs sm:text-sm font-black text-rose-300">
+              <span>{{ locale === 'fr' ? 'Salon Ami • 2J Local • Bot' : 'Friend Room • 2P Local • Bot' }}</span>
+              <span class="group-hover:translate-x-1 transition-transform">{{ locale === 'fr' ? 'Entrer dans l\'Arène →' : 'Enter Arena →' }}</span>
             </div>
           </router-link>
         </div>
       </section>
 
       <!-- ======================================================= -->
-      <!-- RUBRIQUE 2 : ⚡ CLASSIQUES & COMPÉTITION                 -->
+      <!-- RUBRIQUE 2 : ⚡ CLASSIQUES, SPRINT & COMPÉTITION         -->
       <!-- ======================================================= -->
       <section v-if="selectedCategory === 'all' || selectedCategory === 'classics'" class="space-y-5">
         <div class="flex items-center justify-between">
@@ -383,17 +430,17 @@
             </span>
             <div>
               <h3 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
-                {{ locale === 'fr' ? 'Classiques & Compétition' : 'Classics & Competition' }}
+                {{ locale === 'fr' ? 'Classiques, Sprint 60s & Compétition' : 'Classics, 60s Sprint & Competition' }}
               </h3>
               <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                {{ locale === 'fr' ? 'Les grands incontournables de la géographie pour grimper dans le classement mondial.' : 'The essential geography challenges to climb the world leaderboard.' }}
+                {{ locale === 'fr' ? 'Les grands incontournables de la géographie pour grimper dans les Ligues mondiales.' : 'The essential geography challenges to climb the world Leagues.' }}
               </p>
             </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- Mode 3 : Quiz des Capitales -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Mode 4 : Quiz des Capitales -->
           <router-link
             :to="{ path: '/quiz', query: { mode: 'qcm', type: 'capital' } }"
             class="group bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-blue-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
@@ -415,12 +462,12 @@
               </p>
             </div>
             <span class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/60 text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center justify-between">
-              <span>{{ locale === 'fr' ? '15 questions + Lien Duel Ami' : '15 questions + Friend Duel Link' }}</span>
+              <span>{{ locale === 'fr' ? '15 questions + Duel Ami' : '15 questions + Friend Duel' }}</span>
               <span>→</span>
             </span>
           </router-link>
 
-          <!-- Mode 4 : Reconnaissance de Drapeaux -->
+          <!-- Mode 5 : Reconnaissance de Drapeaux -->
           <router-link
             :to="{ path: '/quiz', query: { mode: 'qcm', type: 'flag' } }"
             class="group bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-orange-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
@@ -442,12 +489,41 @@
               </p>
             </div>
             <span class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/60 text-xs font-bold text-orange-600 dark:text-orange-400 flex items-center justify-between">
-              <span>{{ locale === 'fr' ? 'Drapeaux officiels des 6 continents' : 'Official flags from 6 continents' }}</span>
+              <span>{{ locale === 'fr' ? 'Drapeaux des 6 continents' : 'Flags from 6 continents' }}</span>
               <span>→</span>
             </span>
           </router-link>
 
-          <!-- Mode 5 : Défis Chrono Clavier (Style JetPunk) -->
+          <!-- Mode 6 : Contre-la-montre 60 secondes (QCM Flash + Combo) -->
+          <router-link
+            :to="{ path: '/quiz', query: { mode: 'flash60' } }"
+            class="group bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border-2 border-amber-500/35 hover:border-amber-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                  🔥
+                </div>
+                <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300">
+                  ⚡ Combo x4
+                </span>
+              </div>
+              <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                {{ locale === 'fr' ? 'QCM Flash (60 secondes)' : '60-Second Flash Quiz' }}
+              </h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                {{ locale === 'fr'
+                  ? 'Enchaînez un maximum de capitales et drapeaux en 60 secondes chrono avec multiplicateur de combo et bonus de +2s !'
+                  : 'Chain as many capitals and flags as possible in 60 seconds with combo multipliers and +2s time bonuses!' }}
+              </p>
+            </div>
+            <span class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/60 text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center justify-between">
+              <span>{{ locale === 'fr' ? 'Sprint 60s • Bonus temps' : '60s Sprint • Time bonus' }}</span>
+              <span>→</span>
+            </span>
+          </router-link>
+
+          <!-- Mode 7 : Défis Chrono Clavier (Style JetPunk) -->
           <router-link
             :to="{ path: '/quiz', query: { mode: 'chrono' } }"
             class="group bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-red-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
@@ -466,12 +542,12 @@
               </h4>
               <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {{ locale === 'fr'
-                  ? 'Tapez les 47 pays d\'Europe (3 min / 5 min / ∞) ou les 196 pays du Monde (15 min / ∞) avec remplissage de la grille alphabétique par continent !'
-                  : 'Type all 47 European countries (3m / 5m / ∞) or all 196 World countries (15m / ∞) with live alphabetical continent grids!' }}
+                  ? 'Tapez les 47 pays d\'Europe ou les 196 pays du Monde sur carte muette avec grilles alphabétiques par continent.'
+                  : 'Type all 47 European countries or all 196 World countries on a blank map with alphabetical continent grids.' }}
               </p>
             </div>
             <span class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/60 text-xs font-bold text-red-600 dark:text-red-400 flex items-center justify-between">
-              <span>{{ locale === 'fr' ? 'Carte muette + Grilles par continent' : 'Blank map + Continent grids' }}</span>
+              <span>{{ locale === 'fr' ? 'Carte muette + Grilles' : 'Blank map + Grids' }}</span>
               <span>→</span>
             </span>
           </router-link>
@@ -479,7 +555,7 @@
       </section>
 
       <!-- ======================================================= -->
-      <!-- RUBRIQUE 3 : 💡 INNOVATION & IMMERSION (MODES INÉDITS)  -->
+      <!-- RUBRIQUE 3 : 💡 INNOVATION & DÉFIS SUR-MESURE           -->
       <!-- ======================================================= -->
       <section v-if="selectedCategory === 'all' || selectedCategory === 'innovation'" class="space-y-5">
         <div class="flex items-center justify-between">
@@ -489,17 +565,17 @@
             </span>
             <div>
               <h3 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
-                {{ locale === 'fr' ? 'Innovation & Immersion' : 'Innovation & Immersion' }}
+                {{ locale === 'fr' ? 'Innovation, Immersion & Créateur de Défis' : 'Innovation, Immersion & Challenge Builder' }}
               </h3>
               <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                {{ locale === 'fr' ? 'Des mécaniques de jeu originales pour découvrir la culture, la démographie et les cartes autrement.' : 'Original game mechanics to discover culture, demographics, and maps in a new way.' }}
+                {{ locale === 'fr' ? 'Des mécaniques inédites et un outil pour créer vos propres défis sur-mesure entre amis.' : 'Original mechanics and a custom builder to create your own tailored challenges for friends.' }}
               </p>
             </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- Mode 6 : Enquête aux 5 Indices -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Mode 8 : Enquête aux 5 Indices -->
           <router-link
             :to="{ path: '/quiz', query: { mode: 'detective' } }"
             class="group bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border-2 border-indigo-500/30 hover:border-indigo-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between relative"
@@ -518,17 +594,17 @@
               </h4>
               <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {{ locale === 'fr'
-                  ? 'Dévoilez jusqu\'à 5 indices progressifs (superficie, habitants & monnaie, fun fact masqué, langue & capitale, drapeau). Moins d\'indices = plus de points !'
-                  : 'Reveal up to 5 progressive clues (area, population & currency, masked fun fact, language & capital, flag). Fewer clues = more points!' }}
+                  ? 'Dévoilez jusqu\'à 5 indices progressifs (superficie, monnaie, fun fact, capitale, drapeau). Moins d\'indices = plus de points !'
+                  : 'Reveal up to 5 progressive clues (area, currency, fun fact, capital, flag). Fewer clues = more points!' }}
               </p>
             </div>
             <span class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/60 text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center justify-between">
-              <span>{{ locale === 'fr' ? '5 enquêtes • Score sur 25 pts' : '5 cases • Score out of 25 pts' }}</span>
+              <span>{{ locale === 'fr' ? '5 enquêtes • 25 pts max' : '5 cases • 25 pts max' }}</span>
               <span>→</span>
             </span>
           </router-link>
 
-          <!-- Mode 7 : Cliquez sur la Carte (Style Seterra) -->
+          <!-- Mode 9 : Cliquez sur la Carte (Style Seterra) -->
           <router-link
             :to="{ path: '/quiz', query: { mode: 'map-click' } }"
             class="group bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border-2 border-cyan-500/30 hover:border-cyan-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between relative"
@@ -547,17 +623,17 @@
               </h4>
               <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {{ locale === 'fr'
-                  ? 'Style Seterra : cliquez directement sur le pays demandé sur la carte muette sans rien taper au clavier (Europe 47 ou Sprint Monde 25) !'
-                  : 'Seterra style: click directly on the requested country on the blank map with zero typing required (Europe 47 or World Sprint 25)!' }}
+                  ? 'Style Seterra : cliquez directement sur le pays demandé sur la carte muette sans rien taper au clavier !'
+                  : 'Seterra style: click directly on the requested country on the blank map with zero typing required!' }}
               </p>
             </div>
             <span class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/60 text-xs font-bold text-cyan-600 dark:text-cyan-400 flex items-center justify-between">
-              <span>{{ locale === 'fr' ? 'Zéro saisie clavier • Précision pure' : 'Zero typing • Pure accuracy' }}</span>
+              <span>{{ locale === 'fr' ? 'Zéro saisie clavier' : 'Zero typing' }}</span>
               <span>→</span>
             </span>
           </router-link>
 
-          <!-- Mode 8 : Population, Langues & Monnaies -->
+          <!-- Mode 10 : Population, Langues & Monnaies -->
           <router-link
             :to="{ path: '/quiz', query: { mode: 'qcm', type: 'culture' } }"
             class="group bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border-2 border-purple-500/30 hover:border-purple-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between relative"
@@ -576,12 +652,41 @@
               </h4>
               <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {{ locale === 'fr'
-                  ? 'Lequel de ces 4 pays est le plus peuplé ? Quelle est sa langue officielle ou sa monnaie nationale ? Un quiz complet sur la culture mondiale.'
-                  : 'Which of these 4 countries is most populous? What is its official language or national currency? A complete world culture quiz.' }}
+                  ? 'Lequel de ces 4 pays est le plus peuplé ? Quelle est sa langue officielle ou sa monnaie nationale ?'
+                  : 'Which of these 4 countries is most populous? What is its official language or national currency?' }}
               </p>
             </div>
             <span class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/60 text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center justify-between">
-              <span>{{ locale === 'fr' ? 'Démographie, Langues & Devises' : 'Demographics, Languages & Currencies' }}</span>
+              <span>{{ locale === 'fr' ? 'Démographie & Devises' : 'Demographics & Currencies' }}</span>
+              <span>→</span>
+            </span>
+          </router-link>
+
+          <!-- Mode 11 : Créateur de Défis Personnalisés -->
+          <router-link
+            :to="{ path: '/quiz', query: { mode: 'custom-builder' } }"
+            class="group bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border-2 border-pink-500/35 hover:border-pink-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between relative"
+          >
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                  🛠️
+                </div>
+                <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-300">
+                  Sur-mesure
+                </span>
+              </div>
+              <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                {{ locale === 'fr' ? 'Créateur de Défis' : 'Challenge Builder' }}
+              </h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                {{ locale === 'fr'
+                  ? 'Sélectionnez manuellement de 5 à 15 pays dans la liste pour générer un lien de défi personnalisé à envoyer à vos amis !'
+                  : 'Manually pick 5 to 15 countries from the list to generate a custom challenge link to send to your friends!' }}
+              </p>
+            </div>
+            <span class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700/60 text-xs font-bold text-pink-600 dark:text-pink-400 flex items-center justify-between">
+              <span>{{ locale === 'fr' ? '5 à 15 pays • Lien partageable' : '5 to 15 countries • Shareable' }}</span>
               <span>→</span>
             </span>
           </router-link>
@@ -609,7 +714,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- Mode 9 : Flashcards 3D (Révision) -->
+          <!-- Mode 12 : Flashcards 3D (Révision) -->
           <router-link
             :to="{ path: '/quiz', query: { mode: 'flashcards' } }"
             class="group bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border-2 border-emerald-500/30 hover:border-emerald-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
@@ -638,7 +743,7 @@
             </span>
           </router-link>
 
-          <!-- Mode 10 : Grille Mondiale des 196 Drapeaux -->
+          <!-- Mode 13 : Grille Mondiale des 196 Drapeaux -->
           <router-link
             :to="{ path: '/quiz', query: { mode: 'flag-grid' } }"
             class="group bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-teal-500 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between"
@@ -757,9 +862,9 @@ const selectedCategory = ref('all');
 const categoryTabs = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'all', label: isFr ? '✨ Tout voir (10)' : '✨ All Modes (10)' },
-    { id: 'featured', label: isFr ? '🌟 À la Une' : '🌟 Featured' },
-    { id: 'classics', label: isFr ? '⚡ Classiques' : '⚡ Classics' },
+    { id: 'all', label: isFr ? '✨ Tout voir' : '✨ All Modes' },
+    { id: 'featured', label: isFr ? '🌟 À la Une & Duel' : '🌟 Featured & Duel' },
+    { id: 'classics', label: isFr ? '⚡ Classiques & Sprint' : '⚡ Classics & Sprint' },
     { id: 'innovation', label: isFr ? '💡 Innovation' : '💡 Innovation' },
     { id: 'revision', label: isFr ? '📚 Révision & Atlas' : '📚 Review & Atlas' }
   ];

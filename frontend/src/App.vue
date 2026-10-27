@@ -7,7 +7,7 @@
       <div class="navbar-container">
         <!-- GAUCHE : Logo -->
         <router-link to="/" class="brand-logo" @click="mobileMenuOpen = false">
-                  <!-- Logo GeoLearn Vectoriel (Proposition A) -->
+          <!-- Logo GeoLearn Vectoriel -->
           <svg 
             class="logo-svg" 
             width="34" 
@@ -53,7 +53,7 @@
           <span class="logo-text">GeoLearn</span>
         </router-link>
 
-        <!-- CENTRE : Liens de navigation (Clés exactes de ton i18n.js) -->
+        <!-- CENTRE : Liens de navigation complets -->
         <nav :class="['nav-links', { 'nav-open': mobileMenuOpen }]">
           <router-link to="/" class="nav-item" @click="mobileMenuOpen = false">
             {{ t('nav.home') }}
@@ -65,7 +65,10 @@
             {{ t('nav.quiz') }}
           </router-link>
           <router-link to="/geoguessr" class="nav-item" @click="mobileMenuOpen = false">
-            {{t('nav.geoguessr')}}
+            {{ t('nav.geoguessr') }}
+          </router-link>
+          <router-link to="/duel" class="nav-item duel-nav-item" @click="mobileMenuOpen = false">
+            {{ locale === 'fr' ? 'Duel 1v1' : '1v1 Duel' }}
           </router-link>
           <router-link to="/scores" class="nav-item" @click="mobileMenuOpen = false">
             {{ t('nav.scores') }}
@@ -97,7 +100,6 @@
             @click="toggleDarkMode"
             :title="isDarkMode ? (locale === 'fr' ? 'Passer en mode clair' : 'Switch to light mode') : (locale === 'fr' ? 'Passer en mode sombre' : 'Switch to dark mode')"
           >
-            <!-- En mode sombre (isDarkMode = true) : on affiche le SOLEIL pour passer au clair -->
             <svg v-if="!isDarkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="5"></circle>
               <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -109,13 +111,12 @@
               <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
             </svg>
-            <!-- En mode clair (isDarkMode = false) : on affiche la LUNE pour passer au sombre -->
             <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
           </button>
 
-          <!-- Sélecteur de langue (Affiche la langue active FR ou EN proprement) -->
+          <!-- Sélecteur de langue -->
           <button
             type="button"
             class="action-btn lang-btn"
@@ -129,12 +130,12 @@
           <router-link to="/profil" class="profile-btn" @click="mobileMenuOpen = false">
             <img v-if="currentUser && currentUser.avatar" :src="currentUser.avatar" alt="Avatar" class="nav-avatar" />
             <span class="profile-name">
-              {{ currentUser ? currentUser.name : t('nav.login') }}
+              {{ displayNavUser }}
             </span>
           </router-link>
 
-          <!-- Bouton Burger (Strictement caché sur PC) -->
-          <button v-if="currentUser" type="button" class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Menu">
+          <!-- Bouton Burger (Accessible sur mobile même non connecté) -->
+          <button type="button" class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Menu">
             <span v-if="!mobileMenuOpen">☰</span>
             <span v-else>✕</span>
           </button>
@@ -173,6 +174,7 @@
             <li><router-link to="/explorer">{{ t('nav.explore') }}</router-link></li>
             <li><router-link to="/quiz">{{ t('nav.quiz') }}</router-link></li>
             <li><router-link to="/geoguessr">{{ t('nav.geoguessr') }}</router-link></li>
+            <li><router-link to="/duel">{{ locale === 'fr' ? 'Duel Face-à-Face (1v1)' : 'Head-to-Head Duel (1v1)' }}</router-link></li>
             <li><router-link to="/scores">{{ t('nav.scores') }}</router-link></li>
             <li><router-link to="/collection">{{ t('nav.collection') }}</router-link></li>
             <li><router-link to="/profil">{{ t('profil.title') }}</router-link></li>
@@ -182,8 +184,12 @@
         <div class="footer-col">
           <h4>{{ t('footer.community_title') }}</h4>
           <ul class="footer-links">
+            <li><router-link to="/classement" class="highlight-link">{{ t('nav.leaderboard') }}</router-link></li>
+            <li><router-link :to="{ path: '/quiz', query: { mode: 'mystery' } }">{{ locale === 'fr' ? 'Le Pays Mystère (Worldle)' : 'Mystery Country (Worldle)' }}</router-link></li>
+            <li><router-link :to="{ path: '/quiz', query: { mode: 'flash60' } }">{{ locale === 'fr' ? 'Sprint QCM 60 secondes' : '60s Flash Quiz Sprint' }}</router-link></li>
+            <li><router-link :to="{ path: '/quiz', query: { mode: 'custom-builder' } }">{{ locale === 'fr' ? 'Créateur de Défis' : 'Challenge Builder' }}</router-link></li>
             <li>
-              <router-link to="/feedback" class="highlight-link">
+              <router-link to="/feedback">
                 {{ t('footer.feedback_link') }}
               </router-link>
             </li>
@@ -192,7 +198,6 @@
                 {{ t('footer.about_link') }}
               </router-link>
             </li>
-            <li><router-link to="/classement">{{ t('nav.leaderboard') }}</router-link></li>
             <li v-if="isAdmin">
               <router-link to="/admin" class="admin-footer-link">
                 {{ t('footer.admin_link') }}
@@ -250,6 +255,17 @@ const ADMIN_EMAILS = [
 const isAdmin = computed(() => {
   if (!currentUser.value || !currentUser.value.email) return false;
   return ADMIN_EMAILS.includes(currentUser.value.email.toLowerCase());
+});
+
+const displayNavUser = computed(() => {
+  if (!currentUser.value) return t('nav.login');
+  return (
+    currentUser.value.name ||
+    currentUser.value.username ||
+    currentUser.value.pseudo ||
+    (currentUser.value.user && (currentUser.value.user.name || currentUser.value.user.username)) ||
+    t('nav.login')
+  );
 });
 
 const loadUserFromStorage = () => {
@@ -339,7 +355,6 @@ body.dark,
   --shadow-lg: 0 20px 35px -5px rgba(0, 0, 0, 0.45);
 }
 
-
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-main);
@@ -348,14 +363,6 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-.main-content {
-  flex: 1;
-  width: 100%;
-  margin: 0 auto;
-  padding: 3rem 1.5rem; /* Redonne de l'air en haut et sur les côtés */
-}
-
-/* Prise en charge globale du Mode Sombre sur toutes tes pages (Explorer, Quiz, Scores, Profil) */
 body.dark-mode h1,
 body.dark-mode h2,
 body.dark-mode h3,
@@ -412,7 +419,7 @@ body.dark-mode textarea {
 }
 
 /* ========================================== */
-/* NAVBAR PLEINE LARGEUR ( EXTRÉMITÉS )       */
+/* NAVBAR PLEINE LARGEUR                      */
 /* ========================================== */
 .navbar {
   background: var(--bg-nav);
@@ -428,10 +435,8 @@ body.dark-mode textarea {
 .navbar-container {
   width: 100%;
   max-width: 100%; 
-  margin: 0 auto; /* Centre la navbar sur l'écran */
+  margin: 0 auto;
   padding: 0.9rem 2rem;
-  
-  /* Le secret pour un centrage absolu : la Grille ! */
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -447,10 +452,6 @@ body.dark-mode textarea {
   font-weight: 800;
 }
 
-.logo-globe {
-  font-size: 1.55rem;
-}
-
 .logo-text {
   background: linear-gradient(135deg, #2563eb, #0ea5e9);
   -webkit-background-clip: text;
@@ -461,17 +462,18 @@ body.dark-mode textarea {
   display: flex;
   align-items: center;
   justify-self: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
 .nav-item {
   text-decoration: none;
   color: var(--text-muted);
   font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0.55rem 1.15rem;
+  font-size: 0.92rem;
+  padding: 0.5rem 0.95rem;
   border-radius: 10px;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .nav-item:hover {
@@ -482,6 +484,20 @@ body.dark-mode textarea {
 .nav-item.router-link-exact-active {
   color: #2563eb;
   background: rgba(37, 99, 235, 0.12);
+}
+
+.duel-nav-item {
+  color: #e11d48;
+  font-weight: 700;
+}
+
+body.dark-mode .duel-nav-item {
+  color: #fb7185;
+}
+
+.duel-nav-item.router-link-exact-active {
+  color: #e11d48 !important;
+  background: rgba(225, 29, 72, 0.12) !important;
 }
 
 .admin-badge {
@@ -525,17 +541,18 @@ body.dark-mode textarea {
   gap: 0.55rem;
   height: 40px;
   text-decoration: none;
-  background: #2563eb; /* Le même bleu professionnel que le bouton du formulaire */
+  background: #2563eb;
   color: #ffffff !important;
   padding: 0 1.1rem;
-  border-radius: 10px; /* Moins arrondi, style pro aligné sur les inputs et boutons */
+  border-radius: 10px;
   font-weight: 600;
   font-size: 0.9rem;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .profile-btn:hover {
-  background: #1d4ed8; /* Un bleu légèrement plus foncé au survol */
+  background: #1d4ed8;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
@@ -543,7 +560,6 @@ body.dark-mode textarea {
 body.dark-mode .profile-btn {
   background: #2563eb;
 }
-
 
 .nav-avatar {
   width: 24px;
@@ -684,15 +700,9 @@ body.dark-mode .profile-btn {
 }
 
 /* ========================================== */
-/* RESPONSIVE MOBILE                          */
+/* RESPONSIVE TABLETTE & MOBILE               */
 /* ========================================== */
-@media (max-width: 900px) {
-  .footer-container {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 768px) {
+@media (max-width: 1080px) {
   .navbar-container {
     display: flex; 
     justify-content: space-between;
@@ -703,19 +713,13 @@ body.dark-mode .profile-btn {
     gap: 0.4rem;
   }
   .profile-btn .profile-name {
-    display: inline; /* Visible par défaut pour "Connexion" */
+    display: inline;
   }
-
   .profile-btn:has(.nav-avatar) .profile-name { display: none; }
   .profile-btn:has(.nav-avatar) { 
     padding: 0.35rem; 
-    border-radius: 50%; /* Garde le cercle uniquement si c'est un avatar */
+    border-radius: 50%;
   }
-
-  /* 
-    2. SI L'UTILISATEUR N'EST PAS CONNECTÉ (il y a le texte "Connexion") : 
-       On force le bouton à garder la même forme pro et rectangulaire qu'sur PC (border-radius: 10px).
-  */
   .profile-btn:not(:has(.nav-avatar)) {
     border-radius: 10px !important;
     padding: 0 0.85rem;
@@ -742,6 +746,15 @@ body.dark-mode .profile-btn {
   .nav-links.nav-open {
     display: flex;
   }
+}
+
+@media (max-width: 900px) {
+  .footer-container {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
   .main-content {
     padding: 2rem 1.25rem;
   }
