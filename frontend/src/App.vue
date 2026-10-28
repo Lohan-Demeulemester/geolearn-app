@@ -174,7 +174,6 @@
             <li><router-link to="/explorer">{{ t('nav.explore') }}</router-link></li>
             <li><router-link to="/quiz">{{ t('nav.quiz') }}</router-link></li>
             <li><router-link to="/geoguessr">{{ t('nav.geoguessr') }}</router-link></li>
-            <li><router-link :to="{ path: '/quiz', query: { mode: 'flash60' } }">{{ locale === 'fr' ? 'Sprint QCM 60 secondes' : '60s Flash Quiz Sprint' }}</router-link></li>
             <li><router-link to="/scores">{{ t('nav.scores') }}</router-link></li>
             <li><router-link to="/collection">{{ t('nav.collection') }}</router-link></li>
             <li><router-link to="/profil">{{ t('profil.title') }}</router-link></li>
