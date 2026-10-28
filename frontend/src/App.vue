@@ -174,7 +174,7 @@
             <li><router-link to="/explorer">{{ t('nav.explore') }}</router-link></li>
             <li><router-link to="/quiz">{{ t('nav.quiz') }}</router-link></li>
             <li><router-link to="/geoguessr">{{ t('nav.geoguessr') }}</router-link></li>
-            <li><router-link to="/duel">{{ locale === 'fr' ? 'Duel Face-à-Face (1v1)' : 'Head-to-Head Duel (1v1)' }}</router-link></li>
+            <li><router-link :to="{ path: '/quiz', query: { mode: 'flash60' } }">{{ locale === 'fr' ? 'Sprint QCM 60 secondes' : '60s Flash Quiz Sprint' }}</router-link></li>
             <li><router-link to="/scores">{{ t('nav.scores') }}</router-link></li>
             <li><router-link to="/collection">{{ t('nav.collection') }}</router-link></li>
             <li><router-link to="/profil">{{ t('profil.title') }}</router-link></li>
@@ -186,7 +186,7 @@
           <ul class="footer-links">
             <li><router-link to="/classement" class="highlight-link">{{ t('nav.leaderboard') }}</router-link></li>
             <li><router-link :to="{ path: '/quiz', query: { mode: 'mystery' } }">{{ locale === 'fr' ? 'Le Pays Mystère (Worldle)' : 'Mystery Country (Worldle)' }}</router-link></li>
-            <li><router-link :to="{ path: '/quiz', query: { mode: 'flash60' } }">{{ locale === 'fr' ? 'Sprint QCM 60 secondes' : '60s Flash Quiz Sprint' }}</router-link></li>
+            <li><router-link to="/duel">{{ locale === 'fr' ? 'Duel Face-à-Face (1v1)' : 'Head-to-Head Duel (1v1)' }}</router-link></li>
             <li><router-link :to="{ path: '/quiz', query: { mode: 'custom-builder' } }">{{ locale === 'fr' ? 'Créateur de Défis' : 'Challenge Builder' }}</router-link></li>
             <li>
               <router-link to="/feedback">
