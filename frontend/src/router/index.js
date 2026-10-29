@@ -17,7 +17,8 @@ import GeoGuessr from '../views/GeoGuessr.vue';
 const ADMIN_EMAILS = [
   'lohan.dtr@gmail.com',
   'lohan.dtr.muscu@gmail.com',
-  'lohan.demeulemester@efrei.net'
+  'lohan.demeulemester@efrei.net',
+  'juretraxel@gmail.com'
 ]
 
 const router = createRouter({
