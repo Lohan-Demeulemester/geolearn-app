@@ -1743,7 +1743,7 @@ const localizedCountries = computed(() => {
   const isEn = locale.value === 'en';
   return countriesData.value.map((c, idx) => ({
     ...c,
-    id: c.id ?? idx + 1,
+    id: c.id || c.iso || idx + 1,
     name: isEn ? c.name_en : c.name_fr,
     capital: isEn ? c.capital_en : c.capital_fr,
     continent: c.continent_en,
@@ -2301,15 +2301,15 @@ const activeDuelFrom = ref('');
 const duelLinkCopied = ref(false);
 
 const initQcm = (type, customQuestionIds = null) => {
-  qcmCurrentType.value = type;
-  if (customQuestionIds && customQuestionIds.length > 0) {
-    qcmQuestionsList.value = customQuestionIds;
+  qcmCurrentType.value = type || 'capital';
+  if (Array.isArray(customQuestionIds) && customQuestionIds.length > 0) {
+    qcmQuestionsList.value = [...customQuestionIds];
   } else {
     const shuffled = [...localizedCountries.value].sort(() => 0.5 - Math.random());
-    qcmQuestionsList.value = shuffled.slice(0, Math.min(qcmMaxQuestions, shuffled.length)).map(c => c.id);
+    qcmQuestionsList.value = shuffled.slice(0, qcmMaxQuestions).map(c => c.id);
   }
-  qcmIndex.value = 0; 
-  qcmScore.value = 0; 
+  qcmIndex.value = 0;
+  qcmScore.value = 0;
   qcmFini.value = false;
   genererOptionsQcm();
 };
@@ -2422,8 +2422,10 @@ const verifierReponseQcm = (choixId) => {
     playSound('wrong');
   }
 
+  const totalQuestions = Math.min(qcmMaxQuestions, qcmQuestionsList.value.length || qcmMaxQuestions);
+
   setTimeout(() => {
-    if (qcmIndex.value < qcmQuestionsList.length - 1) {
+    if (qcmIndex.value < totalQuestions - 1) {
       qcmIndex.value++;
       genererOptionsQcm();
     } else {
@@ -2435,7 +2437,7 @@ const verifierReponseQcm = (choixId) => {
           : qcmCurrentType.value === 'flag'
             ? 'QCM Drapeaux'
             : 'QCM Culture';
-      sauvegarderScore(modeName, qcmScore.value, qcmQuestionsList.length);
+      sauvegarderScore(modeName, qcmScore.value, totalQuestions);
     }
   }, 1150);
 };
