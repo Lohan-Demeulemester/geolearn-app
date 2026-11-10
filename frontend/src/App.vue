@@ -248,7 +248,8 @@ const isDarkMode = ref(false);
 const ADMIN_EMAILS = [
   'lohan.dtr@gmail.com',
   'lohan.dtr.muscu@gmail.com',
-  'lohan.demeulemester@efrei.net'
+  'lohan.demeulemester@efrei.net',
+  'juretraxel@gmail.com'
 ];
 
 const isAdmin = computed(() => {
@@ -766,6 +767,30 @@ body.dark-mode .profile-btn {
     flex-direction: column;
     gap: 0.75rem;
     text-align: center;
+  }
+}
+/* ========================================================= */
+/* PROTECTION GLOBALE ANTI-DÉBORDEMENT MOBILE (TOUT LE SITE) */
+/* ========================================================= */
+html,
+body,
+.app-layout {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+input,
+select,
+textarea,
+button {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .main-content {
+    padding: 1.25rem 0.75rem 2.5rem;
   }
 }
 </style>

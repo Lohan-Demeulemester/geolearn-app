@@ -4,19 +4,19 @@
     <!-- EN-TÊTE + BOUTON SON + BOUTON RETOUR -->
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
       <div>
-        <h2 class="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-500 mb-2">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-500 mb-1.5">
           {{ t('quiz.title') }}
         </h2>
-        <p class="text-gray-600 dark:text-gray-400 transition-colors duration-500">
+        <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400 transition-colors duration-500">
           {{ t('quiz.subtitle') }}
         </p>
       </div>
 
-      <div class="flex items-center gap-3 self-start sm:self-auto">
+      <div class="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto justify-between sm:justify-end">
         <button
           type="button"
           @click="toggleSound"
-          class="px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+          class="px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold border transition-all flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap shrink-0"
           :class="soundEnabled
             ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700'"
@@ -29,7 +29,7 @@
           v-if="currentMode !== 'menu'" 
           type="button"
           @click="retourMenu"
-          class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-5 py-2 rounded-full font-medium transition-colors flex items-center gap-2 cursor-pointer"
+          class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
         >
           <span>←</span> {{ t('quiz.back') }}
         </button>
@@ -50,7 +50,7 @@
               : (locale === 'fr' ? 'Duel QCM reçu !' : 'Quiz Duel Received!') }}
           </span>
           <h3 class="text-xl font-black mt-1">
-            {{ duelChallenge.isCustom
+        <    {{ duelChallenge.isCustom
               ? (locale === 'fr'
                   ? `${duelChallenge.from} vous lance un défi personnalisé sur ${duelChallenge.ids.length} pays !`
                   : `${duelChallenge.from} sent you a custom challenge on ${duelChallenge.ids.length} countries!`)
@@ -635,15 +635,15 @@
     <!-- ========================================================================= -->
     <!-- MODE : LE PAYS MYSTÈRE (STYLE WORLDLE QUOTIDIEN & INFINI)                 -->
     <!-- ========================================================================= -->
-    <div v-if="currentMode === 'mystery'" class="max-w-2xl mx-auto mt-6 space-y-6">
-      <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
+    <div v-if="currentMode === 'mystery'" class="max-w-2xl mx-auto mt-4 sm:mt-6 space-y-6">
+      <div class="bg-white dark:bg-gray-800 rounded-3xl p-4 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-5 overflow-hidden">
         
-        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-gray-700">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-gray-700">
           <div>
-            <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+            <span class="inline-block px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
               {{ mysteryIsDaily ? (locale === 'fr' ? '🔥 Pays du Jour Officiel' : '🔥 Official Daily Country') : (locale === 'fr' ? '♾️ Mode Entraînement Infini' : '♾️ Infinite Practice Mode') }}
             </span>
-            <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-2">
+            <h3 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mt-2 leading-tight">
               {{ locale === 'fr' ? 'Devinez le Pays Mystère en 6 essais' : 'Guess the Mystery Country in 6 tries' }}
             </h3>
           </div>
@@ -651,33 +651,33 @@
           <button
             type="button"
             @click="startInfiniteMystery"
-            class="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-blue-600 hover:text-white text-gray-800 dark:text-white text-xs font-bold transition cursor-pointer"
+            class="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-blue-600 hover:text-white text-gray-800 dark:text-white text-xs font-bold transition cursor-pointer whitespace-nowrap shrink-0"
           >
             🎲 {{ locale === 'fr' ? 'Nouveau pays aléatoire' : 'New Random Country' }}
           </button>
         </div>
 
-        <!-- Champ de saisie avec autocomplétion des 196 pays -->
+        <!-- Champ de saisie + Bouton Valider centré en dessous sur mobile -->
         <div v-if="!mysteryFinished" class="space-y-3">
-          <div class="flex gap-2">
+          <div class="flex flex-col sm:flex-row items-center gap-2.5">
             <input
               v-model="mysteryQuery"
               @keydown.enter.prevent="submitMysteryGuess()"
               type="text"
-              :placeholder="locale === 'fr' ? `Essai ${mysteryGuesses.length + 1}/6 : Tapez le nom d'un pays...` : `Try ${mysteryGuesses.length + 1}/6: Type a country name...`"
-              class="flex-1 px-4 py-3.5 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-bold focus:outline-none focus:border-blue-500"
+              :placeholder="locale === 'fr' ? `Essai ${mysteryGuesses.length + 1}/6 : Tapez un pays...` : `Try ${mysteryGuesses.length + 1}/6: Type a country...`"
+              class="w-full sm:flex-1 min-w-0 px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm sm:text-base font-bold focus:outline-none focus:border-blue-500"
             />
             <button
               type="button"
               @click="submitMysteryGuess()"
-              class="px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm transition cursor-pointer"
+              class="w-2/3 sm:w-auto mx-auto sm:mx-0 px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm transition cursor-pointer text-center shrink-0 shadow-xs"
             >
               {{ locale === 'fr' ? 'Valider' : 'Guess' }}
             </button>
           </div>
 
           <!-- Suggestions cliquables pendant la frappe -->
-          <div v-if="mysterySuggestions.length > 0" class="flex flex-wrap gap-2">
+          <div v-if="mysterySuggestions.length > 0" class="flex flex-wrap gap-2 pt-1">
             <button
               v-for="sug in mysterySuggestions"
               :key="sug.id"
@@ -685,18 +685,18 @@
               @click="submitMysteryGuess(sug)"
               class="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-gray-700 hover:bg-blue-600 hover:text-white text-gray-800 dark:text-gray-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
             >
-              <img :src="`https://flagcdn.com/w20/${sug.iso}.png`" class="h-3.5 w-auto rounded-2xs" alt="" />
-              <span>{{ sug.name }}</span>
+              <img :src="`https://flagcdn.com/w20/${sug.iso}.png`" class="h-3.5 w-auto rounded-2xs shrink-0" alt="" />
+              <span class="truncate max-w-[200px]">{{ sug.name }}</span>
             </button>
           </div>
         </div>
 
-        <!-- Grille des 6 tentatives (Distance + Boussole + % Proximité) -->
+        <!-- Grille des 6 tentatives (Affichage lisible du nom complet sur mobile et PC) -->
         <div class="space-y-2.5">
           <div
             v-for="slot in 6"
             :key="'mys-slot-' + slot"
-            class="h-14 rounded-2xl px-4 flex items-center justify-between border transition-all"
+            class="min-h-[3.5rem] rounded-2xl px-3.5 py-2.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-2 gap-y-1.5 border transition-all"
             :class="mysteryGuesses[slot - 1]
               ? (mysteryGuesses[slot - 1].isCorrect
                   ? 'bg-emerald-500 text-white border-emerald-500 font-black shadow-sm'
@@ -704,18 +704,26 @@
               : 'bg-gray-50/40 dark:bg-gray-900/30 border-dashed border-gray-200 dark:border-gray-700/60 text-gray-400'"
           >
             <template v-if="mysteryGuesses[slot - 1]">
-              <div class="flex items-center gap-3 min-w-0">
-                <img :src="`https://flagcdn.com/w40/${mysteryGuesses[slot - 1].iso}.png`" class="h-5 w-auto rounded-xs shadow-2xs shrink-0" alt="" />
-                <strong class="text-sm sm:text-base truncate">{{ mysteryGuesses[slot - 1].name }}</strong>
+              <!-- Drapeau + Nom complet du pays -->
+              <div class="flex items-center gap-2.5 min-w-[120px] flex-1">
+                <img
+                  :src="`https://flagcdn.com/w40/${mysteryGuesses[slot - 1].iso}.png`"
+                  class="h-4 sm:h-5 w-auto rounded-xs shadow-2xs shrink-0"
+                  alt=""
+                />
+                <strong class="text-sm sm:text-base font-extrabold leading-tight break-words">
+                  {{ mysteryGuesses[slot - 1].name }}
+                </strong>
               </div>
 
-              <div class="flex items-center gap-3 sm:gap-5 shrink-0 text-xs sm:text-sm font-extrabold">
-                <span>{{ mysteryGuesses[slot - 1].distanceKm.toLocaleString() }} km</span>
-                <span class="px-2.5 py-1 rounded-lg bg-black/10 dark:bg-white/10">
+              <!-- Indicateurs : Distance + Boussole + % Proximité -->
+              <div class="flex items-center gap-1.5 sm:gap-3 shrink-0 text-xs sm:text-sm font-extrabold ml-auto">
+                <span class="whitespace-nowrap">{{ mysteryGuesses[slot - 1].distanceKm.toLocaleString() }} km</span>
+                <span class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/10 dark:bg-white/10 whitespace-nowrap">
                   {{ mysteryGuesses[slot - 1].direction }}
                 </span>
                 <span
-                  class="px-2.5 py-1 rounded-lg"
+                  class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg whitespace-nowrap"
                   :class="mysteryGuesses[slot - 1].isCorrect ? 'bg-white text-emerald-700' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'"
                 >
                   {{ mysteryGuesses[slot - 1].proximity }}%
@@ -732,14 +740,14 @@
         <!-- Résultat final du Pays Mystère -->
         <div
           v-if="mysteryFinished && mysteryTarget"
-          class="p-6 rounded-2xl border text-center space-y-4"
+          class="p-5 sm:p-6 rounded-2xl border text-center space-y-4"
           :class="mysteryWon
             ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-900 dark:text-emerald-200'
             : 'bg-amber-50 dark:bg-amber-950/40 border-amber-400 text-amber-900 dark:text-amber-200'"
         >
           <img :src="`https://flagcdn.com/w160/${mysteryTarget.iso}.png`" class="h-16 w-auto mx-auto rounded-lg shadow" alt="" />
           <div>
-            <h4 class="text-2xl font-black">
+            <h4 class="text-xl sm:text-2xl font-black">
               {{ mysteryWon
                 ? (locale === 'fr' ? `Bravo ! Trouvé en ${mysteryGuesses.length}/6 : ${mysteryTarget.name}` : `Well done! Found in ${mysteryGuesses.length}/6: ${mysteryTarget.name}`)
                 : (locale === 'fr' ? `Le pays mystère était : ${mysteryTarget.name}` : `The mystery country was: ${mysteryTarget.name}`) }}
@@ -749,18 +757,18 @@
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
             <button
               type="button"
               @click="copyMysteryShareGrid"
-              class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition cursor-pointer"
+              class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition cursor-pointer"
             >
               📋 {{ mysteryCopied ? (locale === 'fr' ? 'Grille copiée !' : 'Grid copied!') : (locale === 'fr' ? 'Partager mon résultat (🟩🟨⬛)' : 'Share Result (🟩🟨⬛)') }}
             </button>
             <button
               type="button"
               @click="startInfiniteMystery"
-              class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm transition cursor-pointer"
+              class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm transition cursor-pointer"
             >
               🎲 {{ locale === 'fr' ? 'Rejouer avec un autre pays' : 'Play another country' }}
             </button>
@@ -1413,7 +1421,7 @@
             </div>
 
             <div class="w-full lg:w-1/2 space-y-2">
-              <div class="flex gap-2">
+              <div class="flex flex-col sm:flex-row gap-2.5">
                 <input
                   v-model="chronoInput"
                   @input="verifierSaisieChrono(false)"
