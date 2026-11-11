@@ -1,235 +1,253 @@
 <template>
-  <div :class="['app-layout', { 'dark-mode': isDarkMode, 'dark': isDarkMode }]">
-    <!-- ========================================== -->
-    <!-- BARRE DE NAVIGATION (PLEINE LARGEUR)       -->
-    <!-- ========================================== -->
-    <header class="navbar">
-      <div class="navbar-container">
-        <!-- GAUCHE : Logo -->
-        <router-link to="/" class="brand-logo" @click="mobileMenuOpen = false">
-          <!-- Logo GeoLearn Vectoriel -->
-          <svg 
-            class="logo-svg" 
-            width="34" 
-            height="34" 
-            viewBox="0 0 64 64" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <linearGradient id="geolearn-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#2563eb" />
-                <stop offset="100%" stop-color="#0ea5e9" />
-              </linearGradient>
-            </defs>
-            
-            <!-- Tracé continu : Épingle de carte + Lettre G -->
-            <path 
-              d="M49.5 20C46.2 13.5 39.6 9 32 9C21.5 9 13 17.5 13 28C13 40.2 32 56 32 56C32 56 51 40.2 51 28H34" 
-              stroke="url(#geolearn-grad)" 
-              stroke-width="5.2" 
-              stroke-linecap="round" 
-              stroke-linejoin="round"
-            />
-            
-            <!-- Chapeau de diplômé (Mortier) au centre -->
-            <path 
-              d="M32 20L21 25L32 30L43 25L32 20Z" 
-              fill="url(#geolearn-grad)" 
-            />
-            <path 
-              d="M25.5 28.2V33.5C25.5 35.5 28.4 37.2 32 37.2C35.6 37.2 38.5 35.5 38.5 33.5V28.2" 
-              stroke="url(#geolearn-grad)" 
-              stroke-width="3.2" 
-              stroke-linecap="round"
-            />
-            <path 
-              d="M41.5 26V33.5" 
-              stroke="url(#geolearn-grad)" 
-              stroke-width="2.5" 
-              stroke-linecap="round"
-            />
-          </svg>
-          <span class="logo-text">GeoLearn</span>
+  <div :class="['app-shell', { 'dark-mode': isDarkMode, 'dark': isDarkMode }]">
+    <!-- ========================================================= -->
+    <!-- TOP COMMAND NAVIGATION BAR                                -->
+    <!-- ========================================================= -->
+    <header class="top-nav" role="banner">
+      <div class="top-nav-inner">
+        <!-- Brand Identity -->
+        <router-link to="/" class="brand-mark" @click="mobileMenuOpen = false">
+          <div class="brand-icon-box" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+              <path d="M2 12h20" />
+            </svg>
+          </div>
+          <div class="brand-text-group">
+            <span class="brand-name">GeoLearn</span>
+            <span class="brand-tag">ATLAS // 196</span>
+          </div>
         </router-link>
 
-        <!-- CENTRE : Liens de navigation complets -->
-        <nav :class="['nav-links', { 'nav-open': mobileMenuOpen }]">
-          <router-link to="/" class="nav-item" @click="mobileMenuOpen = false">
-            {{ t('nav.home') }}
-          </router-link>
-          <router-link to="/explorer" class="nav-item" @click="mobileMenuOpen = false">
-            {{ t('nav.explore') }}
-          </router-link>
-          <router-link to="/quiz" class="nav-item" @click="mobileMenuOpen = false">
-            {{ t('nav.quiz') }}
-          </router-link>
-          <router-link to="/geoguessr" class="nav-item" @click="mobileMenuOpen = false">
-            {{ t('nav.geoguessr') }}
-          </router-link>
-          <router-link to="/duel" class="nav-item duel-nav-item" @click="mobileMenuOpen = false">
-            {{ locale === 'fr' ? 'Duel 1v1' : '1v1 Duel' }}
-          </router-link>
-          <router-link to="/scores" class="nav-item" @click="mobileMenuOpen = false">
-            {{ t('nav.scores') }}
-          </router-link>
-          <router-link to="/collection" class="nav-item" @click="mobileMenuOpen = false">
-            {{ t('nav.collection') }}
-          </router-link>
-          <router-link to="/classement" class="nav-item" @click="mobileMenuOpen = false">
-            {{ t('nav.leaderboard') }}
+        <!-- Primary Navigation Links -->
+        <nav :class="['primary-nav', { 'is-open': mobileMenuOpen }]" aria-label="Main Navigation">
+          <router-link to="/" class="nav-link" @click="mobileMenuOpen = false">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span>{{ t('nav.home') }}</span>
           </router-link>
 
-          <!-- Bouton Admin visible uniquement par toi -->
+          <router-link to="/explorer" class="nav-link" @click="mobileMenuOpen = false">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+              <line x1="9" y1="3" x2="9" y2="18" />
+              <line x1="15" y1="6" x2="15" y2="21" />
+            </svg>
+            <span>{{ t('nav.explore') }}</span>
+          </router-link>
+
+          <router-link to="/quiz" class="nav-link" @click="mobileMenuOpen = false">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            <span>{{ t('nav.quiz') }}</span>
+          </router-link>
+
+          <router-link to="/geoguessr" class="nav-link" @click="mobileMenuOpen = false">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <span>{{ t('nav.geoguessr') }}</span>
+          </router-link>
+
+          <router-link to="/duel" class="nav-link nav-link-duel" @click="mobileMenuOpen = false">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+              <line x1="13" y1="19" x2="19" y2="13" />
+              <line x1="16" y1="16" x2="20" y2="20" />
+              <line x1="19" y1="21" x2="21" y2="19" />
+              <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5" />
+              <line x1="5" y1="14" x2="9" y2="18" />
+              <line x1="7" y1="17" x2="4" y2="20" />
+              <line x1="3" y1="19" x2="5" y2="21" />
+            </svg>
+            <span>{{ locale === 'fr' ? 'Duel 1v1' : '1v1 Duel' }}</span>
+          </router-link>
+
+          <router-link to="/scores" class="nav-link" @click="mobileMenuOpen = false">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+            <span>{{ t('nav.scores') }}</span>
+          </router-link>
+
+          <router-link to="/collection" class="nav-link" @click="mobileMenuOpen = false">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+              <path d="M4 22h16" />
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+            </svg>
+            <span>{{ t('nav.collection') }}</span>
+          </router-link>
+
+          <router-link to="/classement" class="nav-link" @click="mobileMenuOpen = false">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+            </svg>
+            <span>{{ t('nav.leaderboard') }}</span>
+          </router-link>
+
           <router-link
             v-if="isAdmin"
             to="/admin"
-            class="nav-item admin-badge"
+            class="nav-link nav-link-admin"
             @click="mobileMenuOpen = false"
           >
-            Admin
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span>Admin</span>
           </router-link>
         </nav>
 
-        <!-- DROITE : Thème + Langue + Profil -->
-        <div class="nav-actions">
-          <!-- Bouton Mode Sombre / Clair -->
+        <!-- Right Controls: Theme, Locale, Profile, Mobile Trigger -->
+        <div class="nav-controls">
           <button
             type="button"
-            class="action-btn theme-btn"
+            class="control-pill"
             @click="toggleDarkMode"
-            :title="isDarkMode ? (locale === 'fr' ? 'Passer en mode clair' : 'Switch to light mode') : (locale === 'fr' ? 'Passer en mode sombre' : 'Switch to dark mode')"
+            :aria-label="isDarkMode ? (locale === 'fr' ? 'Activer le mode clair' : 'Switch to light mode') : (locale === 'fr' ? 'Activer le mode sombre' : 'Switch to dark mode')"
+            :title="isDarkMode ? (locale === 'fr' ? 'Mode clair' : 'Light mode') : (locale === 'fr' ? 'Mode sombre' : 'Dark mode')"
           >
-            <svg v-if="!isDarkMode" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="5"></circle>
-              <line x1="12" y1="1" x2="12" y2="3"></line>
-              <line x1="12" y1="21" x2="12" y2="23"></line>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-              <line x1="1" y1="12" x2="3" y2="12"></line>
-              <line x1="21" y1="12" x2="23" y2="12"></line>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            <svg v-if="isDarkMode" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2" /><path d="M12 20v2" />
+              <path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" />
+              <path d="M2 12h2" /><path d="M20 12h2" />
+              <path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
             </svg>
-            <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
             </svg>
           </button>
 
-          <!-- Sélecteur de langue -->
           <button
             type="button"
-            class="action-btn lang-btn"
+            class="control-pill font-mono"
             @click="toggleLanguage"
             :title="locale === 'fr' ? 'Switch to English' : 'Passer en Français'"
           >
-            <span class="lang-code">{{ locale === 'fr' ? 'FR' : 'EN' }}</span>
+            {{ locale === 'fr' ? 'FR' : 'EN' }}
           </button>
 
-          <!-- Bouton Profil / Connexion -->
-          <router-link to="/profil" class="profile-btn" @click="mobileMenuOpen = false">
-            <img v-if="currentUser && currentUser.avatar" :src="currentUser.avatar" alt="Avatar" class="nav-avatar" />
-            <span class="profile-name">
-              {{ displayNavUser }}
-            </span>
+          <router-link to="/profil" class="user-cta" @click="mobileMenuOpen = false">
+            <img v-if="currentUser && currentUser.avatar" :src="currentUser.avatar" alt="" class="user-avatar" />
+            <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span class="user-cta-label">{{ displayNavUser }}</span>
           </router-link>
 
-          <!-- Bouton Burger (Accessible sur mobile même non connecté) -->
-          <button type="button" class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Menu">
-            <span v-if="!mobileMenuOpen">☰</span>
-            <span v-else>✕</span>
+          <button
+            type="button"
+            class="mobile-toggle-btn"
+            @click="mobileMenuOpen = !mobileMenuOpen"
+            :aria-expanded="mobileMenuOpen"
+            aria-label="Toggle navigation menu"
+          >
+            <svg v-if="!mobileMenuOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="4" y1="7" x2="20" y2="7" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="17" x2="20" y2="17" />
+            </svg>
+            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
       </div>
     </header>
 
-    <!-- ========================================== -->
-    <!-- CONTENU DES PAGES (CENTRÉ & AÉRÉ)          -->
-    <!-- ========================================== -->
-    <main class="main-content">
+    <!-- ========================================================= -->
+    <!-- MAIN VIEWPORT                                             -->
+    <!-- ========================================================= -->
+    <main class="viewport-main">
       <router-view />
     </main>
 
-    <!-- ========================================== -->
-    <!-- FOOTER GLOBAL (SANS EMOJIS)                -->
-    <!-- ========================================== -->
-    <footer class="site-footer">
-      <div class="footer-container">
-        <div class="footer-col brand-col">
-          <div class="footer-logo">
-            <span class="logo-text">GeoLearn</span>
+    <!-- ========================================================= -->
+    <!-- ARCHITECTURAL FOOTER                                      -->
+    <!-- ========================================================= -->
+    <footer class="arch-footer" role="contentinfo">
+      <div class="arch-footer-grid">
+        <div class="footer-brand-col">
+          <div class="brand-mark">
+            <div class="brand-icon-box" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                <path d="M2 12h20" />
+              </svg>
+            </div>
+            <span class="brand-name">GeoLearn</span>
           </div>
-          <p class="footer-desc">
+          <p class="footer-mission">
             {{ t('footer.desc') }}
           </p>
-          <a href="mailto:geolearn-webapp@gmail.com" class="footer-mail">
+          <div class="footer-telemetry">
+            <span class="telemetry-dot"></span>
+            <span class="font-mono text-xs">196 UN/ISO STATES INDEXED</span>
+          </div>
+          <a href="mailto:geolearn-webapp@gmail.com" class="footer-email font-mono">
             geolearn-webapp@gmail.com
           </a>
         </div>
 
-        <div class="footer-col">
-          <h4>{{ t('footer.nav_title') }}</h4>
-          <ul class="footer-links">
+        <div class="footer-nav-col">
+          <h4 class="footer-heading">{{ t('footer.nav_title') }}</h4>
+          <ul class="footer-list">
             <li><router-link to="/">{{ t('nav.home') }}</router-link></li>
             <li><router-link to="/explorer">{{ t('nav.explore') }}</router-link></li>
             <li><router-link to="/quiz">{{ t('nav.quiz') }}</router-link></li>
             <li><router-link to="/geoguessr">{{ t('nav.geoguessr') }}</router-link></li>
+            <li><router-link to="/duel">{{ locale === 'fr' ? 'Arène Duel 1v1' : '1v1 Duel Arena' }}</router-link></li>
             <li><router-link to="/scores">{{ t('nav.scores') }}</router-link></li>
             <li><router-link to="/collection">{{ t('nav.collection') }}</router-link></li>
-            <li><router-link to="/profil">{{ t('profil.title') }}</router-link></li>
           </ul>
         </div>
 
-        <div class="footer-col">
-          <h4>{{ t('footer.community_title') }}</h4>
-          <ul class="footer-links">
-            <li><router-link to="/classement" class="highlight-link">{{ t('nav.leaderboard') }}</router-link></li>
-            <li><router-link :to="{ path: '/quiz', query: { mode: 'mystery' } }">{{ locale === 'fr' ? 'Le Pays Mystère (Worldle)' : 'Mystery Country (Worldle)' }}</router-link></li>
-            <li><router-link to="/duel">{{ locale === 'fr' ? 'Duel Face-à-Face (1v1)' : 'Head-to-Head Duel (1v1)' }}</router-link></li>
+        <div class="footer-nav-col">
+          <h4 class="footer-heading">{{ t('footer.community_title') }}</h4>
+          <ul class="footer-list">
+            <li><router-link to="/classement" class="footer-accent-link">{{ t('nav.leaderboard') }}</router-link></li>
+            <li><router-link :to="{ path: '/quiz', query: { mode: 'mystery' } }">{{ locale === 'fr' ? 'Pays Mystère (Worldle)' : 'Mystery Country (Worldle)' }}</router-link></li>
+            <li><router-link :to="{ path: '/quiz', query: { mode: 'flash60' } }">{{ locale === 'fr' ? 'Sprint 60 Secondes' : '60-Second Sprint' }}</router-link></li>
             <li><router-link :to="{ path: '/quiz', query: { mode: 'custom-builder' } }">{{ locale === 'fr' ? 'Créateur de Défis' : 'Challenge Builder' }}</router-link></li>
-            <li>
-              <router-link to="/feedback">
-                {{ t('footer.feedback_link') }}
-              </router-link>
-            </li>
-            <li>
-              <router-link to="/a-propos">
-                {{ t('footer.about_link') }}
-              </router-link>
-            </li>
+            <li><router-link to="/feedback">{{ t('footer.feedback_link') }}</router-link></li>
+            <li><router-link to="/a-propos">{{ t('footer.about_link') }}</router-link></li>
             <li v-if="isAdmin">
-              <router-link to="/admin" class="admin-footer-link">
-                {{ t('footer.admin_link') }}
-              </router-link>
+              <router-link to="/admin" class="footer-admin-link">{{ t('footer.admin_link') }}</router-link>
             </li>
           </ul>
         </div>
 
-        <div class="footer-col">
-          <h4>{{ t('footer.legal_title') }}</h4>
-          <ul class="footer-links">
-            <li>
-              <router-link to="/confidentialite">
-                {{ t('footer.privacy_link') }}
-              </router-link>
-            </li>
-            <li>
-              <router-link to="/a-propos#contact">
-                {{ t('footer.contact_link') }}
-              </router-link>
-            </li>
+        <div class="footer-nav-col">
+          <h4 class="footer-heading">{{ t('footer.legal_title') }}</h4>
+          <ul class="footer-list">
+            <li><router-link to="/confidentialite">{{ t('footer.privacy_link') }}</router-link></li>
+            <li><router-link to="/a-propos#contact">{{ t('footer.contact_link') }}</router-link></li>
+            <li><router-link to="/profil">{{ t('profil.title') }}</router-link></li>
           </ul>
         </div>
       </div>
 
-      <div class="footer-bottom">
-        <div class="footer-bottom-content">
-          <p>© {{ new Date().getFullYear() }} GeoLearn (geolearn.fun). {{ t('footer.rights') }}</p>
-          <div class="footer-bottom-right">
-            <button type="button" class="footer-lang-btn" @click="toggleLanguage">
-              {{ locale === 'fr' ? 'Français (FR)' : 'English (EN)' }}
-            </button>
-          </div>
+      <div class="arch-footer-bar">
+        <div class="arch-footer-bar-inner">
+          <p class="font-mono text-xs">© {{ new Date().getFullYear() }} GeoLearn (geolearn.fun). {{ t('footer.rights') }}</p>
+          <button type="button" class="footer-locale-switch font-mono" @click="toggleLanguage">
+            {{ locale === 'fr' ? 'LOCALE: FR_FR' : 'LOCALE: EN_US' }}
+          </button>
         </div>
       </div>
     </footer>
@@ -243,13 +261,12 @@ import { useI18n } from 'vue-i18n';
 const { t, locale } = useI18n();
 const mobileMenuOpen = ref(false);
 const currentUser = ref(null);
-const isDarkMode = ref(false);
+const isDarkMode = ref(true);
 
 const ADMIN_EMAILS = [
   'lohan.dtr@gmail.com',
   'lohan.dtr.muscu@gmail.com',
-  'lohan.demeulemester@efrei.net',
-  'juretraxel@gmail.com'
+  'lohan.demeulemester@efrei.net'
 ];
 
 const isAdmin = computed(() => {
@@ -306,12 +323,12 @@ onMounted(() => {
   }
 
   const savedTheme = localStorage.getItem('geolearn_theme');
-  if (savedTheme === 'dark') {
-    isDarkMode.value = true;
-    applyThemeClasses(true);
-  } else {
+  if (savedTheme === 'light') {
     isDarkMode.value = false;
     applyThemeClasses(false);
+  } else {
+    isDarkMode.value = true;
+    applyThemeClasses(true);
   }
 
   loadUserFromStorage();
@@ -324,35 +341,57 @@ onUnmounted(() => {
 </script>
 
 <style>
-/* ========================================== */
-/* VARIABLES GLOBALES & MODE SOMBRE UNIVERSEL */
-/* ========================================== */
+/* ========================================================= */
+/* DESIGN SYSTEM TOKENS: ORBITAL CARTOGRAPHY                 */
+/* ========================================================= */
 :root {
-  --bg-main: #f8fafc;
-  --bg-nav: rgba(255, 255, 255, 0.92);
+  --bg-main: #f6f8fa;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #eef2f6;
+  --bg-nav: rgba(246, 248, 250, 0.86);
   --card-bg: #ffffff;
   --card-hover: #f1f5f9;
-  --text-main: #0f172a;
+  --text-main: #090d16;
+  --text-secondary: #334155;
   --text-muted: #64748b;
   --border-color: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --accent-primary: #0284c7;
+  --accent-bright: #0ea5e9;
+  --accent-emerald: #10b981;
+  --accent-rose: #e11d48;
   --input-bg: #f8fafc;
-  --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 20px 35px -5px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 2px rgba(9, 13, 22, 0.04), 0 4px 12px rgba(9, 13, 22, 0.03);
+  --shadow-lg: 0 20px 40px -12px rgba(9, 13, 22, 0.08);
 }
 
 body.dark-mode,
 body.dark,
 .dark-mode {
-  --bg-main: #0b1120;
-  --bg-nav: rgba(15, 23, 42, 0.92);
-  --card-bg: #1e293b;
-  --card-hover: #334155;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border-color: #334155;
-  --input-bg: #0f172a;
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 20px 35px -5px rgba(0, 0, 0, 0.45);
+  --bg-main: #07090e;
+  --bg-elevated: #0c1017;
+  --bg-subtle: #111722;
+  --bg-nav: rgba(7, 9, 14, 0.84);
+  --card-bg: #0c1017;
+  --card-hover: #131a26;
+  --text-main: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent-primary: #0ea5e9;
+  --accent-bright: #38bdf8;
+  --accent-emerald: #10b981;
+  --accent-rose: #f43f5e;
+  --input-bg: #090c12;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -360,24 +399,16 @@ body {
   background-color: var(--bg-main);
   color: var(--text-main);
   line-height: 1.5;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  margin: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-body.dark-mode h1,
-body.dark-mode h2,
-body.dark-mode h3,
-body.dark-mode h4,
-body.dark-mode strong {
-  color: var(--text-main);
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
 }
 
-body.dark-mode p,
-body.dark-mode span:not(.logo-text):not(.brand-gradient):not(.stat-val):not(.mode-cta),
-body.dark-mode label,
-body.dark-mode small {
-  color: inherit;
-}
-
+/* Legacy view compatibility in Dark Mode */
 body.dark-mode .auth-card,
 body.dark-mode .profile-card,
 body.dark-mode .country-card,
@@ -401,396 +432,425 @@ body.dark-mode textarea {
   color: var(--text-main) !important;
 }
 
-.app-layout {
+.app-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* ========================================== */
-/* CONTENEUR CENTRAL AÉRÉ (TOUTES LES PAGES)  */
-/* ========================================== */
-.main-content {
+.viewport-main {
   flex: 1;
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 3rem 2rem 4rem;
+  padding: 2.5rem 2rem 4rem;
 }
 
-/* ========================================== */
-/* NAVBAR PLEINE LARGEUR                      */
-/* ========================================== */
-.navbar {
-  background: var(--bg-nav);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-color);
+/* ========================================================= */
+/* COMMAND BAR NAVIGATION                                    */
+/* ========================================================= */
+.top-nav {
   position: sticky;
   top: 0;
   z-index: 1000;
   width: 100%;
-  transition: background-color 0.25s ease, border-color 0.25s ease;
+  background: var(--bg-nav);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.navbar-container {
-  width: 100%;
-  max-width: 100%; 
+.top-nav-inner {
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0.9rem 2rem;
+  padding: 0.75rem 2rem;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
+  gap: 1.5rem;
 }
 
-.brand-logo {
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-decoration: none;
+  color: var(--text-main);
+}
+
+.brand-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  color: var(--accent-bright);
   display: flex;
   align-items: center;
-  justify-self: start;
-  gap: 0.6rem;
-  text-decoration: none;
-  font-size: 1.45rem;
+  justify-content: center;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.brand-mark:hover .brand-icon-box {
+  transform: scale(1.04);
+  border-color: var(--accent-bright);
+}
+
+.brand-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-size: 1.05rem;
   font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--text-main);
 }
 
-.logo-text {
-  background: linear-gradient(135deg, #2563eb, #0ea5e9);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.brand-tag {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
-.nav-links {
+.primary-nav {
   display: flex;
   align-items: center;
-  justify-self: center;
-  gap: 0.35rem;
+  justify-content: center;
+  gap: 0.25rem;
 }
 
-.nav-item {
-  text-decoration: none;
-  color: var(--text-muted);
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.84rem;
   font-weight: 600;
-  font-size: 0.92rem;
-  padding: 0.5rem 0.95rem;
-  border-radius: 10px;
-  transition: all 0.2s ease;
+  color: var(--text-muted);
+  text-decoration: none;
   white-space: nowrap;
+  border: 1px solid transparent;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.nav-item:hover {
-  color: #2563eb;
+.nav-svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.nav-link:hover {
+  color: var(--text-main);
   background: var(--card-hover);
 }
 
-.nav-item.router-link-exact-active {
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.12);
+.nav-link.router-link-exact-active {
+  color: var(--text-main);
+  background: var(--bg-subtle);
+  border-color: var(--border-color);
 }
 
-.duel-nav-item {
-  color: #e11d48;
-  font-weight: 700;
+.nav-link.router-link-exact-active .nav-svg {
+  color: var(--accent-bright);
+  opacity: 1;
 }
 
-body.dark-mode .duel-nav-item {
-  color: #fb7185;
+.nav-link-duel {
+  color: var(--accent-rose);
 }
 
-.duel-nav-item.router-link-exact-active {
-  color: #e11d48 !important;
-  background: rgba(225, 29, 72, 0.12) !important;
+.nav-link-duel.router-link-exact-active {
+  background: rgba(244, 63, 94, 0.1);
+  border-color: rgba(244, 63, 94, 0.28);
+  color: var(--accent-rose);
 }
 
-.admin-badge {
-  background: rgba(245, 158, 11, 0.15);
-  color: #d97706 !important;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+.nav-link-admin {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.08);
 }
 
-.nav-actions {
+.nav-controls {
   display: flex;
-  justify-self: end;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
-.action-btn {
+.control-pill {
+  height: 36px;
+  min-width: 36px;
+  padding: 0 0.65rem;
+  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
-  min-width: 42px;
-  padding: 0 0.85rem;
-  background: var(--card-bg);
-  color: var(--text-main);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
-.action-btn:hover {
-  border-color: #2563eb;
-  background: var(--card-hover);
+.control-pill:hover {
+  border-color: var(--border-strong);
+  color: var(--text-main);
 }
 
-.profile-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  height: 40px;
+.user-cta {
+  height: 36px;
+  padding: 0 0.9rem;
+  border-radius: 8px;
+  background: var(--text-main);
+  color: var(--bg-main) !important;
+  font-size: 0.82rem;
+  font-weight: 700;
   text-decoration: none;
-  background: #2563eb;
-  color: #ffffff !important;
-  padding: 0 1.1rem;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   white-space: nowrap;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.profile-btn:hover {
-  background: #1d4ed8;
+.user-cta:hover {
+  opacity: 0.92;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
-body.dark-mode .profile-btn {
-  background: #2563eb;
-}
-
-.nav-avatar {
-  width: 24px;
-  height: 24px;
+.user-avatar {
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-/* STRICTEMENT CACHÉ SUR PC */
-.mobile-menu-btn {
-  display: none !important;
+.mobile-toggle-btn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  font-size: 1.25rem;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
-/* ========================================== */
-/* FOOTER GLOBAL                              */
-/* ========================================== */
-.site-footer {
-  background: #090e1a;
-  color: #cbd5e1;
+/* ========================================================= */
+/* ARCHITECTURAL FOOTER                                      */
+/* ========================================================= */
+.arch-footer {
   margin-top: auto;
-  border-top: 1px solid #1e293b;
-  width: 100%;
+  background: #05070b;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  color: #94a3b8;
 }
 
-.footer-container {
-  max-width: 1400px;
+.arch-footer-grid {
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 3.5rem 2.5rem 2.5rem;
+  padding: 3.5rem 2rem 2.5rem;
   display: grid;
-  grid-template-columns: 1.8fr 1fr 1.2fr 1fr;
+  grid-template-columns: 1.6fr 1fr 1.2fr 1fr;
   gap: 2.5rem;
 }
 
-.footer-logo {
-  font-size: 1.45rem;
-  font-weight: 800;
-  margin-bottom: 0.8rem;
+.arch-footer .brand-name {
+  color: #f8fafc;
 }
 
-.footer-desc {
-  font-size: 0.9rem;
-  color: #94a3b8;
+.footer-mission {
+  font-size: 0.85rem;
   line-height: 1.6;
-  margin-bottom: 1.2rem;
-  max-width: 360px;
+  color: #64748b;
+  margin: 0.9rem 0;
+  max-width: 340px;
 }
 
-.footer-mail {
+.footer-telemetry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.telemetry-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.footer-email {
   display: inline-block;
+  font-size: 0.78rem;
   color: #38bdf8;
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-  background: rgba(56, 189, 248, 0.1);
-  padding: 0.45rem 0.9rem;
-  border-radius: 8px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  background: rgba(56, 189, 248, 0.08);
   border: 1px solid rgba(56, 189, 248, 0.2);
-  transition: all 0.2s;
 }
 
-.footer-mail:hover {
-  background: rgba(56, 189, 248, 0.2);
-}
-
-.footer-col h4 {
-  color: #ffffff;
-  font-size: 1rem;
+.footer-heading {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.72rem;
   font-weight: 700;
-  margin-bottom: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #f1f5f9;
+  margin: 0 0 1rem;
 }
 
-.footer-links {
+.footer-list {
   list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.55rem;
 }
 
-.footer-links a {
-  color: #94a3b8;
+.footer-list a {
+  color: #64748b;
   text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s;
+  font-size: 0.85rem;
+  transition: color 0.15s ease;
 }
 
-.footer-links a:hover {
-  color: #ffffff;
+.footer-list a:hover {
+  color: #f8fafc;
 }
 
-.highlight-link {
-  color: #60a5fa !important;
+.footer-accent-link {
+  color: #38bdf8 !important;
   font-weight: 600;
 }
 
-.admin-footer-link {
+.footer-admin-link {
   color: #fbbf24 !important;
   font-weight: 600;
 }
 
-.footer-bottom {
-  border-top: 1px solid #1e293b;
-  background: #060911;
+.arch-footer-bar {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: #030407;
 }
 
-.footer-bottom-content {
-  max-width: 1400px;
+.arch-footer-bar-inner {
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 1.25rem 2.5rem;
+  padding: 1.1rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.85rem;
-  color: #64748b;
+  color: #475569;
 }
 
-.footer-lang-btn {
-  background: #1e293b;
-  color: #cbd5e1;
-  border: 1px solid #334155;
-  padding: 0.4rem 0.85rem;
+.footer-locale-switch {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  padding: 0.3rem 0.65rem;
   border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 0.72rem;
   cursor: pointer;
 }
 
-.footer-lang-btn:hover {
+.footer-locale-switch:hover {
   color: #ffffff;
-  border-color: #475569;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* ========================================== */
-/* RESPONSIVE TABLETTE & MOBILE               */
-/* ========================================== */
-@media (max-width: 1080px) {
-  .navbar-container {
-    display: flex; 
+/* ========================================================= */
+/* RESPONSIVE BREAKPOINTS & MOBILE OVERFLOW GUARD            */
+/* ========================================================= */
+@media (max-width: 1120px) {
+  .top-nav-inner {
+    display: flex;
     justify-content: space-between;
-    padding: 0.75rem 1rem;
-    gap: 0.3rem;
+    padding: 0.7rem 1.25rem;
   }
-  .nav-actions {
-    gap: 0.4rem;
+
+  .mobile-toggle-btn {
+    display: inline-flex;
   }
-  .profile-btn .profile-name {
-    display: inline;
-  }
-  .profile-btn:has(.nav-avatar) .profile-name { display: none; }
-  .profile-btn:has(.nav-avatar) { 
-    padding: 0.35rem; 
-    border-radius: 50%;
-  }
-  .profile-btn:not(:has(.nav-avatar)) {
-    border-radius: 10px !important;
-    padding: 0 0.85rem;
-    height: 38px;
-    font-size: 0.85rem;
-  }
-  .mobile-menu-btn {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-  }
-  .nav-links {
+
+  .primary-nav {
     display: none;
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
     background: var(--card-bg);
-    flex-direction: column;
-    padding: 1rem;
     border-bottom: 1px solid var(--border-color);
     box-shadow: var(--shadow-lg);
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem 1rem 1rem;
+    gap: 0.25rem;
   }
-  .nav-links.nav-open {
+
+  .primary-nav.is-open {
     display: flex;
+  }
+
+  .nav-link {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.92rem;
   }
 }
 
 @media (max-width: 900px) {
-  .footer-container {
+  .arch-footer-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (max-width: 768px) {
-  .main-content {
-    padding: 2rem 1.25rem;
+@media (max-width: 640px) {
+  html,
+  body,
+  .app-shell {
+    max-width: 100vw;
+    overflow-x: clip;
   }
-  .footer-container {
+
+  input,
+  select,
+  textarea,
+  button {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .viewport-main {
+    padding: 1.25rem 0.85rem 2.5rem !important;
+  }
+
+  .arch-footer-grid {
     grid-template-columns: 1fr;
     padding: 2.5rem 1.25rem;
-    gap: 2rem;
   }
-  .footer-bottom-content {
+
+  .arch-footer-bar-inner {
     flex-direction: column;
     gap: 0.75rem;
     text-align: center;
-  }
-}
-/* ========================================================= */
-/* PROTECTION GLOBALE ANTI-DÉBORDEMENT MOBILE (TOUT LE SITE) */
-/* ========================================================= */
-html,
-body,
-.app-layout {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-input,
-select,
-textarea,
-button {
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-@media (max-width: 640px) {
-  .main-content {
-    padding: 1.25rem 0.75rem 2.5rem;
   }
 }
 </style>
