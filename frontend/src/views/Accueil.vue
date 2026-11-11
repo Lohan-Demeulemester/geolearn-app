@@ -1,536 +1,458 @@
 <template>
-  <div class="command-center space-y-10 pb-14">
+  <div class="home-experience">
 
     <!-- ========================================================= -->
-    <!-- 1. GEOSPATIAL 3D COMMAND DECK (3-COLUMN ORBITAL COCKPIT)  -->
+    <!-- 1. SCÈNE IMMERSIVE PLEIN ÉCRAN (100VW x 100VH SANS BORDS) -->
     <!-- ========================================================= -->
-    <section class="cockpit-shell relative rounded-2xl border border-slate-300/80 dark:border-white/[0.08] bg-white dark:bg-[#050811] overflow-hidden shadow-2xl">
-      
-      <!-- Top Telemetry Status Bar -->
-      <div class="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-2.5 border-b border-slate-200 dark:border-white/[0.07] bg-slate-50/90 dark:bg-[#070B16] font-mono text-[11px]">
-        <div class="flex items-center gap-3">
-          <span class="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>ORBITAL TELEMETRY // ONLINE</span>
-          </span>
-          <span class="hidden sm:inline text-slate-300 dark:text-white/15">|</span>
-          <span class="hidden sm:inline text-slate-500 dark:text-slate-400">
-            VECTOR BORDERS: <strong class="text-slate-800 dark:text-slate-200">{{ worldPolygonsLoaded ? '196 SOVEREIGN POLYGONS' : 'SYNCING...' }}</strong>
-          </span>
+    <section
+      class="orbital-stage relative w-full min-h-[calc(100vh-58px)] flex flex-col justify-between overflow-hidden select-none"
+      @pointermove="onStagePointerMove"
+    >
+      <!-- Halos lumineux organiques & Typographie monumentale en arrière-plan -->
+      <div class="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          class="ambient-orb ambient-orb-primary"
+          :style="{ transform: `translate3d(${parallaxX * -28}px, ${parallaxY * -28}px, 0)` }"
+        ></div>
+        <div
+          class="ambient-orb ambient-orb-secondary"
+          :style="{ transform: `translate3d(${parallaxX * 24}px, ${parallaxY * 24}px, 0)` }"
+        ></div>
+
+        <!-- Typographie monumentale en filigrane derrière le Globe (Style Awwwards) -->
+        <div
+          class="watermark-display"
+          :style="{ transform: `translate3d(calc(-50% + ${parallaxX * -18}px), calc(-50% + ${parallaxY * -12}px), 0)` }"
+        >
+          <span>GEOLEARN</span>
+          <span class="watermark-sub">WORLD ATLAS • 196</span>
+        </div>
+      </div>
+
+      <!-- GLOBE 3D GÉANT AU CENTRE DE L'ÉCRAN -->
+      <div class=" globe-centerpiece absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+        <div class="relative flex items-center justify-center pointer-events-auto">
+          <canvas
+            ref="globeCanvasRef"
+            class="globe-canvas cursor-grab active:cursor-grabbing"
+            @pointerdown="onGlobePointerDown"
+            @pointermove="onGlobePointerMove"
+            @pointerup="onGlobePointerUp"
+            @pointerleave="onGlobePointerLeave"
+            @wheel.prevent="onGlobeWheel"
+          ></canvas>
+
+          <!-- Infobulle flottante au survol d'un pays sur le Globe -->
+          <transition name="fade-up">
+            <div
+              v-if="hoveredCountry"
+              class="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-900/90 dark:bg-white/95 text-white dark:text-slate-950 font-sans text-xs font-bold flex items-center gap-2.5 shadow-2xl backdrop-blur-md"
+            >
+              <img :src="`https://flagcdn.com/w40/${hoveredCountry.iso}.png`" class="h-4 w-auto rounded-xs" alt="" />
+              <span>{{ hoveredCountry.name }}</span>
+              <span class="opacity-60 font-mono text-[11px]">{{ hoveredCountry.capital }}</span>
+            </div>
+          </transition>
+        </div>
+      </div>
+
+      <!-- BARRE SUPÉRIEURE FLOTTANTE : RECHERCHE & FILTRES CONTINENTS -->
+      <div class="relative z-20 w-full max-w-[1600px] mx-auto px-4 sm:px-8 pt-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pointer-events-none">
+        
+        <!-- Recherche rapide + Sélecteur de continents en pilules -->
+        <div class="flex flex-wrap items-center gap-2 pointer-events-auto">
+          <div class="relative">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              v-model="globeSearchQuery"
+              type="text"
+              :placeholder="locale === 'fr' ? 'Chercher un pays sur le globe...' : 'Search a country on the globe...'"
+              class="w-56 sm:w-64 pl-9 pr-8 py-2 rounded-full bg-white/80 dark:bg-slate-900/75 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400 shadow-lg"
+            />
+            <button
+              v-if="globeSearchQuery"
+              type="button"
+              @click="globeSearchQuery = ''"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
+            >
+              ×
+            </button>
+
+            <!-- Résultats de recherche flottants -->
+            <div
+              v-if="searchResults.length > 0"
+              class="absolute left-0 right-0 top-full mt-2 z-40 rounded-2xl border border-slate-200/80 dark:border-white/15 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-white/5"
+            >
+              <button
+                v-for="item in searchResults"
+                :key="item.iso"
+                type="button"
+                @click="lockOnCountry(item); globeSearchQuery = ''"
+                class="w-full px-4 py-2.5 text-left text-xs flex items-center justify-between hover:bg-sky-500/10 transition cursor-pointer"
+              >
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <img :src="`https://flagcdn.com/w40/${item.iso}.png`" class="h-3.5 w-auto rounded-2xs shrink-0" alt="" />
+                  <span class="font-bold text-slate-900 dark:text-white truncate">{{ item.name }}</span>
+                </div>
+                <span class="font-mono text-[10px] text-sky-500 uppercase">{{ item.capital }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Pilules Continents -->
+          <div class="hidden xl:flex items-center gap-1 p-1 rounded-full bg-white/75 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-lg">
+            <button
+              v-for="sec in continentSectors"
+              :key="sec.id"
+              type="button"
+              @click="selectContinentSector(sec)"
+              class="px-3 py-1.5 rounded-full text-[11px] font-bold transition cursor-pointer"
+              :class="activeContinent === sec.id
+                ? 'bg-sky-500 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
+            >
+              {{ sec.label }}
+            </button>
+          </div>
         </div>
 
-        <!-- Layer Toggles (Borders, Geodesic Arcs, Grid, Auto-Rotate) -->
-        <div class="flex flex-wrap items-center gap-1.5">
+        <!-- Contrôles visuels du Globe (Calques & Zoom) -->
+        <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-white/75 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-lg pointer-events-auto">
           <button
             type="button"
             @click="showBorders = !showBorders"
-            class="px-2.5 py-1 rounded border transition cursor-pointer font-semibold"
-            :class="showBorders
-              ? 'bg-sky-500/15 border-sky-500/40 text-sky-600 dark:text-sky-300'
-              : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400'"
+            class="px-3 py-1.5 rounded-full text-[11px] font-bold transition cursor-pointer"
+            :class="showBorders ? 'bg-sky-500/20 text-sky-600 dark:text-sky-300' : 'text-slate-400'"
           >
-            {{ locale === 'fr' ? 'FRONTIÈRES' : 'BORDERS' }}
+            {{ locale === 'fr' ? 'Frontières' : 'Borders' }}
           </button>
           <button
             type="button"
             @click="showArcs = !showArcs"
-            class="px-2.5 py-1 rounded border transition cursor-pointer font-semibold"
-            :class="showArcs
-              ? 'bg-fuchsia-500/15 border-fuchsia-500/40 text-fuchsia-600 dark:text-fuchsia-300'
-              : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400'"
+            class="px-3 py-1.5 rounded-full text-[11px] font-bold transition cursor-pointer"
+            :class="showArcs ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300' : 'text-slate-400'"
           >
-            {{ locale === 'fr' ? 'ARCS 3D' : '3D ARCS' }}
-          </button>
-          <button
-            type="button"
-            @click="showGraticule = !showGraticule"
-            class="px-2.5 py-1 rounded border transition cursor-pointer font-semibold"
-            :class="showGraticule
-              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-300'
-              : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400'"
-          >
-            GRATICULE
+            {{ locale === 'fr' ? 'Liaisons 3D' : '3D Arcs' }}
           </button>
           <button
             type="button"
             @click="autoRotate = !autoRotate"
-            class="px-2.5 py-1 rounded border transition cursor-pointer font-semibold"
-            :class="autoRotate
-              ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-300'
-              : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400'"
+            class="px-3 py-1.5 rounded-full text-[11px] font-bold transition cursor-pointer"
+            :class="autoRotate ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300' : 'text-slate-400'"
           >
-            {{ autoRotate ? 'ROTATION: ON' : 'ROTATION: OFF' }}
+            {{ autoRotate ? (locale === 'fr' ? 'Rotation Auto' : 'Auto Spin') : (locale === 'fr' ? 'Pause' : 'Paused') }}
+          </button>
+          <button
+            type="button"
+            @click="selectRandomGlobeCountry"
+            class="px-3.5 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-[11px] font-extrabold transition cursor-pointer hover:scale-105"
+          >
+            {{ locale === 'fr' ? 'Pays Aléatoire ↻' : 'Random Country ↻' }}
           </button>
         </div>
       </div>
 
-      <!-- Main 3-Column Command Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
-
-        <!-- ===================================================== -->
-        <!-- LEFT DOCK: SEARCH, CONTINENT SECTORS & MODE LAUNCHER  -->
-        <!-- ===================================================== -->
-        <aside class="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/[0.07] bg-slate-50/50 dark:bg-[#070A14]/90 p-4 sm:p-5 flex flex-col justify-between gap-5">
-          <div class="space-y-4">
-            <div>
-              <span class="font-mono text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400 block">
-                {{ locale === 'fr' ? 'INDEX GÉOSPATIAL' : 'GEOSPATIAL INDEX' }}
-              </span>
-              <h1 class="text-lg font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
-                {{ locale === 'fr' ? 'Poste de Contrôle Global' : 'Global Command Deck' }}
-              </h1>
-            </div>
-
-            <!-- Instant Country Search on Globe -->
-            <div class="relative">
-              <input
-                v-model="globeSearchQuery"
-                type="text"
-                :placeholder="locale === 'fr' ? 'Localiser un État ou capitale...' : 'Locate state or capital...'"
-                class="w-full pl-3.5 pr-8 py-2 rounded-lg border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-[#0B101D] text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
-              />
-              <button
-                v-if="globeSearchQuery"
-                type="button"
-                @click="globeSearchQuery = ''"
-                class="absolute right-2.5 top-2 text-xs text-slate-400 hover:text-white cursor-pointer"
-              >
-                ×
-              </button>
-
-              <!-- Search Dropdown Results -->
-              <div
-                v-if="searchResults.length > 0"
-                class="absolute left-0 right-0 top-full mt-1 z-30 rounded-lg border border-slate-200 dark:border-white/15 bg-white dark:bg-[#0C1222] shadow-xl divide-y divide-slate-100 dark:divide-white/[0.06] max-h-52 overflow-y-auto"
-              >
-                <button
-                  v-for="item in searchResults"
-                  :key="item.iso"
-                  type="button"
-                  @click="lockOnCountry(item); globeSearchQuery = ''"
-                  class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-sky-500/10 transition cursor-pointer"
-                >
-                  <div class="flex items-center gap-2 min-w-0">
-                    <img :src="`https://flagcdn.com/w40/${item.iso}.png`" class="h-3.5 w-auto rounded-2xs shrink-0" alt="" />
-                    <span class="font-bold text-slate-900 dark:text-white truncate">{{ item.name }}</span>
-                  </div>
-                  <span class="font-mono text-[10px] text-sky-400 uppercase">{{ item.iso }}</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Continent Sector Filters -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between font-mono text-[10px] text-slate-400 uppercase">
-                <span>{{ locale === 'fr' ? 'SECTEURS CONTINENTAUX' : 'CONTINENTAL SECTORS' }}</span>
-                <span>{{ filteredGlobeCountries.length }} {{ locale === 'fr' ? 'ÉTATS' : 'STATES' }}</span>
-              </div>
-              <div class="grid grid-cols-2 gap-1.5">
-                <button
-                  v-for="sec in continentSectors"
-                  :key="sec.id"
-                  type="button"
-                  @click="selectContinentSector(sec)"
-                  class="px-2.5 py-1.5 rounded-md text-left font-mono text-[11px] border transition cursor-pointer flex items-center justify-between"
-                  :class="activeContinent === sec.id
-                    ? 'bg-sky-500/15 border-sky-500/50 text-sky-600 dark:text-sky-300 font-bold'
-                    : 'bg-white/60 dark:bg-white/[0.02] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:border-slate-400'"
-                >
-                  <span class="truncate">{{ sec.label }}</span>
-                  <span class="text-[10px] opacity-75">{{ sec.count }}</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Direct Protocol Launcher List (Inspired by Left Sidebar in Reference) -->
-            <div class="space-y-1.5 pt-2 border-t border-slate-200/80 dark:border-white/[0.07]">
-              <span class="font-mono text-[10px] text-slate-400 uppercase block">
-                {{ locale === 'fr' ? 'PROTOCOLES D\'ENTRAÎNEMENT DIRECTS' : 'DIRECT TRAINING PROTOCOLS' }}
-              </span>
-
-              <div class="space-y-1 max-h-[250px] overflow-y-auto pr-1">
-                <router-link
-                  v-for="proto in quickProtocols"
-                  :key="proto.id"
-                  :to="proto.to"
-                  class="group px-2.5 py-2 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08] hover:bg-white dark:hover:bg-white/[0.04] flex items-center justify-between transition"
-                >
-                  <div class="flex items-center gap-2.5 min-w-0">
-                    <span class="w-2 h-2 rounded-full shrink-0" :class="proto.dotClass"></span>
-                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-sky-500 dark:group-hover:text-sky-300 truncate">
-                      {{ proto.title }}
-                    </span>
-                  </div>
-                  <span class="font-mono text-[10px] text-slate-400 group-hover:text-sky-400 shrink-0">
-                    {{ proto.tag }}
-                  </span>
-                </router-link>
-              </div>
-            </div>
+      <!-- ZONE MÉDIANE : ACCROCHE ÉDITORIALE FLOTTANTE (GAUCHE) & CARTE PAYS 3D (DROITE) -->
+      <div class="relative z-20 w-full max-w-[1600px] mx-auto px-4 sm:px-8 my-auto py-6 grid grid-cols-1 lg:grid-cols-12 items-center gap-8 pointer-events-none">
+        
+        <!-- Colonne Gauche Flottante : Titre & Accès Direct -->
+        <div
+          class="lg:col-span-4 space-y-5 pointer-events-auto"
+          :style="{ transform: `translate3d(${parallaxX * 8}px, ${parallaxY * 8}px, 0)` }"
+        >
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-600 dark:text-sky-300 text-xs font-bold backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>{{ locale === 'fr' ? 'Explorez la planète en temps réel' : 'Explore the planet in real time' }}</span>
           </div>
 
-          <!-- Primary Quick Launch CTA -->
-          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/80 dark:border-white/[0.07]">
+          <h1 class="text-4xl sm:text-5xl xl:text-[3.4rem] font-black tracking-tight text-slate-900 dark:text-white leading-[1.05]">
+            {{ locale === 'fr' ? 'Le monde entier' : 'The entire world' }}
+            <span class="block bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">
+              {{ locale === 'fr' ? 'au bout des doigts.' : 'at your fingertips.' }}
+            </span>
+          </h1>
+
+          <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300/90 max-w-md leading-relaxed">
+            {{ locale === 'fr'
+              ? 'Faites tourner le globe, cliquez sur n\'importe lequel des 196 États pour inspecter ses frontières et lancez vos défis géographiques.'
+              : 'Spin the globe, click any of the 196 sovereign states to inspect its borders, and launch your geography challenges.' }}
+          </p>
+
+          <div class="flex flex-wrap items-center gap-3 pt-1">
+            <router-link
+              to="/quiz"
+              class="px-6 py-3.5 rounded-full bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-slate-950 font-black text-sm shadow-xl shadow-sky-500/25 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+            >
+              <span>{{ locale === 'fr' ? 'Lancer un Quiz' : 'Start a Quiz' }}</span>
+              <span>→</span>
+            </router-link>
+
             <router-link
               to="/geoguessr"
-              class="px-3 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs text-center transition shadow-lg shadow-sky-500/20"
+              class="px-5 py-3.5 rounded-full bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/80 dark:border-white/15 font-bold text-sm backdrop-blur-xl shadow-lg hover:-translate-y-0.5 transition-all"
             >
-              PINDROP 25K
+              PinDrop 25K
             </router-link>
+
             <router-link
               to="/duel"
-              class="px-3 py-2.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-600 dark:text-rose-300 font-black text-xs text-center transition"
+              class="px-5 py-3.5 rounded-full bg-rose-500/15 hover:bg-rose-500/25 text-rose-600 dark:text-rose-300 border border-rose-500/35 font-bold text-sm backdrop-blur-xl hover:-translate-y-0.5 transition-all"
             >
-              DUEL 1V1
+              {{ locale === 'fr' ? 'Duel 1v1' : '1v1 Duel' }}
             </router-link>
-          </div>
-        </aside>
-
-        <!-- ===================================================== -->
-        <!-- CENTERPIECE: INTERACTIVE 3D VECTOR GLOBE VIEWPORT     -->
-        <!-- ===================================================== -->
-        <div class="lg:col-span-6 relative flex flex-col items-center justify-between bg-slate-950 overflow-hidden min-h-[460px] sm:min-h-[560px]">
-          <!-- Deep Space Radial Backdrop -->
-          <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(14,165,233,0.14),rgba(5,8,17,0.96)_72%)]"></div>
-
-          <!-- Top Floating HUD Overlay inside Globe Viewport -->
-          <div class="relative z-10 w-full flex items-center justify-between px-4 pt-3 text-[11px] font-mono text-slate-400">
-            <div>
-              <span class="text-sky-400 font-bold">TARGET //</span>
-              <span class="text-white ml-1.5 font-bold">{{ heroCountry.name.toUpperCase() }}</span>
-              <span class="text-slate-500 ml-1">[{{ heroCountry.iso.toUpperCase() }}]</span>
-            </div>
-
-            <!-- Zoom & Reset Controls -->
-            <div class="flex items-center gap-1">
-              <button
-                type="button"
-                @click="adjustGlobeZoom(0.25)"
-                class="w-7 h-7 rounded bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 text-white font-bold cursor-pointer flex items-center justify-center"
-                title="Zoom In"
-              >
-                +
-              </button>
-              <button
-                type="button"
-                @click="adjustGlobeZoom(-0.25)"
-                class="w-7 h-7 rounded bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 text-white font-bold cursor-pointer flex items-center justify-center"
-                title="Zoom Out"
-              >
-                -
-              </button>
-              <button
-                type="button"
-                @click="selectRandomGlobeCountry"
-                class="px-2.5 h-7 rounded bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-sky-300 font-semibold cursor-pointer"
-              >
-                {{ locale === 'fr' ? 'ALÉATOIRE' : 'RANDOM' }}
-              </button>
-            </div>
-          </div>
-
-          <!-- High-DPI 3D Vector Globe Canvas -->
-          <div class="relative z-10 flex-1 w-full flex items-center justify-center select-none my-auto">
-            <canvas
-              ref="globeCanvasRef"
-              class="w-[340px] h-[340px] sm:w-[460px] sm:h-[460px] xl:w-[500px] xl:h-[500px] cursor-grab active:cursor-grabbing"
-              @pointerdown="onGlobePointerDown"
-              @pointermove="onGlobePointerMove"
-              @pointerup="onGlobePointerUp"
-              @pointerleave="onGlobePointerLeave"
-              @wheel.prevent="onGlobeWheel"
-            ></canvas>
-
-            <!-- Hover Tooltip on 3D Globe -->
-            <div
-              v-if="hoveredCountry"
-              class="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-slate-900/95 border border-sky-400/50 text-white font-mono text-xs flex items-center gap-2 shadow-xl"
-            >
-              <img :src="`https://flagcdn.com/w40/${hoveredCountry.iso}.png`" class="h-3.5 w-auto rounded-2xs" alt="" />
-              <span class="font-bold">{{ hoveredCountry.name }}</span>
-              <span class="text-sky-400">({{ hoveredCountry.capital }})</span>
-            </div>
-          </div>
-
-          <!-- Bottom Telemetry Readout Bar -->
-          <div class="relative z-10 w-full px-4 pb-3 flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] text-slate-400 border-t border-white/[0.05] pt-2.5 bg-slate-950/60">
-            <div class="flex items-center gap-3">
-              <span>LAT: <strong class="text-sky-300">{{ formatCoord(heroCountry.lat, 'N', 'S') }}</strong></span>
-              <span>LON: <strong class="text-sky-300">{{ formatCoord(heroCountry.lng, 'E', 'W') }}</strong></span>
-              <span>ZOOM: <strong class="text-emerald-400">{{ globeZoom.toFixed(2) }}x</strong></span>
-            </div>
-            <div class="text-slate-500">
-              {{ locale === 'fr' ? 'GLISSER POUR TOURNER • CLIC SUR NŒUD POUR INSPECTER' : 'DRAG TO ROTATE • CLICK NODE TO INSPECT' }}
-            </div>
           </div>
         </div>
 
-        <!-- ===================================================== -->
-        <!-- RIGHT DOCK: TARGET TELEMETRY & GEODESIC NEIGHBORS     -->
-        <!-- ===================================================== -->
-        <aside class="lg:col-span-3 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-white/[0.07] bg-slate-50/50 dark:bg-[#070A14]/90 p-4 sm:p-5 flex flex-col justify-between gap-5">
-          <div class="space-y-4">
-            <!-- Country Header -->
-            <div class="flex items-start justify-between gap-3 pb-3.5 border-b border-slate-200 dark:border-white/[0.07]">
-              <div class="flex items-center gap-3 min-w-0">
+        <!-- Espace central laissé libre pour voir et manipuler le Globe 3D -->
+        <div class="hidden lg:block lg:col-span-4"></div>
+
+        <!-- Colonne Droite Flottante : Carte d'Exploration du Pays Ciblé -->
+        <div
+          class="lg:col-span-4 flex justify-end pointer-events-auto"
+          :style="{ transform: `translate3d(${parallaxX * -10}px, ${parallaxY * -10}px, 0)` }"
+        >
+          <div class="w-full max-w-sm rounded-3xl bg-white/80 dark:bg-slate-900/75 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-5 sm:p-6 shadow-2xl space-y-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3.5 min-w-0">
                 <img
                   :src="`https://flagcdn.com/w160/${heroCountry.iso}.png`"
                   :alt="heroCountry.name"
-                  class="h-10 w-auto rounded border border-slate-300 dark:border-white/15 shadow-xs shrink-0"
+                  class="h-11 w-auto rounded-lg shadow-md border border-slate-200 dark:border-white/10 shrink-0"
                 />
                 <div class="min-w-0">
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-600 dark:text-sky-300 uppercase">
-                      ISO // {{ heroCountry.iso }}
-                    </span>
-                    <span class="font-mono text-[10px] text-slate-400 truncate">
-                      {{ heroCountry.subregion }}
-                    </span>
-                  </div>
-                  <h2 class="text-xl font-black text-slate-900 dark:text-white truncate mt-0.5">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 block truncate">
+                    {{ heroCountry.subregion }}
+                  </span>
+                  <h2 class="text-2xl font-black text-slate-900 dark:text-white truncate leading-tight">
                     {{ heroCountry.name }}
                   </h2>
                 </div>
               </div>
-            </div>
-
-            <!-- Primary Telemetry Metrics (2x2 Grid like Manchester Cluster Card) -->
-            <div class="grid grid-cols-2 gap-2">
-              <div class="p-2.5 rounded-lg border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#0B101D]">
-                <span class="font-mono text-[10px] uppercase text-slate-400 block">
-                  {{ t('common.capital') }}
-                </span>
-                <strong class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate block mt-0.5">
-                  {{ heroCountry.capital }}
-                </strong>
-              </div>
-
-              <div class="p-2.5 rounded-lg border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#0B101D]">
-                <span class="font-mono text-[10px] uppercase text-slate-400 block">
-                  {{ locale === 'fr' ? 'POPULATION' : 'POPULATION' }}
-                </span>
-                <strong class="font-mono text-xs sm:text-sm font-bold text-sky-600 dark:text-sky-400 truncate block mt-0.5">
-                  {{ heroCountry.population }}
-                </strong>
-              </div>
-
-              <div class="p-2.5 rounded-lg border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#0B101D]">
-                <span class="font-mono text-[10px] uppercase text-slate-400 block">
-                  {{ locale === 'fr' ? 'LANGUE OFF.' : 'OFFICIAL LANG' }}
-                </span>
-                <strong class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
-                  {{ heroCountry.lang }}
-                </strong>
-              </div>
-
-              <div class="p-2.5 rounded-lg border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#0B101D]">
-                <span class="font-mono text-[10px] uppercase text-slate-400 block">
-                  {{ locale === 'fr' ? 'DEVISE' : 'CURRENCY' }}
-                </span>
-                <strong class="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate block mt-0.5">
-                  {{ heroCountry.currency }}
-                </strong>
-              </div>
-            </div>
-
-            <!-- Intelligence Brief -->
-            <div class="p-3 rounded-lg border border-sky-500/25 bg-sky-500/[0.05] text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-              <span class="font-mono text-[10px] font-bold uppercase text-sky-600 dark:text-sky-400 block mb-1">
-                {{ locale === 'fr' ? 'NOTE D\'ARCHIVE GÉOGRAPHIQUE' : 'GEOGRAPHIC INTELLIGENCE BRIEF' }}
+              <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 uppercase shrink-0">
+                {{ heroCountry.iso }}
               </span>
-              {{ heroCountry.fact }}
             </div>
 
-            <!-- Connected Geodesic Neighbors (Clicking rotates 3D globe along the arc) -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between font-mono text-[10px] text-slate-400 uppercase">
-                <span>{{ locale === 'fr' ? 'LIAISONS GÉODÉSIQUES PROCHES' : 'CONNECTED GEODESIC ARCS' }}</span>
-                <span>DIST (KM)</span>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                <span class="text-[11px] text-slate-400 block">{{ t('common.capital') }}</span>
+                <strong class="text-sm font-bold text-slate-900 dark:text-white truncate block mt-0.5">{{ heroCountry.capital }}</strong>
               </div>
+              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Habitants' : 'Population' }}</span>
+                <strong class="text-sm font-bold text-sky-600 dark:text-sky-400 truncate block mt-0.5">{{ heroCountry.population }}</strong>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Langue' : 'Language' }}</span>
+                <strong class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">{{ heroCountry.lang }}</strong>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Monnaie' : 'Currency' }}</span>
+                <strong class="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate block mt-0.5">{{ heroCountry.currency }}</strong>
+              </div>
+            </div>
 
-              <div class="divide-y divide-slate-200/60 dark:divide-white/[0.05] rounded-lg border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#0B101D] overflow-hidden">
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-sky-500/[0.07] border border-sky-500/20 rounded-2xl p-3.5">
+              {{ heroCountry.fact }}
+            </p>
+
+            <!-- Pays voisins cliquables en pilules fluides -->
+            <div class="space-y-2 pt-1">
+              <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+                <span>{{ locale === 'fr' ? 'Voyager vers un pays voisin :' : 'Fly to a neighboring country:' }}</span>
+                <span class="font-mono text-[10px]">{{ formatCoord(heroCountry.lat, 'N', 'S') }}</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
                 <button
                   v-for="nb in nearestNeighbors"
                   :key="nb.country.iso"
                   type="button"
                   @click="lockOnCountry(nb.country)"
-                  class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-sky-500/10 transition cursor-pointer group"
+                  class="px-2.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] hover:bg-sky-500 hover:text-white dark:hover:bg-sky-500 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
                 >
-                  <div class="flex items-center gap-2 min-w-0">
-                    <img :src="`https://flagcdn.com/w40/${nb.country.iso}.png`" class="h-3.5 w-auto rounded-2xs shrink-0" alt="" />
-                    <span class="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-sky-400 truncate">
-                      {{ nb.country.name }}
-                    </span>
-                  </div>
-                  <span class="font-mono text-[11px] text-fuchsia-500 dark:text-fuchsia-400 font-bold shrink-0">
-                    {{ nb.distKm.toLocaleString() }} km
-                  </span>
+                  <img :src="`https://flagcdn.com/w40/${nb.country.iso}.png`" class="h-3 w-auto rounded-2xs" alt="" />
+                  <span>{{ nb.country.name }}</span>
                 </button>
               </div>
             </div>
           </div>
-
-          <!-- Action Buttons on Selected State -->
-          <div class="flex items-center gap-2 pt-2 border-t border-slate-200/80 dark:border-white/[0.07]">
-            <router-link
-              :to="{ path: '/quiz', query: { mode: 'mystery' } }"
-              class="flex-1 px-3 py-2.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-xs text-center hover:opacity-90 transition"
-            >
-              {{ locale === 'fr' ? 'Jouer Pays Mystère' : 'Play Mystery Mode' }}
-            </router-link>
-            <router-link
-              to="/explorer"
-              class="px-3 py-2.5 rounded-lg border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-200 hover:border-sky-400 font-mono text-xs font-bold transition"
-            >
-              ATLAS
-            </router-link>
-          </div>
-        </aside>
-
-      </div>
-    </section>
-
-    <!-- ========================================================= -->
-    <!-- 2. OPERATOR TELEMETRY & ACHIEVEMENT MATRIX                -->
-    <!-- ========================================================= -->
-    <section
-      v-if="currentUser"
-      class="rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#070B14] p-6 sm:p-7 shadow-xs space-y-5"
-    >
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-2.5 flex-wrap">
-            <span class="font-mono text-[11px] uppercase tracking-wider text-sky-600 dark:text-sky-400 font-bold">
-              OPERATOR TELEMETRY // {{ displayUsername.toUpperCase() }}
-            </span>
-            <router-link
-              to="/collection"
-              class="px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25"
-            >
-              {{ unlockedBadgesCount }} / {{ userBadges.length }} {{ locale === 'fr' ? 'BADGES ACTIFS' : 'ACTIVE BADGES' }}
-            </router-link>
-          </div>
-          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-            <template v-if="userStats.totalGames > 0">
-              {{ locale === 'fr'
-                ? `${userStats.totalGames} sessions validées. Dernier rapport : ${userStats.lastMode} (${userStats.lastScore}).`
-                : `${userStats.totalGames} sessions completed. Latest report: ${userStats.lastMode} (${userStats.lastScore}).` }}
-            </template>
-            <template v-else>
-              {{ locale === 'fr'
-                ? 'Aucune session enregistrée. Lancez un protocole ci-dessous pour initialiser vos statistiques.'
-                : 'No recorded sessions yet. Launch a protocol below to initialize your statistics.' }}
-            </template>
-          </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+      </div>
+
+      <!-- DOCK FLOTTANT INFÉRIEUR : ACCÈS IMMÉDIAT AUX EXPÉRIENCES PHARES -->
+      <div class="relative z-20 w-full max-w-[1400px] mx-auto px-4 sm:px-8 pb-6 pointer-events-auto">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-2.5 rounded-3xl bg-white/75 dark:bg-slate-900/75 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl">
           <router-link
-            to="/collection"
-            class="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-white/[0.1] bg-slate-50 dark:bg-white/[0.03] hover:border-sky-500 font-mono text-xs font-bold text-slate-800 dark:text-slate-200 transition"
+            v-for="feat in featuredDockModes"
+            :key="feat.id"
+            :to="feat.to"
+            class="group p-3.5 rounded-2xl hover:bg-slate-100/90 dark:hover:bg-white/[0.06] transition-all flex items-center justify-between gap-3"
           >
-            COLLECTION (I→V)
-          </router-link>
-          <router-link
-            to="/classement"
-            class="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-white/[0.1] bg-slate-50 dark:bg-white/[0.03] hover:border-sky-500 font-mono text-xs font-bold text-slate-800 dark:text-slate-200 transition"
-          >
-            LEADERBOARD
-          </router-link>
-          <router-link
-            to="/scores"
-            class="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-white/[0.1] bg-slate-50 dark:bg-white/[0.03] hover:border-sky-500 font-mono text-xs font-bold text-slate-800 dark:text-slate-200 transition"
-          >
-            LOGS
-          </router-link>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
-        <router-link
-          v-for="badge in userBadges"
-          :key="badge.id"
-          to="/collection"
-          class="p-3 rounded-xl border transition-all flex flex-col justify-between gap-1.5"
-          :class="badge.unlocked
-            ? 'bg-sky-500/[0.06] border-sky-500/35 text-slate-900 dark:text-white'
-            : 'bg-slate-50/40 dark:bg-white/[0.01] border-slate-200/60 dark:border-white/[0.05] opacity-45'"
-        >
-          <div class="flex items-center justify-between">
-            <span class="font-mono text-[10px] font-bold text-sky-600 dark:text-sky-400">{{ badge.code }}</span>
-            <span class="w-1.5 h-1.5 rounded-full" :class="badge.unlocked ? 'bg-emerald-400 shadow-[0_0_6px_#10b981]' : 'bg-slate-500'"></span>
-          </div>
-          <div>
-            <strong class="text-xs font-bold block truncate">{{ badge.title }}</strong>
-            <span class="text-[10px] text-slate-500 dark:text-slate-400 block truncate">{{ badge.desc }}</span>
-          </div>
-        </router-link>
-      </div>
-    </section>
-
-    <!-- ========================================================= -->
-    <!-- 3. FULL 12-MODULE TRAINING ARCHITECTURE                   -->
-    <!-- ========================================================= -->
-    <div class="space-y-8">
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/[0.08] pb-5">
-        <div>
-          <span class="font-mono text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 block mb-1">
-            {{ locale === 'fr' ? 'RÉPERTOIRE OPÉRATIONNEL // 12 MODULES' : 'OPERATIONAL DIRECTORY // 12 MODULES' }}
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            {{ locale === 'fr' ? 'Tous les protocoles d\'évaluation et de révision' : 'All Evaluation & Cartographic Study Protocols' }}
-          </h2>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-1.5">
-          <button
-            v-for="tab in categoryTabs"
-            :key="tab.id"
-            type="button"
-            @click="selectedCategory = tab.id"
-            class="px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition cursor-pointer border"
-            :class="selectedCategory === tab.id
-              ? 'bg-sky-500 text-slate-950 border-sky-400'
-              : 'bg-white dark:bg-[#070B14] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/[0.08] hover:border-slate-400'"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Grid of Filtered Modules -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <router-link
-          v-for="mod in visibleModules"
-          :key="mod.id"
-          :to="mod.to"
-          class="group rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#070B14] hover:border-sky-500/60 dark:hover:border-sky-400/50 p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5 shadow-2xs"
-        >
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-4">
-              <span class="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border" :class="mod.badgeClass">
-                {{ mod.code }}
-              </span>
-              <span class="font-mono text-[11px] text-slate-400">
-                {{ mod.metric }}
-              </span>
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110" :class="feat.iconBg">
+                <span class="w-2.5 h-2.5 rounded-full" :class="feat.dotColor"></span>
+              </div>
+              <div class="min-w-0">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{{ feat.tag }}</span>
+                <strong class="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate block">{{ feat.title }}</strong>
+              </div>
             </div>
+            <span class="text-slate-400 group-hover:text-sky-400 group-hover:translate-x-1 transition-all font-bold">→</span>
+          </router-link>
+        </div>
+      </div>
 
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors mb-1.5">
-              {{ mod.title }}
-            </h3>
+    </section>
 
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              {{ mod.desc }}
+    <!-- ========================================================= -->
+    <!-- 2. SECTION CONTENU FLUIDE : PROFIL & CATALOGUE DES 12 JEUX-->
+    <!-- ========================================================= -->
+    <div class="max-w-[1320px] mx-auto px-4 sm:px-8 pt-14 pb-20 space-y-16">
+
+      <!-- Bandeau Joueur Connecté -->
+      <section
+        v-if="currentUser"
+        class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl p-6 sm:p-8 shadow-xl space-y-6"
+      >
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                {{ locale === 'fr' ? 'Tableau de bord joueur' : 'Player Dashboard' }}
+              </span>
+              <router-link
+                to="/collection"
+                class="px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30"
+              >
+                {{ unlockedBadgesCount }} / {{ userBadges.length }} {{ locale === 'fr' ? 'Trophées débloqués' : 'Trophies unlocked' }}
+              </router-link>
+            </div>
+            <h2 class="text-2xl font-black text-slate-900 dark:text-white mt-1">
+              {{ displayUsername }}
+            </h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+              <template v-if="userStats.totalGames > 0">
+                {{ locale === 'fr'
+                  ? `${userStats.totalGames} parties jouées • Dernière session : ${userStats.lastMode} (${userStats.lastScore}).`
+                  : `${userStats.totalGames} games played • Latest session: ${userStats.lastMode} (${userStats.lastScore}).` }}
+              </template>
+              <template v-else>
+                {{ locale === 'fr'
+                  ? 'Lancez votre première partie pour débloquer vos badges de progression.'
+                  : 'Play your first game to unlock your progression badges.' }}
+              </template>
             </p>
           </div>
 
-          <div class="mt-5 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between font-mono text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-500 dark:group-hover:text-sky-400">
-            <span>{{ mod.footer }}</span>
-            <span class="group-hover:translate-x-1 transition-transform">→</span>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <router-link
+              to="/collection"
+              class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] hover:border-sky-500 text-xs font-bold text-slate-800 dark:text-slate-200 transition"
+            >
+              {{ locale === 'fr' ? 'Ma Collection (I→V)' : 'My Badges (I→V)' }}
+            </router-link>
+            <router-link
+              to="/classement"
+              class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] hover:border-sky-500 text-xs font-bold text-slate-800 dark:text-slate-200 transition"
+            >
+              {{ locale === 'fr' ? 'Classement & Ligues' : 'Leaderboard & Leagues' }}
+            </router-link>
+            <router-link
+              to="/scores"
+              class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] hover:border-sky-500 text-xs font-bold text-slate-800 dark:text-slate-200 transition"
+            >
+              {{ locale === 'fr' ? 'Mes Scores' : 'My Scores' }}
+            </router-link>
           </div>
-        </router-link>
-      </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-4 border-t border-slate-100 dark:border-white/[0.06]">
+          <router-link
+            v-for="badge in userBadges"
+            :key="badge.id"
+            to="/collection"
+            class="p-3.5 rounded-2xl border transition-all flex flex-col justify-between gap-2 hover:-translate-y-0.5"
+            :class="badge.unlocked
+              ? 'bg-sky-500/[0.07] border-sky-500/35 text-slate-900 dark:text-white'
+              : 'bg-slate-50/40 dark:bg-white/[0.02] border-slate-200/60 dark:border-white/[0.05] opacity-45'"
+          >
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[10px] font-bold text-sky-600 dark:text-sky-400">{{ badge.code }}</span>
+              <span class="w-2 h-2 rounded-full" :class="badge.unlocked ? 'bg-emerald-400 shadow-[0_0_8px_#10b981]' : 'bg-slate-500'"></span>
+            </div>
+            <div>
+              <strong class="text-xs font-bold block truncate">{{ badge.title }}</strong>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 block truncate">{{ badge.desc }}</span>
+            </div>
+          </router-link>
+        </div>
+      </section>
+
+      <!-- Galerie des 12 Modes de Jeu -->
+      <section class="space-y-8">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-sky-600 dark:text-sky-400 block mb-1">
+              {{ locale === 'fr' ? '12 Expériences Interactives' : '12 Interactive Experiences' }}
+            </span>
+            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+              {{ locale === 'fr' ? 'Choisissez votre terrain de jeu' : 'Choose your playground' }}
+            </h2>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-slate-200/60 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
+            <button
+              v-for="tab in categoryTabs"
+              :key="tab.id"
+              type="button"
+              @click="selectedCategory = tab.id"
+              class="px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer"
+              :class="selectedCategory === tab.id
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+            >
+              {{ tab.label }}
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <router-link
+            v-for="mod in visibleModules"
+            :key="mod.id"
+            :to="mod.to"
+            class="group rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#090E1A] hover:border-sky-500/60 dark:hover:border-sky-400/50 p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-2xl"
+          >
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-4">
+                <span class="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border" :class="mod.badgeClass">
+                  {{ mod.tag }}
+                </span>
+                <span class="font-mono text-xs text-slate-400">
+                  {{ mod.metric }}
+                </span>
+              </div>
+
+              <h3 class="text-xl font-black text-slate-900 dark:text-white group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors mb-2">
+                {{ mod.title }}
+              </h3>
+
+              <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                {{ mod.desc }}
+              </p>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-500 dark:group-hover:text-sky-400">
+              <span>{{ mod.footer }}</span>
+              <span class="w-7 h-7 rounded-full bg-slate-100 dark:bg-white/5 group-hover:bg-sky-500 group-hover:text-white flex items-center justify-center transition-all">→</span>
+            </div>
+          </router-link>
+        </div>
+      </section>
+
     </div>
 
   </div>
@@ -545,7 +467,21 @@ const { t, locale } = useI18n();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 // =========================================================
-// LOCALIZED COUNTRIES & HAVERSINE GEODESIC MATH
+// PARALLAXE DOUCE AU MOUVEMENT DE LA SOURIS
+// =========================================================
+const parallaxX = ref(0);
+const parallaxY = ref(0);
+
+const onStagePointerMove = (e) => {
+  if (typeof window === 'undefined') return;
+  const nx = (e.clientX / window.innerWidth - 0.5) * 2;
+  const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+  parallaxX.value = Number(nx.toFixed(3));
+  parallaxY.value = Number(ny.toFixed(3));
+};
+
+// =========================================================
+// PAYS LOCALISÉS & DISTANCE ORTHODROMIQUE
 // =========================================================
 const localizedCountries = computed(() => {
   const isEn = locale.value === 'en';
@@ -580,11 +516,11 @@ const formatCoord = (val, posDir, negDir) => {
 };
 
 // =========================================================
-// GLOBE SEARCH, CONTINENT SECTORS & TARGET NEIGHBORS
+// RECHERCHE, SECTEURS & VOISINS DU GLOBE
 // =========================================================
 const globeSearchQuery = ref('');
 const activeContinent = ref('all');
-const heroIndex = ref(14); // France default
+const heroIndex = ref(14); // France par défaut
 const hoveredCountry = ref(null);
 
 const heroCountry = computed(() => localizedCountries.value[heroIndex.value] || localizedCountries.value[0]);
@@ -604,14 +540,13 @@ const searchResults = computed(() => {
 
 const continentSectors = computed(() => {
   const isFr = locale.value === 'fr';
-  const countIn = (cont) => localizedCountries.value.filter((c) => c.continent === cont).length;
   return [
-    { id: 'all', label: isFr ? 'GLOBAL' : 'GLOBAL', count: localizedCountries.value.length, lat: 20, lng: 10 },
-    { id: 'Europe', label: 'EUROPE', count: countIn('Europe'), lat: 50, lng: 14 },
-    { id: 'Asia', label: isFr ? 'ASIE' : 'ASIA', count: countIn('Asia'), lat: 30, lng: 95 },
-    { id: 'Africa', label: isFr ? 'AFRIQUE' : 'AFRICA', count: countIn('Africa'), lat: 4, lng: 20 },
-    { id: 'Americas', label: isFr ? 'AMÉRIQUES' : 'AMERICAS', count: countIn('North America') + countIn('South America'), lat: 10, lng: -75 },
-    { id: 'Oceania', label: isFr ? 'OCÉANIE' : 'OCEANIA', count: countIn('Oceania'), lat: -22, lng: 145 }
+    { id: 'all', label: isFr ? 'Monde (196)' : 'World (196)', lat: 20, lng: 10 },
+    { id: 'Europe', label: 'Europe', lat: 48, lng: 12 },
+    { id: 'Asia', label: isFr ? 'Asie' : 'Asia', lat: 28, lng: 92 },
+    { id: 'Africa', label: isFr ? 'Afrique' : 'Africa', lat: 4, lng: 18 },
+    { id: 'Americas', label: isFr ? 'Amériques' : 'Americas', lat: 12, lng: -75 },
+    { id: 'Oceania', label: isFr ? 'Océanie' : 'Oceania', lat: -22, lng: 145 }
   ];
 });
 
@@ -625,7 +560,6 @@ const filteredGlobeCountries = computed(() => {
   return localizedCountries.value.filter((c) => c.continent === activeContinent.value);
 });
 
-// 6 Nearest Neighbors to draw 3D Geodesic Arcs & populate Right Dock Table
 const nearestNeighbors = computed(() => {
   const target = heroCountry.value;
   if (!target) return [];
@@ -640,24 +574,21 @@ const nearestNeighbors = computed(() => {
 });
 
 // =========================================================
-// REAL WORLD VECTOR BORDERS (TOPOJSON / GEOJSON) + 3D GLOBE
+// MOTEUR 3D DU GLOBE AVEC FRONTIÈRES VECTORIELLES
 // =========================================================
 const globeCanvasRef = ref(null);
-const worldPolygonsLoaded = ref(false);
 const showBorders = ref(true);
 const showArcs = ref(true);
-const showGraticule = ref(true);
 const autoRotate = ref(true);
 const globeZoom = ref(1.0);
 
-let worldRings = []; // Array of [ [lon, lat], ... ] rings for all world countries
+let worldRings = [];
 let animFrameId = null;
 
-// Smooth camera angles (current vs target for spring interpolation)
-let rotLon = -12;
-let rotLat = -32;
-let targetLon = -12;
-let targetLat = -32;
+let rotLon = -8;
+let rotLat = -34;
+let targetLon = -8;
+let targetLat = -34;
 let isCameraLocked = false;
 let isDragging = false;
 let lastPointerX = 0;
@@ -666,7 +597,6 @@ let dragDistance = 0;
 let projectedNodes = [];
 let pulsePhase = 0;
 
-// Pure 20-line TopoJSON parser to decode world-atlas countries-110m.json
 const extractRingsFromTopoJSON = (topology) => {
   const rings = [];
   if (!topology || !topology.objects || !topology.arcs) return rings;
@@ -696,14 +626,10 @@ const extractRingsFromTopoJSON = (topology) => {
 
   for (const geom of geometries) {
     if (geom.type === 'Polygon') {
-      for (const ringIdx of geom.arcs) {
-        rings.push(stitchArcs(ringIdx));
-      }
+      for (const ringIdx of geom.arcs) rings.push(stitchArcs(ringIdx));
     } else if (geom.type === 'MultiPolygon') {
       for (const poly of geom.arcs) {
-        for (const ringIdx of poly) {
-          rings.push(stitchArcs(ringIdx));
-        }
+        for (const ringIdx of poly) rings.push(stitchArcs(ringIdx));
       }
     }
   }
@@ -716,12 +642,10 @@ const loadWorldVectorBorders = async () => {
     if (res.ok) {
       const topo = await res.json();
       worldRings = extractRingsFromTopoJSON(topo);
-      worldPolygonsLoaded.value = worldRings.length > 0;
       return;
     }
   } catch (e) {}
 
-  // Fallback to standard GeoJSON if jsDelivr is blocked
   try {
     const resGeo = await fetch('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson');
     if (resGeo.ok) {
@@ -730,14 +654,12 @@ const loadWorldVectorBorders = async () => {
       for (const feat of geo.features || []) {
         const g = feat.geometry;
         if (!g) continue;
-        if (g.type === 'Polygon') {
-          rings.push(...g.coordinates);
-        } else if (g.type === 'MultiPolygon') {
+        if (g.type === 'Polygon') rings.push(...g.coordinates);
+        else if (g.type === 'MultiPolygon') {
           for (const poly of g.coordinates) rings.push(...poly);
         }
       }
       worldRings = rings;
-      worldPolygonsLoaded.value = worldRings.length > 0;
     }
   } catch (e) {}
 };
@@ -765,13 +687,9 @@ const selectRandomGlobeCountry = () => {
   lockOnCountry(randomCountry);
 };
 
-const adjustGlobeZoom = (delta) => {
-  globeZoom.value = Math.max(0.85, Math.min(2.8, Number((globeZoom.value + delta).toFixed(2))));
-};
-
 const onGlobeWheel = (e) => {
-  const delta = e.deltaY < 0 ? 0.12 : -0.12;
-  adjustGlobeZoom(delta);
+  const delta = e.deltaY < 0 ? 0.1 : -0.1;
+  globeZoom.value = Math.max(0.85, Math.min(2.4, Number((globeZoom.value + delta).toFixed(2))));
 };
 
 const onGlobePointerDown = (e) => {
@@ -790,8 +708,8 @@ const onGlobePointerMove = (e) => {
     const dx = e.clientX - lastPointerX;
     const dy = e.clientY - lastPointerY;
     dragDistance += Math.hypot(dx, dy);
-    rotLon += dx * (0.42 / globeZoom.value);
-    rotLat = Math.max(-72, Math.min(72, rotLat + dy * (0.35 / globeZoom.value)));
+    rotLon += dx * (0.4 / globeZoom.value);
+    rotLat = Math.max(-70, Math.min(70, rotLat + dy * (0.35 / globeZoom.value)));
     targetLon = rotLon;
     targetLat = rotLat;
     lastPointerX = e.clientX;
@@ -799,12 +717,11 @@ const onGlobePointerMove = (e) => {
     return;
   }
 
-  // Hover detection over 196 Country Nodes
   const rect = canvas.getBoundingClientRect();
   const cx = e.clientX - rect.left;
   const cy = e.clientY - rect.top;
   let closest = null;
-  let minD = 14;
+  let minD = 15;
   for (const node of projectedNodes) {
     const d = Math.hypot(node.x - cx, node.y - cy);
     if (d < minD) {
@@ -841,7 +758,6 @@ const onGlobePointerLeave = () => {
   hoveredCountry.value = null;
 };
 
-// Spherical Linear Interpolation (Slerp) for 3D Great-Circle Geodesic Arcs
 const slerpLatLon = (lat1, lon1, lat2, lon2, tParam) => {
   const toRad = (d) => (d * Math.PI) / 180;
   const toDeg = (r) => (r * 180) / Math.PI;
@@ -868,9 +784,7 @@ const slerpLatLon = (lat1, lon1, lat2, lon2, tParam) => {
   const y = a * y1 + b * y2;
   const z = a * z1 + b * z2;
 
-  const lat = toDeg(Math.atan2(z, Math.hypot(x, y)));
-  const lon = toDeg(Math.atan2(y, x));
-  return [lat, lon];
+  return [toDeg(Math.atan2(z, Math.hypot(x, y))), toDeg(Math.atan2(y, x))];
 };
 
 const renderGlobe = () => {
@@ -879,14 +793,15 @@ const renderGlobe = () => {
 
   const rect = canvas.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const W = rect.width || 440;
-  const H = rect.height || 440;
+  const W = rect.width || 640;
+  const H = rect.height || 640;
 
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
   }
 
+  const isDark = document.documentElement.classList.contains('dark');
   const ctx = canvas.getContext('2d');
   ctx.save();
   ctx.scale(dpr, dpr);
@@ -894,46 +809,54 @@ const renderGlobe = () => {
 
   const cx = W / 2;
   const cy = H / 2;
-  const R = Math.min(W, H) * 0.42 * globeZoom.value;
+  const R = Math.min(W, H) * 0.43 * globeZoom.value;
 
-  // Smooth spring camera rotation
   if (isCameraLocked && !isDragging) {
     const dLon = ((targetLon - rotLon + 540) % 360) - 180;
     const dLat = targetLat - rotLat;
     rotLon += dLon * 0.08;
     rotLat += dLat * 0.08;
-    if (Math.abs(dLon) < 0.15 && Math.abs(dLat) < 0.15) {
-      isCameraLocked = false;
-    }
+    if (Math.abs(dLon) < 0.15 && Math.abs(dLat) < 0.15) isCameraLocked = false;
   } else if (autoRotate.value && !isDragging) {
-    rotLon -= 0.14;
+    rotLon -= 0.12;
     targetLon = rotLon;
   }
 
-  pulsePhase = (pulsePhase + 0.018) % 1;
+  pulsePhase = (pulsePhase + 0.015) % 1;
 
-  // 1. Outer Atmospheric Glow Halo
-  const outerHalo = ctx.createRadialGradient(cx, cy, R * 0.88, cx, cy, R * 1.14);
-  outerHalo.addColorStop(0, 'rgba(14, 165, 233, 0)');
-  outerHalo.addColorStop(0.65, 'rgba(14, 165, 233, 0.14)');
-  outerHalo.addColorStop(1, 'rgba(14, 165, 233, 0)');
+  // 1. Halo atmosphérique doux autour du Globe
+  const outerHalo = ctx.createRadialGradient(cx, cy, R * 0.85, cx, cy, R * 1.16);
+  if (isDark) {
+    outerHalo.addColorStop(0, 'rgba(14, 165, 233, 0)');
+    outerHalo.addColorStop(0.6, 'rgba(56, 189, 248, 0.16)');
+    outerHalo.addColorStop(1, 'rgba(16, 185, 129, 0)');
+  } else {
+    outerHalo.addColorStop(0, 'rgba(2, 132, 199, 0)');
+    outerHalo.addColorStop(0.6, 'rgba(14, 165, 233, 0.14)');
+    outerHalo.addColorStop(1, 'rgba(14, 165, 233, 0)');
+  }
   ctx.beginPath();
-  ctx.arc(cx, cy, R * 1.14, 0, Math.PI * 2);
+  ctx.arc(cx, cy, R * 1.16, 0, Math.PI * 2);
   ctx.fillStyle = outerHalo;
   ctx.fill();
 
-  // 2. Ocean Sphere Core
-  const oceanGrad = ctx.createRadialGradient(cx - R * 0.28, cy - R * 0.28, R * 0.08, cx, cy, R);
-  oceanGrad.addColorStop(0, '#0a1628');
-  oceanGrad.addColorStop(0.7, '#050b16');
-  oceanGrad.addColorStop(1, '#02050b');
+  // 2. Sphère océanique 3D
+  const oceanGrad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.08, cx, cy, R);
+  if (isDark) {
+    oceanGrad.addColorStop(0, '#0f2342');
+    oceanGrad.addColorStop(0.65, '#071124');
+    oceanGrad.addColorStop(1, '#030711');
+  } else {
+    oceanGrad.addColorStop(0, '#e0f2fe');
+    oceanGrad.addColorStop(0.7, '#bae6fd');
+    oceanGrad.addColorStop(1, '#7dd3fc');
+  }
 
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
   ctx.fillStyle = oceanGrad;
   ctx.fill();
 
-  // Clip everything inside the sphere
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
@@ -959,41 +882,39 @@ const renderGlobe = () => {
     return { x, y, z: cosC };
   };
 
-  // 3. Geodesic Graticule Grid (15 deg)
-  if (showGraticule.value) {
-    ctx.lineWidth = 0.55;
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.11)';
-    for (let lon = -180; lon < 180; lon += 20) {
-      ctx.beginPath();
-      let started = false;
-      for (let lat = -80; lat <= 80; lat += 6) {
-        const p = projectLatLon(lat, lon);
-        if (p) {
-          if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-          else ctx.lineTo(p.x, p.y);
-        } else started = false;
-      }
-      ctx.stroke();
+  // 3. Grille géodésique subtile
+  ctx.lineWidth = 0.5;
+  ctx.strokeStyle = isDark ? 'rgba(56, 189, 248, 0.09)' : 'rgba(2, 132, 199, 0.14)';
+  for (let lon = -180; lon < 180; lon += 20) {
+    ctx.beginPath();
+    let started = false;
+    for (let lat = -80; lat <= 80; lat += 6) {
+      const p = projectLatLon(lat, lon);
+      if (p) {
+        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+        else ctx.lineTo(p.x, p.y);
+      } else started = false;
     }
-    for (let lat = -60; lat <= 60; lat += 20) {
-      ctx.beginPath();
-      let started = false;
-      for (let lon = -180; lon <= 180; lon += 6) {
-        const p = projectLatLon(lat, lon);
-        if (p) {
-          if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-          else ctx.lineTo(p.x, p.y);
-        } else started = false;
-      }
-      ctx.stroke();
+    ctx.stroke();
+  }
+  for (let lat = -60; lat <= 60; lat += 20) {
+    ctx.beginPath();
+    let started = false;
+    for (let lon = -180; lon <= 180; lon += 6) {
+      const p = projectLatLon(lat, lon);
+      if (p) {
+        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+        else ctx.lineTo(p.x, p.y);
+      } else started = false;
     }
+    ctx.stroke();
   }
 
-  // 4. REAL COUNTRY BORDERS & LANDMASS POLYGONS
+  // 4. CONTINENTS & FRONTIÈRES VECTORIELLES DES PAYS
   if (showBorders.value && worldRings.length > 0) {
-    ctx.fillStyle = 'rgba(14, 34, 64, 0.72)';
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.48)';
-    ctx.lineWidth = 0.85;
+    ctx.fillStyle = isDark ? 'rgba(20, 48, 86, 0.78)' : 'rgba(255, 255, 255, 0.85)';
+    ctx.strokeStyle = isDark ? 'rgba(56, 189, 248, 0.52)' : 'rgba(2, 132, 199, 0.45)';
+    ctx.lineWidth = 0.9;
 
     for (const ring of worldRings) {
       ctx.beginPath();
@@ -1021,7 +942,7 @@ const renderGlobe = () => {
     }
   }
 
-  // 5. 3D GEODESIC ARCS & TRAVELING TELEMETRY PULSES
+  // 5. ARCS GÉODÉSIQUES 3D ANIMÉS
   const activeTarget = heroCountry.value;
   if (showArcs.value && activeTarget) {
     for (const nb of nearestNeighbors.value) {
@@ -1032,34 +953,30 @@ const renderGlobe = () => {
       for (let s = 0; s <= steps; s++) {
         const tStep = s / steps;
         const [lat, lon] = slerpLatLon(activeTarget.lat, activeTarget.lng, dest.lat, dest.lng, tStep);
-        // Parabolic 3D loft above the globe surface
-        const loft = 1 + Math.sin(tStep * Math.PI) * 0.055;
+        const loft = 1 + Math.sin(tStep * Math.PI) * 0.06;
         const p = projectLatLon(lat, lon, loft);
         if (p) {
           if (!started) { ctx.moveTo(p.x, p.y); started = true; }
           else ctx.lineTo(p.x, p.y);
-        } else {
-          started = false;
-        }
+        } else started = false;
       }
-      ctx.strokeStyle = 'rgba(217, 70, 239, 0.55)';
-      ctx.lineWidth = 1.35;
+      ctx.strokeStyle = isDark ? 'rgba(52, 211, 153, 0.55)' : 'rgba(2, 132, 199, 0.55)';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Animated photon pulse along the 3D arc
       const [pLat, pLon] = slerpLatLon(activeTarget.lat, activeTarget.lng, dest.lat, dest.lng, pulsePhase);
-      const pLoft = 1 + Math.sin(pulsePhase * Math.PI) * 0.055;
+      const pLoft = 1 + Math.sin(pulsePhase * Math.PI) * 0.06;
       const pulsePt = projectLatLon(pLat, pLon, pLoft);
       if (pulsePt) {
         ctx.beginPath();
-        ctx.arc(pulsePt.x, pulsePt.y, 2.6, 0, Math.PI * 2);
-        ctx.fillStyle = '#f0abfc';
+        ctx.arc(pulsePt.x, pulsePt.y, 2.8, 0, Math.PI * 2);
+        ctx.fillStyle = '#34d399';
         ctx.fill();
       }
     }
   }
 
-  // 6. SOVEREIGN CAPITAL CLUSTERS (WITH NEON HALOS LIKE REFERENCE)
+  // 6. CAPITALES MONDIALES SUR LE GLOBE
   const nextNodes = [];
   const allList = localizedCountries.value;
   const activeSectorSet = new Set(filteredGlobeCountries.value.map((c) => c.iso));
@@ -1082,55 +999,41 @@ const renderGlobe = () => {
     const isNeighbor = neighborIsos.has(c.iso);
 
     if (isNeighbor) {
-      // Magenta glowing cluster for connected neighbors
-      const glow = ctx.createRadialGradient(p.x, p.y, 0.5, p.x, p.y, 8);
-      glow.addColorStop(0, 'rgba(232, 121, 249, 0.9)');
-      glow.addColorStop(1, 'rgba(232, 121, 249, 0)');
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-      ctx.fillStyle = glow;
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2);
-      ctx.fillStyle = '#f5d0fe';
+      ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = '#34d399';
       ctx.fill();
     } else if (inSector) {
-      // Cyan telemetry node
       ctx.beginPath();
       ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(56, 189, 248, ${0.45 + p.z * 0.55})`;
-      ctx.fill();
-    } else {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 1.4, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.2)';
+      ctx.fillStyle = isDark
+        ? `rgba(56, 189, 248, ${0.45 + p.z * 0.55})`
+        : `rgba(2, 132, 199, ${0.5 + p.z * 0.5})`;
       ctx.fill();
     }
   }
 
-  // 7. ACTIVE TARGET LOCK RETICLE ON 3D GLOBE
+  // 7. MARQUEUR LUMINEUX DU PAYS SÉLECTIONNÉ
   if (targetProjected) {
     const { x, y } = targetProjected;
-    const bloom = ctx.createRadialGradient(x, y, 1, x, y, 18);
-    bloom.addColorStop(0, 'rgba(16, 185, 129, 0.85)');
+    const bloom = ctx.createRadialGradient(x, y, 1, x, y, 20);
+    bloom.addColorStop(0, 'rgba(16, 185, 129, 0.9)');
     bloom.addColorStop(0.5, 'rgba(56, 189, 248, 0.35)');
     bloom.addColorStop(1, 'rgba(16, 185, 129, 0)');
     ctx.beginPath();
-    ctx.arc(x, y, 18, 0, Math.PI * 2);
+    ctx.arc(x, y, 20, 0, Math.PI * 2);
     ctx.fillStyle = bloom;
     ctx.fill();
 
-    // Expanding radar ring
-    const ringRadius = 6 + pulsePhase * 12;
+    const ringRadius = 6 + pulsePhase * 13;
     ctx.beginPath();
     ctx.arc(x, y, ringRadius, 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(52, 211, 153, ${1 - pulsePhase})`;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.6;
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(x, y, 4.2, 0, Math.PI * 2);
+    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
     ctx.fillStyle = '#ffffff';
     ctx.fill();
     ctx.lineWidth = 2;
@@ -1138,13 +1041,13 @@ const renderGlobe = () => {
     ctx.stroke();
   }
 
-  ctx.restore(); // End sphere clip
+  ctx.restore();
 
-  // 8. Specular Atmospheric Rim Border
+  // Anneau atmosphérique externe
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
   ctx.lineWidth = 1.5;
-  ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+  ctx.strokeStyle = isDark ? 'rgba(56, 189, 248, 0.45)' : 'rgba(2, 132, 199, 0.4)';
   ctx.stroke();
 
   projectedNodes = nextNodes;
@@ -1153,17 +1056,55 @@ const renderGlobe = () => {
 };
 
 // =========================================================
-// MODULES & PROTOCOLS DIRECTORY
+// DOCK RAPIDE & CATALOGUE DES 12 MODES
 // =========================================================
+const featuredDockModes = computed(() => {
+  const isFr = locale.value === 'fr';
+  return [
+    {
+      id: 'mystery',
+      tag: isFr ? 'Défi Quotidien' : 'Daily Challenge',
+      title: isFr ? 'Pays Mystère (Worldle)' : 'Mystery Country',
+      iconBg: 'bg-amber-500/15 border border-amber-500/30',
+      dotColor: 'bg-amber-400 shadow-[0_0_8px_#fbbf24]',
+      to: { path: '/quiz', query: { mode: 'mystery' } }
+    },
+    {
+      id: 'pindrop',
+      tag: '25 000 PTS',
+      title: 'GeoLearn PinDrop',
+      iconBg: 'bg-sky-500/15 border border-sky-500/30',
+      dotColor: 'bg-sky-400 shadow-[0_0_8px_#38bdf8]',
+      to: '/geoguessr'
+    },
+    {
+      id: 'duel',
+      tag: isFr ? 'Multijoueur' : 'Multiplayer',
+      title: isFr ? 'Arène Duel 1v1' : '1v1 Live Duel',
+      iconBg: 'bg-rose-500/15 border border-rose-500/30',
+      dotColor: 'bg-rose-400 shadow-[0_0_8px_#fb7185]',
+      to: '/duel'
+    },
+    {
+      id: 'flash60',
+      tag: 'Combo x4',
+      title: isFr ? 'Sprint 60 Secondes' : '60s Flash Sprint',
+      iconBg: 'bg-emerald-500/15 border border-emerald-500/30',
+      dotColor: 'bg-emerald-400 shadow-[0_0_8px_#34d399]',
+      to: { path: '/quiz', query: { mode: 'flash60' } }
+    }
+  ];
+});
+
 const selectedCategory = ref('all');
 const categoryTabs = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'all', label: isFr ? 'TOUS (12)' : 'ALL (12)' },
-    { id: 'featured', label: isFr ? '01 // PHARES & DUEL' : '01 // FLAGSHIP & DUEL' },
-    { id: 'classics', label: isFr ? '02 // CLASSIQUES & SPRINT' : '02 // CLASSICS & SPRINT' },
-    { id: 'innovation', label: isFr ? '03 // DÉDUCTION & CUSTOM' : '03 // DEDUCTION & CUSTOM' },
-    { id: 'revision', label: isFr ? '04 // ATLAS & ÉTUDE' : '04 // ATLAS & STUDY' }
+    { id: 'all', label: isFr ? 'Tous les modes (12)' : 'All Modes (12)' },
+    { id: 'featured', label: isFr ? 'Phares & Duel' : 'Featured & Duel' },
+    { id: 'classics', label: isFr ? 'Classiques & Sprint' : 'Classics & Sprint' },
+    { id: 'innovation', label: isFr ? 'Déduction & Sur-mesure' : 'Deduction & Custom' },
+    { id: 'revision', label: isFr ? 'Atlas & Révision' : 'Atlas & Study' }
   ];
 });
 
@@ -1173,183 +1114,157 @@ const allModules = computed(() => {
     {
       id: 'mystery',
       cat: 'featured',
-      code: 'MOD-01 // WORLDLE',
-      metric: '6 TRIES',
+      tag: 'WORLDLE',
+      metric: '6 ESSAIS',
       title: isFr ? 'Le Pays Mystère (Worldle)' : 'Mystery Country (Worldle)',
       desc: isFr
-        ? 'Triangulez l\'État cible en 6 essais grâce à la distance orthodromique en kilomètres, l\'azimut boussole et le pourcentage de proximité.'
-        : 'Triangulate the target state in 6 tries using great-circle distance in km, compass bearing, and proximity percentage.',
-      footer: 'HAVERSINE TELEMETRY',
+        ? 'Devinez le pays secret en 6 essais grâce à la distance en kilomètres, la direction boussole et le pourcentage de proximité.'
+        : 'Guess the secret country in 6 tries using distance in km, compass direction, and proximity percentage.',
+      footer: isFr ? 'Lancer le défi' : 'Start challenge',
       badgeClass: 'bg-amber-500/10 text-amber-500 border-amber-500/30',
-      dotClass: 'bg-amber-400',
-      tag: 'WORLDLE',
       to: { path: '/quiz', query: { mode: 'mystery' } }
     },
     {
       id: 'pindrop',
       cat: 'featured',
-      code: 'MOD-02 // ORBITAL',
-      metric: '25,000 PTS',
-      title: 'GeoLearn PinDrop (Satellite & Photo)',
+      tag: 'SATELLITE & PHOTO',
+      metric: '25 000 PTS',
+      title: 'GeoLearn PinDrop',
       desc: isFr
-        ? 'Analysez une vue satellite orbitale sans étiquette ou un cliché géolocalisé, placez votre épingle et mesurez votre écart au mètre près.'
-        : 'Inspect an unlabeled orbital satellite view or geotagged photograph, drop your pin, and measure your metric offset.',
-      footer: '5 ROUNDS // SATELLITE',
+        ? 'Explorez une vue satellite orbitale sans étiquette ou une photo géolocalisée et placez votre épingle au plus près.'
+        : 'Inspect an unlabeled satellite view or geotagged photo and drop your pin as close as possible.',
+      footer: isFr ? 'Ouvrir PinDrop' : 'Open PinDrop',
       badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
-      dotClass: 'bg-sky-400',
-      tag: '25K PTS',
       to: '/geoguessr'
     },
     {
       id: 'duel',
       cat: 'featured',
-      code: 'MOD-03 // ARENA 1V1',
-      metric: 'REAL-TIME',
+      tag: '1V1 LIVE',
+      metric: 'MULTIJOUEUR',
       title: isFr ? 'Arène Duel & Face-à-Face' : '1v1 Live Duel Arena',
       desc: isFr
-        ? 'Affrontez un ami à distance via lien de salon, jouez à 2 sur le même clavier (A-Z-E-R vs 1-2-3-4) ou défiez un rival de ligue.'
-        : 'Battle a friend remotely via room link, play 2P split-keyboard on one screen, or face a live league rival.',
-      footer: 'BLITZ // SNIPER // RACE',
+        ? 'Affrontez un ami à distance via lien de salon, jouez à 2 sur le même écran ou défiez un rival de ligue.'
+        : 'Battle a friend remotely via room link, play 2-player split-screen, or face a live league rival.',
+      footer: isFr ? 'Entrer dans l\'arène' : 'Enter arena',
       badgeClass: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-      dotClass: 'bg-rose-500',
-      tag: '1V1 LIVE',
       to: '/duel'
     },
     {
       id: 'capitals',
       cat: 'classics',
-      code: 'MOD-04 // CAPITALS',
-      metric: '15 QCM',
+      tag: 'CAPITALES',
+      metric: '15 QUESTIONS',
       title: t('home.mode_caps_title'),
       desc: t('home.mode_caps_desc'),
-      footer: 'OFFICIAL CAPITALS',
-      badgeClass: 'bg-slate-500/10 text-slate-400 border-slate-500/30',
-      dotClass: 'bg-blue-400',
-      tag: '15 QCM',
+      footer: isFr ? 'Jouer aux capitales' : 'Play capitals',
+      badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
       to: { path: '/quiz', query: { mode: 'qcm', type: 'capital' } }
     },
     {
       id: 'flags',
       cat: 'classics',
-      code: 'MOD-05 // FLAGS',
-      metric: '196 STATES',
+      tag: 'DRAPEAUX',
+      metric: '196 ÉTATS',
       title: t('home.mode_flags_title'),
       desc: t('home.mode_flags_desc'),
-      footer: 'VEXILLOLOGY IDENTIFICATION',
-      badgeClass: 'bg-slate-500/10 text-slate-400 border-slate-500/30',
-      dotClass: 'bg-indigo-400',
-      tag: 'FLAGS',
+      footer: isFr ? 'Jouer aux drapeaux' : 'Play flags',
+      badgeClass: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
       to: { path: '/quiz', query: { mode: 'qcm', type: 'flag' } }
     },
     {
       id: 'flash60',
       cat: 'classics',
-      code: 'MOD-06 // SPRINT 60S',
+      tag: 'SPRINT 60S',
       metric: 'COMBO X4',
-      title: isFr ? 'Contre-la-montre 60s (QCM Flash)' : '60-Second Time Trial (Flash)',
+      title: isFr ? 'Contre-la-montre 60 secondes' : '60-Second Flash Quiz',
       desc: isFr
         ? 'Enchaînez un maximum de capitales et drapeaux en 60 secondes avec multiplicateur de combo et bonus de +2 secondes.'
-        : 'Chain as many capitals and flags as possible in 60 seconds with combo multipliers and +2s time extensions.',
-      footer: 'SPEED MULTIPLIER',
+        : 'Chain as many capitals and flags as possible in 60 seconds with combo multipliers and +2s time bonuses.',
+      footer: isFr ? 'Lancer les 60s' : 'Start 60s sprint',
       badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-      dotClass: 'bg-amber-400',
-      tag: '60S SPRINT',
       to: { path: '/quiz', query: { mode: 'flash60' } }
     },
     {
       id: 'chrono',
       cat: 'classics',
-      code: 'MOD-07 // JETPUNK',
+      tag: 'STYLE JETPUNK',
       metric: '47 / 196',
-      title: isFr ? 'Défis Chrono Carte (Clavier)' : 'Timed Map Typing (JetPunk)',
+      title: isFr ? 'Défis Chrono Carte (Clavier)' : 'Timed Map Typing',
       desc: isFr
         ? 'Saisissez au clavier les 47 pays d\'Europe ou les 196 pays du Monde sur carte muette avec grilles continentales.'
         : 'Type all 47 European countries or all 196 World countries on a blank map with continental grids.',
-      footer: 'EUROPE 47 // WORLD 196',
+      footer: isFr ? 'Démarrer le chrono' : 'Start timer',
       badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
-      dotClass: 'bg-cyan-400',
-      tag: 'CHRONO',
       to: { path: '/quiz', query: { mode: 'chrono' } }
     },
     {
       id: 'detective',
       cat: 'innovation',
-      code: 'MOD-08 // DEDUCTION',
+      tag: '5 INDICES',
       metric: '25 PTS MAX',
-      title: isFr ? 'Enquête Géographique (5 Indices)' : '5-Clue Geographic Detective',
+      title: isFr ? 'Enquête aux 5 Indices' : '5-Clue Detective',
       desc: isFr
-        ? 'Identifiez l\'État mystère en dévoilant le moins d\'indices possible (superficie, devise, anecdote masquée, capitale).'
-        : 'Identify the mystery state while revealing as few progressive clues as possible.',
-      footer: '5 PROGRESSIVE CLUES',
+        ? 'Identifiez le pays mystère en dévoilant le moins d\'indices possible (superficie, monnaie, anecdote, capitale).'
+        : 'Identify the mystery country while revealing as few progressive clues as possible.',
+      footer: isFr ? 'Mener l\'enquête' : 'Start investigation',
       badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-      dotClass: 'bg-emerald-400',
-      tag: '5 CLUES',
       to: { path: '/quiz', query: { mode: 'detective' } }
     },
     {
       id: 'map-click',
       cat: 'innovation',
-      code: 'MOD-09 // SETERRA',
-      metric: 'ZERO TYPING',
-      title: isFr ? 'Cliquez sur la Carte Muette' : 'Blank Map Precision Click',
+      tag: 'SETERRA',
+      metric: 'SANS CLAVIER',
+      title: isFr ? 'Cliquez sur la Carte Muette' : 'Click on the Blank Map',
       desc: isFr
-        ? 'Pointez directement chaque État demandé sur la carte muette sans aucune saisie clavier.'
-        : 'Click directly on each requested sovereign state on the blank map with zero keyboard input.',
-      footer: 'PINPOINT ACCURACY',
+        ? 'Pointez directement chaque pays demandé sur la carte muette sans aucune saisie clavier.'
+        : 'Click directly on each requested country on the blank map with zero typing.',
+      footer: isFr ? 'Tester ma précision' : 'Test accuracy',
       badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-      dotClass: 'bg-teal-400',
-      tag: 'MAP CLICK',
       to: { path: '/quiz', query: { mode: 'map-click' } }
     },
     {
       id: 'culture',
       cat: 'innovation',
-      code: 'MOD-10 // DEMOGRAPHICS',
-      metric: 'POP & LANG',
+      tag: 'CULTURE & DÉMO',
+      metric: '15 QUESTIONS',
       title: isFr ? 'Population, Langues & Monnaies' : 'Population, Languages & Currencies',
       desc: isFr
-        ? 'Comparez les ordres de grandeur démographiques, les langues officielles et les devises nationales.'
-        : 'Compare demographic magnitudes, official languages, and national currencies.',
-      footer: 'CULTURAL TELEMETRY',
+        ? 'Comparez la population des pays et identifiez leurs langues officielles et leurs devises nationales.'
+        : 'Compare country populations and identify their official languages and national currencies.',
+      footer: isFr ? 'Lancer le quiz culture' : 'Start culture quiz',
       badgeClass: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30',
-      dotClass: 'bg-fuchsia-400',
-      tag: 'CULTURE',
       to: { path: '/quiz', query: { mode: 'qcm', type: 'culture' } }
     },
     {
       id: 'custom-builder',
       cat: 'innovation',
-      code: 'MOD-11 // CUSTOM SEED',
-      metric: '5 TO 15',
-      title: isFr ? 'Créateur de Défis sur-mesure' : 'Custom Challenge Builder',
+      tag: 'SUR-MESURE',
+      metric: '5 À 15 PAYS',
+      title: isFr ? 'Créateur de Défis Personnalisés' : 'Custom Challenge Builder',
       desc: isFr
-        ? 'Sélectionnez manuellement de 5 à 15 pays pour générer un lien de défi personnalisé partageable.'
-        : 'Manually pick 5 to 15 countries to generate a shareable custom challenge link.',
-      footer: 'SHAREABLE SEED LINK',
+        ? 'Sélectionnez de 5 à 15 pays dans la liste pour générer un lien de défi sur-mesure à envoyer à vos amis.'
+        : 'Select 5 to 15 countries from the list to generate a custom challenge link for your friends.',
+      footer: isFr ? 'Créer un défi' : 'Build challenge',
       badgeClass: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30',
-      dotClass: 'bg-pink-400',
-      tag: 'BUILDER',
       to: { path: '/quiz', query: { mode: 'custom-builder' } }
     },
     {
       id: 'atlas',
       cat: 'revision',
-      code: 'MOD-12 // ATLAS & DECK',
-      metric: '196 DOSSIERS',
+      tag: 'ATLAS & ÉTUDE',
+      metric: '196 FICHES',
       title: isFr ? 'Atlas Comparateur & Flashcards 3D' : 'Comparator Atlas & 3D Flashcards',
       desc: isFr
         ? 'Comparez deux États côte à côte, explorez la grille des 196 drapeaux et révisez avec les cartes mémoire.'
-        : 'Compare two states side-by-side, inspect the 196-flag matrix, and study with memory cards.',
-      footer: 'OPEN ATLAS & STUDY',
+        : 'Compare two states side-by-side, inspect the 196-flag grid, and study with memory cards.',
+      footer: isFr ? 'Ouvrir l\'Atlas' : 'Open Atlas',
       badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
-      dotClass: 'bg-sky-400',
-      tag: 'ATLAS',
       to: '/explorer'
     }
   ];
 });
-
-const quickProtocols = computed(() => allModules.value);
 
 const visibleModules = computed(() => {
   if (selectedCategory.value === 'all') return allModules.value;
@@ -1357,7 +1272,7 @@ const visibleModules = computed(() => {
 });
 
 // =========================================================
-// USER TELEMETRY & BADGES
+// PROFIL JOUEUR & BADGES
 // =========================================================
 const currentUser = ref(null);
 const userScoresList = ref([]);
@@ -1369,7 +1284,7 @@ const displayUsername = computed(() => {
     currentUser.value.pseudo ||
     currentUser.value.name ||
     (currentUser.value.user && (currentUser.value.user.username || currentUser.value.user.name)) ||
-    (currentUser.value.email ? currentUser.value.email.split('@')[0] : 'Operator')
+    (currentUser.value.email ? currentUser.value.email.split('@')[0] : 'Explorateur')
   );
 });
 
@@ -1467,3 +1382,81 @@ onUnmounted(() => {
   if (animFrameId) cancelAnimationFrame(animFrameId);
 });
 </script>
+
+<style scoped>
+/* Scène plein écran sans aucune bordure ni marge externe */
+.orbital-stage {
+  background: radial-gradient(circle at 50% 48%, rgba(14, 165, 233, 0.12) 0%, rgba(16, 185, 129, 0.04) 38%, transparent 72%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Taille généreuse du Globe au centre de l'écran */
+.globe-canvas {
+  width: min(86vw, 72vh);
+  height: min(86vw, 72vh);
+  max-width: 720px;
+  max-height: 720px;
+}
+
+/* Halos organiques en arrière-plan */
+.ambient-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ambient-orb-primary {
+  width: 38vw;
+  height: 38vw;
+  top: 8%;
+  left: 18%;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.16), transparent 70%);
+}
+
+.ambient-orb-secondary {
+  width: 34vw;
+  height: 34vw;
+  bottom: 6%;
+  right: 16%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.13), transparent 70%);
+}
+
+/* Typographie monumentale en filigrane (Style Awwwards) */
+.watermark-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-weight: 900;
+  font-size: clamp(4.5rem, 15vw, 14rem);
+  letter-spacing: -0.05em;
+  line-height: 0.85;
+  color: rgba(148, 163, 184, 0.045);
+  pointer-events: none;
+  user-select: none;
+  transition: transform 0.2s ease-out;
+}
+
+.watermark-sub {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.9rem, 2.2vw, 2rem);
+  letter-spacing: 0.38em;
+  margin-top: 1rem;
+  opacity: 0.7;
+}
+
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-up-enter-from,
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 6px);
+}
+</style>
