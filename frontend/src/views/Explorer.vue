@@ -2,7 +2,7 @@
   <div class="explorer-experience relative w-full h-[calc(100vh-58px)] overflow-hidden select-none">
 
     <!-- ========================================================= -->
-    <!-- 1. CARTE INTERACTIVE PLEIN ÉCRAN (AVEC MARGE DE DÉZOOM)   -->
+    <!-- 1. CARTE INTERACTIVE PLEIN ÉCRAN (ARRIÈRE-PLAN 100%)      -->
     <!-- ========================================================= -->
     <div class="absolute inset-0 z-0 w-full h-full">
       <l-map
@@ -79,34 +79,34 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- 2. BARRE SUPÉRIEURE FLOTTANTE : CONTINENTS PRÉCIS & VUES  -->
+    <!-- 2. BARRE SUPÉRIEURE FLOTTANTE (ANCRÉE EN HAUT)            -->
     <!-- ========================================================= -->
-    <div class="relative z-20 w-full max-w-[1720px] mx-auto px-4 sm:px-8 pt-4 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-2.5 pointer-events-none">
+    <div class="absolute top-4 left-0 right-0 z-20 max-w-[1760px] mx-auto px-4 sm:px-6 flex flex-wrap items-center justify-between gap-2.5 pointer-events-none">
 
-      <!-- Gauche : Recherche instantanée + Continents avec Zoom Précis + Aléatoire -->
+      <!-- Gauche : Recherche + Pilules Continents + Aléatoire -->
       <div class="flex flex-wrap items-center gap-2 pointer-events-auto">
-        <div class="relative flex-1 sm:flex-initial">
+        <div class="relative">
           <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
           </svg>
           <input
             v-model="searchQuery"
             type="text"
-            :placeholder="locale === 'fr' ? 'Pays, capitale, langue, monnaie...' : 'Country, capital, language, currency...'"
-            class="w-full sm:w-60 pl-9 pr-8 py-2 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400 shadow-xl"
+            :placeholder="locale === 'fr' ? 'Pays, capitale, langue...' : 'Country, capital, language...'"
+            class="w-48 sm:w-56 pl-9 pr-7 py-2 rounded-full bg-white/90 dark:bg-slate-900/88 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400 shadow-xl"
           />
           <button
             v-if="searchQuery"
             type="button"
             @click="searchQuery = ''"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm cursor-pointer"
+            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm cursor-pointer"
           >
             ×
           </button>
         </div>
 
         <!-- Pilules Continents (Zoom et cadrage précis au clic) -->
-        <div class="flex items-center gap-1 p-1 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl overflow-x-auto max-w-full">
+        <div class="flex items-center gap-1 p-1 rounded-full bg-white/90 dark:bg-slate-900/88 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl overflow-x-auto max-w-full">
           <button
             v-for="cont in continentPills"
             :key="cont.id"
@@ -114,7 +114,7 @@
             @click="selectContinentPill(cont.id)"
             class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer"
             :class="selectedContinent === cont.id
-              ? 'bg-sky-500 text-white shadow-sm scale-[1.02]'
+              ? 'bg-sky-500 text-white shadow-sm'
               : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
           >
             {{ cont.label }}
@@ -125,7 +125,7 @@
         <button
           type="button"
           @click="pickRandomCountry"
-          class="px-3.5 py-2 rounded-full bg-white/90 dark:bg-slate-900/85 hover:bg-sky-500 hover:text-white dark:hover:bg-sky-500 text-slate-700 dark:text-slate-200 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 text-xs font-bold shadow-xl transition cursor-pointer flex items-center gap-1.5"
+          class="px-3.5 py-2 rounded-full bg-white/90 dark:bg-slate-900/88 hover:bg-sky-500 hover:text-white dark:hover:bg-sky-500 text-slate-700 dark:text-slate-200 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 text-xs font-bold shadow-xl transition cursor-pointer flex items-center gap-1.5"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" />
@@ -136,9 +136,9 @@
         </button>
       </div>
 
-      <!-- Droite : Style de Carte + Comparateur + Zoom souple -->
-      <div class="flex flex-wrap items-center gap-2 pointer-events-auto self-start xl:self-auto">
-        <div class="flex items-center p-1 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
+      <!-- Droite : Style de Carte + Mode Fiche/Comparateur + Zoom -->
+      <div class="flex flex-wrap items-center gap-2 pointer-events-auto">
+        <div class="flex items-center p-1 rounded-full bg-white/90 dark:bg-slate-900/88 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
           <button
             v-for="style in mapStyles"
             :key="style.id"
@@ -153,7 +153,7 @@
           </button>
         </div>
 
-        <div class="flex items-center p-1 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
+        <div class="flex items-center p-1 rounded-full bg-white/90 dark:bg-slate-900/88 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
           <button
             type="button"
             @click="switchToInspector"
@@ -176,7 +176,7 @@
           </button>
         </div>
 
-        <div class="flex items-center gap-1 p-1 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
+        <div class="flex items-center gap-1 p-1 rounded-full bg-white/90 dark:bg-slate-900/88 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
           <button
             type="button"
             @click="stepZoom(0.5)"
@@ -205,17 +205,18 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- 3. ZONE MÉDIANE : FICHE PAYS 3D OU COMPARATEUR (AVEC "−") -->
+    <!-- 3. PANNEAU FLOTTANT DROIT : FICHE 3D OU COMPARATEUR       -->
     <!-- ========================================================= -->
-    <div class="relative z-20 w-full max-w-[1720px] mx-auto px-4 sm:px-8 my-auto flex justify-end pointer-events-none">
+    <div class="absolute top-20 right-4 sm:right-6 z-20 flex flex-col items-end pointer-events-none max-w-[calc(100vw-2rem)]">
 
       <!-- CAPSULE RÉDUITE QUAND ON CLIQUE SUR LE BOUTON "−" -->
-      <transition name="minimize-pill">
+      <transition name="minimize-pill" mode="out-in">
         <button
           v-if="inspectorCollapsed"
+          key="collapsed-pill"
           type="button"
           @click="inspectorCollapsed = false"
-          class="pointer-events-auto mt-2 px-4 py-2.5 rounded-full bg-white/92 dark:bg-slate-900/90 backdrop-blur-2xl border border-sky-500/40 shadow-2xl flex items-center gap-3 hover:scale-105 transition-all cursor-pointer group"
+          class="pointer-events-auto px-4 py-2.5 rounded-full bg-white/92 dark:bg-slate-900/90 backdrop-blur-2xl border border-sky-500/40 shadow-2xl flex items-center gap-3 hover:scale-105 transition-all cursor-pointer group"
         >
           <template v-if="!compareMode">
             <img :src="`https://flagcdn.com/w40/${selectedCountry.iso}.png`" class="h-4 w-auto rounded-xs shadow-2xs" alt="" />
@@ -234,15 +235,12 @@
             +
           </span>
         </button>
-      </transition>
 
-      <!-- PANNEAU COMPLET (ANIMATION D'AGRANDISSEMENT / RÉDUCTION) -->
-      <transition name="window-minimize" mode="out-in">
         <!-- MODE 1 : INSPECTEUR AVEC CARTE 3D RECTO-VERSO -->
         <aside
-          v-if="!inspectorCollapsed && !compareMode"
+          v-else-if="!compareMode"
           :key="'inspector-' + selectedCountry.iso"
-          class="w-full max-w-md pointer-events-auto"
+          class="w-[380px] sm:w-[410px] pointer-events-auto"
         >
           <div
             class="inspector-flip-scene"
@@ -357,7 +355,7 @@
                       @click="enableCompareMode"
                       class="text-sky-500 hover:underline cursor-pointer"
                     >
-                      {{ locale === 'fr' ? 'Comparer avec un pays →' : 'Compare country →' }}
+                      {{ locale === 'fr' ? 'Comparer ce pays →' : 'Compare country →' }}
                     </button>
                   </div>
                   <div class="flex flex-wrap gap-1.5">
@@ -450,9 +448,9 @@
 
         <!-- MODE 2 : COMPARATEUR BILATÉRAL FLOTTANT (AVEC BOUTON "−") -->
         <aside
-          v-else-if="!inspectorCollapsed && compareMode"
+          v-else
           key="comparator-panel"
-          class="w-full max-w-lg rounded-3xl bg-white/92 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-5 shadow-2xl space-y-3.5 pointer-events-auto"
+          class="w-[400px] sm:w-[440px] rounded-3xl bg-white/92 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-5 shadow-2xl space-y-3.5 pointer-events-auto"
         >
           <div class="flex items-start justify-between gap-3">
             <div>
@@ -585,10 +583,10 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- 4. DOCK DES CALQUES THÉMATIQUES (JUSTE AU-DESSUS DU TIROIR)-->
+    <!-- 4. DOCK DES CALQUES THÉMATIQUES (ANCRÉ EN BAS À GAUCHE)   -->
     <!-- ========================================================= -->
-    <div class="relative z-20 w-full max-w-[1720px] mx-auto px-4 sm:px-8 pb-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
-      <div class="inline-flex flex-col md:flex-row md:items-center gap-3 p-2 rounded-3xl bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-2xl pointer-events-auto">
+    <div class="absolute bottom-[92px] left-4 sm:left-6 z-20 pointer-events-none max-w-[calc(100vw-2rem)]">
+      <div class="inline-flex flex-col md:flex-row md:items-center gap-3 p-2 rounded-3xl bg-white/90 dark:bg-slate-900/88 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-2xl pointer-events-auto">
         <div class="flex flex-wrap items-center gap-1">
           <button
             v-for="layer in thematicLayers"
@@ -622,38 +620,36 @@
     <!-- ========================================================= -->
     <!-- 5. TIROIR COULISSANT (BOTTOM SHEET) DES 196 FICHES 3D     -->
     <!-- ========================================================= -->
-    <!-- Voile d'arrière-plan quand le tiroir est ouvert -->
     <transition name="fade-backdrop">
       <div
         v-if="isDrawerOpen"
-        class="fixed inset-0 z-30 bg-slate-950/55 backdrop-blur-xs"
+        class="absolute inset-0 z-30 bg-slate-950/55 backdrop-blur-xs"
         @click="isDrawerOpen = false"
       ></div>
     </transition>
 
     <section
-      class="cards-drawer fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[2rem] bg-white/95 dark:bg-[#080D18]/95 backdrop-blur-2xl border-t border-slate-200/90 dark:border-white/15 shadow-[0_-20px_60px_rgba(0,0,0,0.45)]"
+      class="cards-drawer absolute left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[2rem] bg-white/95 dark:bg-[#080D18]/96 backdrop-blur-2xl border-t border-slate-200/90 dark:border-white/15 shadow-[0_-20px_60px_rgba(0,0,0,0.45)]"
       :class="isDrawerOpen ? 'is-open' : 'is-closed'"
     >
-      <!-- Poignée de tirage du tiroir (Clic ou Glissement haut/bas) -->
+      <!-- Poignée de tirage du tiroir (Hauteur fixe 78px pour ne jamais couper le texte) -->
       <div
-        class="w-full px-6 pt-3 pb-4 cursor-pointer select-none border-b border-slate-200/70 dark:border-white/10"
+        class="h-[78px] shrink-0 w-full px-6 flex flex-col justify-center cursor-pointer select-none border-b border-slate-200/70 dark:border-white/10"
         @click="isDrawerOpen = !isDrawerOpen"
         @pointerdown="onDrawerPointerDown"
       >
-        <!-- Barre de préhension centrale -->
-        <div class="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-white/25 mx-auto mb-2.5 transition-transform group-hover:scale-x-110"></div>
+        <div class="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-white/25 mx-auto mb-2"></div>
 
-        <div class="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <span class="px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-600 dark:text-sky-300 font-mono text-xs font-extrabold">
+        <div class="max-w-[1480px] w-full mx-auto flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-600 dark:text-sky-300 font-mono text-xs font-extrabold shrink-0">
               {{ filteredCountries.length }} / 196
             </span>
-            <div>
-              <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+            <div class="min-w-0">
+              <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate leading-tight">
                 {{ locale === 'fr' ? 'Tiroir des 196 Fiches Pays 3D' : '196 3D Country Cards Drawer' }}
               </h2>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate hidden sm:block">
                 {{ isDrawerOpen
                   ? (locale === 'fr' ? 'Cliquez sur une carte pour la retourner en 3D ou cliquez ici pour rabattre le tiroir' : 'Click any card to flip in 3D or click here to close the drawer')
                   : (locale === 'fr' ? 'Tirez vers le haut ou cliquez pour déployer les 196 flashcards interactives' : 'Pull up or click to expand all 196 interactive 3D flashcards') }}
@@ -664,7 +660,7 @@
           <button
             type="button"
             @click.stop="isDrawerOpen = !isDrawerOpen"
-            class="px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-black text-xs shadow-md hover:scale-105 transition cursor-pointer flex items-center gap-2"
+            class="px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-black text-xs shadow-md hover:scale-105 transition cursor-pointer flex items-center gap-2 shrink-0"
           >
             <span>{{ isDrawerOpen ? (locale === 'fr' ? 'Rabattre le tiroir' : 'Close drawer') : (locale === 'fr' ? 'Ouvrir les 196 Fiches 3D' : 'Open 196 3D Cards') }}</span>
             <span class="inline-block transition-transform duration-300" :class="isDrawerOpen ? 'rotate-180' : ''">↑</span>
@@ -676,7 +672,6 @@
       <div class="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
         <div class="max-w-[1440px] mx-auto space-y-6 pb-12">
 
-          <!-- Barre d'outils interne au tiroir -->
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-2.5">
               <select
@@ -712,7 +707,6 @@
             </button>
           </div>
 
-          <!-- État vide -->
           <div
             v-if="filteredCountries.length === 0"
             class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#090E1A] p-12 text-center space-y-4"
@@ -1150,7 +1144,6 @@ const showNeighborLinks = ref(true);
 
 const flippedIsos = ref(new Set());
 
-// Zoom initial 2.5 avec marge de dézoom jusqu'à 2.25
 const mapZoom = ref(2.5);
 const mapCenter = ref([25, 12]);
 
@@ -1171,7 +1164,6 @@ const stepZoom = (delta) => {
   else mapZoom.value = next;
 };
 
-// Glissement tactile / souris sur la barre du tiroir
 let drawerStartY = 0;
 const onDrawerPointerDown = (e) => {
   drawerStartY = e.clientY;
@@ -1310,7 +1302,6 @@ const selectCountryAndFly = (country) => {
   inspectorFlipped.value = false;
   inspectorCollapsed.value = false;
   selectedIso.value = country.iso;
-  // Léger décalage longitudinal quand la fiche est ouverte à droite pour centrer le pays dans la zone libre
   const lngOffset = inspectorCollapsed.value ? 0 : 8;
   smoothFlyTo([clampLat(country.lat), country.lng + lngOffset], 4.5);
 };
@@ -1371,7 +1362,6 @@ const resetMapView = () => {
   smoothFlyTo([25, 12], 2.5);
 };
 
-// Zoom et cadrage précis sur chaque continent sélectionné
 const selectContinentPill = (contId) => {
   selectedContinent.value = contId;
   selectedSubregion.value = '';
@@ -1454,14 +1444,14 @@ onUnmounted(() => {
 /* ========================================================= */
 .cards-drawer {
   height: 85vh;
-  max-height: calc(100vh - 72px);
+  max-height: calc(100% - 68px);
   transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 
-/* Quand le tiroir est fermé, seule la barre d'en-tête (72px) dépasse en bas */
+/* Laisse exactement les 78px de la barre d'en-tête visibles en bas */
 .cards-drawer.is-closed {
-  transform: translateY(calc(100% - 72px));
+  transform: translateY(calc(100% - 78px));
 }
 
 .cards-drawer.is-open {
@@ -1480,31 +1470,18 @@ onUnmounted(() => {
 /* ========================================================= */
 /* ANIMATION STYLE APP POUR LE BOUTON DE RÉDUCTION "−"       */
 /* ========================================================= */
-.window-minimize-enter-active,
-.window-minimize-leave-active {
-  transition:
-    opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-  transform-origin: top right;
-}
-
-.window-minimize-enter-from,
-.window-minimize-leave-to {
-  opacity: 0;
-  transform: translate(28px, -24px) scale(0.72);
-}
-
 .minimize-pill-enter-active,
 .minimize-pill-leave-active {
   transition:
     opacity 0.25s cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top right;
 }
 
 .minimize-pill-enter-from,
 .minimize-pill-leave-to {
   opacity: 0;
-  transform: translateY(-10px) scale(0.9);
+  transform: translate(20px, -16px) scale(0.82);
 }
 
 /* ========================================================= */
