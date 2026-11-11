@@ -2,24 +2,28 @@
   <div class="explorer-experience w-full">
 
     <!-- ========================================================= -->
-    <!-- 1. SCÈNE ATLAS PLEIN ÉCRAN (SANS BORDURE NI BANDE NOIRE)  -->
+    <!-- 1. SCÈNE ATLAS CALIBRÉE (LAISSE APPARAÎTRE LES FICHES 3D) -->
     <!-- ========================================================= -->
     <section
       class="atlas-stage relative w-full flex flex-col justify-between overflow-hidden transition-all duration-500"
-      :class="isMapFullscreen ? 'h-[calc(100vh-58px)]' : 'min-h-[calc(100vh-58px)]'"
+      :class="isMapFullscreen ? 'h-[calc(100vh-58px)]' : 'h-[76vh] min-h-[560px] max-h-[760px]'"
     >
-      <!-- CARTE LEAFLET PLEINE LARGEUR (TUILES ESRI ARCGIS SANS CLÉ API) -->
+      <!-- CARTE LEAFLET VERROUILLÉE (MIN-ZOOM 3 & MAX-BOUNDS STRICTES) -->
       <div class="absolute inset-0 z-0 w-full h-full">
         <l-map
           ref="mapRef"
           v-model:zoom="mapZoom"
           v-model:center="mapCenter"
-          :min-zoom="2"
-          :max-zoom="8"
-          :options="{ zoomControl: false, worldCopyJump: true }"
+          :min-zoom="3"
+          :max-zoom="7"
+          :max-bounds="[[-56, -178], [80, 178]]"
+          :options="{
+            zoomControl: false,
+            maxBoundsViscosity: 1.0,
+            worldCopyJump: true
+          }"
           :use-global-leaflet="false"
         >
-          <!-- Fond de carte principal sans restriction d'API Key -->
           <l-tile-layer
             :key="activeTileStyle"
             :url="activeTileUrl"
@@ -80,7 +84,7 @@
       <!-- ======================================================= -->
       <!-- BARRE SUPÉRIEURE FLOTTANTE : RECHERCHE, CONTINENTS, VUE -->
       <!-- ======================================================= -->
-      <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pt-4 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 pointer-events-none">
+      <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pt-4 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-2.5 pointer-events-none">
 
         <!-- Gauche : Recherche instantanée + Continents + Pays Aléatoire -->
         <div class="flex flex-wrap items-center gap-2 pointer-events-auto">
@@ -92,7 +96,7 @@
               v-model="searchQuery"
               type="text"
               :placeholder="locale === 'fr' ? 'Pays, capitale, langue, monnaie...' : 'Country, capital, language, currency...'"
-              class="w-full sm:w-64 pl-9 pr-8 py-2.5 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400 shadow-xl"
+              class="w-full sm:w-60 pl-9 pr-8 py-2 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400 shadow-xl"
             />
             <button
               v-if="searchQuery"
@@ -104,7 +108,7 @@
             </button>
           </div>
 
-          <!-- Pilules Continents avec compteurs -->
+          <!-- Pilules Continents -->
           <div class="flex items-center gap-1 p-1 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl overflow-x-auto max-w-full">
             <button
               v-for="cont in continentPills"
@@ -126,7 +130,7 @@
             @click="pickRandomCountry"
             class="px-3.5 py-2 rounded-full bg-white/90 dark:bg-slate-900/85 hover:bg-sky-500 hover:text-white dark:hover:bg-sky-500 text-slate-700 dark:text-slate-200 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 text-xs font-bold shadow-xl transition cursor-pointer flex items-center gap-1.5"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" />
               <polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" />
               <line x1="4" y1="4" x2="9" y2="9" />
@@ -135,9 +139,8 @@
           </button>
         </div>
 
-        <!-- Droite : Sélecteur de Fond de Carte (Sombre / Satellite / Clair) + Comparateur + Zoom -->
+        <!-- Droite : Style de Carte + Comparateur + Zoom borné (3 à 7) -->
         <div class="flex flex-wrap items-center gap-2 pointer-events-auto self-start xl:self-auto">
-          <!-- Choix du style de carte (Esri sans clé API) -->
           <div class="flex items-center p-1 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
             <button
               v-for="style in mapStyles"
@@ -153,7 +156,6 @@
             </button>
           </div>
 
-          <!-- Bascule Inspecteur 3D vs Comparateur A/B -->
           <div class="flex items-center p-1 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
             <button
               type="button"
@@ -177,11 +179,10 @@
             </button>
           </div>
 
-          <!-- Contrôles de Zoom & Plein écran -->
           <div class="flex items-center gap-1 p-1 rounded-full bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
             <button
               type="button"
-              @click="mapZoom = Math.min(8, mapZoom + 1)"
+              @click="mapZoom = Math.min(7, mapZoom + 1)"
               class="w-7 h-7 rounded-full hover:bg-slate-200/60 dark:hover:bg-white/10 text-slate-700 dark:text-white font-bold text-sm cursor-pointer flex items-center justify-center"
               title="Zoom +"
             >
@@ -189,7 +190,7 @@
             </button>
             <button
               type="button"
-              @click="mapZoom = Math.max(2, mapZoom - 1)"
+              @click="mapZoom = Math.max(3, mapZoom - 1)"
               class="w-7 h-7 rounded-full hover:bg-slate-200/60 dark:hover:bg-white/10 text-slate-700 dark:text-white font-bold text-sm cursor-pointer flex items-center justify-center"
               title="Zoom -"
             >
@@ -218,7 +219,7 @@
       <!-- ======================================================= -->
       <div
         v-if="!inspectorCollapsed"
-        class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 my-auto py-4 flex justify-end pointer-events-none"
+        class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 my-auto py-2 flex justify-end pointer-events-none"
       >
         <transition name="card-morph" mode="out-in">
           <!-- MODE 1 : INSPECTEUR AVEC CARTE 3D RECTO-VERSO -->
@@ -234,13 +235,13 @@
               <div class="inspector-flip-inner" :class="{ 'is-flipped': inspectorFlipped }">
 
                 <!-- RECTO DE LA FICHE INSPECTEUR -->
-                <div class="inspector-flip-face inspector-flip-front rounded-3xl bg-white/90 dark:bg-slate-900/88 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-6 shadow-2xl space-y-4">
+                <div class="inspector-flip-face inspector-flip-front rounded-3xl bg-white/92 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-5 shadow-2xl space-y-3.5">
                   <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center gap-3.5 min-w-0">
                       <img
                         :src="`https://flagcdn.com/w160/${selectedCountry.iso}.png`"
                         :alt="selectedCountry.name"
-                        class="h-12 w-auto rounded-xl shadow-md border border-slate-200 dark:border-white/10 shrink-0"
+                        class="h-11 w-auto rounded-xl shadow-md border border-slate-200 dark:border-white/10 shrink-0"
                       />
                       <div class="min-w-0">
                         <span class="text-xs font-bold text-sky-600 dark:text-sky-400 block truncate">
@@ -262,45 +263,45 @@
                   </div>
 
                   <!-- 4 Indicateurs clés -->
-                  <div class="grid grid-cols-2 gap-2.5">
-                    <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
-                      <span class="text-[11px] text-slate-400 block">{{ t('common.capital') }}</span>
-                      <strong class="text-sm font-bold text-slate-900 dark:text-white truncate block mt-0.5">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="p-2.5 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                      <span class="text-[10px] text-slate-400 block">{{ t('common.capital') }}</span>
+                      <strong class="text-sm font-bold text-slate-900 dark:text-white truncate block">
                         {{ selectedCountry.capital }}
                       </strong>
                     </div>
-                    <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
-                      <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Habitants' : 'Population' }}</span>
-                      <strong class="text-sm font-bold text-sky-600 dark:text-sky-400 truncate block mt-0.5">
+                    <div class="p-2.5 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                      <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'Habitants' : 'Population' }}</span>
+                      <strong class="text-sm font-bold text-sky-600 dark:text-sky-400 truncate block">
                         {{ selectedCountry.population }}
                       </strong>
                     </div>
-                    <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
-                      <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Langue officielle' : 'Official language' }}</span>
-                      <strong class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
+                    <div class="p-2.5 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                      <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'Langue officielle' : 'Official language' }}</span>
+                      <strong class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">
                         {{ selectedCountry.lang }}
                       </strong>
                     </div>
-                    <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
-                      <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Monnaie' : 'Currency' }}</span>
-                      <strong class="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate block mt-0.5">
+                    <div class="p-2.5 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                      <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'Monnaie' : 'Currency' }}</span>
+                      <strong class="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate block">
                         {{ selectedCountry.currency }}
                       </strong>
                     </div>
                   </div>
 
                   <!-- Jauge IDH & Superficie -->
-                  <div class="space-y-2.5 p-3.5 rounded-2xl bg-slate-100/60 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.06]">
+                  <div class="space-y-2 p-3 rounded-2xl bg-slate-100/60 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.06]">
                     <div>
                       <div class="flex items-center justify-between text-xs mb-1">
                         <span class="font-semibold text-slate-500 dark:text-slate-400">
-                          {{ locale === 'fr' ? 'Indice de Développement (IDH)' : 'Human Development (HDI)' }}
+                          {{ locale === 'fr' ? 'Développement Humain (IDH)' : 'Human Development (HDI)' }}
                         </span>
                         <strong class="font-mono text-slate-900 dark:text-white">
                           {{ selectedCountry.idh.toFixed(3) }} <span class="text-emerald-500 text-[11px]">({{ getHdiTierLabel(selectedCountry.idh) }})</span>
                         </strong>
                       </div>
-                      <div class="h-2 w-full rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+                      <div class="h-1.5 w-full rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
                         <div
                           class="h-full rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 transition-all duration-500"
                           :style="{ width: `${Math.round(selectedCountry.idh * 100)}%` }"
@@ -308,7 +309,7 @@
                       </div>
                     </div>
 
-                    <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-white/[0.06] text-xs">
+                    <div class="flex items-center justify-between pt-1.5 border-t border-slate-200/60 dark:border-white/[0.06] text-xs">
                       <div>
                         <span class="text-slate-400 block text-[10px]">{{ locale === 'fr' ? 'Régime politique' : 'Political regime' }}</span>
                         <strong class="text-slate-800 dark:text-slate-200">{{ selectedCountry.regimeLabel }}</strong>
@@ -321,7 +322,7 @@
                   </div>
 
                   <!-- Pays voisins cliquables -->
-                  <div class="space-y-2" @click.stop>
+                  <div class="space-y-1.5" @click.stop>
                     <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
                       <span>{{ locale === 'fr' ? 'Voyager vers un voisin :' : 'Fly to a neighbor:' }}</span>
                       <button
@@ -338,7 +339,7 @@
                         :key="'nb-pill-' + nb.country.iso"
                         type="button"
                         @click="selectCountryAndFly(nb.country)"
-                        class="px-2.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] hover:bg-sky-500 hover:text-white dark:hover:bg-sky-500 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+                        class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] hover:bg-sky-500 hover:text-white dark:hover:bg-sky-500 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
                       >
                         <img :src="`https://flagcdn.com/w40/${nb.country.iso}.png`" class="h-3 w-auto rounded-2xs" alt="" />
                         <span>{{ nb.country.name }}</span>
@@ -348,10 +349,10 @@
                   </div>
                 </div>
 
-                <!-- VERSO DE LA FICHE INSPECTEUR (DÉTAILS GÉOPOLITIQUES & ACTIONS) -->
-                <div class="inspector-flip-face inspector-flip-back rounded-3xl bg-slate-900/95 text-white border border-sky-400/40 p-6 shadow-2xl flex flex-col justify-between space-y-4">
-                  <div class="space-y-4">
-                    <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                <!-- VERSO DE LA FICHE INSPECTEUR -->
+                <div class="inspector-flip-face inspector-flip-back rounded-3xl bg-slate-900/95 text-white border border-sky-400/40 p-5 shadow-2xl flex flex-col justify-between space-y-4">
+                  <div class="space-y-3.5">
+                    <div class="flex items-center justify-between pb-2.5 border-b border-white/10">
                       <div class="flex items-center gap-3">
                         <img :src="`https://flagcdn.com/w80/${selectedCountry.iso}.png`" class="h-8 w-auto rounded shadow" alt="" />
                         <div>
@@ -364,26 +365,26 @@
                       <span class="px-2.5 py-1 rounded-full bg-white/10 text-xs font-bold">↻ Recto</span>
                     </div>
 
-                    <div class="p-4 rounded-2xl bg-sky-500/10 border border-sky-400/25 text-xs leading-relaxed text-slate-200">
+                    <div class="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-400/25 text-xs leading-relaxed text-slate-200">
                       <strong class="text-sky-300 block mb-1 uppercase tracking-wider text-[10px]">
                         {{ locale === 'fr' ? 'Anecdote & Spécificité Géographique' : 'Geographic & Cultural Fact' }}
                       </strong>
                       {{ selectedCountry.fact }}
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2.5 text-xs">
-                      <div class="p-3 rounded-xl bg-white/[0.05]">
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                      <div class="p-2.5 rounded-xl bg-white/[0.05]">
                         <span class="text-slate-400 block text-[10px]">{{ locale === 'fr' ? 'PIB Nominal estimé' : 'Est. Nominal GDP' }}</span>
                         <strong class="font-mono text-sm text-amber-300">~${{ selectedCountry.pib.toLocaleString() }} Md</strong>
                       </div>
-                      <div class="p-3 rounded-xl bg-white/[0.05]">
+                      <div class="p-2.5 rounded-xl bg-white/[0.05]">
                         <span class="text-slate-400 block text-[10px]">{{ locale === 'fr' ? 'Continent ONU' : 'UN Continent' }}</span>
                         <strong class="text-sm text-white">{{ selectedCountry.continent }}</strong>
                       </div>
                     </div>
                   </div>
 
-                  <div class="grid grid-cols-2 gap-2.5 pt-2" @click.stop>
+                  <div class="grid grid-cols-2 gap-2 pt-1" @click.stop>
                     <router-link
                       :to="{ path: '/quiz', query: { mode: 'flashcards' } }"
                       class="px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs text-center transition"
@@ -408,7 +409,7 @@
           <aside
             v-else
             key="comparator-panel"
-            class="w-full max-w-lg rounded-3xl bg-white/92 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-6 shadow-2xl space-y-4 pointer-events-auto"
+            class="w-full max-w-lg rounded-3xl bg-white/92 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-5 shadow-2xl space-y-3.5 pointer-events-auto"
           >
             <div class="flex items-center justify-between">
               <div>
@@ -429,9 +430,8 @@
               </div>
             </div>
 
-            <!-- Sélecteurs des deux pays -->
             <div class="grid grid-cols-2 gap-3">
-              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-sky-500/30 space-y-2">
+              <div class="p-2.5 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-sky-500/30 space-y-1.5">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <img :src="`https://flagcdn.com/w80/${selectedCountry.iso}.png`" class="h-4 w-auto rounded-xs" alt="" />
@@ -456,7 +456,7 @@
                 </select>
               </div>
 
-              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-emerald-500/30 space-y-2">
+              <div class="p-2.5 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-emerald-500/30 space-y-1.5">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <img :src="`https://flagcdn.com/w80/${compareCountryB.iso}.png`" class="h-4 w-auto rounded-xs" alt="" />
@@ -482,15 +482,14 @@
               </div>
             </div>
 
-            <!-- Barres comparatives proportionnelles -->
-            <div class="space-y-3 text-xs">
+            <div class="space-y-2.5 text-xs">
               <div class="space-y-1">
                 <div class="flex justify-between font-bold">
                   <span class="text-sky-500">{{ selectedCountry.idh.toFixed(3) }}</span>
                   <span class="text-slate-400">{{ locale === 'fr' ? 'Indice IDH' : 'HDI Index' }}</span>
                   <span class="text-emerald-500">{{ compareCountryB.idh.toFixed(3) }}</span>
                 </div>
-                <div class="grid grid-cols-2 gap-1.5 h-2">
+                <div class="grid grid-cols-2 gap-1.5 h-1.5">
                   <div class="bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden flex justify-end">
                     <div class="bg-sky-500 h-full rounded-full transition-all duration-500" :style="{ width: `${Math.round(selectedCountry.idh * 100)}%` }"></div>
                   </div>
@@ -506,7 +505,7 @@
                   <span class="text-slate-400">{{ locale === 'fr' ? 'PIB Nominal' : 'Nominal GDP' }}</span>
                   <span class="text-emerald-500">~${{ compareCountryB.pib.toLocaleString() }} Md</span>
                 </div>
-                <div class="grid grid-cols-2 gap-1.5 h-2">
+                <div class="grid grid-cols-2 gap-1.5 h-1.5">
                   <div class="bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden flex justify-end">
                     <div class="bg-sky-500 h-full rounded-full transition-all duration-500" :style="{ width: `${comparisonMetrics.gdpPctA}%` }"></div>
                   </div>
@@ -516,7 +515,7 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-3 items-center py-2 border-y border-slate-200/70 dark:border-white/10 text-center">
+              <div class="grid grid-cols-3 items-center py-1.5 border-y border-slate-200/70 dark:border-white/10 text-center">
                 <strong class="text-slate-900 dark:text-white">{{ selectedCountry.population }}</strong>
                 <span class="text-[11px] text-slate-400">{{ locale === 'fr' ? 'Population' : 'Population' }}</span>
                 <strong class="text-slate-900 dark:text-white">{{ compareCountryB.population }}</strong>
@@ -527,12 +526,6 @@
                 <span class="text-[11px] text-slate-400">{{ locale === 'fr' ? 'Superficie' : 'Area' }}</span>
                 <strong class="text-slate-900 dark:text-white truncate">{{ compareCountryB.area }}</strong>
               </div>
-
-              <div class="grid grid-cols-3 items-center pt-2 border-t border-slate-200/70 dark:border-white/10 text-center">
-                <strong class="text-slate-700 dark:text-slate-300 truncate">{{ selectedCountry.currency }}</strong>
-                <span class="text-[11px] text-slate-400">{{ locale === 'fr' ? 'Monnaie' : 'Currency' }}</span>
-                <strong class="text-slate-700 dark:text-slate-300 truncate">{{ compareCountryB.currency }}</strong>
-              </div>
             </div>
           </aside>
         </transition>
@@ -541,7 +534,7 @@
       <!-- ======================================================= -->
       <!-- DOCK INFÉRIEUR : CALQUES THÉMATIQUES & LÉGENDE          -->
       <!-- ======================================================= -->
-      <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pb-5 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+      <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pb-4 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
         <div class="inline-flex flex-col md:flex-row md:items-center gap-3 p-2 rounded-3xl bg-white/90 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-2xl pointer-events-auto">
           <div class="flex flex-wrap items-center gap-1">
             <button
@@ -549,7 +542,7 @@
               :key="layer.id"
               type="button"
               @click="activeColorLayer = layer.id"
-              class="px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer"
+              class="px-3.5 py-1.5 rounded-2xl text-xs font-bold transition-all cursor-pointer"
               :class="activeColorLayer === layer.id
                 ? 'bg-sky-500 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'"
@@ -558,7 +551,7 @@
             </button>
           </div>
 
-          <div class="hidden md:block w-px h-6 bg-slate-200 dark:bg-white/10"></div>
+          <div class="hidden md:block w-px h-5 bg-slate-200 dark:bg-white/10"></div>
 
           <div class="flex flex-wrap items-center gap-3 px-2 text-xs font-semibold">
             <div
@@ -572,13 +565,12 @@
           </div>
         </div>
 
-        <!-- Bouton d'ancrage rapide vers les 196 Fiches 3D -->
         <button
           type="button"
           @click="scrollToCatalog"
-          class="px-5 py-3 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-black text-xs shadow-2xl hover:scale-105 transition cursor-pointer pointer-events-auto flex items-center gap-2"
+          class="px-5 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-black text-xs shadow-2xl hover:scale-105 transition cursor-pointer pointer-events-auto flex items-center gap-2"
         >
-          <span>{{ locale === 'fr' ? `Voir les ${filteredCountries.length} Fiches 3D` : `Browse ${filteredCountries.length} 3D Cards` }}</span>
+          <span>{{ locale === 'fr' ? `Parcourir les ${filteredCountries.length} Fiches 3D` : `Browse ${filteredCountries.length} 3D Cards` }}</span>
           <span>↓</span>
         </button>
       </div>
@@ -588,7 +580,7 @@
     <!-- ========================================================= -->
     <!-- 2. GALERIE DES 196 FICHES PAYS 3D RECTO-VERSO             -->
     <!-- ========================================================= -->
-    <section ref="catalogSectionRef" class="max-w-[1440px] mx-auto px-4 sm:px-8 pt-14 pb-20 space-y-8">
+    <section ref="catalogSectionRef" class="max-w-[1440px] mx-auto px-4 sm:px-8 pt-10 pb-20 space-y-8">
 
       <!-- Barre de filtres avancés (Sous-région, Tri, Retourner toutes les cartes) -->
       <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-5 border-b border-slate-200 dark:border-white/10 pb-6">
@@ -602,7 +594,6 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
-          <!-- Filtre par Sous-région -->
           <select
             v-model="selectedSubregion"
             class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 text-slate-800 dark:text-white text-xs font-bold focus:outline-none focus:border-sky-500 cursor-pointer shadow-xs"
@@ -613,7 +604,6 @@
             </option>
           </select>
 
-          <!-- Tri multi-critères -->
           <select
             v-model="sortBy"
             class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 text-slate-800 dark:text-white text-xs font-bold focus:outline-none focus:border-sky-500 cursor-pointer shadow-xs"
@@ -627,7 +617,6 @@
             <option value="pib-desc">{{ locale === 'fr' ? 'PIB Nominal (+ vers -)' : 'Nominal GDP (Highest)' }}</option>
           </select>
 
-          <!-- Bouton pour retourner ou réinitialiser toutes les cartes 3D -->
           <button
             type="button"
             @click="toggleAllCardsFlip"
@@ -802,7 +791,7 @@ const { t, locale } = useI18n();
 // FONDS DE CARTE ESRI ARCGIS (100% GRATUITS SANS CLÉ API)
 // =========================================================
 const isDarkTheme = ref(document.documentElement.classList.contains('dark'));
-const manualTileStyle = ref('auto'); // 'auto' | 'dark' | 'satellite' | 'light'
+const manualTileStyle = ref('auto');
 let themeObserver = null;
 
 const mapStyles = computed(() => {
@@ -1056,7 +1045,7 @@ const getHdiTierLabel = (idh) => {
 };
 
 // =========================================================
-// FILTRES, TRI, CARTES 3D & INTERACTIONS CARTE
+// FILTRES, TRI, CARTES 3D & INTERACTIONS CARTE BORNÉES
 // =========================================================
 const searchQuery = ref('');
 const selectedContinent = ref('');
@@ -1075,8 +1064,9 @@ const showNeighborLinks = ref(true);
 const flippedIsos = ref(new Set());
 const catalogSectionRef = ref(null);
 
+// Zoom initial 3 (jamais inférieur à 3 pour éviter tout bord vide)
 const mapZoom = ref(3);
-const mapCenter = ref([34, 15]);
+const mapCenter = ref([28, 14]);
 
 const continentPills = computed(() => {
   const isFr = locale.value === 'fr';
@@ -1189,11 +1179,13 @@ const getNodeRadius = (country) => {
   return 6;
 };
 
+const clampLat = (lat) => Math.max(-45, Math.min(68, Number(lat || 0)));
+
 const selectCountryAndFly = (country) => {
   inspectorFlipped.value = false;
   inspectorCollapsed.value = false;
   selectedIso.value = country.iso;
-  mapCenter.value = [country.lat, country.lng + 10];
+  mapCenter.value = [clampLat(country.lat), country.lng + 10];
   mapZoom.value = 4;
 };
 
@@ -1236,8 +1228,8 @@ const enableCompareMode = () => {
     const alt = localizedCountries.value.find((c) => c.iso !== selectedIso.value);
     if (alt) compareIsoB.value = alt.iso;
   }
-  mapZoom.value = 2;
-  mapCenter.value = [24, 15];
+  mapZoom.value = 3;
+  mapCenter.value = [26, 15];
 };
 
 const onSelectCompareA = (iso) => {
@@ -1249,7 +1241,7 @@ const onSelectCompareB = (iso) => {
 };
 
 const resetMapView = () => {
-  mapCenter.value = [28, 12];
+  mapCenter.value = [28, 14];
   mapZoom.value = 3;
 };
 
@@ -1258,11 +1250,11 @@ const selectContinentPill = (contId) => {
   selectedSubregion.value = '';
   const centers = {
     Europe: { center: [50, 20], zoom: 4 },
-    Asia: { center: [30, 100], zoom: 3 },
-    Africa: { center: [2, 24], zoom: 3 },
-    'North America': { center: [38, -90], zoom: 3 },
-    'South America': { center: [-15, -55], zoom: 3 },
-    Oceania: { center: [-22, 150], zoom: 3 }
+    Asia: { center: [28, 98], zoom: 3 },
+    Africa: { center: [4, 22], zoom: 3 },
+    'North America': { center: [36, -90], zoom: 3 },
+    'South America': { center: [-16, -56], zoom: 3 },
+    Oceania: { center: [-22, 148], zoom: 3 }
   };
   const cfg = centers[contId];
   if (cfg) {
@@ -1332,14 +1324,14 @@ onUnmounted(() => {
 <style scoped>
 .atlas-stage {
   border-bottom: 1px solid var(--border-color);
-  background-color: #060a12;
+  background-color: #1b222c;
 }
 
 .leaflet-container {
   width: 100%;
   height: 100%;
   z-index: 1;
-  background-color: #0b111e !important;
+  background-color: #1b222c !important;
 }
 
 /* ========================================================= */
@@ -1396,7 +1388,6 @@ onUnmounted(() => {
   transform: rotateY(180deg);
 }
 
-/* Transition fluide entre deux pays sur l'inspecteur */
 .card-morph-enter-active,
 .card-morph-leave-active {
   transition: opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1), transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);

@@ -2,7 +2,7 @@
   <div class="home-experience">
 
     <!-- ========================================================= -->
-    <!-- 1. SCÈNE IMMERSIVE PLEIN ÉCRAN (100VW x 100VH SANS BORDS) -->
+    <!-- 1. SCÈNE IMMERSIVE PLEIN ÉCRAN (GLOBE 3D SPHÉRIQUE FIXE)  -->
     <!-- ========================================================= -->
     <section
       class="orbital-stage relative w-full min-h-[calc(100vh-58px)] flex flex-col justify-between overflow-hidden select-none"
@@ -19,18 +19,18 @@
           :style="{ transform: `translate3d(${parallaxX * 24}px, ${parallaxY * 24}px, 0)` }"
         ></div>
 
-        <!-- Typographie monumentale en filigrane derrière le Globe (Style Awwwards) -->
+        <!-- Typographie monumentale en filigrane derrière le Globe -->
         <div
           class="watermark-display"
-          :style="{ transform: `translate3d(calc(-50% + ${parallaxX * -18}px), calc(-50% + ${parallaxY * -12}px), 0)` }"
+          :style="{ transform: `translate3d(calc(-50% + ${parallaxX * -16}px), calc(-50% + ${parallaxY * -10}px), 0)` }"
         >
           <span>GEOLEARN</span>
           <span class="watermark-sub">WORLD ATLAS • 196</span>
         </div>
       </div>
 
-      <!-- GLOBE 3D GÉANT AU CENTRE DE L'ÉCRAN -->
-      <div class=" globe-centerpiece absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+      <!-- GLOBE 3D AU CENTRE DE L'ÉCRAN (TAILLE FIXE, ZÉRO COUPURE CARRÉE) -->
+      <div class="globe-centerpiece absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
         <div class="relative flex items-center justify-center pointer-events-auto">
           <canvas
             ref="globeCanvasRef"
@@ -39,14 +39,13 @@
             @pointermove="onGlobePointerMove"
             @pointerup="onGlobePointerUp"
             @pointerleave="onGlobePointerLeave"
-            @wheel.prevent="onGlobeWheel"
           ></canvas>
 
           <!-- Infobulle flottante au survol d'un pays sur le Globe -->
           <transition name="fade-up">
             <div
               v-if="hoveredCountry"
-              class="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-900/90 dark:bg-white/95 text-white dark:text-slate-950 font-sans text-xs font-bold flex items-center gap-2.5 shadow-2xl backdrop-blur-md"
+              class="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-900/92 dark:bg-white/95 text-white dark:text-slate-950 font-sans text-xs font-bold flex items-center gap-2.5 shadow-2xl backdrop-blur-md"
             >
               <img :src="`https://flagcdn.com/w40/${hoveredCountry.iso}.png`" class="h-4 w-auto rounded-xs" alt="" />
               <span>{{ hoveredCountry.name }}</span>
@@ -69,7 +68,7 @@
               v-model="globeSearchQuery"
               type="text"
               :placeholder="locale === 'fr' ? 'Chercher un pays sur le globe...' : 'Search a country on the globe...'"
-              class="w-56 sm:w-64 pl-9 pr-8 py-2 rounded-full bg-white/80 dark:bg-slate-900/75 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400 shadow-lg"
+              class="w-56 sm:w-64 pl-9 pr-8 py-2 rounded-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400 shadow-lg"
             />
             <button
               v-if="globeSearchQuery"
@@ -102,7 +101,7 @@
           </div>
 
           <!-- Pilules Continents -->
-          <div class="hidden xl:flex items-center gap-1 p-1 rounded-full bg-white/75 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-lg">
+          <div class="hidden xl:flex items-center gap-1 p-1 rounded-full bg-white/80 dark:bg-slate-900/75 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-lg">
             <button
               v-for="sec in continentSectors"
               :key="sec.id"
@@ -118,8 +117,8 @@
           </div>
         </div>
 
-        <!-- Contrôles visuels du Globe (Calques & Zoom) -->
-        <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-white/75 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-lg pointer-events-auto">
+        <!-- Contrôles visuels du Globe (Sans zoom déformant) -->
+        <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-white/80 dark:bg-slate-900/75 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-lg pointer-events-auto">
           <button
             type="button"
             @click="showBorders = !showBorders"
@@ -157,27 +156,27 @@
       <!-- ZONE MÉDIANE : ACCROCHE ÉDITORIALE FLOTTANTE (GAUCHE) & CARTE PAYS 3D (DROITE) -->
       <div class="relative z-20 w-full max-w-[1600px] mx-auto px-4 sm:px-8 my-auto py-6 grid grid-cols-1 lg:grid-cols-12 items-center gap-8 pointer-events-none">
         
-        <!-- Colonne Gauche Flottante : Titre & Accès Direct -->
+        <!-- Colonne Gauche Flottante : Titre corrigé (sans lettres coupées en bas) & Accès Direct -->
         <div
           class="lg:col-span-4 space-y-5 pointer-events-auto"
-          :style="{ transform: `translate3d(${parallaxX * 8}px, ${parallaxY * 8}px, 0)` }"
+          :style="{ transform: `translate3d(${parallaxX * 6}px, ${parallaxY * 6}px, 0)` }"
         >
           <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-600 dark:text-sky-300 text-xs font-bold backdrop-blur-md">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
             <span>{{ locale === 'fr' ? 'Explorez la planète en temps réel' : 'Explore the planet in real time' }}</span>
           </div>
 
-          <h1 class="text-4xl sm:text-5xl xl:text-[3.4rem] font-black tracking-tight text-slate-900 dark:text-white leading-[1.05]">
-            {{ locale === 'fr' ? 'Le monde entier' : 'The entire world' }}
-            <span class="block bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">
+          <h1 class="text-4xl sm:text-5xl xl:text-[3.35rem] font-black tracking-tight text-slate-900 dark:text-white leading-[1.15]">
+            <span class="block">{{ locale === 'fr' ? 'Le monde entier' : 'The entire world' }}</span>
+            <span class="block pb-2 pt-0.5 bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">
               {{ locale === 'fr' ? 'au bout des doigts.' : 'at your fingertips.' }}
             </span>
           </h1>
 
           <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300/90 max-w-md leading-relaxed">
             {{ locale === 'fr'
-              ? 'Faites tourner le globe, cliquez sur n\'importe lequel des 196 États pour inspecter ses frontières et lancez vos défis géographiques.'
-              : 'Spin the globe, click any of the 196 sovereign states to inspect its borders, and launch your geography challenges.' }}
+              ? 'Faites tourner le globe à la souris, cliquez sur n\'importe lequel des 196 États pour inspecter ses frontières et lancez vos défis géographiques.'
+              : 'Spin the globe by hand, click any of the 196 sovereign states to inspect its borders, and launch your geography challenges.' }}
           </p>
 
           <div class="flex flex-wrap items-center gap-3 pt-1">
@@ -191,7 +190,7 @@
 
             <router-link
               to="/geoguessr"
-              class="px-5 py-3.5 rounded-full bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/80 dark:border-white/15 font-bold text-sm backdrop-blur-xl shadow-lg hover:-translate-y-0.5 transition-all"
+              class="px-5 py-3.5 rounded-full bg-white/85 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200/80 dark:border-white/15 font-bold text-sm backdrop-blur-xl shadow-lg hover:-translate-y-0.5 transition-all"
             >
               PinDrop 25K
             </router-link>
@@ -205,86 +204,91 @@
           </div>
         </div>
 
-        <!-- Espace central laissé libre pour voir et manipuler le Globe 3D -->
+        <!-- Espace central laissé libre pour manipuler le Globe 3D -->
         <div class="hidden lg:block lg:col-span-4"></div>
 
         <!-- Colonne Droite Flottante : Carte d'Exploration du Pays Ciblé -->
         <div
           class="lg:col-span-4 flex justify-end pointer-events-auto"
-          :style="{ transform: `translate3d(${parallaxX * -10}px, ${parallaxY * -10}px, 0)` }"
+          :style="{ transform: `translate3d(${parallaxX * -8}px, ${parallaxY * -8}px, 0)` }"
         >
-          <div class="w-full max-w-sm rounded-3xl bg-white/80 dark:bg-slate-900/75 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-5 sm:p-6 shadow-2xl space-y-4">
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-center gap-3.5 min-w-0">
-                <img
-                  :src="`https://flagcdn.com/w160/${heroCountry.iso}.png`"
-                  :alt="heroCountry.name"
-                  class="h-11 w-auto rounded-lg shadow-md border border-slate-200 dark:border-white/10 shrink-0"
-                />
-                <div class="min-w-0">
-                  <span class="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 block truncate">
-                    {{ heroCountry.subregion }}
-                  </span>
-                  <h2 class="text-2xl font-black text-slate-900 dark:text-white truncate leading-tight">
-                    {{ heroCountry.name }}
-                  </h2>
+          <transition name="card-fade" mode="out-in">
+            <div
+              :key="heroCountry.iso"
+              class="w-full max-w-sm rounded-3xl bg-white/85 dark:bg-slate-900/78 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-5 sm:p-6 shadow-2xl space-y-4"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3.5 min-w-0">
+                  <img
+                    :src="`https://flagcdn.com/w160/${heroCountry.iso}.png`"
+                    :alt="heroCountry.name"
+                    class="h-11 w-auto rounded-lg shadow-md border border-slate-200 dark:border-white/10 shrink-0"
+                  />
+                  <div class="min-w-0">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 block truncate">
+                      {{ heroCountry.subregion }}
+                    </span>
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-white truncate leading-tight">
+                      {{ heroCountry.name }}
+                    </h2>
+                  </div>
+                </div>
+                <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 uppercase shrink-0">
+                  {{ heroCountry.iso }}
+                </span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                  <span class="text-[11px] text-slate-400 block">{{ t('common.capital') }}</span>
+                  <strong class="text-sm font-bold text-slate-900 dark:text-white truncate block mt-0.5">{{ heroCountry.capital }}</strong>
+                </div>
+                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                  <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Habitants' : 'Population' }}</span>
+                  <strong class="text-sm font-bold text-sky-600 dark:text-sky-400 truncate block mt-0.5">{{ heroCountry.population }}</strong>
+                </div>
+                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                  <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Langue' : 'Language' }}</span>
+                  <strong class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">{{ heroCountry.lang }}</strong>
+                </div>
+                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                  <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Monnaie' : 'Currency' }}</span>
+                  <strong class="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate block mt-0.5">{{ heroCountry.currency }}</strong>
                 </div>
               </div>
-              <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 uppercase shrink-0">
-                {{ heroCountry.iso }}
-              </span>
-            </div>
 
-            <div class="grid grid-cols-2 gap-2.5">
-              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
-                <span class="text-[11px] text-slate-400 block">{{ t('common.capital') }}</span>
-                <strong class="text-sm font-bold text-slate-900 dark:text-white truncate block mt-0.5">{{ heroCountry.capital }}</strong>
-              </div>
-              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
-                <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Habitants' : 'Population' }}</span>
-                <strong class="text-sm font-bold text-sky-600 dark:text-sky-400 truncate block mt-0.5">{{ heroCountry.population }}</strong>
-              </div>
-              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
-                <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Langue' : 'Language' }}</span>
-                <strong class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">{{ heroCountry.lang }}</strong>
-              </div>
-              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
-                <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Monnaie' : 'Currency' }}</span>
-                <strong class="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate block mt-0.5">{{ heroCountry.currency }}</strong>
-              </div>
-            </div>
+              <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-sky-500/[0.07] border border-sky-500/20 rounded-2xl p-3.5">
+                {{ heroCountry.fact }}
+              </p>
 
-            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-sky-500/[0.07] border border-sky-500/20 rounded-2xl p-3.5">
-              {{ heroCountry.fact }}
-            </p>
-
-            <!-- Pays voisins cliquables en pilules fluides -->
-            <div class="space-y-2 pt-1">
-              <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
-                <span>{{ locale === 'fr' ? 'Voyager vers un pays voisin :' : 'Fly to a neighboring country:' }}</span>
-                <span class="font-mono text-[10px]">{{ formatCoord(heroCountry.lat, 'N', 'S') }}</span>
-              </div>
-              <div class="flex flex-wrap gap-1.5">
-                <button
-                  v-for="nb in nearestNeighbors"
-                  :key="nb.country.iso"
-                  type="button"
-                  @click="lockOnCountry(nb.country)"
-                  class="px-2.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] hover:bg-sky-500 hover:text-white dark:hover:bg-sky-500 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
-                >
-                  <img :src="`https://flagcdn.com/w40/${nb.country.iso}.png`" class="h-3 w-auto rounded-2xs" alt="" />
-                  <span>{{ nb.country.name }}</span>
-                </button>
+              <!-- Pays voisins cliquables en pilules fluides -->
+              <div class="space-y-2 pt-1">
+                <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+                  <span>{{ locale === 'fr' ? 'Voyager vers un pays voisin :' : 'Fly to a neighboring country:' }}</span>
+                  <span class="font-mono text-[10px]">{{ formatCoord(heroCountry.lat, 'N', 'S') }}</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="nb in nearestNeighbors"
+                    :key="nb.country.iso"
+                    type="button"
+                    @click="lockOnCountry(nb.country)"
+                    class="px-2.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] hover:bg-sky-500 hover:text-white dark:hover:bg-sky-500 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <img :src="`https://flagcdn.com/w40/${nb.country.iso}.png`" class="h-3 w-auto rounded-2xs" alt="" />
+                    <span>{{ nb.country.name }}</span>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </transition>
         </div>
 
       </div>
 
       <!-- DOCK FLOTTANT INFÉRIEUR : ACCÈS IMMÉDIAT AUX EXPÉRIENCES PHARES -->
       <div class="relative z-20 w-full max-w-[1400px] mx-auto px-4 sm:px-8 pb-6 pointer-events-auto">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-2.5 rounded-3xl bg-white/75 dark:bg-slate-900/75 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-2.5 rounded-3xl bg-white/80 dark:bg-slate-900/75 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl">
           <router-link
             v-for="feat in featuredDockModes"
             :key="feat.id"
@@ -541,7 +545,7 @@ const searchResults = computed(() => {
 const continentSectors = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'all', label: isFr ? 'Monde (196)' : 'World (196)', lat: 20, lng: 10 },
+    { id: 'all', label: isFr ? 'Monde (196)' : 'World (196)', lat: 22, lng: 10 },
     { id: 'Europe', label: 'Europe', lat: 48, lng: 12 },
     { id: 'Asia', label: isFr ? 'Asie' : 'Asia', lat: 28, lng: 92 },
     { id: 'Africa', label: isFr ? 'Afrique' : 'Africa', lat: 4, lng: 18 },
@@ -574,21 +578,24 @@ const nearestNeighbors = computed(() => {
 });
 
 // =========================================================
-// MOTEUR 3D DU GLOBE AVEC FRONTIÈRES VECTORIELLES
+// MOTEUR 3D DU GLOBE AVEC INERTIE PHYSIQUE & CONTROLES EXACTS
 // =========================================================
 const globeCanvasRef = ref(null);
 const showBorders = ref(true);
 const showArcs = ref(true);
 const autoRotate = ref(true);
-const globeZoom = ref(1.0);
 
 let worldRings = [];
 let animFrameId = null;
 
+// Angles de la caméra et vitesses d'inertie
 let rotLon = -8;
 let rotLat = -34;
 let targetLon = -8;
 let targetLat = -34;
+let velocityLon = 0;
+let velocityLat = 0;
+
 let isCameraLocked = false;
 let isDragging = false;
 let lastPointerX = 0;
@@ -668,6 +675,8 @@ const lockOnCountry = (country) => {
   if (!country) return;
   const idx = localizedCountries.value.findIndex((c) => c.iso === country.iso);
   if (idx !== -1) heroIndex.value = idx;
+  velocityLon = 0;
+  velocityLat = 0;
   targetLon = -Number(country.lng || 0);
   targetLat = -Math.max(-65, Math.min(65, Number(country.lat || 0)));
   isCameraLocked = true;
@@ -675,6 +684,8 @@ const lockOnCountry = (country) => {
 
 const selectContinentSector = (sector) => {
   activeContinent.value = sector.id;
+  velocityLon = 0;
+  velocityLat = 0;
   targetLon = -sector.lng;
   targetLat = -sector.lat;
   isCameraLocked = true;
@@ -687,14 +698,11 @@ const selectRandomGlobeCountry = () => {
   lockOnCountry(randomCountry);
 };
 
-const onGlobeWheel = (e) => {
-  const delta = e.deltaY < 0 ? 0.1 : -0.1;
-  globeZoom.value = Math.max(0.85, Math.min(2.4, Number((globeZoom.value + delta).toFixed(2))));
-};
-
 const onGlobePointerDown = (e) => {
   isDragging = true;
   isCameraLocked = false;
+  velocityLon = 0;
+  velocityLat = 0;
   dragDistance = 0;
   lastPointerX = e.clientX;
   lastPointerY = e.clientY;
@@ -708,8 +716,18 @@ const onGlobePointerMove = (e) => {
     const dx = e.clientX - lastPointerX;
     const dy = e.clientY - lastPointerY;
     dragDistance += Math.hypot(dx, dy);
-    rotLon += dx * (0.4 / globeZoom.value);
-    rotLat = Math.max(-70, Math.min(70, rotLat + dy * (0.35 / globeZoom.value)));
+
+    // Gauche / Droite naturel (+) et Haut / Bas corrigé (-)
+    const deltaLon = dx * 0.38;
+    const deltaLat = -dy * 0.36;
+
+    rotLon += deltaLon;
+    rotLat = Math.max(-68, Math.min(68, rotLat + deltaLat));
+
+    // Mémorise la vitesse du geste pour l'inertie au relâchement
+    velocityLon = deltaLon * 0.85;
+    velocityLat = deltaLat * 0.85;
+
     targetLon = rotLon;
     targetLat = rotLat;
     lastPointerX = e.clientX;
@@ -809,42 +827,63 @@ const renderGlobe = () => {
 
   const cx = W / 2;
   const cy = H / 2;
-  const R = Math.min(W, H) * 0.43 * globeZoom.value;
+  // Rayon sphérique fixe calibré pour que le globe entier et son atmosphère ne soient jamais coupés
+  const R = Math.min(W, H) * 0.42;
 
   if (isCameraLocked && !isDragging) {
     const dLon = ((targetLon - rotLon + 540) % 360) - 180;
     const dLat = targetLat - rotLat;
-    rotLon += dLon * 0.08;
-    rotLat += dLat * 0.08;
-    if (Math.abs(dLon) < 0.15 && Math.abs(dLat) < 0.15) isCameraLocked = false;
-  } else if (autoRotate.value && !isDragging) {
-    rotLon -= 0.12;
+    rotLon += dLon * 0.085;
+    rotLat += dLat * 0.085;
+    if (Math.abs(dLon) < 0.12 && Math.abs(dLat) < 0.12) isCameraLocked = false;
+  } else if (!isDragging) {
+    // Application de l'inertie physique du lancer à la main
+    if (Math.abs(velocityLon) > 0.01 || Math.abs(velocityLat) > 0.01) {
+      rotLon += velocityLon;
+      rotLat = Math.max(-68, Math.min(68, rotLat + velocityLat));
+      velocityLon *= 0.93;
+      velocityLat *= 0.93;
+    } else if (autoRotate.value) {
+      rotLon -= 0.11;
+    }
     targetLon = rotLon;
+    targetLat = rotLat;
   }
 
   pulsePhase = (pulsePhase + 0.015) % 1;
 
-  // 1. Halo atmosphérique doux autour du Globe
-  const outerHalo = ctx.createRadialGradient(cx, cy, R * 0.85, cx, cy, R * 1.16);
+  // 1. Anneau orbital subtil autour de la planète
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-0.28);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, R * 1.15, R * 0.28, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = isDark ? 'rgba(56, 189, 248, 0.12)' : 'rgba(2, 132, 199, 0.14)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+
+  // 2. Halo atmosphérique doux autour du Globe
+  const outerHalo = ctx.createRadialGradient(cx, cy, R * 0.85, cx, cy, R * 1.15);
   if (isDark) {
     outerHalo.addColorStop(0, 'rgba(14, 165, 233, 0)');
-    outerHalo.addColorStop(0.6, 'rgba(56, 189, 248, 0.16)');
+    outerHalo.addColorStop(0.65, 'rgba(56, 189, 248, 0.18)');
     outerHalo.addColorStop(1, 'rgba(16, 185, 129, 0)');
   } else {
     outerHalo.addColorStop(0, 'rgba(2, 132, 199, 0)');
-    outerHalo.addColorStop(0.6, 'rgba(14, 165, 233, 0.14)');
+    outerHalo.addColorStop(0.65, 'rgba(14, 165, 233, 0.15)');
     outerHalo.addColorStop(1, 'rgba(14, 165, 233, 0)');
   }
   ctx.beginPath();
-  ctx.arc(cx, cy, R * 1.16, 0, Math.PI * 2);
+  ctx.arc(cx, cy, R * 1.15, 0, Math.PI * 2);
   ctx.fillStyle = outerHalo;
   ctx.fill();
 
-  // 2. Sphère océanique 3D
+  // 3. Sphère océanique 3D
   const oceanGrad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.08, cx, cy, R);
   if (isDark) {
-    oceanGrad.addColorStop(0, '#0f2342');
-    oceanGrad.addColorStop(0.65, '#071124');
+    oceanGrad.addColorStop(0, '#102648');
+    oceanGrad.addColorStop(0.65, '#071226');
     oceanGrad.addColorStop(1, '#030711');
   } else {
     oceanGrad.addColorStop(0, '#e0f2fe');
@@ -882,7 +921,7 @@ const renderGlobe = () => {
     return { x, y, z: cosC };
   };
 
-  // 3. Grille géodésique subtile
+  // 4. Grille géodésique subtile
   ctx.lineWidth = 0.5;
   ctx.strokeStyle = isDark ? 'rgba(56, 189, 248, 0.09)' : 'rgba(2, 132, 199, 0.14)';
   for (let lon = -180; lon < 180; lon += 20) {
@@ -910,10 +949,10 @@ const renderGlobe = () => {
     ctx.stroke();
   }
 
-  // 4. CONTINENTS & FRONTIÈRES VECTORIELLES DES PAYS
+  // 5. CONTINENTS & FRONTIÈRES VECTORIELLES DES PAYS
   if (showBorders.value && worldRings.length > 0) {
-    ctx.fillStyle = isDark ? 'rgba(20, 48, 86, 0.78)' : 'rgba(255, 255, 255, 0.85)';
-    ctx.strokeStyle = isDark ? 'rgba(56, 189, 248, 0.52)' : 'rgba(2, 132, 199, 0.45)';
+    ctx.fillStyle = isDark ? 'rgba(22, 52, 94, 0.80)' : 'rgba(255, 255, 255, 0.86)';
+    ctx.strokeStyle = isDark ? 'rgba(56, 189, 248, 0.54)' : 'rgba(2, 132, 199, 0.45)';
     ctx.lineWidth = 0.9;
 
     for (const ring of worldRings) {
@@ -942,7 +981,7 @@ const renderGlobe = () => {
     }
   }
 
-  // 5. ARCS GÉODÉSIQUES 3D ANIMÉS
+  // 6. ARCS GÉODÉSIQUES 3D ANIMÉS
   const activeTarget = heroCountry.value;
   if (showArcs.value && activeTarget) {
     for (const nb of nearestNeighbors.value) {
@@ -960,7 +999,7 @@ const renderGlobe = () => {
           else ctx.lineTo(p.x, p.y);
         } else started = false;
       }
-      ctx.strokeStyle = isDark ? 'rgba(52, 211, 153, 0.55)' : 'rgba(2, 132, 199, 0.55)';
+      ctx.strokeStyle = isDark ? 'rgba(52, 211, 153, 0.58)' : 'rgba(2, 132, 199, 0.58)';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
@@ -976,7 +1015,7 @@ const renderGlobe = () => {
     }
   }
 
-  // 6. CAPITALES MONDIALES SUR LE GLOBE
+  // 7. CAPITALES MONDIALES SUR LE GLOBE
   const nextNodes = [];
   const allList = localizedCountries.value;
   const activeSectorSet = new Set(filteredGlobeCountries.value.map((c) => c.iso));
@@ -1013,7 +1052,7 @@ const renderGlobe = () => {
     }
   }
 
-  // 7. MARQUEUR LUMINEUX DU PAYS SÉLECTIONNÉ
+  // 8. MARQUEUR LUMINEUX DU PAYS SÉLECTIONNÉ
   if (targetProjected) {
     const { x, y } = targetProjected;
     const bloom = ctx.createRadialGradient(x, y, 1, x, y, 20);
@@ -1047,7 +1086,7 @@ const renderGlobe = () => {
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
   ctx.lineWidth = 1.5;
-  ctx.strokeStyle = isDark ? 'rgba(56, 189, 248, 0.45)' : 'rgba(2, 132, 199, 0.4)';
+  ctx.strokeStyle = isDark ? 'rgba(56, 189, 248, 0.48)' : 'rgba(2, 132, 199, 0.42)';
   ctx.stroke();
 
   projectedNodes = nextNodes;
@@ -1384,21 +1423,18 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Scène plein écran sans aucune bordure ni marge externe */
 .orbital-stage {
   background: radial-gradient(circle at 50% 48%, rgba(14, 165, 233, 0.12) 0%, rgba(16, 185, 129, 0.04) 38%, transparent 72%);
   border-bottom: 1px solid var(--border-color);
 }
 
-/* Taille généreuse du Globe au centre de l'écran */
 .globe-canvas {
   width: min(86vw, 72vh);
   height: min(86vw, 72vh);
-  max-width: 720px;
-  max-height: 720px;
+  max-width: 700px;
+  max-height: 700px;
 }
 
-/* Halos organiques en arrière-plan */
 .ambient-orb {
   position: absolute;
   border-radius: 9999px;
@@ -1422,7 +1458,6 @@ onUnmounted(() => {
   background: radial-gradient(circle, rgba(16, 185, 129, 0.13), transparent 70%);
 }
 
-/* Typographie monumentale en filigrane (Style Awwwards) */
 .watermark-display {
   position: absolute;
   top: 50%;
@@ -1458,5 +1493,18 @@ onUnmounted(() => {
 .fade-up-leave-to {
   opacity: 0;
   transform: translate(-50%, 6px);
+}
+
+.card-fade-enter-active,
+.card-fade-leave-active {
+  transition: opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1), transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.card-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+}
+.card-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
 }
 </style>
