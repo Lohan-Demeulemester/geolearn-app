@@ -1,1577 +1,1008 @@
 <template>
-  <div class="max-w-6xl mx-auto space-y-8 pb-12">
-    
-    <!-- EN-TÊTE + BOUTON SON + BOUTON RETOUR -->
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
-      <div>
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-500 mb-1.5">
-          {{ t('quiz.title') }}
-        </h2>
-        <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400 transition-colors duration-500">
+  <div class="quiz-experience max-w-[1400px] mx-auto px-2 sm:px-6 pb-24 space-y-8">
+
+    <!-- ========================================================= -->
+    <!-- 1. BARRE SUPÉRIEURE FLOTTANTE : TITRE, AUDIO & RETOUR     -->
+    <!-- ========================================================= -->
+    <header class="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-[#090E1A]/85 backdrop-blur-2xl p-5 sm:p-7 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="space-y-1">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-600 dark:text-sky-400 font-mono text-[11px] font-bold uppercase tracking-wider">
+          <span class="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
+          <span>{{ activeModeBadge }}</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          {{ activeModeTitle }}
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
           {{ t('quiz.subtitle') }}
         </p>
       </div>
 
-      <div class="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto justify-between sm:justify-end">
+      <!-- Contrôles Audio & Retour aux modes (whitespace-nowrap garanti sur mobile) -->
+      <div class="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto justify-between sm:justify-end shrink-0">
         <button
           type="button"
           @click="toggleSound"
-          class="px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold border transition-all flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap shrink-0"
+          class="px-4 py-2.5 rounded-full text-xs font-bold border transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
           :class="soundEnabled
-            ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700'"
+            ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300 border-sky-500/30'
+            : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10'"
         >
-          <span>{{ soundEnabled ? '🔊' : '🔇' }}</span>
+          <svg v-if="soundEnabled" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+          </svg>
+          <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <line x1="23" y1="9" x2="17" y2="15" />
+            <line x1="17" y1="9" x2="23" y2="15" />
+          </svg>
           <span>{{ soundEnabled ? (locale === 'fr' ? 'Sons activés' : 'Sound ON') : (locale === 'fr' ? 'Muet' : 'Muted') }}</span>
         </button>
 
-        <button 
-          v-if="currentMode !== 'menu'" 
+        <button
+          v-if="currentMode !== 'menu'"
           type="button"
           @click="retourMenu"
-          class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+          class="px-4 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:opacity-90 text-xs font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-md"
         >
-          <span>←</span> {{ t('quiz.back') }}
+          <span>←</span>
+          <span>{{ t('quiz.back') }}</span>
         </button>
       </div>
-    </div>
+    </header>
 
-    <!-- BANNIÈRE SI UN AMI NOUS A ENVOYÉ UN LIEN DE DUEL OU DÉFI PERSONNALISÉ -->
-    <div
-      v-if="duelChallenge && currentMode === 'menu'"
-      class="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-3xl p-6 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4"
-    >
-      <div class="flex items-center gap-4">
-        <div class="text-4xl">⚔️</div>
-        <div>
-          <span class="text-xs font-extrabold uppercase tracking-wider bg-black/20 px-2.5 py-0.5 rounded-full">
-            {{ duelChallenge.isCustom
-              ? (locale === 'fr' ? 'Défi sur-mesure reçu !' : 'Custom Challenge Received!')
-              : (locale === 'fr' ? 'Duel QCM reçu !' : 'Quiz Duel Received!') }}
-          </span>
-          <h3 class="text-xl font-black mt-1">
-        <    {{ duelChallenge.isCustom
-              ? (locale === 'fr'
-                  ? `${duelChallenge.from} vous lance un défi personnalisé sur ${duelChallenge.ids.length} pays !`
-                  : `${duelChallenge.from} sent you a custom challenge on ${duelChallenge.ids.length} countries!`)
-              : (locale === 'fr'
-                  ? `${duelChallenge.from} vous défie de battre son score de ${duelChallenge.score}/${duelChallenge.ids.length} !`
-                  : `${duelChallenge.from} challenges you to beat their score of ${duelChallenge.score}/${duelChallenge.ids.length}!`) }}
-          </h3>
+    <!-- ========================================================= -->
+    <!-- TRANSITION SPATIALE ENTRE LES MODES DE JEU                -->
+    <!-- ========================================================= -->
+    <transition name="stage-morph" mode="out-in">
+
+      <!-- ======================================================= -->
+      <!-- MENU PRINCIPAL : RÉPERTOIRE DES 11 EXPÉRIENCES          -->
+      <!-- ======================================================= -->
+      <div v-if="currentMode === 'menu'" key="quiz-menu" class="space-y-8">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-slate-200/70 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
+            <button
+              v-for="cat in menuCategories"
+              :key="cat.id"
+              type="button"
+              @click="selectedMenuCat = cat.id"
+              class="px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer"
+              :class="selectedMenuCat === cat.id
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+            >
+              {{ cat.label }}
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <router-link
+              to="/geoguessr"
+              class="px-4 py-2 rounded-full bg-sky-500/15 border border-sky-500/35 text-sky-600 dark:text-sky-300 text-xs font-bold hover:bg-sky-500 hover:text-slate-950 transition flex items-center gap-2"
+            >
+              <span>GeoLearn PinDrop (25 000 pts)</span>
+              <span>→</span>
+            </router-link>
+            <router-link
+              to="/duel"
+              class="px-4 py-2 rounded-full bg-rose-500/15 border border-rose-500/35 text-rose-600 dark:text-rose-300 text-xs font-bold hover:bg-rose-500 hover:text-white transition flex items-center gap-2"
+            >
+              <span>{{ locale === 'fr' ? 'Arène Duel 1v1' : '1v1 Duel Arena' }}</span>
+              <span>→</span>
+            </router-link>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <button
+            v-for="card in filteredMenuCards"
+            :key="card.id"
+            type="button"
+            @click="card.action()"
+            class="group text-left rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/60 hover:shadow-2xl cursor-pointer"
+          >
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-4">
+                <span class="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border" :class="card.badgeClass">
+                  {{ card.tag }}
+                </span>
+                <span class="font-mono text-xs text-slate-400">
+                  {{ card.metric }}
+                </span>
+              </div>
+
+              <h3 class="text-xl font-black text-slate-900 dark:text-white group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors mb-2">
+                {{ card.title }}
+              </h3>
+
+              <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                {{ card.desc }}
+              </p>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 dark:border-white/[0.06] w-full flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-500 dark:group-hover:text-sky-400">
+              <span>{{ card.cta }}</span>
+              <span class="w-7 h-7 rounded-full bg-slate-100 dark:bg-white/5 group-hover:bg-sky-500 group-hover:text-white flex items-center justify-center transition-all">→</span>
+            </div>
+          </button>
         </div>
       </div>
-      <button
-        type="button"
-        @click="startDuelQcm"
-        class="px-6 py-3 rounded-xl bg-white text-orange-600 font-black text-sm hover:bg-orange-50 transition shadow cursor-pointer shrink-0"
-      >
-        🚀 {{ locale === 'fr' ? 'Relever le Défi' : 'Accept Challenge' }}
-      </button>
-    </div>
 
-    <!-- ========================================================== -->
-    <!-- MENU PRINCIPAL : TOUS LES MODES DE JEU + NOUVEAUTÉS        -->
-    <!-- ========================================================== -->
-    <div v-if="currentMode === 'menu'" class="space-y-8 mt-6">
-      
-      <!-- Bannière mise en avant : Pays Mystère + GeoGuessr PinDrop -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Pays Mystère du Jour (Style Worldle) -->
-        <div
-          @click="lancerMode('mystery')"
-          class="group bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 text-white p-6 sm:p-7 rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
-        >
-          <div class="flex items-center justify-between mb-4">
-            <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-black/20 text-white">
-              🔥 {{ locale === 'fr' ? 'Défi Quotidien & Infini' : 'Daily & Infinite Challenge' }}
-            </span>
-            <span class="text-3xl group-hover:scale-110 transition-transform">🧭</span>
-          </div>
-          <div>
-            <h3 class="text-2xl font-black mb-1.5">
-              {{ locale === 'fr' ? 'Le Pays Mystère (Worldle)' : 'Mystery Country (Worldle)' }}
-            </h3>
-            <p class="text-xs sm:text-sm text-white/90 leading-relaxed">
-              {{ locale === 'fr'
-                ? '6 essais pour deviner le pays secret grâce à la distance en kilomètres, la flèche de boussole (🧭 ↗️) et le pourcentage de proximité !'
-                : '6 tries to guess the secret country using distance in km, compass direction (🧭 ↗️), and proximity percentage!' }}
-            </p>
-          </div>
-          <div class="mt-5 pt-3 border-t border-white/20 flex items-center justify-between text-xs font-black">
-            <span>{{ locale === 'fr' ? 'Partageable sur Discord / WhatsApp' : 'Shareable on Discord / WhatsApp' }}</span>
-            <span>{{ locale === 'fr' ? 'Jouer maintenant →' : 'Play now →' }}</span>
-          </div>
-        </div>
-
-        <!-- Passerelle directe vers GeoGuessr Satellite & Photo -->
-        <router-link
-          to="/geoguessr"
-          class="group bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-6 sm:p-7 rounded-3xl shadow-lg border border-cyan-400/30 hover:border-cyan-400 hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between relative overflow-hidden"
-        >
-          <div class="flex items-center justify-between mb-4">
-            <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-              🛰️ {{ locale === 'fr' ? 'Satellite Espion & Photo' : 'Spy Satellite & Photo' }}
-            </span>
-            <span class="text-3xl group-hover:scale-110 transition-transform">📍</span>
-          </div>
-          <div>
-            <h3 class="text-2xl font-black mb-1.5">
-              GeoLearn PinDrop (25 000 pts)
-            </h3>
-            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              {{ locale === 'fr'
-                ? 'Explorez une vue satellite orbitale ou une photo géolocalisée tirée dans le monde et placez votre épingle sur la carte !'
-                : 'Explore an orbital satellite view or geotagged photo around the world and drop your pin on the map!' }}
-            </p>
-          </div>
-          <div class="mt-5 pt-3 border-t border-white/15 flex items-center justify-between text-xs font-black text-cyan-300">
-            <span>5 {{ locale === 'fr' ? 'manches • Score sur 25 000' : 'rounds • Score out of 25,000' }}</span>
-            <span>{{ locale === 'fr' ? 'Ouvrir GeoGuessr →' : 'Open GeoGuessr →' }}</span>
-          </div>
-        </router-link>
-      </div>
-
-      <!-- Grille des modes de jeu -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-        <!-- 1. QCM Capitales -->
-        <div @click="lancerMode('qcm', 'capital')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
-          <div class="w-14 h-14 bg-blue-100 dark:bg-gray-700 text-brandBlue dark:text-blue-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏛️</div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_caps_title') }}</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_caps_desc') }}</p>
-        </div>
-
-        <!-- 2. QCM Drapeaux -->
-        <div @click="lancerMode('qcm', 'flag')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
-          <div class="w-14 h-14 bg-orange-100 dark:bg-gray-700 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🚩</div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_flags_title') }}</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_flags_desc') }}</p>
-        </div>
-
-        <!-- 3. QCM Population, Langues & Monnaies -->
-        <div @click="lancerMode('qcm', 'culture')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
-          <div class="w-14 h-14 bg-purple-100 dark:bg-gray-700 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🗣️</div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
-            {{ locale === 'fr' ? 'Population & Langues' : 'Population & Languages' }}
-          </h3>
-          <p class="text-gray-500 dark:text-gray-400 text-xs">
-            {{ locale === 'fr' ? 'Quel pays est le plus peuplé ? Quelle est sa langue ou sa monnaie ?' : 'Which country is most populous? What is its language or currency?' }}
-          </p>
-        </div>
-
-        <!-- 4. NOUVEAU : Contre-la-montre 60 secondes (QCM Flash + Combo) -->
-        <div @click="lancerMode('flash60')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-amber-500/40 hover:border-amber-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
-          <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300">
-            ⚡ Combo
-          </span>
-          <div class="w-14 h-14 bg-amber-100 dark:bg-gray-700 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🔥</div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
-            {{ locale === 'fr' ? 'QCM Flash (60s)' : '60s Flash Quiz' }}
-          </h3>
-          <p class="text-gray-500 dark:text-gray-400 text-xs">
-            {{ locale === 'fr' ? 'Enchaînez un maximum de réponses en 60 secondes avec multiplicateur de combo et bonus de temps !' : 'Chain as many answers as possible in 60 seconds with combo multipliers and time bonuses!' }}
-          </p>
-        </div>
-
-        <!-- 5. Enquête aux 5 Indices -->
-        <div @click="lancerMode('detective')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-indigo-500/30 hover:border-indigo-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
-          <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
-            {{ locale === 'fr' ? 'Inédit' : 'Unique' }}
-          </span>
-          <div class="w-14 h-14 bg-indigo-100 dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🕵️</div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
-            {{ locale === 'fr' ? 'Enquête aux 5 Indices' : '5-Clue Detective' }}
-          </h3>
-          <p class="text-gray-500 dark:text-gray-400 text-xs">
-            {{ locale === 'fr' ? 'Dévoilez jusqu\'à 5 indices progressifs (superficie, monnaie, fun fact, capitale, drapeau). Moins d\'indices = plus de points !' : 'Reveal up to 5 progressive clues. Fewer clues used = more points scored!' }}
-          </p>
-        </div>
-
-        <!-- 6. Cliquez sur la Carte (Style Seterra) -->
-        <div @click="lancerMode('map-click')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-cyan-500/30 hover:border-cyan-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
-          <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300">
-            Mobile & PC
-          </span>
-          <div class="w-14 h-14 bg-cyan-100 dark:bg-gray-700 text-cyan-600 dark:text-cyan-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🖱️</div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
-            {{ locale === 'fr' ? 'Cliquez sur la Carte' : 'Click on the Map' }}
-          </h3>
-          <p class="text-gray-500 dark:text-gray-400 text-xs">
-            {{ locale === 'fr' ? 'Style Seterra : cliquez directement sur le pays demandé sur la carte muette sans rien taper au clavier !' : 'Seterra style: click directly on the requested country on the blank map with zero typing!' }}
-          </p>
-        </div>
-
-        <!-- 7. Grille des Drapeaux -->
-        <div @click="lancerMode('flag-grid')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
-          <div class="w-14 h-14 bg-emerald-100 dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🏳️</div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
-            {{ locale === 'fr' ? 'Grille des Drapeaux' : 'World Flag Grid' }}
-          </h3>
-          <p class="text-gray-500 dark:text-gray-400 text-xs">
-            {{ locale === 'fr' ? 'Tous les drapeaux devant vous : saisissez le nom du pays sous chaque drapeau pour verdir la carte.' : 'All flags in front of you: type the country name under each flag to turn the card green.' }}
-          </p>
-        </div>
-
-        <!-- 8. Flashcards 3D -->
-        <div @click="lancerMode('flashcards')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
-          <div class="w-14 h-14 bg-green-100 dark:bg-gray-700 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🃏</div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">{{ t('home.mode_flash_title') }}</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-xs">{{ t('home.mode_flash_desc') }}</p>
-        </div>
-
-        <!-- 9. Défis Chronométrés Carte (Clavier) -->
-        <div @click="lancerMode('chrono')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group">
-          <div class="w-14 h-14 bg-red-100 dark:bg-gray-700 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">⏱️</div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
-            {{ locale === 'fr' ? 'Défis Chrono (Clavier)' : 'Timed Map Typing' }}
-          </h3>
-          <p class="text-gray-500 dark:text-gray-400 text-xs">
-            {{ locale === 'fr' ? 'Tapez un maximum de pays au clavier avec grille par continent (Europe 47 ou Monde 196).' : 'Type as many countries as possible with continent grids (Europe 47 or World 196).' }}
-          </p>
-        </div>
-
-        <!-- 10. NOUVEAU : Créateur de Défis Personnalisés -->
-        <div @click="lancerMode('custom-builder')" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-2 border-pink-500/30 hover:border-pink-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-center group relative">
-          <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-300">
-            Sur-mesure
-          </span>
-          <div class="w-14 h-14 bg-pink-100 dark:bg-gray-700 text-pink-600 dark:text-pink-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">🛠️</div>
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-2">
-            {{ locale === 'fr' ? 'Créateur de Défis' : 'Challenge Builder' }}
-          </h3>
-          <p class="text-gray-500 dark:text-gray-400 text-xs">
-            {{ locale === 'fr' ? 'Sélectionnez vos propres pays (5 à 15) pour générer un lien de défi sur-mesure à envoyer à vos amis !' : 'Select your own countries (5 to 15) to generate a custom challenge link to send to your friends!' }}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================== -->
-    <!-- MODES QCM (CAPITALES, DRAPEAUX, CULTURE) + DUEL AMI        -->
-    <!-- ========================================================== -->
-    <div v-if="currentMode === 'qcm'" class="max-w-2xl mx-auto mt-8">
-      <div v-if="!qcmFini" class="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
-        <!-- Bandeau si Duel actif -->
-        <div v-if="activeDuelTarget !== null" class="mb-4 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-bold text-center">
-          ⚔️ {{ locale === 'fr' ? `Défi de ${activeDuelFrom} — Score à battre : ${activeDuelTarget} / ${qcmQuestionsList.length}` : `Challenge from ${activeDuelFrom} — Target score: ${activeDuelTarget} / ${qcmQuestionsList.length}` }}
-        </div>
-
-        <div class="flex justify-between items-center mb-6 text-sm font-medium text-gray-500 dark:text-gray-400">
-          <span>{{ t('quiz.question_x_of_y', { current: qcmIndex + 1, total: qcmQuestionsList.length }) }}</span>
-          <span class="font-bold text-blue-600 dark:text-blue-400">{{ t('quiz.score', { score: qcmScore }) }}</span>
-        </div>
-
-        <div class="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden mb-8">
+      <!-- ======================================================= -->
+      <!-- MODE 1 : QCM CLASSIQUES (15 QUESTIONS + BILAN DÉTAILLÉ) -->
+      <!-- ======================================================= -->
+      <div v-else-if="currentMode === 'qcm'" key="quiz-qcm" class="max-w-3xl mx-auto">
+        <transition name="card-flip-fade" mode="out-in">
+          <!-- QUESTION ACTIVE -->
           <div
-            class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-300"
-            :style="{ width: `${((qcmIndex + 1) / qcmQuestionsList.length) * 100}%` }"
-          ></div>
-        </div>
-        
-        <h3 v-if="qcmCurrentType === 'capital'" class="text-2xl font-bold text-center text-gray-900 dark:text-white mb-8 flex flex-col items-center gap-4">
-          {{ t('quiz.ask_capital', { country: getLocalizedName(qcmQuestionsList[qcmIndex]) }) }}
-          <img :src="`https://flagcdn.com/w80/${getIso(qcmQuestionsList[qcmIndex])}.png`" class="h-12 w-auto shadow-sm rounded-md border border-gray-100 dark:border-gray-700" alt="drapeau">
-        </h3>
-
-        <div v-else-if="qcmCurrentType === 'flag'" class="text-center mb-8">
-          <img :src="`https://flagcdn.com/w160/${getIso(qcmQuestionsList[qcmIndex])}.png`" class="h-24 w-auto mx-auto mb-6 shadow-md rounded-md border border-gray-100 dark:border-gray-700" alt="drapeau">
-          <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
-            {{ t('quiz.ask_flag') }}
-          </h3>
-        </div>
-
-        <div v-else class="text-center mb-8 space-y-4">
-          <span class="inline-block px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
-            <template v-if="cultureSubType === 'population'">👥 {{ locale === 'fr' ? 'Défi Population' : 'Population Challenge' }}</template>
-            <template v-else-if="cultureSubType === 'lang'">🗣️ {{ locale === 'fr' ? 'Langue Officielle' : 'Official Language' }}</template>
-            <template v-else>💶 {{ locale === 'fr' ? 'Monnaie Nationale' : 'National Currency' }}</template>
-          </span>
-
-          <img
-            v-if="cultureSubType !== 'population'"
-            :src="`https://flagcdn.com/w160/${getIso(qcmQuestionsList[qcmIndex])}.png`"
-            class="h-16 w-auto mx-auto shadow-sm rounded-lg border border-gray-100 dark:border-gray-700"
-            alt="drapeau"
-          />
-
-          <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
-            <template v-if="cultureSubType === 'population'">
-              {{ locale === 'fr' ? 'Lequel de ces 4 pays compte le plus grand nombre d\'habitants ?' : 'Which of these 4 countries has the largest population?' }}
-            </template>
-            <template v-else-if="cultureSubType === 'lang'">
-              {{ locale === 'fr'
-                ? `Quelle est la langue officielle principale parlée en / au ${getLocalizedName(qcmQuestionsList[qcmIndex])} ?`
-                : `What is the main official language spoken in ${getLocalizedName(qcmQuestionsList[qcmIndex])}?` }}
-            </template>
-            <template v-else>
-              {{ locale === 'fr'
-                ? `Quelle est la monnaie officielle utilisée en / au ${getLocalizedName(qcmQuestionsList[qcmIndex])} ?`
-                : `What is the official currency used in ${getLocalizedName(qcmQuestionsList[qcmIndex])}?` }}
-            </template>
-          </h3>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button 
-            v-for="choixId in qcmOptions" :key="choixId"
-            @click="verifierReponseQcm(choixId)"
-            :disabled="qcmIsAnswered"
-            class="p-4 rounded-xl border-2 font-medium transition-all duration-300 cursor-pointer flex flex-col items-center justify-center gap-1"
-            :class="[
-              !qcmIsAnswered ? 'border-gray-200 hover:border-brandBlue hover:bg-blue-50 text-gray-800 dark:border-gray-600 dark:hover:border-brandBlue dark:hover:bg-gray-700 dark:text-white' : '',
-              qcmIsAnswered && choixId === qcmCorrectAnswer ? 'bg-green-100 border-green-500 text-green-800 dark:bg-green-900/50 dark:border-green-500 dark:text-green-300 scale-[1.02] shadow-sm' : '',
-              qcmIsAnswered && choixId === qcmSelected && choixId !== qcmCorrectAnswer ? 'bg-red-100 border-red-500 text-red-800 dark:bg-red-900/50 dark:border-red-500 dark:text-red-300 scale-95' : '',
-              qcmIsAnswered && choixId !== qcmSelected && choixId !== qcmCorrectAnswer ? 'border-gray-100 text-gray-400 dark:border-gray-800 dark:text-gray-600 opacity-50 cursor-not-allowed' : ''
-            ]"
+            v-if="!qcmFini && currentQcmQuestion"
+            :key="'qcm-q-' + qcmIndex"
+            class="rounded-3xl border border-slate-200/90 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-6 sm:p-10 shadow-2xl space-y-7"
           >
-            <div class="flex items-center gap-2.5">
-              <img
-                v-if="qcmCurrentType === 'culture' && cultureSubType === 'population'"
-                :src="`https://flagcdn.com/w40/${getIso(choixId)}.png`"
-                class="h-5 w-auto rounded-xs shadow-2xs"
-                alt=""
-              />
-              <span class="font-bold">{{ getOptionLabel(choixId) }}</span>
+            <!-- Barre de progression segmentée (15 questions) + Série active -->
+            <div class="space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-sky-600 dark:text-sky-400 font-bold">
+                    QUESTION {{ qcmIndex + 1 }} / {{ totalQcmQuestions }}
+                  </span>
+                  <span
+                    v-if="qcmStreak >= 2"
+                    class="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-black"
+                  >
+                    {{ locale === 'fr' ? `SÉRIE : ${qcmStreak}` : `STREAK: ${qcmStreak}` }}
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="hidden sm:inline text-[11px] text-slate-400">
+                    [{{ locale === 'fr' ? 'Touches 1-4' : 'Keys 1-4' }}]
+                  </span>
+                  <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 font-bold">
+                    SCORE : {{ qcmScore }} / {{ totalQcmQuestions }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-15 gap-1 h-2">
+                <div
+                  v-for="step in totalQcmQuestions"
+                  :key="'step-' + step"
+                  class="rounded-full transition-all duration-300"
+                  :class="getQcmStepBarClass(step - 1)"
+                ></div>
+              </div>
             </div>
 
-            <span
-              v-if="qcmIsAnswered && qcmCurrentType === 'culture' && cultureSubType === 'population'"
-              class="text-xs font-extrabold opacity-85"
-            >
-              👥 {{ getCountry(choixId)?.population }}
-            </span>
-          </button>
-        </div>
-      </div>
-      
-      <!-- Fin du QCM + Bouton Défier un ami -->
-      <div v-else class="text-center py-12 px-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
-        <div class="text-6xl">🏆</div>
-        <div>
-          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ t('quiz.finished') }}</h3>
-          <p class="text-xl text-gray-600 dark:text-gray-300">
-            {{ t('quiz.your_score', { score: qcmScore, total: qcmQuestionsList.length }) }}
-          </p>
-        </div>
+            <!-- Visuel central de la question -->
+            <div class="py-3 text-center space-y-4">
+              <template v-if="qcmCurrentType === 'flag'">
+                <div class="inline-block p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 shadow-lg">
+                  <img
+                    :src="`https://flagcdn.com/w320/${currentQcmQuestion.iso}.png`"
+                    :alt="locale === 'fr' ? 'Drapeau mystère' : 'Mystery flag'"
+                    class="h-28 sm:h-36 w-auto rounded-xl mx-auto object-contain"
+                  />
+                </div>
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                  {{ locale === 'fr' ? 'À quel État appartient ce drapeau ?' : 'Which country does this flag belong to?' }}
+                </h2>
+              </template>
 
-        <div class="flex flex-wrap items-center justify-center gap-4">
-          <button
-            type="button"
-            @click="copyDuelQcmLink"
-            class="px-6 py-3 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm transition cursor-pointer shadow-sm"
-          >
-            ⚔️ {{ duelLinkCopied ? (locale === 'fr' ? 'Lien de duel copié !' : 'Duel link copied!') : (locale === 'fr' ? `Défier un ami sur ces ${qcmQuestionsList.length} questions` : `Challenge a friend on these ${qcmQuestionsList.length} questions`) }}
-          </button>
-
-          <button
-            type="button"
-            @click="lancerMode('qcm', qcmCurrentType)"
-            class="bg-brandBlue text-white px-8 py-3 rounded-full font-bold text-sm hover:bg-blue-700 transition cursor-pointer"
-          >
-            ↻ {{ t('quiz.replay') }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- NOUVEAU MODE : CONTRE-LA-MONTRE 60 SECONDES (QCM FLASH + COMBO)           -->
-    <!-- ========================================================================= -->
-    <div v-if="currentMode === 'flash60'" class="max-w-2xl mx-auto mt-6 space-y-6">
-      <!-- Écran de configuration avant départ -->
-      <div v-if="!flash60Running && !flash60Finished" class="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 text-center space-y-6">
-        <div class="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-3xl mx-auto">
-          🔥
-        </div>
-        <div>
-          <h3 class="text-2xl font-black text-gray-900 dark:text-white">
-            {{ locale === 'fr' ? 'Contre-la-montre 60 secondes (QCM Flash)' : '60-Second Time Trial (Flash Quiz)' }}
-          </h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-lg mx-auto">
-            {{ locale === 'fr'
-              ? 'Enchaînez un maximum de bonnes réponses en 60 secondes ! Chaque série de 5 réponses sans erreur active un bonus de +2 secondes et multiplie vos points jusqu\'à x4.'
-              : 'Chain as many correct answers as possible in 60 seconds! Every 5-streak gives a +2s time bonus and multiplies your points up to x4.' }}
-          </p>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-center gap-3">
-          <button
-            v-for="sub in [
-              { id: 'mix', label: locale === 'fr' ? '🎲 Mix Capitales & Drapeaux' : '🎲 Capitals & Flags Mix' },
-              { id: 'capital', label: locale === 'fr' ? '🏛️ Capitales uniquement' : '🏛️ Capitals only' },
-              { id: 'flag', label: locale === 'fr' ? '🚩 Drapeaux uniquement' : '🚩 Flags only' }
-            ]"
-            :key="sub.id"
-            type="button"
-            @click="flash60Topic = sub.id"
-            class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm border-2 transition cursor-pointer"
-            :class="flash60Topic === sub.id
-              ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-              : 'bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'"
-          >
-            {{ sub.label }}
-          </button>
-        </div>
-
-        <button
-          type="button"
-          @click="startFlash60"
-          class="px-10 py-4 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-black text-base shadow-lg cursor-pointer transition"
-        >
-          ⚡ {{ locale === 'fr' ? 'Lancer les 60 secondes !' : 'Start 60 Seconds!' }}
-        </button>
-      </div>
-
-      <!-- Jeu actif 60 secondes -->
-      <div v-else-if="flash60Running && flash60Question" class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
-        <div class="flex items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <div class="flex items-center gap-3">
-            <div
-              class="px-4 py-2 rounded-xl font-black text-xl text-white flex items-center gap-2"
-              :class="flash60TimeLeft <= 10 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'"
-            >
-              <span>⏱️</span>
-              <span>{{ flash60TimeLeft }}s</span>
-            </div>
-            <span
-              v-if="flash60BonusToast"
-              class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-black animate-bounce"
-            >
-              +2s BONUS !
-            </span>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <span
-              class="px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm"
-              :class="flash60Streak >= 3
-                ? 'bg-orange-500 text-white shadow-xs'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-            >
-              🔥 Combo x{{ flash60Multiplier }} ({{ flash60Streak }})
-            </span>
-
-            <div class="text-right">
-              <span class="text-[11px] uppercase font-bold text-gray-400 block">Points</span>
-              <strong class="text-xl font-black text-blue-600 dark:text-blue-400">{{ flash60Score }}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div class="text-center space-y-4 py-2">
-          <template v-if="flash60Question.qType === 'capital'">
-            <img :src="`https://flagcdn.com/w80/${flash60Question.target.iso}.png`" class="h-12 w-auto mx-auto rounded shadow-xs border border-gray-200 dark:border-gray-700" alt="" />
-            <h3 class="text-2xl font-black text-gray-900 dark:text-white">
-              {{ t('quiz.ask_capital', { country: flash60Question.target.name }) }}
-            </h3>
-          </template>
-          <template v-else>
-            <img :src="`https://flagcdn.com/w160/${flash60Question.target.iso}.png`" class="h-24 w-auto mx-auto rounded-lg shadow-md border border-gray-200 dark:border-gray-700" alt="" />
-            <h3 class="text-xl font-black text-gray-900 dark:text-white">
-              {{ t('quiz.ask_flag') }}
-            </h3>
-          </template>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <button
-            v-for="opt in flash60Question.options"
-            :key="'f60-' + opt.id"
-            type="button"
-            @click="answerFlash60(opt)"
-            class="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-amber-500 hover:bg-amber-50/40 dark:hover:bg-gray-700 font-bold text-gray-900 dark:text-white transition cursor-pointer"
-          >
-            {{ flash60Question.qType === 'capital' ? opt.capital : opt.name }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Bilan final QCM Flash 60s -->
-      <div v-else class="bg-white dark:bg-gray-800 rounded-3xl p-8 text-center shadow-sm border border-gray-100 dark:border-gray-700 space-y-5">
-        <div class="text-6xl">⚡</div>
-        <h3 class="text-2xl font-black text-gray-900 dark:text-white">
-          {{ locale === 'fr' ? 'Temps écoulé !' : 'Time is up!' }}
-        </h3>
-        <div class="flex flex-wrap justify-center gap-4">
-          <div class="px-5 py-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
-            <span class="text-xs text-gray-500 block">{{ locale === 'fr' ? 'Score Total' : 'Total Score' }}</span>
-            <strong class="text-2xl font-black text-amber-600 dark:text-amber-400">{{ flash60Score }} pts</strong>
-          </div>
-          <div class="px-5 py-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
-            <span class="text-xs text-gray-500 block">{{ locale === 'fr' ? 'Bonnes réponses' : 'Correct answers' }}</span>
-            <strong class="text-2xl font-black text-blue-600 dark:text-blue-400">{{ flash60CorrectCount }}</strong>
-          </div>
-          <div class="px-5 py-3 rounded-2xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800">
-            <span class="text-xs text-gray-500 block">{{ locale === 'fr' ? 'Meilleur Combo' : 'Best Streak' }}</span>
-            <strong class="text-2xl font-black text-orange-600 dark:text-orange-400">🔥 {{ flash60BestStreak }}</strong>
-          </div>
-        </div>
-        <button
-          type="button"
-          @click="startFlash60"
-          class="px-8 py-3.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-black text-sm cursor-pointer transition"
-        >
-          ↻ {{ locale === 'fr' ? 'Rejouer le Sprint 60s' : 'Play 60s Sprint Again' }}
-        </button>
-      </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- NOUVEAU MODE : CRÉATEUR DE DÉFIS PERSONNALISÉS (5 À 15 PAYS)              -->
-    <!-- ========================================================================= -->
-    <div v-if="currentMode === 'custom-builder'" class="max-w-5xl mx-auto mt-6 space-y-6">
-      <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <div>
-            <span class="text-xs font-extrabold uppercase tracking-wider text-pink-600 dark:text-pink-400 block">
-              🛠️ {{ locale === 'fr' ? 'Défi sur-mesure entre amis' : 'Custom Friend Challenge' }}
-            </span>
-            <h3 class="text-2xl font-black text-gray-900 dark:text-white">
-              {{ locale === 'fr' ? 'Créez votre propre sélection de pays (5 à 15)' : 'Build your own country selection (5 to 15)' }}
-            </h3>
-          </div>
-
-          <div class="flex items-center gap-3 flex-wrap">
-            <select
-              v-model="customBuilderType"
-              class="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-xs sm:text-sm font-bold"
-            >
-              <option value="capital">🏛️ {{ locale === 'fr' ? 'Épreuve : Capitales' : 'Mode: Capitals' }}</option>
-              <option value="flag">🚩 {{ locale === 'fr' ? 'Épreuve : Drapeaux' : 'Mode: Flags' }}</option>
-              <option value="culture">🗣️ {{ locale === 'fr' ? 'Épreuve : Population & Langues' : 'Mode: Culture' }}</option>
-            </select>
-
-            <button
-              type="button"
-              @click="pickRandomCustomCountries(10)"
-              class="px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-xs font-bold cursor-pointer transition"
-            >
-              🎲 {{ locale === 'fr' ? 'Sélection aléatoire (10)' : 'Random Pick (10)' }}
-            </button>
-
-            <button
-              v-if="customSelectedIds.length > 0"
-              type="button"
-              @click="customSelectedIds = []"
-              class="px-3 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-300 text-xs font-bold cursor-pointer"
-            >
-              ✕ {{ locale === 'fr' ? 'Tout vider' : 'Clear all' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Filtres de recherche -->
-        <div class="flex flex-col sm:flex-row gap-3">
-          <input
-            v-model="customSearchQuery"
-            type="text"
-            :placeholder="locale === 'fr' ? 'Rechercher un pays à ajouter...' : 'Search a country to add...'"
-            class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm font-semibold focus:outline-none focus:border-pink-500"
-          />
-          <select
-            v-model="customContinentFilter"
-            class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm font-semibold"
-          >
-            <option value="">{{ locale === 'fr' ? 'Tous les continents (196)' : 'All Continents (196)' }}</option>
-            <option value="Europe">Europe</option>
-            <option value="Asia">{{ locale === 'fr' ? 'Asie' : 'Asia' }}</option>
-            <option value="Africa">{{ locale === 'fr' ? 'Afrique' : 'Africa' }}</option>
-            <option value="North America">{{ locale === 'fr' ? 'Amérique du Nord' : 'North America' }}</option>
-            <option value="South America">{{ locale === 'fr' ? 'Amérique du Sud' : 'South America' }}</option>
-            <option value="Oceania">{{ locale === 'fr' ? 'Océanie' : 'Oceania' }}</option>
-          </select>
-        </div>
-
-        <!-- Grille de sélection des pays -->
-        <div class="max-h-80 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
-          <button
-            v-for="country in filteredCustomCountries"
-            :key="'cb-' + country.id"
-            type="button"
-            @click="toggleCustomCountry(country.id)"
-            class="p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition cursor-pointer"
-            :class="customSelectedIds.includes(country.id)
-              ? 'bg-pink-50 dark:bg-pink-950/50 border-pink-500 text-pink-900 dark:text-pink-200 font-black shadow-2xs'
-              : 'bg-gray-50/70 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:border-pink-400'"
-          >
-            <img :src="`https://flagcdn.com/w40/${country.iso}.png`" class="h-4 w-auto rounded-2xs shrink-0" alt="" />
-            <span class="text-xs truncate flex-1">{{ country.name }}</span>
-            <span v-if="customSelectedIds.includes(country.id)" class="text-pink-600 dark:text-pink-400 text-xs font-black">✓</span>
-          </button>
-        </div>
-
-        <!-- Barre d'actions du défi personnalisé -->
-        <div class="pt-4 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div class="text-xs sm:text-sm font-bold text-gray-600 dark:text-gray-300">
-            {{ locale === 'fr'
-              ? `Pays sélectionnés : ${customSelectedIds.length} / 15 (minimum 5 requis)`
-              : `Selected countries: ${customSelectedIds.length} / 15 (minimum 5 required)` }}
-          </div>
-
-          <div class="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              :disabled="customSelectedIds.length < 5"
-              @click="copyCustomChallengeLink"
-              class="px-5 py-3 rounded-xl bg-pink-600 hover:bg-pink-700 disabled:opacity-40 text-white font-black text-xs sm:text-sm transition cursor-pointer"
-            >
-              🔗 {{ customLinkCopied
-                ? (locale === 'fr' ? 'Lien copié dans le presse-papiers !' : 'Link copied to clipboard!')
-                : (locale === 'fr' ? 'Copier le lien du Défi' : 'Copy Challenge Link') }}
-            </button>
-
-            <button
-              type="button"
-              :disabled="customSelectedIds.length < 5"
-              @click="playCustomChallengeNow"
-              class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-black text-xs sm:text-sm transition cursor-pointer"
-            >
-              🚀 {{ locale === 'fr' ? 'Jouer ce Défi maintenant' : 'Play This Challenge Now' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- MODE : LE PAYS MYSTÈRE (STYLE WORLDLE QUOTIDIEN & INFINI)                 -->
-    <!-- ========================================================================= -->
-    <div v-if="currentMode === 'mystery'" class="max-w-2xl mx-auto mt-4 sm:mt-6 space-y-6">
-      <div class="bg-white dark:bg-gray-800 rounded-3xl p-4 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-5 overflow-hidden">
-        
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <div>
-            <span class="inline-block px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
-              {{ mysteryIsDaily ? (locale === 'fr' ? '🔥 Pays du Jour Officiel' : '🔥 Official Daily Country') : (locale === 'fr' ? '♾️ Mode Entraînement Infini' : '♾️ Infinite Practice Mode') }}
-            </span>
-            <h3 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mt-2 leading-tight">
-              {{ locale === 'fr' ? 'Devinez le Pays Mystère en 6 essais' : 'Guess the Mystery Country in 6 tries' }}
-            </h3>
-          </div>
-
-          <button
-            type="button"
-            @click="startInfiniteMystery"
-            class="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-blue-600 hover:text-white text-gray-800 dark:text-white text-xs font-bold transition cursor-pointer whitespace-nowrap shrink-0"
-          >
-            🎲 {{ locale === 'fr' ? 'Nouveau pays aléatoire' : 'New Random Country' }}
-          </button>
-        </div>
-
-        <!-- Champ de saisie + Bouton Valider centré en dessous sur mobile -->
-        <div v-if="!mysteryFinished" class="space-y-3">
-          <div class="flex flex-col sm:flex-row items-center gap-2.5">
-            <input
-              v-model="mysteryQuery"
-              @keydown.enter.prevent="submitMysteryGuess()"
-              type="text"
-              :placeholder="locale === 'fr' ? `Essai ${mysteryGuesses.length + 1}/6 : Tapez un pays...` : `Try ${mysteryGuesses.length + 1}/6: Type a country...`"
-              class="w-full sm:flex-1 min-w-0 px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm sm:text-base font-bold focus:outline-none focus:border-blue-500"
-            />
-            <button
-              type="button"
-              @click="submitMysteryGuess()"
-              class="w-2/3 sm:w-auto mx-auto sm:mx-0 px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm transition cursor-pointer text-center shrink-0 shadow-xs"
-            >
-              {{ locale === 'fr' ? 'Valider' : 'Guess' }}
-            </button>
-          </div>
-
-          <!-- Suggestions cliquables pendant la frappe -->
-          <div v-if="mysterySuggestions.length > 0" class="flex flex-wrap gap-2 pt-1">
-            <button
-              v-for="sug in mysterySuggestions"
-              :key="sug.id"
-              type="button"
-              @click="submitMysteryGuess(sug)"
-              class="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-gray-700 hover:bg-blue-600 hover:text-white text-gray-800 dark:text-gray-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
-            >
-              <img :src="`https://flagcdn.com/w20/${sug.iso}.png`" class="h-3.5 w-auto rounded-2xs shrink-0" alt="" />
-              <span class="truncate max-w-[200px]">{{ sug.name }}</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Grille des 6 tentatives (Affichage lisible du nom complet sur mobile et PC) -->
-        <div class="space-y-2.5">
-          <div
-            v-for="slot in 6"
-            :key="'mys-slot-' + slot"
-            class="min-h-[3.5rem] rounded-2xl px-3.5 py-2.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-2 gap-y-1.5 border transition-all"
-            :class="mysteryGuesses[slot - 1]
-              ? (mysteryGuesses[slot - 1].isCorrect
-                  ? 'bg-emerald-500 text-white border-emerald-500 font-black shadow-sm'
-                  : 'bg-gray-50 dark:bg-gray-900/80 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white')
-              : 'bg-gray-50/40 dark:bg-gray-900/30 border-dashed border-gray-200 dark:border-gray-700/60 text-gray-400'"
-          >
-            <template v-if="mysteryGuesses[slot - 1]">
-              <!-- Drapeau + Nom complet du pays -->
-              <div class="flex items-center gap-2.5 min-w-[120px] flex-1">
+              <template v-else-if="qcmCurrentType === 'capital'">
                 <img
-                  :src="`https://flagcdn.com/w40/${mysteryGuesses[slot - 1].iso}.png`"
-                  class="h-4 sm:h-5 w-auto rounded-xs shadow-2xs shrink-0"
+                  :src="`https://flagcdn.com/w160/${currentQcmQuestion.iso}.png`"
+                  class="h-16 w-auto rounded-xl mx-auto shadow-md border border-slate-200 dark:border-white/10"
                   alt=""
                 />
-                <strong class="text-sm sm:text-base font-extrabold leading-tight break-words">
-                  {{ mysteryGuesses[slot - 1].name }}
-                </strong>
-              </div>
-
-              <!-- Indicateurs : Distance + Boussole + % Proximité -->
-              <div class="flex items-center gap-1.5 sm:gap-3 shrink-0 text-xs sm:text-sm font-extrabold ml-auto">
-                <span class="whitespace-nowrap">{{ mysteryGuesses[slot - 1].distanceKm.toLocaleString() }} km</span>
-                <span class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/10 dark:bg-white/10 whitespace-nowrap">
-                  {{ mysteryGuesses[slot - 1].direction }}
-                </span>
-                <span
-                  class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg whitespace-nowrap"
-                  :class="mysteryGuesses[slot - 1].isCorrect ? 'bg-white text-emerald-700' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'"
-                >
-                  {{ mysteryGuesses[slot - 1].proximity }}%
-                </span>
-              </div>
-            </template>
-
-            <template v-else>
-              <span class="text-xs font-semibold">{{ locale === 'fr' ? `Essai ${slot} / 6` : `Try ${slot} / 6` }}</span>
-            </template>
-          </div>
-        </div>
-
-        <!-- Résultat final du Pays Mystère -->
-        <div
-          v-if="mysteryFinished && mysteryTarget"
-          class="p-5 sm:p-6 rounded-2xl border text-center space-y-4"
-          :class="mysteryWon
-            ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-900 dark:text-emerald-200'
-            : 'bg-amber-50 dark:bg-amber-950/40 border-amber-400 text-amber-900 dark:text-amber-200'"
-        >
-          <img :src="`https://flagcdn.com/w160/${mysteryTarget.iso}.png`" class="h-16 w-auto mx-auto rounded-lg shadow" alt="" />
-          <div>
-            <h4 class="text-xl sm:text-2xl font-black">
-              {{ mysteryWon
-                ? (locale === 'fr' ? `Bravo ! Trouvé en ${mysteryGuesses.length}/6 : ${mysteryTarget.name}` : `Well done! Found in ${mysteryGuesses.length}/6: ${mysteryTarget.name}`)
-                : (locale === 'fr' ? `Le pays mystère était : ${mysteryTarget.name}` : `The mystery country was: ${mysteryTarget.name}`) }}
-            </h4>
-            <p class="text-xs sm:text-sm opacity-90 mt-1">
-              {{ t('common.capital') }} : <strong>{{ mysteryTarget.capital }}</strong> • {{ mysteryTarget.subregion }} • 💡 {{ mysteryTarget.fact }}
-            </p>
-          </div>
-
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
-            <button
-              type="button"
-              @click="copyMysteryShareGrid"
-              class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition cursor-pointer"
-            >
-              📋 {{ mysteryCopied ? (locale === 'fr' ? 'Grille copiée !' : 'Grid copied!') : (locale === 'fr' ? 'Partager mon résultat (🟩🟨⬛)' : 'Share Result (🟩🟨⬛)') }}
-            </button>
-            <button
-              type="button"
-              @click="startInfiniteMystery"
-              class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm transition cursor-pointer"
-            >
-              🎲 {{ locale === 'fr' ? 'Rejouer avec un autre pays' : 'Play another country' }}
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- MODE : ENQUÊTE GÉOGRAPHIQUE AUX 5 INDICES                                 -->
-    <!-- ========================================================================= -->
-    <div v-if="currentMode === 'detective'" class="max-w-3xl mx-auto mt-6 space-y-6">
-      <div v-if="!detectiveFinished && detectiveTarget" class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
-        
-        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <div>
-            <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">
-              🕵️ {{ locale === 'fr' ? `Enquête ${detectiveRound} / 5` : `Case ${detectiveRound} / 5` }}
-            </span>
-            <h3 class="text-2xl font-black text-gray-900 dark:text-white">
-              {{ locale === 'fr' ? 'Identifiez le pays avec le moins d\'indices possible' : 'Identify the country using as few clues as possible' }}
-            </h3>
-          </div>
-
-          <div class="text-right">
-            <span class="text-xs text-gray-400 block">{{ locale === 'fr' ? 'Score total' : 'Total Score' }}</span>
-            <strong class="text-2xl font-black text-indigo-600 dark:text-indigo-400">{{ detectiveScore }} / 25 pts</strong>
-          </div>
-        </div>
-
-        <!-- Les 5 cartes d'indices progressifs (de 5 pts à 1 pt) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
-            <span class="text-[11px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-1">
-              {{ locale === 'fr' ? 'Indice #1 (Valeur : 5 pts)' : 'Clue #1 (Worth: 5 pts)' }}
-            </span>
-            <p class="text-sm font-bold text-gray-900 dark:text-white">
-               📐 {{ detectiveTarget.area }}
-            </p>
-          </div>
-
-          <div class="p-4 rounded-2xl border transition-all" :class="detectiveCluesRevealed >= 2 ? 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'">
-            <span class="text-[11px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-1">
-              {{ locale === 'fr' ? 'Indice #2 (Valeur : 4 pts)' : 'Clue #2 (Worth: 4 pts)' }}
-            </span>
-            <p v-if="detectiveCluesRevealed >= 2" class="text-sm font-bold text-gray-900 dark:text-white">
-              👥 {{ detectiveTarget.population }} hab. • 💶 {{ detectiveTarget.currency }}
-            </p>
-            <button v-else type="button" @click="detectiveCluesRevealed = 2" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
-              🔓 {{ locale === 'fr' ? 'Dévoiler Habitants & Monnaie (-1 pt)' : 'Reveal Population & Currency (-1 pt)' }}
-            </button>
-          </div>
-
-          <div class="sm:col-span-2 p-4 rounded-2xl border transition-all" :class="detectiveCluesRevealed >= 3 ? 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'">
-            <span class="text-[11px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-1">
-              {{ locale === 'fr' ? 'Indice #3 — Anecdote (Valeur : 3 pts)' : 'Clue #3 — Fun Fact (Worth: 3 pts)' }}
-            </span>
-            <p v-if="detectiveCluesRevealed >= 3" class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-              💡 « {{ maskedDetectiveFact }} »
-            </p>
-            <button v-else type="button" @click="detectiveCluesRevealed = 3" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
-              🔓 {{ locale === 'fr' ? 'Dévoiler le Fun Fact du pays (-1 pt)' : 'Reveal Country Fun Fact (-1 pt)' }}
-            </button>
-          </div>
-
-          <div class="p-4 rounded-2xl border transition-all" :class="detectiveCluesRevealed >= 4 ? 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'">
-            <span class="text-[11px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-1">
-              {{ locale === 'fr' ? 'Indice #4 (Valeur : 2 pts)' : 'Clue #4 (Worth: 2 pts)' }}
-            </span>
-            <p v-if="detectiveCluesRevealed >= 4" class="text-sm font-bold text-gray-900 dark:text-white">
-              🗣️ {{ detectiveTarget.lang }} • 🏛️ {{ detectiveTarget.capital }}
-            </p>
-            <button v-else type="button" @click="detectiveCluesRevealed = 4" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
-              🔓 {{ locale === 'fr' ? 'Dévoiler Langue & Capitale (-1 pt)' : 'Reveal Language & Capital (-1 pt)' }}
-            </button>
-          </div>
-
-          <div class="p-4 rounded-2xl border transition-all flex items-center justify-between" :class="detectiveCluesRevealed >= 5 ? 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700'">
-            <div>
-              <span class="text-[11px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-1">
-                {{ locale === 'fr' ? 'Indice #5 (Valeur : 1 pt)' : 'Clue #5 (Worth: 1 pt)' }}
-              </span>
-              <button v-if="detectiveCluesRevealed < 5" type="button" @click="detectiveCluesRevealed = 5" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
-                🔓 {{ locale === 'fr' ? 'Dévoiler le Drapeau (-1 pt)' : 'Reveal Flag (-1 pt)' }}
-              </button>
-              <span v-else class="text-xs font-bold text-gray-600 dark:text-gray-300">{{ locale === 'fr' ? 'Drapeau officiel' : 'Official Flag' }}</span>
-            </div>
-            <img v-if="detectiveCluesRevealed >= 5" :src="`https://flagcdn.com/w80/${detectiveTarget.iso}.png`" class="h-10 w-auto rounded shadow-xs" alt="" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
-          <button
-            v-for="optId in detectiveOptions"
-            :key="'det-opt-' + optId"
-            type="button"
-            :disabled="detectiveAnswered"
-            @click="answerDetective(optId)"
-            class="p-4 rounded-xl border-2 font-bold transition-all cursor-pointer"
-            :class="[
-              !detectiveAnswered ? 'border-gray-200 dark:border-gray-700 hover:border-indigo-500 text-gray-900 dark:text-white' : '',
-              detectiveAnswered && optId === detectiveTarget.id ? 'bg-emerald-500 border-emerald-500 text-white' : '',
-              detectiveAnswered && optId === detectiveSelected && optId !== detectiveTarget.id ? 'bg-red-500 border-red-500 text-white' : '',
-              detectiveAnswered && optId !== detectiveSelected && optId !== detectiveTarget.id ? 'opacity-40 border-gray-200 dark:border-gray-800' : ''
-            ]"
-          >
-            {{ getLocalizedName(optId) }}
-          </button>
-        </div>
-
-      </div>
-
-      <div v-else class="text-center py-12 px-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-5">
-        <div class="text-6xl">🕵️</div>
-        <h3 class="text-2xl font-black text-gray-900 dark:text-white">
-          {{ locale === 'fr' ? 'Enquête terminée !' : 'Investigation Complete!' }}
-        </h3>
-        <p class="text-xl text-gray-600 dark:text-gray-300 font-bold">
-          Score : {{ detectiveScore }} / 25 pts
-        </p>
-        <button
-          type="button"
-          @click="lancerMode('detective')"
-          class="px-8 py-3 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition cursor-pointer"
-        >
-          ↻ {{ locale === 'fr' ? 'Nouvelle Enquête' : 'New Investigation' }}
-        </button>
-      </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- MODE : CLIQUEZ SUR LA CARTE (STYLE SETERRA SANS CLAVIER - CARTE MUETTE)   -->
-    <!-- ========================================================================= -->
-    <div v-if="currentMode === 'map-click'" class="max-w-5xl mx-auto mt-6 space-y-5">
-      <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-7 shadow-sm border border-gray-100 dark:border-gray-700 space-y-5">
-        
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-cyan-50/80 dark:bg-gray-900 p-4 rounded-2xl border border-cyan-200 dark:border-gray-700">
-          <div class="flex items-center gap-3">
-            <select
-              v-model="mapClickScope"
-              @change="initMapClickGame"
-              class="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs sm:text-sm font-bold text-gray-800 dark:text-white"
-            >
-              <option value="europe">{{ locale === 'fr' ? 'Europe (47 pays)' : 'Europe (47 countries)' }}</option>
-              <option value="world25">{{ locale === 'fr' ? 'Sprint Monde (25 pays)' : 'World Sprint (25 countries)' }}</option>
-            </select>
-
-            <span class="text-xs sm:text-sm font-extrabold text-gray-500 dark:text-gray-400">
-              {{ mapClickIndex }} / {{ mapClickQueue.length }}
-            </span>
-          </div>
-
-          <div v-if="!mapClickFinished && currentMapClickTarget" class="flex items-center gap-3">
-            <span class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400">
-              {{ locale === 'fr' ? 'Cliquez sur :' : 'Click on:' }}
-            </span>
-            <img :src="`https://flagcdn.com/w40/${currentMapClickTarget.iso}.png`" class="h-6 w-auto rounded shadow-2xs" alt="" />
-            <strong class="text-xl sm:text-2xl font-black text-blue-600 dark:text-cyan-400">
-              {{ currentMapClickTarget.name }}
-            </strong>
-          </div>
-
-          <div class="text-right">
-            <span class="text-xs text-gray-400 block">Précision</span>
-            <strong class="text-lg font-black text-emerald-600 dark:text-emerald-400">
-              {{ mapClickScore }} / {{ mapClickQueue.length }}
-            </strong>
-          </div>
-        </div>
-
-        <div v-if="mapClickFeedback" class="text-center text-xs sm:text-sm font-bold text-red-500">
-          {{ mapClickFeedback }}
-        </div>
-
-        <div class="h-[500px] w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 relative z-0 bg-[#aad3df] dark:bg-[#1e293b]">
-          <l-map
-            v-model:zoom="mapClickZoom"
-            v-model:center="mapClickCenter"
-            :min-zoom="2"
-            :max-zoom="7"
-            :use-global-leaflet="false"
-          >
-            <l-tile-layer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}"
-              :no-wrap="true"
-            ></l-tile-layer>
-
-            <l-circle-marker
-              v-for="country in mapClickCountriesPool"
-              :key="'mc-' + country.id"
-              :lat-lng="[country.lat, country.lng]"
-              :radius="getMapClickRadius(country)"
-              :color="getMapClickBorderColor(country)"
-              :weight="2"
-              :fill-color="getMapClickFillColor(country)"
-              :fill-opacity="0.95"
-              @click="onCountryMarkerClick(country)"
-            >
-              <l-popup v-if="mapClickStatus[country.iso]">
-                <strong>{{ country.name }}</strong>
-              </l-popup>
-            </l-circle-marker>
-          </l-map>
-        </div>
-
-        <div v-if="mapClickFinished" class="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-400 text-center space-y-3">
-          <h4 class="text-2xl font-black text-emerald-800 dark:text-emerald-200">
-            🎉 {{ locale === 'fr' ? `Terminé ! Score : ${mapClickScore} / ${mapClickQueue.length}` : `Finished! Score: ${mapClickScore} / ${mapClickQueue.length}` }}
-          </h4>
-          <button
-            type="button"
-            @click="initMapClickGame"
-            class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition cursor-pointer"
-          >
-            ↻ {{ locale === 'fr' ? 'Rejouer' : 'Play Again' }}
-          </button>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- MODE GRILLE DES DRAPEAUX                                                  -->
-    <!-- ========================================================================= -->
-    <div v-if="currentMode === 'flag-grid'" class="space-y-6 mt-6">
-      <div class="sticky top-20 z-30 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md p-4 sm:p-5 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
-          <div 
-            class="px-4 py-2.5 rounded-xl font-black text-xl tracking-wider text-white shadow-sm flex items-center gap-2"
-            :class="flagGridTime <= 30 && !flagGridFinished ? 'bg-red-500 animate-pulse' : 'bg-blue-600'"
-          >
-            <span>⏱️</span>
-            <span>{{ formatTime(flagGridTime) }}</span>
-          </div>
-
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-              {{ locale === 'fr' ? 'Drapeaux trouvés' : 'Flags Found' }}
-            </p>
-            <div class="flex items-baseline gap-1.5">
-              <strong class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                {{ flagGridFoundCount }}
-              </strong>
-              <span class="text-sm font-bold text-gray-500 dark:text-gray-400">
-                / {{ flagGridCountries.length }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="w-full md:flex-1 max-w-md">
-          <div class="h-3 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div 
-              class="h-full bg-gradient-to-r from-blue-600 to-emerald-500 transition-all duration-300 rounded-full"
-              :style="{ width: `${flagGridCountries.length ? (flagGridFoundCount / flagGridCountries.length) * 100 : 0}%` }"
-            ></div>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
-          <select
-            v-model="flagGridContinent"
-            @change="initFlagGrid"
-            :disabled="flagGridFoundCount > 0 && !flagGridFinished"
-            class="px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm font-semibold focus:outline-none disabled:opacity-50"
-          >
-            <option value="">{{ locale === 'fr' ? 'Monde entier (196)' : 'Whole World (196)' }}</option>
-            <option value="Europe">{{ locale === 'fr' ? 'Europe (47)' : 'Europe (47)' }}</option>
-            <option value="Asia">{{ locale === 'fr' ? 'Asie (46)' : 'Asia (46)' }}</option>
-            <option value="Africa">{{ locale === 'fr' ? 'Afrique (54)' : 'Africa (54)' }}</option>
-            <option value="North America">{{ locale === 'fr' ? 'Amérique du Nord (23)' : 'North America (23)' }}</option>
-            <option value="South America">{{ locale === 'fr' ? 'Amérique du Sud (12)' : 'South America (12)' }}</option>
-            <option value="Oceania">{{ locale === 'fr' ? 'Océanie (14)' : 'Oceania (14)' }}</option>
-          </select>
-
-          <button
-            v-if="!flagGridFinished"
-            type="button"
-            @click="finishFlagGrid"
-            class="px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition shadow-sm cursor-pointer"
-          >
-            {{ locale === 'fr' ? 'Abandonner / Terminer' : 'Give Up / Finish' }}
-          </button>
-
-          <button
-            v-else
-            type="button"
-            @click="initFlagGrid"
-            class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition shadow-sm cursor-pointer"
-          >
-            ↻ {{ locale === 'fr' ? 'Rejouer' : 'Play Again' }}
-          </button>
-        </div>
-      </div>
-
-      <div 
-        v-if="flagGridFinished" 
-        class="p-6 rounded-2xl text-center border"
-        :class="flagGridFoundCount === flagGridCountries.length 
-          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-800 dark:text-emerald-200' 
-          : 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-200'"
-      >
-        <h3 class="text-2xl font-black mb-1">
-          {{ flagGridFoundCount === flagGridCountries.length
-            ? (locale === 'fr' ? 'Sans-faute légendaire ! 🏆' : 'Legendary Perfect Score! 🏆')
-            : (locale === 'fr' ? 'Partie terminée !' : 'Game Over!') }}
-        </h3>
-        <p class="text-sm opacity-90">
-          {{ locale === 'fr'
-            ? `Vous avez identifié ${flagGridFoundCount} drapeaux sur ${flagGridCountries.length}.`
-            : `You identified ${flagGridFoundCount} out of ${flagGridCountries.length} flags.` }}
-        </p>
-      </div>
-
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        <div
-          v-for="(country, index) in flagGridCountries"
-          :key="country.id"
-          class="rounded-2xl p-3.5 transition-all duration-300 flex flex-col justify-between border-2"
-          :class="[
-            flagGridFound[country.iso]
-              ? 'bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-500 shadow-sm scale-[1.01]'
-              : flagGridFinished
-                ? 'bg-red-50/60 dark:bg-red-950/30 border-red-300 dark:border-red-800/70'
-                : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-blue-400/60 shadow-sm'
-          ]"
-        >
-          <div class="h-24 w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900/60 rounded-xl p-2 mb-3 overflow-hidden border border-gray-100 dark:border-gray-700/60">
-            <img
-              :src="`https://flagcdn.com/w160/${country.iso}.png`"
-              :alt="locale === 'fr' ? 'Drapeau à deviner' : 'Flag to guess'"
-              class="max-h-full max-w-full object-contain rounded shadow-sm select-none pointer-events-none"
-              loading="lazy"
-            />
-          </div>
-
-          <div class="relative">
-            <div
-              v-if="flagGridFound[country.iso]"
-              class="w-full px-3 py-2 rounded-xl bg-emerald-500 text-white font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 shadow-xs"
-            >
-              <span>✓</span>
-              <span class="truncate">{{ country.name }}</span>
-            </div>
-
-            <div
-              v-else-if="flagGridFinished"
-              class="w-full px-3 py-2 rounded-xl bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 font-bold text-xs sm:text-sm text-center truncate"
-              :title="country.name"
-            >
-              {{ country.name }}
-            </div>
-
-            <input
-              v-else
-              :ref="el => setFlagInputRef(el, index)"
-              v-model="flagGridInputs[country.iso]"
-              @input="checkSingleFlagInput(country, index)"
-              type="text"
-              :placeholder="locale === 'fr' ? 'Nom du pays...' : 'Country name...'"
-              autocomplete="off"
-              spellcheck="false"
-              class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-xs sm:text-sm font-semibold text-center focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-blue-500/20 transition-all"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- MODE FLASHCARDS 3D ENRICHIES (NAVIGATION BOUTONS & FLÈCHES CLAVIER)       -->
-    <!-- ========================================================================= -->
-    <div v-if="currentMode === 'flashcards'" class="max-w-xl mx-auto mt-6 space-y-6">
-      <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
-        <select 
-          v-model="flashcardContinent"
-          @change="resetFlashcards"
-          class="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-xs sm:text-sm font-semibold focus:outline-none"
-        >
-          <option value="">{{ locale === 'fr' ? 'Tous les continents (196)' : 'All Continents (196)' }}</option>
-          <option value="Europe">Europe (47)</option>
-          <option value="Asia">{{ locale === 'fr' ? 'Asie (46)' : 'Asia (46)' }}</option>
-          <option value="Africa">{{ locale === 'fr' ? 'Afrique (54)' : 'Africa (54)' }}</option>
-          <option value="North America">{{ locale === 'fr' ? 'Amérique du Nord (23)' : 'North America (23)' }}</option>
-          <option value="South America">{{ locale === 'fr' ? 'Amérique du Sud (12)' : 'South America (12)' }}</option>
-          <option value="Oceania">{{ locale === 'fr' ? 'Océanie (14)' : 'Oceania (14)' }}</option>
-        </select>
-
-        <select 
-          v-model="flashcardFrontPrompt"
-          @change="flashcardFlipped = false"
-          class="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-xs sm:text-sm font-semibold focus:outline-none"
-        >
-          <option value="flag">{{ locale === 'fr' ? 'Recto : Drapeau' : 'Front: Flag' }}</option>
-          <option value="country">{{ locale === 'fr' ? 'Recto : Nom du pays' : 'Front: Country Name' }}</option>
-          <option value="capital">{{ locale === 'fr' ? 'Recto : Capitale' : 'Front: Capital' }}</option>
-        </select>
-
-        <button 
-          type="button"
-          @click="shuffleFlashcards"
-          class="bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-gray-600 text-gray-800 dark:text-white hover:text-blue-600 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-2"
-        >
-          <span>🔀</span> {{ locale === 'fr' ? 'Mélanger' : 'Shuffle' }}
-        </button>
-      </div>
-
-      <div v-if="currentFlashcard" class="flip-scene w-full select-none">
-        <div 
-          class="flip-card-inner" 
-          :class="{ 'is-flipped': flashcardFlipped }"
-          @click="toggleFlashcardFlip"
-        >
-          <!-- FACE RECTO -->
-          <div class="flip-card-face flip-card-front bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-between text-center">
-            <div class="w-full flex items-center justify-between">
-              <span class="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-300">
-                {{ currentFlashcard.subregion || currentFlashcard.continent }}
-              </span>
-              <span class="text-xs font-extrabold text-gray-400">
-                {{ t('quiz.card_x_of_y', { current: flashcardIndex + 1, total: activeFlashcards.length }) }}
-              </span>
-            </div>
-
-            <div class="my-auto flex flex-col items-center justify-center py-6">
-              <template v-if="flashcardFrontPrompt === 'flag'">
-                <img :src="`https://flagcdn.com/w320/${currentFlashcard.iso}.png`" :alt="currentFlashcard.name" class="h-36 w-auto rounded-xl shadow-md mb-6 border border-gray-200 dark:border-gray-700 object-contain">
-                <p class="text-lg font-bold text-gray-700 dark:text-gray-200">{{ locale === 'fr' ? 'Quel est ce pays et sa capitale ?' : 'What is this country and its capital?' }}</p>
+                <div class="space-y-1">
+                  <span class="font-mono text-xs uppercase tracking-wider text-sky-500 block">
+                    {{ currentQcmQuestion.subregion }}
+                  </span>
+                  <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                    {{ locale === 'fr'
+                      ? `Quelle est la capitale de : ${currentQcmQuestion.name} ?`
+                      : `What is the capital of ${currentQcmQuestion.name}?` }}
+                  </h2>
+                </div>
               </template>
-              <template v-else-if="flashcardFrontPrompt === 'country'">
-                <h3 class="text-4xl font-black text-gray-900 dark:text-white mb-3">{{ currentFlashcard.name }}</h3>
-                <p class="text-base font-medium text-gray-500 dark:text-gray-400">{{ locale === 'fr' ? 'Devinez sa capitale et ses infos clés !' : 'Guess its capital and key facts!' }}</p>
-              </template>
+
               <template v-else>
-                <h3 class="text-4xl font-black text-gray-900 dark:text-white mb-3">{{ currentFlashcard.capital }}</h3>
-                <p class="text-base font-medium text-gray-500 dark:text-gray-400">{{ locale === 'fr' ? 'De quel pays est-ce la capitale ?' : 'Which country is this the capital of?' }}</p>
+                <img
+                  :src="`https://flagcdn.com/w160/${currentQcmQuestion.iso}.png`"
+                  class="h-16 w-auto rounded-xl mx-auto shadow-md border border-slate-200 dark:border-white/10"
+                  alt=""
+                />
+                <div class="space-y-1">
+                  <span class="font-mono text-xs uppercase tracking-wider text-fuchsia-500 block">
+                    {{ qcmCultureSubType === 'currency'
+                      ? (locale === 'fr' ? 'DEVISE NATIONALE' : 'NATIONAL CURRENCY')
+                      : qcmCultureSubType === 'lang'
+                        ? (locale === 'fr' ? 'LANGUE OFFICIELLE' : 'OFFICIAL LANGUAGE')
+                        : (locale === 'fr' ? 'COMPARAISON DÉMOGRAPHIQUE' : 'DEMOGRAPHIC COMPARISON') }}
+                  </span>
+                  <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                    {{ qcmCulturePrompt }}
+                  </h2>
+                </div>
               </template>
             </div>
 
-            <div class="w-full pt-4 border-t border-gray-100 dark:border-gray-700/70 text-xs font-bold text-blue-600 dark:text-blue-400">
-              {{ locale === 'fr' ? 'Cliquez ou appuyez sur Espace pour retourner ↻' : 'Click or press Space to flip ↻' }}
+            <!-- 4 Options de réponse (Pilotables à la souris ou touches 1, 2, 3, 4) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <button
+                v-for="(opt, idx) in qcmOptions"
+                :key="'opt-' + opt.id + '-' + idx"
+                type="button"
+                :disabled="qcmIsAnswered"
+                @click="verifierReponseQcm(opt.id)"
+                class="p-4 rounded-2xl border-2 text-left font-bold text-sm sm:text-base transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer"
+                :class="getQcmOptionClass(opt.id)"
+              >
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/10 font-mono text-xs font-black flex items-center justify-center shrink-0">
+                    {{ idx + 1 }}
+                  </span>
+                  <span class="truncate">{{ getQcmOptionLabel(opt) }}</span>
+                </div>
+                <span v-if="qcmIsAnswered && opt.id === qcmCorrectAnswer" class="text-emerald-400 font-black shrink-0">✓</span>
+                <span v-else-if="qcmIsAnswered && opt.id === qcmSelected && opt.id !== qcmCorrectAnswer" class="text-rose-400 font-black shrink-0">✕</span>
+              </button>
             </div>
+
+            <!-- Note culturelle instantanée après réponse -->
+            <transition name="fade-slide">
+              <div
+                v-if="qcmIsAnswered && currentQcmQuestion.fact"
+                class="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/25 text-xs text-slate-700 dark:text-slate-200 flex items-center gap-3"
+              >
+                <span class="font-mono text-[10px] font-black uppercase px-2 py-0.5 rounded bg-sky-500 text-slate-950 shrink-0">
+                  INFO
+                </span>
+                <span class="truncate">{{ currentQcmQuestion.fact }}</span>
+              </div>
+            </transition>
           </div>
 
-          <!-- FACE VERSO -->
-          <div class="flip-card-face flip-card-back bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 dark:border-gray-700 flex flex-col justify-between text-left">
-            <div>
-              <div class="flex items-start justify-between gap-4 pb-4 mb-5 border-b border-gray-100 dark:border-gray-700">
-                <div class="flex items-center gap-3.5">
-                  <img :src="`https://flagcdn.com/w160/${currentFlashcard.iso}.png`" :alt="currentFlashcard.name" class="h-12 w-auto rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 shrink-0">
-                  <div>
-                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">{{ currentFlashcard.subregion }}</span>
-                    <h3 class="text-2xl font-black text-gray-900 dark:text-white leading-tight">{{ currentFlashcard.name }}</h3>
+          <!-- ÉCRAN DE FIN DE QCM + BILAN COMPLET DES 15 QUESTIONS -->
+          <div
+            v-else
+            key="qcm-result"
+            class="rounded-3xl border border-slate-200/90 dark:border-white/15 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-6 sm:p-10 shadow-2xl space-y-8"
+          >
+            <div class="text-center space-y-3">
+              <div class="w-16 h-16 rounded-3xl bg-sky-500/15 border border-sky-500/30 text-sky-400 mx-auto flex items-center justify-center">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                  <path d="M4 22h16" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                </svg>
+              </div>
+
+              <span class="font-mono text-xs uppercase tracking-widest text-sky-500 font-bold block">
+                {{ locale === 'fr' ? 'RAPPORT DE SESSION COMPLET' : 'COMPLETE SESSION REPORT' }}
+              </span>
+              <h3 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                {{ locale === 'fr' ? 'Quiz terminé !' : 'Quiz Completed!' }}
+              </h3>
+              <p class="text-lg font-bold text-slate-600 dark:text-slate-300">
+                {{ locale === 'fr' ? 'Votre score :' : 'Your score:' }}
+                <strong class="font-mono text-2xl text-emerald-500 ml-1">{{ qcmScore }} / {{ totalQcmQuestions }}</strong>
+                <span class="font-mono text-sm text-slate-400 ml-2">({{ Math.round((qcmScore / totalQcmQuestions) * 100) }}%)</span>
+              </p>
+
+              <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+                <button
+                  type="button"
+                  @click="copyQcmDuelLink"
+                  class="w-full sm:w-auto px-6 py-3.5 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm transition cursor-pointer shadow-lg shadow-amber-500/20"
+                >
+                  {{ qcmChallengeCopied
+                    ? (locale === 'fr' ? 'Lien de défi copié !' : 'Challenge link copied!')
+                    : (locale === 'fr' ? `Défier un ami sur ces ${totalQcmQuestions} questions` : `Challenge a friend on these ${totalQcmQuestions} questions`) }}
+                </button>
+
+                <button
+                  type="button"
+                  @click="initQcm(qcmCurrentType)"
+                  class="w-full sm:w-auto px-7 py-3.5 rounded-full bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs sm:text-sm transition cursor-pointer shadow-lg shadow-sky-500/20"
+                >
+                  ↻ {{ locale === 'fr' ? 'Rejouer une série' : 'Play New Series' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Récapitulatif détaillé des 15 réponses (Correction) -->
+            <div v-if="qcmHistoryLog.length > 0" class="space-y-3 pt-6 border-t border-slate-200 dark:border-white/10">
+              <h4 class="font-mono text-xs font-bold uppercase tracking-wider text-slate-400">
+                {{ locale === 'fr' ? 'DÉTAIL DE VOS 15 RÉPONSES' : 'YOUR 15 ANSWERS BREAKDOWN' }}
+              </h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-[320px] overflow-y-auto pr-1">
+                <div
+                  v-for="(item, idx) in qcmHistoryLog"
+                  :key="'log-' + idx"
+                  class="p-3 rounded-2xl border flex items-center justify-between gap-2 text-xs"
+                  :class="item.isCorrect
+                    ? 'bg-emerald-500/[0.07] border-emerald-500/30 text-slate-900 dark:text-white'
+                    : 'bg-rose-500/[0.07] border-rose-500/30 text-slate-900 dark:text-white'"
+                >
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="font-mono text-[10px] opacity-60">#{{ idx + 1 }}</span>
+                    <img :src="`https://flagcdn.com/w40/${item.iso}.png`" class="h-4 w-auto rounded-2xs shrink-0" alt="" />
+                    <div class="min-w-0">
+                      <strong class="block truncate">{{ item.countryName }}</strong>
+                      <span class="text-[11px] text-slate-500 dark:text-slate-400 block truncate">
+                        {{ item.correctLabel }}
+                      </span>
+                    </div>
                   </div>
+                  <span class="font-black shrink-0" :class="item.isCorrect ? 'text-emerald-400' : 'text-rose-400'">
+                    {{ item.isCorrect ? '✓' : '✕' }}
+                  </span>
                 </div>
-                <span class="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold">↻</span>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3 mb-5">
-                <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
-                  <span class="text-xs font-semibold text-gray-400 block mb-0.5">🏛️ {{ t('common.capital') }}</span>
-                  <strong class="text-sm font-bold text-gray-900 dark:text-white">{{ currentFlashcard.capital }}</strong>
-                </div>
-                <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
-                  <span class="text-xs font-semibold text-gray-400 block mb-0.5">👥 {{ locale === 'fr' ? 'Habitants' : 'Population' }}</span>
-                  <strong class="text-sm font-bold text-gray-900 dark:text-white">{{ currentFlashcard.population }}</strong>
-                </div>
-                <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
-                  <span class="text-xs font-semibold text-gray-400 block mb-0.5">🗣️ {{ locale === 'fr' ? 'Langue(s)' : 'Language(s)' }}</span>
-                  <strong class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2">{{ currentFlashcard.lang }}</strong>
-                </div>
-                <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
-                  <span class="text-xs font-semibold text-gray-400 block mb-0.5">💶 {{ locale === 'fr' ? 'Monnaie' : 'Currency' }}</span>
-                  <strong class="text-sm font-bold text-gray-900 dark:text-white">{{ currentFlashcard.currency }}</strong>
-                </div>
-              </div>
-
-              <div class="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/70 dark:border-blue-800/60 rounded-2xl p-4">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-blue-700 dark:text-blue-300 block mb-1">💡 Fun Fact</span>
-                <p class="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{{ currentFlashcard.fact }}</p>
               </div>
             </div>
+
           </div>
+        </transition>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- MODE 2 : SPRINT 60 SECONDES (JAUGE CIRCULAIRE & COMBO)  -->
+      <!-- ======================================================= -->
+      <div v-else-if="currentMode === 'flash60'" key="quiz-flash60" class="max-w-3xl mx-auto">
+        <div
+          v-if="!flashFinished && currentFlashQuestion"
+          class="rounded-3xl border border-amber-500/30 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-6 sm:p-10 shadow-2xl space-y-6"
+        >
+          <!-- Jauge circulaire SVG 60s + Multiplicateur de Combo -->
+          <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+            <div class="flex items-center gap-3.5">
+              <div class="relative w-14 h-14 flex items-center justify-center">
+                <svg class="w-14 h-14 -rotate-90" viewBox="0 0 48 48">
+                  <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-200 dark:text-white/10" />
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="4"
+                    stroke-linecap="round"
+                    :stroke-dasharray="125.6"
+                    :stroke-dashoffset="125.6 - (Math.min(60, flashTimeLeft) / 60) * 125.6"
+                    :class="flashTimeLeft <= 10 ? 'text-rose-500' : 'text-amber-400'"
+                  />
+                </svg>
+                <span class="absolute font-mono text-sm font-black text-slate-900 dark:text-white">
+                  {{ flashTimeLeft }}s
+                </span>
+              </div>
+
+              <div>
+                <span class="font-mono text-[10px] uppercase tracking-wider text-slate-400 block">
+                  {{ locale === 'fr' ? 'CHRONOMÈTRE SPRINT' : 'SPRINT TIMER' }}
+                </span>
+                <span
+                  v-if="flashBonusToast"
+                  class="font-mono text-xs font-black text-emerald-400 animate-bounce block"
+                >
+                  +2 SECONDES BONUS !
+                </span>
+                <span v-else class="text-xs text-slate-500">
+                  {{ locale === 'fr' ? '+2s toutes les 4 bonnes réponses' : '+2s every 4 streak hits' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 font-mono text-xs">
+              <span class="px-3.5 py-2 rounded-2xl bg-fuchsia-500/15 border border-fuchsia-500/35 text-fuchsia-400 font-black">
+                COMBO x{{ flashMultiplier }} ({{ flashStreak }})
+              </span>
+              <span class="px-4 py-2 rounded-2xl bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 font-black text-sm">
+                {{ flashScore }} PTS
+              </span>
+            </div>
+          </div>
+
+          <div class="text-center py-3 space-y-3">
+            <img
+              :src="`https://flagcdn.com/w160/${currentFlashQuestion.iso}.png`"
+              class="h-16 w-auto rounded-xl mx-auto shadow-md border border-slate-200 dark:border-white/10"
+              alt=""
+            />
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+              {{ flashAskFlag
+                ? (locale === 'fr' ? 'Quel est ce pays ?' : 'Which country is this?')
+                : (locale === 'fr' ? `Capitale de : ${currentFlashQuestion.name} ?` : `Capital of ${currentFlashQuestion.name}?`) }}
+            </h2>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              v-for="(opt, idx) in flashOptions"
+              :key="'fl-' + opt.id"
+              type="button"
+              @click="submitFlashAnswer(opt.id)"
+              class="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] hover:border-amber-400 hover:bg-amber-500/10 text-slate-900 dark:text-white font-bold text-sm sm:text-base transition cursor-pointer flex items-center gap-3 text-left"
+            >
+              <span class="w-6 h-6 rounded-md bg-slate-200/70 dark:bg-white/10 font-mono text-xs font-black flex items-center justify-center shrink-0">
+                {{ idx + 1 }}
+              </span>
+              <span class="truncate">{{ flashAskFlag ? opt.name : opt.capital }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-else
+          class="rounded-3xl border border-slate-200 dark:border-white/15 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-8 sm:p-12 text-center shadow-2xl space-y-6"
+        >
+          <span class="font-mono text-xs font-bold uppercase tracking-widest text-amber-400 block">
+            SPRINT 60 SECONDES TERMINÉ
+          </span>
+          <h3 class="text-4xl font-black text-slate-900 dark:text-white">
+            {{ flashScore }} {{ locale === 'fr' ? 'Points' : 'Points' }}
+          </h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            {{ locale === 'fr'
+              ? `${flashCorrectCount} bonnes réponses • Meilleure série : ${flashBestStreak}`
+              : `${flashCorrectCount} correct answers • Best streak: ${flashBestStreak}` }}
+          </p>
+          <button
+            type="button"
+            @click="startFlash60"
+            class="px-8 py-3.5 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm transition cursor-pointer"
+          >
+            ↻ {{ locale === 'fr' ? 'Relancer un Sprint 60s' : 'Play 60s Sprint Again' }}
+          </button>
         </div>
       </div>
 
-      <div v-if="currentFlashcard" class="relative z-20 flex items-center justify-center gap-5 pt-2">
-        <button
-          type="button"
-          @click.stop="flashcardPrecedente"
-          class="w-12 h-12 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-full cursor-pointer flex items-center justify-center transition shadow-xs"
-        >
-          <span class="pointer-events-none text-xl font-black leading-none">←</span>
-        </button>
+      <!-- ======================================================= -->
+      <!-- MODE 3 : LE PAYS MYSTÈRE (WORLDLE + GLOBE RADAR 3D)     -->
+      <!-- ======================================================= -->
+      <div v-else-if="currentMode === 'mystery'" key="quiz-mystery" class="max-w-5xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-        <button
-          type="button"
-          @click.stop="toggleFlashcardFlip"
-          class="px-6 py-3 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white font-bold text-sm cursor-pointer hover:border-blue-500 transition shadow-xs"
-        >
-          ↻ {{ flashcardFlipped ? (locale === 'fr' ? 'Recto' : 'Front') : (locale === 'fr' ? 'Verso' : 'Back') }}
-        </button>
+          <!-- Colonne Principale (7 cols) : Saisie Mobile/PC & Grille des 6 essais -->
+          <div class="lg:col-span-7 rounded-3xl border border-slate-200/90 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-4 sm:p-7 shadow-2xl space-y-5 overflow-hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-white/10">
+              <div>
+                <span class="inline-block px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30">
+                  {{ mysteryIsDaily ? (locale === 'fr' ? 'Pays du Jour Officiel' : 'Official Daily Country') : (locale === 'fr' ? 'Entraînement Infini' : 'Infinite Practice Mode') }}
+                </span>
+                <h3 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-2 leading-tight">
+                  {{ locale === 'fr' ? 'Devinez le Pays Mystère en 6 essais' : 'Guess the Mystery Country in 6 tries' }}
+                </h3>
+              </div>
 
-        <button
-          type="button"
-          @click.stop="flashcardSuivante"
-          class="w-12 h-12 bg-brandBlue hover:bg-blue-700 text-white rounded-full cursor-pointer flex items-center justify-center transition shadow-xs"
-        >
-          <span class="pointer-events-none text-xl font-black leading-none">→</span>
-        </button>
-      </div>
-    </div>
+              <button
+                type="button"
+                @click="startInfiniteMystery"
+                class="self-start sm:self-auto px-4 py-2 rounded-full bg-slate-100 dark:bg-white/10 hover:bg-sky-500 hover:text-white text-slate-800 dark:text-white text-xs font-bold transition cursor-pointer whitespace-nowrap shrink-0"
+              >
+                ↻ {{ locale === 'fr' ? 'Nouveau pays aléatoire' : 'New Random Country' }}
+              </button>
+            </div>
 
-    <!-- ========================================================================= -->
-    <!-- MODE CHRONO CARTE (CLAVIER EUROPE 47 & MONDE 196 + GRILLES JETPUNK)       -->
-    <!-- ========================================================================= -->
-    <div v-if="currentMode === 'chrono'" class="max-w-6xl mx-auto mt-8">
-      <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-700">
-        
-        <div v-if="!isChronoStarted && !chronoFini" class="text-center py-4 space-y-8">
-          <div>
-            <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {{ locale === 'fr' ? 'Choisissez votre Défi Chrono' : 'Choose Your Timed Challenge' }}
-            </h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
+            <!-- Saisie : Bouton Valider centré en dessous sur mobile (<640px), en ligne sur PC (sm:flex-row) -->
+            <div v-if="!mysteryFinished" class="space-y-3">
+              <div class="flex flex-col sm:flex-row items-center sm:items-stretch gap-2.5 sm:gap-2">
+                <input
+                  v-model="mysteryQuery"
+                  @keydown.enter.prevent="submitMysteryGuess()"
+                  type="text"
+                  :placeholder="locale === 'fr' ? `Essai ${mysteryGuesses.length + 1}/6 : Tapez le nom d'un pays...` : `Try ${mysteryGuesses.length + 1}/6: Type a country name...`"
+                  class="w-full sm:flex-1 min-w-0 px-4 py-3 sm:py-3.5 rounded-xl border-2 border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-sm sm:text-base font-bold focus:outline-none focus:border-sky-500"
+                />
+                <button
+                  type="button"
+                  @click="submitMysteryGuess()"
+                  class="w-2/3 sm:w-auto mx-auto sm:mx-0 px-6 py-3 sm:py-3.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-sm transition cursor-pointer text-center shrink-0 shadow-md"
+                >
+                  {{ locale === 'fr' ? 'Valider' : 'Guess' }}
+                </button>
+              </div>
+
+              <!-- Suggestions cliquables pendant la frappe -->
+              <div v-if="mysterySuggestions.length > 0" class="flex flex-wrap gap-2 pt-1">
+                <button
+                  v-for="sug in mysterySuggestions"
+                  :key="sug.id"
+                  type="button"
+                  @click="submitMysteryGuess(sug)"
+                  class="px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500 hover:text-white text-slate-800 dark:text-slate-200 border border-sky-500/25 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <img :src="`https://flagcdn.com/w20/${sug.iso}.png`" class="h-3.5 w-auto rounded-2xs shrink-0" alt="" />
+                  <span class="truncate max-w-[210px]">{{ sug.name }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Grille des 6 tentatives (Nom complet du pays jamais tronqué en Fr...) -->
+            <div class="space-y-2.5">
+              <div
+                v-for="slot in 6"
+                :key="'mys-slot-' + slot"
+                class="min-h-[3.5rem] rounded-2xl px-3.5 py-2.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-2 gap-y-1.5 border transition-all"
+                :class="mysteryGuesses[slot - 1]
+                  ? (mysteryGuesses[slot - 1].isCorrect
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-black shadow-lg'
+                      : 'bg-slate-50 dark:bg-slate-900/90 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white')
+                  : 'bg-slate-50/40 dark:bg-white/[0.02] border-dashed border-slate-200 dark:border-white/10 text-slate-400'"
+              >
+                <template v-if="mysteryGuesses[slot - 1]">
+                  <div class="flex items-center gap-2.5 min-w-[125px] flex-1">
+                    <img
+                      :src="`https://flagcdn.com/w40/${mysteryGuesses[slot - 1].iso}.png`"
+                      class="h-4 sm:h-5 w-auto rounded-xs shadow-2xs shrink-0"
+                      alt=""
+                    />
+                    <strong class="text-sm sm:text-base font-extrabold leading-tight break-words">
+                      {{ mysteryGuesses[slot - 1].name }}
+                    </strong>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0 font-mono text-xs sm:text-sm font-extrabold ml-auto">
+                    <span class="whitespace-nowrap">{{ mysteryGuesses[slot - 1].distanceKm.toLocaleString() }} km</span>
+                    <span class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/10 dark:bg-white/10 whitespace-nowrap">
+                      {{ mysteryGuesses[slot - 1].direction }}
+                    </span>
+                    <span
+                      class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg whitespace-nowrap"
+                      :class="mysteryGuesses[slot - 1].isCorrect ? 'bg-white text-emerald-700' : 'bg-sky-500/15 text-sky-600 dark:text-sky-300'"
+                    >
+                      {{ mysteryGuesses[slot - 1].proximity }}%
+                    </span>
+                  </div>
+                </template>
+
+                <template v-else>
+                  <span class="font-mono text-xs">{{ locale === 'fr' ? `Essai ${slot} / 6` : `Try ${slot} / 6` }}</span>
+                </template>
+              </div>
+            </div>
+
+            <!-- Bilan final du Pays Mystère -->
+            <div
+              v-if="mysteryFinished && mysteryTarget"
+              class="p-5 sm:p-6 rounded-2xl border text-center space-y-4"
+              :class="mysteryWon
+                ? 'bg-emerald-500/10 border-emerald-500/40 text-slate-900 dark:text-white'
+                : 'bg-amber-500/10 border-amber-500/40 text-slate-900 dark:text-white'"
+            >
+              <img :src="`https://flagcdn.com/w160/${mysteryTarget.iso}.png`" class="h-16 w-auto mx-auto rounded-lg shadow" alt="" />
+              <div>
+                <h4 class="text-xl sm:text-2xl font-black">
+                  {{ mysteryWon
+                    ? (locale === 'fr' ? `Bravo ! Trouvé en ${mysteryGuesses.length}/6 : ${mysteryTarget.name}` : `Well done! Found in ${mysteryGuesses.length}/6: ${mysteryTarget.name}`)
+                    : (locale === 'fr' ? `Le pays mystère était : ${mysteryTarget.name}` : `The mystery country was: ${mysteryTarget.name}`) }}
+                </h4>
+                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
+                  {{ t('common.capital') }} : <strong>{{ mysteryTarget.capital }}</strong> • {{ mysteryTarget.subregion }} • {{ mysteryTarget.fact }}
+                </p>
+              </div>
+
+              <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+                <button
+                  type="button"
+                  @click="copyMysteryShareGrid"
+                  class="w-full sm:w-auto px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs sm:text-sm transition cursor-pointer"
+                >
+                  {{ mysteryCopied ? (locale === 'fr' ? 'Grille copiée !' : 'Grid copied!') : (locale === 'fr' ? 'Partager mon résultat (🟩🟨⬛)' : 'Share Result (🟩🟨⬛)') }}
+                </button>
+                <button
+                  type="button"
+                  @click="startInfiniteMystery"
+                  class="w-full sm:w-auto px-5 py-2.5 rounded-full bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs sm:text-sm transition cursor-pointer"
+                >
+                  ↻ {{ locale === 'fr' ? 'Rejouer avec un autre pays' : 'Play another country' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Colonne Droite (5 cols) : Globe Radar 3D de Triangulation Thermique -->
+          <div class="lg:col-span-5 rounded-3xl border border-slate-200/90 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 shadow-2xl flex flex-col items-center space-y-4">
+            <div class="w-full flex items-center justify-between text-xs font-mono text-slate-400 border-b border-slate-200 dark:border-white/10 pb-3">
+              <span class="text-sky-400 font-bold">
+                {{ locale === 'fr' ? 'RADAR DE TRIANGULATION 3D' : '3D TRIANGULATION RADAR' }}
+              </span>
+              <span>{{ mysteryGuesses.length }} / 6 POINTS</span>
+            </div>
+
+            <canvas
+              ref="mysteryGlobeCanvasRef"
+              class="w-[290px] h-[290px] sm:w-[330px] sm:h-[330px] cursor-grab active:cursor-grabbing select-none"
+              @pointerdown="onQuizGlobePointerDown"
+              @pointermove="onQuizGlobePointerMove"
+              @pointerup="onQuizGlobePointerUp"
+              @pointerleave="onQuizGlobePointerUp"
+            ></canvas>
+
+            <p class="text-[11px] text-center text-slate-500 dark:text-slate-400 leading-relaxed">
               {{ locale === 'fr'
-                ? 'Sélectionnez la carte puis votre limite de temps avant de lancer la partie.'
-                : 'Select the map and your time limit before starting the game.' }}
+                ? 'Vos essais s\'allument sur le globe 3D selon leur proximité thermique (bleu → ambre → émeraude). Faites tourner la sphère pour trianguler la cible.'
+                : 'Your guesses light up on the 3D globe by thermal proximity (blue → amber → emerald). Rotate the sphere to triangulate the target.' }}
             </p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            <div
-              @click="selectChronoMode('europe')"
-              class="p-6 rounded-2xl border-2 transition-all cursor-pointer text-left flex flex-col gap-3"
-              :class="chronoRegion === 'europe' ? 'border-brandBlue bg-blue-50/50 dark:bg-blue-900/20 shadow-sm' : 'border-gray-200 dark:border-gray-700'"
-            >
-              <div class="text-3xl">🇪🇺</div>
-              <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ t('home.mode_chrono_title') }}</h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ locale === 'fr' ? 'Retrouvez les 47 pays d\'Europe sur carte muette (grille alphabétique incluse).' : 'Find all 47 European countries on a blank map (alphabetical grid included).' }}
-              </p>
-            </div>
+        </div>
+      </div>
 
+      <!-- ======================================================= -->
+      <!-- MODE 4 : ENQUÊTE AUX 5 INDICES (CARTES 3D RECTO-VERSO)  -->
+      <!-- ======================================================= -->
+      <div v-else-if="currentMode === 'detective'" key="quiz-detective" class="max-w-4xl mx-auto">
+        <div
+          v-if="!detectiveFinished && detectiveTarget"
+          class="rounded-3xl border border-slate-200 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl space-y-6"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-200 dark:border-white/10 font-mono text-xs">
+            <span class="text-emerald-500 font-bold">
+              {{ locale === 'fr' ? `DOSSIER D'ENQUÊTE ${detectiveRound + 1} / 5` : `CASE FILE ${detectiveRound + 1} / 5` }}
+            </span>
+            <span class="px-3.5 py-1 rounded-full bg-sky-500/15 text-sky-400 font-bold">
+              SCORE : {{ detectiveScore }} / 25 PTS
+            </span>
+          </div>
+
+          <!-- 5 Vraies Cartes d'Indices 3D Recto-Verso -->
+          <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
             <div
-              @click="selectChronoMode('world')"
-              class="p-6 rounded-2xl border-2 transition-all cursor-pointer text-left flex flex-col gap-3"
-              :class="chronoRegion === 'world' ? 'border-brandBlue bg-blue-50/50 dark:bg-blue-900/20 shadow-sm' : 'border-gray-200 dark:border-gray-700'"
+              v-for="(clue, idx) in currentDetectiveClues"
+              :key="'clue-' + idx"
+              class="clue-3d-scene"
+              @click="idx === detectiveCluesRevealed && !detectiveRoundAnswered ? detectiveCluesRevealed++ : null"
             >
-              <div class="text-3xl">🌍</div>
-              <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ locale === 'fr' ? 'Défi Monde (196 pays)' : 'World Challenge (196 countries)' }}</h4>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ locale === 'fr' ? 'Retrouvez les 196 pays du monde sur carte muette classés par continent comme sur JetPunk !' : 'Find all 196 world countries on a blank map sorted by continent just like JetPunk!' }}
-              </p>
+              <div class="clue-3d-inner" :class="{ 'is-flipped': idx < detectiveCluesRevealed }">
+                <!-- Dos verrouillé de l'indice -->
+                <div class="clue-3d-face clue-3d-front rounded-2xl border border-dashed border-slate-300 dark:border-white/15 bg-slate-100/60 dark:bg-white/[0.03] p-4 flex flex-col items-center justify-between text-center">
+                  <span class="font-mono text-[10px] font-bold uppercase text-slate-400">
+                    {{ locale === 'fr' ? `INDICE #${idx + 1}` : `CLUE #${idx + 1}` }}
+                  </span>
+                  <div class="w-9 h-9 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-400 flex items-center justify-center font-mono text-xs font-black">
+                    ?
+                  </div>
+                  <span class="text-[10px] font-bold text-sky-500">
+                    {{ idx === detectiveCluesRevealed ? (locale === 'fr' ? 'Cliquer pour révéler' : 'Click to reveal') : `${6 - (idx + 1)} pts` }}
+                  </span>
+                </div>
+
+                <!-- Face révélée en 3D de l'indice -->
+                <div class="clue-3d-face clue-3d-back rounded-2xl border border-sky-500/40 bg-sky-500/[0.08] p-3.5 flex flex-col justify-between">
+                  <span class="font-mono text-[10px] font-bold uppercase text-sky-400">
+                    {{ locale === 'fr' ? `INDICE #${idx + 1}` : `CLUE #${idx + 1}` }}
+                  </span>
+                  <div class="my-auto py-1">
+                    <template v-if="clue.type === 'flag'">
+                      <img :src="`https://flagcdn.com/w80/${detectiveTarget.iso}.png`" class="h-10 w-auto rounded shadow mx-auto" alt="" />
+                    </template>
+                    <template v-else>
+                      <span class="text-[10px] text-slate-400 block">{{ clue.label }}</span>
+                      <strong class="text-xs font-extrabold text-slate-900 dark:text-white leading-snug block mt-0.5">
+                        {{ clue.value }}
+                      </strong>
+                    </template>
+                  </div>
+                  <span class="font-mono text-[9px] text-emerald-400 font-bold">DÉVERROUILLÉ</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="max-w-2xl mx-auto bg-gray-50 dark:bg-gray-900/60 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3">
-            <h4 class="text-sm font-extrabold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-              ⏱️ {{ locale === 'fr' ? 'Limite de temps & Calcul des points' : 'Time Limit & Scoring' }}
-            </h4>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <button
+              v-if="detectiveCluesRevealed < 5 && !detectiveRoundAnswered"
+              type="button"
+              @click="detectiveCluesRevealed++"
+              class="px-4 py-2.5 rounded-full bg-amber-500/15 border border-amber-500/35 text-amber-500 hover:bg-amber-500 hover:text-slate-950 font-bold text-xs transition cursor-pointer"
+            >
+              ↻ {{ locale === 'fr' ? `Retourner l'indice #${detectiveCluesRevealed + 1} (${6 - (detectiveCluesRevealed + 1)} pts max)` : `Flip clue #${detectiveCluesRevealed + 1} (${6 - (detectiveCluesRevealed + 1)} pts max)` }}
+            </button>
+            <span class="font-mono text-xs text-slate-400 ml-auto">
+              {{ locale === 'fr' ? `Gain potentiel : ${6 - detectiveCluesRevealed} pt(s)` : `Potential reward: ${6 - detectiveCluesRevealed} pt(s)` }}
+            </span>
+          </div>
 
-            <div class="flex flex-wrap items-center justify-center gap-3">
+          <!-- Saisie de la réponse d'enquête -->
+          <div v-if="!detectiveRoundAnswered" class="space-y-2.5">
+            <div class="flex flex-col sm:flex-row gap-2.5">
+              <input
+                v-model="detectiveQuery"
+                @keydown.enter.prevent="submitDetectiveGuess()"
+                type="text"
+                :placeholder="locale === 'fr' ? 'Quel est cet État ?' : 'Which country is this?'"
+                class="w-full sm:flex-1 min-w-0 px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-bold focus:outline-none focus:border-sky-500"
+              />
               <button
-                v-for="opt in chronoTimerOptions"
-                :key="opt.seconds"
                 type="button"
-                @click="selectChronoDuration(opt.seconds)"
-                class="px-5 py-3 rounded-xl border-2 font-bold text-xs sm:text-sm transition-all cursor-pointer flex flex-col items-center gap-0.5"
-                :class="chronoTimeLimit === opt.seconds
-                  ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
-                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white hover:border-blue-400'"
+                @click="submitDetectiveGuess()"
+                class="w-2/3 sm:w-auto mx-auto sm:mx-0 px-6 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs sm:text-sm transition cursor-pointer shrink-0"
               >
-                <span class="text-sm sm:text-base font-black">{{ opt.label }}</span>
-                <span
-                  class="text-[11px] font-semibold"
-                  :class="chronoTimeLimit === opt.seconds ? 'text-blue-100' : 'text-gray-400'"
-                >
-                  {{ opt.subLabel }}
-                </span>
+                {{ locale === 'fr' ? 'Identifier' : 'Identify' }}
+              </button>
+            </div>
+
+            <div v-if="detectiveSuggestions.length > 0" class="flex flex-wrap gap-1.5">
+              <button
+                v-for="sug in detectiveSuggestions"
+                :key="'det-' + sug.id"
+                type="button"
+                @click="submitDetectiveGuess(sug)"
+                class="px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/10 hover:bg-sky-500 hover:text-white text-xs font-bold transition cursor-pointer"
+              >
+                {{ sug.name }}
               </button>
             </div>
           </div>
 
-          <button
-            @click="demarrerChrono"
-            class="bg-brandBlue text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-700 transition shadow-md cursor-pointer"
+          <div
+            v-else
+            class="p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4"
+            :class="detectiveRoundWon ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-rose-500/10 border-rose-500/40'"
           >
-            {{ t('quiz.start_timer') }}
-          </button>
+            <div class="flex items-center gap-3">
+              <img :src="`https://flagcdn.com/w80/${detectiveTarget.iso}.png`" class="h-10 w-auto rounded shadow" alt="" />
+              <div>
+                <strong class="text-base font-black text-slate-900 dark:text-white block">
+                  {{ detectiveTarget.name }} ({{ detectiveTarget.capital }})
+                </strong>
+                <span class="text-xs text-slate-500 dark:text-slate-300">
+                  {{ detectiveRoundWon
+                    ? (locale === 'fr' ? `Identifié avec ${detectiveCluesRevealed} indice(s) !` : `Identified with ${detectiveCluesRevealed} clue(s)!`)
+                    : (locale === 'fr' ? 'Non trouvé sur ce dossier.' : 'Missed on this case.') }}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="nextDetectiveRound"
+              class="px-5 py-2.5 rounded-full bg-sky-500 text-slate-950 font-black text-xs cursor-pointer shrink-0"
+            >
+              {{ detectiveRound < 4 ? (locale === 'fr' ? 'Dossier suivant →' : 'Next case →') : (locale === 'fr' ? 'Voir le bilan →' : 'Final report →') }}
+            </button>
+          </div>
         </div>
 
-        <div v-else class="space-y-6">
-          
-          <div class="w-full h-[460px] bg-[#aad3df] dark:bg-[#1e293b] rounded-2xl overflow-hidden shadow-inner border border-gray-200 dark:border-gray-700 relative z-0">
-            <l-map ref="map" v-model:zoom="mapZoom" v-model:center="mapCenter" :min-zoom="2" :max-zoom="7" :use-global-leaflet="false">
-              <l-tile-layer
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}"
-                :no-wrap="true"
-              ></l-tile-layer>
-              <l-circle-marker
-                v-for="country in targetCountries"
-                :key="'marker-' + country.id"
-                :lat-lng="[country.lat, country.lng]"
-                :radius="getMarkerRadius(country.iso)"
-                :color="paysTrouves.includes(country.iso) ? '#15803d' : (chronoFini ? '#b91c1c' : '#64748b')"
-                :weight="1.5"
-                :fill-color="paysTrouves.includes(country.iso) ? '#22c55e' : (chronoFini ? '#ef4444' : '#ffffff')"
-                :fill-opacity="0.95"
+        <div
+          v-else
+          class="rounded-3xl border border-slate-200 dark:border-white/15 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-8 sm:p-12 text-center shadow-2xl space-y-5"
+        >
+          <h3 class="text-3xl font-black text-slate-900 dark:text-white">
+            {{ locale === 'fr' ? 'Enquêtes terminées !' : 'Investigations Complete!' }}
+          </h3>
+          <p class="font-mono text-2xl font-black text-emerald-400">
+            {{ detectiveScore }} / 25 PTS
+          </p>
+          <button
+            type="button"
+            @click="initDetective"
+            class="px-7 py-3.5 rounded-full bg-sky-500 text-slate-950 font-black text-sm cursor-pointer"
+          >
+            ↻ {{ locale === 'fr' ? 'Nouvelle série d\'enquêtes' : 'New Investigation Series' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- MODE 5 : DÉFIS CHRONO (AVEC GLOBE 3D INTERACTIF + 2D)   -->
+      <!-- ======================================================= -->
+      <div v-else-if="currentMode === 'chrono'" key="quiz-chrono" class="space-y-6">
+        <div class="rounded-3xl border border-slate-200 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-2xl space-y-5">
+
+          <!-- Barre de contrôle : Europe (47) / Monde (196) + Bascule Globe 3D / Carte 2D + Temps -->
+          <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                @click="changerPorteeChrono('europe')"
+                class="px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer"
+                :class="chronoScope === 'europe' ? 'bg-sky-500 text-slate-950 font-black' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'"
               >
-                <l-popup v-if="paysTrouves.includes(country.iso) || chronoFini">
-                  <strong>{{ country.name }}</strong>
+                Europe (47)
+              </button>
+              <button
+                type="button"
+                @click="changerPorteeChrono('world')"
+                class="px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer"
+                :class="chronoScope === 'world' ? 'bg-sky-500 text-slate-950 font-black' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'"
+              >
+                {{ locale === 'fr' ? 'Monde entier (196)' : 'Full World (196)' }}
+              </button>
+
+              <div class="h-5 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
+
+              <!-- Sélecteur de Vue : Globe 3D Interactif vs Carte Muette 2D -->
+              <div class="flex items-center p-1 rounded-full bg-slate-100 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10">
+                <button
+                  type="button"
+                  @click="chronoViewMode = 'globe3d'"
+                  class="px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer"
+                  :class="chronoViewMode === 'globe3d' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-500 dark:text-slate-300'"
+                >
+                  {{ locale === 'fr' ? 'Globe 3D Interactif' : '3D Interactive Globe' }}
+                </button>
+                <button
+                  type="button"
+                  @click="chronoViewMode = 'map2d'"
+                  class="px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer"
+                  :class="chronoViewMode === 'map2d' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-500 dark:text-slate-300'"
+                >
+                  {{ locale === 'fr' ? 'Planisphère 2D' : '2D World Map' }}
+                </button>
+              </div>
+
+              <div class="h-5 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
+
+              <button
+                v-for="preset in chronoAvailablePresets"
+                :key="preset.sec"
+                type="button"
+                @click="changerDureeChrono(preset.sec)"
+                class="px-3 py-1.5 rounded-full font-mono text-xs font-bold transition cursor-pointer"
+                :class="chronoDuration === preset.sec
+                  ? 'bg-sky-500/20 border border-sky-500/40 text-sky-400'
+                  : 'bg-slate-100 dark:bg-white/5 text-slate-500'"
+              >
+                {{ preset.label }}
+              </button>
+            </div>
+
+            <!-- Compteur & Progression -->
+            <div class="flex items-center gap-2.5 font-mono">
+              <span class="px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-black">
+                {{ chronoFoundIds.length }} / {{ chronoTargetCountries.length }} ({{ Math.round((chronoFoundIds.length / chronoTargetCountries.length) * 100) }}%)
+              </span>
+              <span class="px-4 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-sm font-black">
+                {{ chronoDuration === 0 ? '∞' : formatTime(chronoTimeLeft) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Barre de saisie + Feedback Dernier Pays Trouvé ou Doublon -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
+            <div class="lg:col-span-7 flex flex-col sm:flex-row items-center sm:items-stretch gap-2.5">
+              <input
+                v-model="chronoInput"
+                @input="verifierSaisieChrono(false)"
+                @keydown.enter.prevent="verifierSaisieChrono(true)"
+                :disabled="chronoFini"
+                type="text"
+                :placeholder="locale === 'fr' ? 'Tapez un pays (ex: France, RDC, USA, Pays-Bas)...' : 'Type a country (e.g., France, USA, UK)...'"
+                autocomplete="off"
+                spellcheck="false"
+                class="w-full sm:flex-1 min-w-0 px-4 py-3 rounded-xl border-2 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-sm sm:text-base font-bold transition-colors focus:outline-none"
+                :class="chronoDuplicateMsg ? 'border-amber-500' : 'border-slate-200 dark:border-white/15 focus:border-sky-500'"
+              />
+              <button
+                v-if="!chronoFini"
+                type="button"
+                @click="terminerChrono"
+                class="w-2/3 sm:w-auto mx-auto sm:mx-0 px-5 py-3 rounded-xl bg-rose-500/15 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/30 text-xs font-bold transition cursor-pointer shrink-0 text-center"
+              >
+                {{ locale === 'fr' ? 'Révéler les manquants' : 'Give up & Reveal' }}
+              </button>
+              <button
+                v-else
+                type="button"
+                @click="demarrerChrono"
+                class="w-2/3 sm:w-auto mx-auto sm:mx-0 px-6 py-3 rounded-xl bg-sky-500 text-slate-950 text-xs font-black transition cursor-pointer shrink-0 text-center"
+              >
+                ↻ {{ locale === 'fr' ? 'Rejouer' : 'Play Again' }}
+              </button>
+            </div>
+
+            <!-- Toast du dernier pays validé ou alerte doublon -->
+            <div class="lg:col-span-5 flex items-center justify-end">
+              <div
+                v-if="chronoDuplicateMsg"
+                class="w-full px-4 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-400 text-xs font-bold flex items-center gap-2"
+              >
+                <span>⚠️ {{ chronoDuplicateMsg }}</span>
+              </div>
+              <div
+                v-else-if="chronoLastFoundCountry"
+                class="w-full px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 text-xs font-bold flex items-center justify-between gap-2"
+              >
+                <div class="flex items-center gap-2.5 truncate">
+                  <img :src="`https://flagcdn.com/w40/${chronoLastFoundCountry.iso}.png`" class="h-4 w-auto rounded-2xs shrink-0" alt="" />
+                  <span class="truncate">{{ locale === 'fr' ? 'Validé :' : 'Found:' }} <strong>{{ chronoLastFoundCountry.name }}</strong> ({{ chronoLastFoundCountry.capital }})</span>
+                </div>
+                <span class="font-mono text-[10px] shrink-0">✓</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- VUE 1 : GLOBE 3D INTERACTIF AVEC ROTATION AUTOMATIQUE SUR LE DERNIER PAYS TROUVÉ -->
+          <div
+            v-if="chronoViewMode === 'globe3d'"
+            class="relative rounded-3xl border border-slate-200 dark:border-white/10 bg-[#050811] py-6 px-4 flex flex-col items-center justify-center overflow-hidden min-h-[430px]"
+          >
+            <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.12),transparent_70%)]"></div>
+
+            <canvas
+              ref="chronoGlobeCanvasRef"
+              class="relative z-10 w-[330px] h-[330px] sm:w-[420px] sm:h-[420px] cursor-grab active:cursor-grabbing select-none"
+              @pointerdown="onQuizGlobePointerDown"
+              @pointermove="onQuizGlobePointerMove"
+              @pointerup="onQuizGlobePointerUp"
+              @pointerleave="onQuizGlobePointerUp"
+            ></canvas>
+
+            <div class="relative z-10 mt-3 flex flex-wrap items-center justify-center gap-4 font-mono text-[11px] text-slate-400">
+              <span class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                <span>{{ locale === 'fr' ? 'Pays trouvés' : 'Found countries' }} ({{ chronoFoundIds.length }})</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+                <span>{{ locale === 'fr' ? 'Restants à deviner' : 'Remaining' }} ({{ chronoTargetCountries.length - chronoFoundIds.length }})</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- VUE 2 : PLANISPHÈRE MUET 2D LEAFLET -->
+          <div
+            v-else
+            class="h-[390px] sm:h-[450px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative z-0"
+          >
+            <l-map
+              v-model:zoom="chronoMapZoom"
+              v-model:center="chronoMapCenter"
+              :min-zoom="2"
+              :max-zoom="6"
+              :use-global-leaflet="false"
+            >
+              <l-tile-layer :url="blankTileUrl" :no-wrap="false"></l-tile-layer>
+              <l-circle-marker
+                v-for="country in chronoTargetCountries"
+                :key="'chr-m-' + country.id"
+                :lat-lng="[country.lat, country.lng]"
+                :radius="chronoFoundSet.has(country.id) ? 7.5 : (chronoFini ? 6 : 4.5)"
+                :color="chronoFoundSet.has(country.id) ? '#10b981' : (chronoFini ? '#f43f5e' : '#64748b')"
+                :fill-color="chronoFoundSet.has(country.id) ? '#10b981' : (chronoFini ? '#f43f5e' : '#475569')"
+                :fill-opacity="0.88"
+              >
+                <l-popup v-if="chronoFoundSet.has(country.id) || chronoFini">
+                  <strong class="text-xs">{{ country.name }}</strong>
                 </l-popup>
               </l-circle-marker>
             </l-map>
           </div>
 
-          <div class="flex flex-col lg:flex-row justify-between items-center gap-4 bg-white dark:bg-gray-800 border-2 border-brandBlue/20 p-4 sm:p-5 rounded-2xl shadow-sm">
-            
-            <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-start">
-              <div class="flex items-center gap-4">
-                <div
-                  class="w-16 h-16 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold text-white shrink-0"
-                  :class="chronoTimeLimit > 0 && chronoTemps <= 20 && !chronoFini ? 'bg-red-500 animate-pulse' : 'bg-brandBlue'"
-                >
-                  {{ chronoTimeLimit === 0 ? '∞' : formatTime(chronoTemps) }}
-                </div>
-
-                <div>
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-semibold">{{ t('quiz.progression') }}</p>
-                    <span
-                      class="px-2 py-0.5 rounded-full text-[11px] font-extrabold"
-                      :class="chronoMultiplier === 1
-                        ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
-                        : 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300'"
-                    >
-                      {{ chronoMultiplierBadge }}
-                    </span>
-                  </div>
-                  <h3 class="font-bold text-gray-900 dark:text-white text-xl">
-                    {{ t('quiz.found', { current: paysTrouves.length, total: targetCountries.length }) }}
-                  </h3>
-                  <p class="text-xs font-extrabold text-blue-600 dark:text-blue-400">
-                    🏆 {{ chronoAdjustedScore }} / {{ targetCountries.length }} pts • +{{ chronoEarnedXp }} XP
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="w-full lg:w-1/2 space-y-2">
-              <div class="flex flex-col sm:flex-row gap-2.5">
-                <input
-                  v-model="chronoInput"
-                  @input="verifierSaisieChrono(false)"
-                  @keydown.enter.prevent="verifierSaisieChrono(true)"
-                  :disabled="chronoFini"
-                  type="text"
-                  :placeholder="locale === 'fr' ? 'Tapez le nom d\'un pays...' : 'Type a country name...'"
-                  autocomplete="off"
-                  spellcheck="false"
-                  class="flex-1 pl-5 pr-4 py-3.5 rounded-xl border-2 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-base sm:text-lg font-bold transition-colors focus:outline-none"
-                  :class="chronoDuplicateMsg
-                    ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/30'
-                    : 'border-brandBlue/40 focus:border-brandBlue'"
-                />
-
-                <button
-                  v-if="!chronoFini"
-                  type="button"
-                  @click="terminerChrono"
-                  class="px-4 py-3.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-bold transition cursor-pointer shrink-0"
-                >
-                  {{ locale === 'fr' ? 'Révéler les pays manquants' : 'Reveal missing countries' }}
-                </button>
-
-                <button
-                  v-else
-                  type="button"
-                  @click="demarrerChrono"
-                  class="px-5 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold transition cursor-pointer shrink-0"
-                >
-                  ↻ {{ locale === 'fr' ? 'Rejouer' : 'Play Again' }}
-                </button>
-              </div>
-
-              <transition name="fade">
-                <div
-                  v-if="chronoDuplicateMsg"
-                  class="px-3.5 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/60 border border-amber-400 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs sm:text-sm font-extrabold flex items-center justify-between"
-                >
-                  <span>⚠️ {{ chronoDuplicateMsg }}</span>
-                  <button
-                    type="button"
-                    @click="chronoDuplicateMsg = ''; chronoInput = ''"
-                    class="text-xs underline ml-2 cursor-pointer"
-                  >
-                    {{ locale === 'fr' ? 'Effacer' : 'Clear' }}
-                  </button>
-                </div>
-              </transition>
-            </div>
-          </div>
-
-          <div
-            v-if="chronoFini"
-            class="p-5 rounded-2xl border text-center space-y-2"
-            :class="paysTrouves.length === targetCountries.length
-              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-900 dark:text-emerald-200'
-              : 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-200'"
-          >
-            <h4 class="text-2xl font-black">
-              {{ paysTrouves.length === targetCountries.length
-                ? (locale === 'fr' ? 'Sans-faute légendaire ! 🏆' : 'Legendary Perfect Score! 🏆')
-                : (locale === 'fr' ? 'Défi terminé !' : 'Challenge Finished!') }}
-            </h4>
-            <p class="text-sm font-bold">
-              {{ locale === 'fr'
-                ? `Pays trouvés : ${paysTrouves.length} / ${targetCountries.length} • Score comptabilisé (${chronoMultiplierBadge}) : ${chronoAdjustedScore} pts • +${chronoEarnedXp} XP`
-                : `Countries found: ${paysTrouves.length} / ${targetCountries.length} • Final Score (${chronoMultiplierBadge}): ${chronoAdjustedScore} pts • +${chronoEarnedXp} XP` }}
-            </p>
-          </div>
-
-          <!-- CAS 1 : DÉFI MONDE (6 COLONNES PAR CONTINENT COMME SUR JETPUNK) -->
-          <div v-if="chronoRegion === 'world'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 pt-2">
+          <!-- Grille alphabétique par continent style JetPunk -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
             <div
-              v-for="group in worldContinentGroups"
-              :key="group.key"
-              class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900 shadow-2xs flex flex-col"
+              v-for="group in chronoContinentGroups"
+              :key="group.continent"
+              class="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]"
             >
-              <div class="bg-[#2b579a] text-white font-bold text-xs sm:text-sm py-2 px-3 text-center flex items-center justify-between">
-                <span class="truncate">{{ group.label }}</span>
-                <span class="text-[11px] bg-black/25 px-2 py-0.5 rounded-full font-extrabold">
-                  {{ group.foundCount }}/{{ group.countries.length }}
-                </span>
+              <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-200 dark:border-white/10 text-xs font-black">
+                <span class="text-sky-500">{{ group.label }}</span>
+                <span class="font-mono">{{ group.foundCount }} / {{ group.countries.length }}</span>
               </div>
-
-              <div class="divide-y divide-gray-200 dark:divide-gray-700/80 text-xs">
+              <div class="grid grid-cols-2 gap-1.5 text-xs">
                 <div
-                  v-for="country in group.countries"
-                  :key="'jp-w-' + country.id"
-                  class="h-7 px-2.5 flex items-center justify-between transition-colors"
-                  :class="[
-                    paysTrouves.includes(country.iso)
-                      ? 'bg-emerald-50/90 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold'
-                      : chronoFini
-                        ? 'bg-red-50/70 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-semibold'
-                        : 'bg-white dark:bg-gray-900 text-transparent select-none'
-                  ]"
+                  v-for="c in group.countries"
+                  :key="'grid-c-' + c.id"
+                  class="px-2 py-1 rounded truncate font-medium flex items-center gap-1.5"
+                  :class="chronoFoundSet.has(c.id)
+                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 font-bold'
+                    : chronoFini
+                      ? 'bg-rose-500/15 text-rose-400 font-semibold'
+                      : 'bg-slate-200/50 dark:bg-white/[0.03] text-transparent select-none'"
                 >
-                  <template v-if="paysTrouves.includes(country.iso) || chronoFini">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <img :src="`https://flagcdn.com/w20/${country.iso}.png`" class="h-3 w-auto rounded-2xs shrink-0" alt="" />
-                      <span class="truncate" :title="country.name">{{ country.name }}</span>
-                    </div>
-                    <span v-if="paysTrouves.includes(country.iso)" class="text-[10px] text-emerald-600 dark:text-emerald-400">✓</span>
-                  </template>
-                  <template v-else>
-                    <span>&nbsp;</span>
-                  </template>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- CAS 2 : DÉFI EUROPE (4 COLONNES ALPHABÉTIQUES JETPUNK) -->
-          <div v-else class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900 shadow-2xs">
-            <div class="bg-[#2b579a] text-white font-bold text-sm py-2.5 px-4 flex items-center justify-between">
-              <span>🇪🇺 Europe</span>
-              <span class="text-xs bg-black/25 px-2.5 py-0.5 rounded-full font-extrabold">
-                {{ paysTrouves.length }} / {{ targetCountries.length }}
-              </span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 dark:divide-gray-700">
-              <div
-                v-for="(col, colIdx) in europeColumns"
-                :key="'eur-col-' + colIdx"
-                class="divide-y divide-gray-200 dark:divide-gray-700/80 text-xs sm:text-sm"
-              >
-                <div
-                  v-for="country in col"
-                  :key="'jp-e-' + country.id"
-                  class="h-8 px-3 flex items-center justify-between transition-colors"
-                  :class="[
-                    paysTrouves.includes(country.iso)
-                      ? 'bg-emerald-50/90 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold'
-                      : chronoFini
-                        ? 'bg-red-50/70 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-semibold'
-                        : 'bg-white dark:bg-gray-900 text-transparent select-none'
-                  ]"
-                >
-                  <template v-if="paysTrouves.includes(country.iso) || chronoFini">
-                    <div class="flex items-center gap-2 min-w-0">
-                      <img :src="`https://flagcdn.com/w20/${country.iso}.png`" class="h-3.5 w-auto rounded-2xs shrink-0" alt="" />
-                      <span class="truncate" :title="country.name">{{ country.name }}</span>
-                    </div>
-                    <span v-if="paysTrouves.includes(country.iso)" class="text-xs text-emerald-600 dark:text-emerald-400">✓</span>
-                  </template>
-                  <template v-else>
-                    <span>&nbsp;</span>
-                  </template>
+                  <img
+                    v-if="chronoFoundSet.has(c.id) || chronoFini"
+                    :src="`https://flagcdn.com/w20/${c.iso}.png`"
+                    class="h-3 w-auto rounded-2xs shrink-0"
+                    alt=""
+                  />
+                  <span class="truncate">{{ chronoFoundSet.has(c.id) || chronoFini ? c.name : '••••••••' }}</span>
                 </div>
               </div>
             </div>
@@ -1579,163 +1010,447 @@
 
         </div>
       </div>
-    </div>
+
+      <!-- ======================================================= -->
+      <!-- MODE 6 : CLIQUEZ SUR LA CARTE MUETTE (STYLE SETERRA)    -->
+      <!-- ======================================================= -->
+      <div v-else-if="currentMode === 'map-click'" key="quiz-mapclick" class="space-y-5">
+        <div class="rounded-3xl border border-slate-200 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-2xl space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="initMapClick('europe')"
+                class="px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition"
+                :class="mapClickScope === 'europe' ? 'bg-sky-500 text-slate-950 font-black' : 'bg-slate-100 dark:bg-white/5 text-slate-400'"
+              >
+                Europe (20)
+              </button>
+              <button
+                type="button"
+                @click="initMapClick('world')"
+                class="px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition"
+                :class="mapClickScope === 'world' ? 'bg-sky-500 text-slate-950 font-black' : 'bg-slate-100 dark:bg-white/5 text-slate-400'"
+              >
+                {{ locale === 'fr' ? 'Sprint Monde (25)' : 'World Sprint (25)' }}
+              </button>
+            </div>
+
+            <div v-if="!mapClickFinished && currentMapClickTarget" class="flex items-center gap-3">
+              <img :src="`https://flagcdn.com/w80/${currentMapClickTarget.iso}.png`" class="h-7 w-auto rounded shadow" alt="" />
+              <span class="text-base sm:text-xl font-black text-slate-900 dark:text-white">
+                {{ locale === 'fr' ? `Localisez : ${currentMapClickTarget.name}` : `Locate: ${currentMapClickTarget.name}` }}
+              </span>
+              <button
+                type="button"
+                @click="skipMapClickTarget"
+                class="px-3 py-1 rounded-full bg-slate-200 dark:bg-white/10 text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer"
+              >
+                {{ locale === 'fr' ? 'Passer →' : 'Skip →' }}
+              </button>
+            </div>
+
+            <span class="font-mono text-xs font-black px-3.5 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400">
+              SCORE : {{ mapClickScore }} / {{ mapClickTargets.length }}
+            </span>
+          </div>
+
+          <div class="h-[440px] sm:h-[500px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative z-0">
+            <l-map
+              v-model:zoom="mapClickZoom"
+              v-model:center="mapClickCenter"
+              :min-zoom="2"
+              :max-zoom="7"
+              :use-global-leaflet="false"
+            >
+              <l-tile-layer :url="blankTileUrl" :no-wrap="false"></l-tile-layer>
+              <l-circle-marker
+                v-for="country in mapClickPool"
+                :key="'mc-' + country.id"
+                :lat-lng="[country.lat, country.lng]"
+                :radius="mapClickDoneIds.has(country.id) ? 7.5 : 6.5"
+                :color="mapClickDoneIds.has(country.id) ? '#10b981' : (mapClickLastWrongId === country.id ? '#f43f5e' : '#38bdf8')"
+                :fill-color="mapClickDoneIds.has(country.id) ? '#10b981' : (mapClickLastWrongId === country.id ? '#f43f5e' : '#0ea5e9')"
+                :fill-opacity="0.88"
+                @click="handleMapClickCountry(country)"
+              ></l-circle-marker>
+            </l-map>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- MODE 7 : FLASHCARDS 3D INTERACTIVES (ACQUIS / À REVOIR) -->
+      <!-- ======================================================= -->
+      <div v-else-if="currentMode === 'flashcards'" key="quiz-flashcards" class="max-w-2xl mx-auto space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <select
+              v-model="selectedFlashContinent"
+              @change="changerContinentFlash"
+              class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+            >
+              <option value="all">{{ locale === 'fr' ? 'Tous les continents (196)' : 'All continents (196)' }}</option>
+              <option value="Europe">Europe (47)</option>
+              <option value="Asia">{{ locale === 'fr' ? 'Asie (46)' : 'Asia (46)' }}</option>
+              <option value="Africa">{{ locale === 'fr' ? 'Afrique (54)' : 'Africa (54)' }}</option>
+              <option value="North America">{{ locale === 'fr' ? 'Amérique du Nord (23)' : 'North America (23)' }}</option>
+              <option value="South America">{{ locale === 'fr' ? 'Amérique du Sud (12)' : 'South America (12)' }}</option>
+              <option value="Oceania">{{ locale === 'fr' ? 'Océanie (14)' : 'Oceania (14)' }}</option>
+            </select>
+
+            <button
+              type="button"
+              @click="melangerFlashcards"
+              class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 hover:border-sky-500 text-xs font-bold text-slate-700 dark:text-slate-200 transition cursor-pointer"
+            >
+              {{ locale === 'fr' ? 'Mélanger le paquet' : 'Shuffle Deck' }}
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2 font-mono text-xs">
+            <span class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 font-bold">
+              ✓ {{ flashKnownIds.size }}
+            </span>
+            <span class="text-slate-500 font-bold">
+              {{ flashIndex + 1 }} / {{ filteredFlashcards.length }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Scène 3D de la Flashcard -->
+        <div
+          v-if="currentFlashcard"
+          class="flash-3d-scene"
+          @click="isFlipped = !isFlipped"
+        >
+          <div class="flash-3d-inner" :class="{ 'is-flipped': isFlipped }">
+            <!-- Recto -->
+            <div class="flash-3d-face flash-3d-front rounded-3xl border border-slate-200 dark:border-white/15 bg-white dark:bg-[#090E1A] p-8 flex flex-col items-center justify-between text-center shadow-2xl">
+              <div class="w-full flex items-center justify-between text-xs font-bold text-slate-400">
+                <span>{{ currentFlashcard.subregion }}</span>
+                <span class="text-sky-500">↻ {{ locale === 'fr' ? 'Cliquer ou Espace pour retourner' : 'Click or Space to flip' }}</span>
+              </div>
+
+              <div class="my-6 space-y-4">
+                <img
+                  :src="`https://flagcdn.com/w320/${currentFlashcard.iso}.png`"
+                  :alt="currentFlashcard.name"
+                  class="h-28 sm:h-36 w-auto rounded-xl shadow-lg mx-auto border border-slate-200 dark:border-white/10"
+                />
+                <h3 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                  {{ currentFlashcard.name }}
+                </h3>
+              </div>
+
+              <span class="font-mono text-xs text-sky-500 font-bold">
+                {{ locale === 'fr' ? 'Quelle est sa capitale, sa langue et sa monnaie ?' : 'What is its capital, language, and currency?' }}
+              </span>
+            </div>
+
+            <!-- Verso -->
+            <div class="flash-3d-face flash-3d-back rounded-3xl border border-sky-500/40 bg-slate-900 text-white p-8 flex flex-col justify-between shadow-2xl">
+              <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                  <img :src="`https://flagcdn.com/w80/${currentFlashcard.iso}.png`" class="h-7 w-auto rounded" alt="" />
+                  <h4 class="text-xl font-black">{{ currentFlashcard.name }}</h4>
+                </div>
+                <span class="text-xs text-sky-400 font-bold">↻ Recto</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 my-4 text-xs">
+                <div class="p-3 rounded-2xl bg-white/[0.06]">
+                  <span class="text-slate-400 block">{{ t('common.capital') }}</span>
+                  <strong class="text-base text-white">{{ currentFlashcard.capital }}</strong>
+                </div>
+                <div class="p-3 rounded-2xl bg-white/[0.06]">
+                  <span class="text-slate-400 block">{{ locale === 'fr' ? 'Population' : 'Population' }}</span>
+                  <strong class="text-base text-sky-400">{{ currentFlashcard.population }}</strong>
+                </div>
+                <div class="p-3 rounded-2xl bg-white/[0.06]">
+                  <span class="text-slate-400 block">{{ locale === 'fr' ? 'Langue' : 'Language' }}</span>
+                  <strong class="text-sm text-white">{{ currentFlashcard.lang }}</strong>
+                </div>
+                <div class="p-3 rounded-2xl bg-white/[0.06]">
+                  <span class="text-slate-400 block">{{ locale === 'fr' ? 'Monnaie' : 'Currency' }}</span>
+                  <strong class="text-sm text-emerald-400">{{ currentFlashcard.currency }}</strong>
+                </div>
+              </div>
+
+              <p class="p-3.5 rounded-2xl bg-sky-500/15 border border-sky-400/25 text-xs text-slate-200 leading-relaxed">
+                {{ currentFlashcard.fact }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contrôles Précédent / Retourner / Acquis / Suivant -->
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            @click="cartePrecedente"
+            class="px-5 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 text-xs font-bold cursor-pointer hover:border-sky-500 transition"
+          >
+            ← {{ locale === 'fr' ? 'Précédent' : 'Previous' }}
+          </button>
+          <button
+            type="button"
+            @click="isFlipped = !isFlipped"
+            class="px-6 py-2.5 rounded-full bg-sky-500 text-slate-950 text-xs font-black cursor-pointer"
+          >
+            ↻ {{ locale === 'fr' ? 'Retourner' : 'Flip Card' }}
+          </button>
+          <button
+            type="button"
+            @click="marquerFlashAcquise"
+            class="px-5 py-2.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 text-xs font-bold cursor-pointer transition"
+          >
+            ✓ {{ locale === 'fr' ? 'Acquise' : 'Mastered' }}
+          </button>
+          <button
+            type="button"
+            @click="carteSuivante"
+            class="px-5 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 text-xs font-bold cursor-pointer hover:border-sky-500 transition"
+          >
+            {{ locale === 'fr' ? 'Suivant' : 'Next' }} →
+          </button>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- MODE 8 : GRILLE MONDIALE DES 196 DRAPEAUX (AUTO-FOCUS)  -->
+      <!-- ======================================================= -->
+      <div v-else-if="currentMode === 'flag-grid'" key="quiz-flaggrid" class="space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 p-5">
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              v-for="cont in ['all', 'Europe', 'Asia', 'Africa', 'North America', 'South America', 'Oceania']"
+              :key="'fg-' + cont"
+              type="button"
+              @click="flagGridContinent = cont"
+              class="px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer"
+              :class="flagGridContinent === cont ? 'bg-sky-500 text-slate-950 font-black' : 'bg-slate-100 dark:bg-white/5 text-slate-500'"
+            >
+              {{ cont === 'all' ? (locale === 'fr' ? 'Monde (196)' : 'World (196)') : cont }}
+            </button>
+          </div>
+          <span class="font-mono text-xs font-black text-emerald-500">
+            {{ flagGridFoundCount }} / {{ filteredFlagGridCountries.length }} {{ locale === 'fr' ? 'TROUVÉS' : 'FOUND' }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div
+            v-for="(c, idx) in filteredFlagGridCountries"
+            :key="'fg-card-' + c.id"
+            class="p-3.5 rounded-2xl border transition-all flex flex-col items-center gap-2.5"
+            :class="flagGridSolvedSet.has(c.id)
+              ? 'border-emerald-500 bg-emerald-500/10 scale-[1.02]'
+              : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#090E1A]'"
+          >
+            <img :src="`https://flagcdn.com/w160/${c.iso}.png`" class="h-12 w-auto rounded shadow-xs object-contain" loading="lazy" alt="" />
+            <input
+              v-if="!flagGridSolvedSet.has(c.id)"
+              :id="'flag-input-' + idx"
+              v-model="flagGridInputs[c.id]"
+              @input="checkFlagGridItem(c, idx)"
+              type="text"
+              :placeholder="locale === 'fr' ? 'Pays...' : 'Country...'"
+              class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-900 text-center text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+            />
+            <strong v-else class="text-xs font-black text-emerald-500 text-center truncate w-full">
+              ✓ {{ c.name }}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- MODE 9 : CRÉATEUR DE DÉFIS SUR-MESURE (5 À 15 PAYS)     -->
+      <!-- ======================================================= -->
+      <div v-else-if="currentMode === 'custom-builder'" key="quiz-builder" class="max-w-4xl mx-auto">
+        <div class="rounded-3xl border border-slate-200 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+            <div>
+              <h3 class="text-xl font-black text-slate-900 dark:text-white">
+                {{ locale === 'fr' ? 'Sélectionnez de 5 à 15 pays pour votre défi' : 'Select 5 to 15 countries for your custom challenge' }}
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                {{ locale === 'fr' ? `${customSelectedIds.length} / 15 pays sélectionnés` : `${customSelectedIds.length} / 15 countries selected` }}
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                @click="pickRandomCustomSet(10)"
+                class="px-3.5 py-2 rounded-full bg-slate-100 dark:bg-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer"
+              >
+                {{ locale === 'fr' ? '10 Aléatoires' : 'Random 10' }}
+              </button>
+              <button
+                v-if="customSelectedIds.length > 0"
+                type="button"
+                @click="customSelectedIds = []"
+                class="px-3.5 py-2 rounded-full bg-rose-500/15 text-xs font-bold text-rose-400 cursor-pointer"
+              >
+                {{ locale === 'fr' ? 'Vider' : 'Clear' }}
+              </button>
+
+              <select
+                v-model="customBuilderType"
+                class="px-3.5 py-2 rounded-full border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-white"
+              >
+                <option value="capital">{{ locale === 'fr' ? 'Quiz Capitales' : 'Capitals Quiz' }}</option>
+                <option value="flag">{{ locale === 'fr' ? 'Quiz Drapeaux' : 'Flags Quiz' }}</option>
+              </select>
+
+              <button
+                type="button"
+                :disabled="customSelectedIds.length < 5"
+                @click="copyCustomBuilderLink"
+                class="px-5 py-2 rounded-full bg-sky-500 disabled:opacity-40 text-slate-950 font-black text-xs transition cursor-pointer"
+              >
+                {{ customLinkCopied ? (locale === 'fr' ? 'Lien copié !' : 'Link copied!') : (locale === 'fr' ? 'Copier le lien Duel' : 'Copy Duel Link') }}
+              </button>
+
+              <button
+                type="button"
+                :disabled="customSelectedIds.length < 5"
+                @click="launchCustomBuiltQuiz"
+                class="px-5 py-2 rounded-full bg-emerald-500 disabled:opacity-40 text-slate-950 font-black text-xs transition cursor-pointer"
+              >
+                {{ locale === 'fr' ? 'Jouer →' : 'Play Now →' }}
+              </button>
+            </div>
+          </div>
+
+          <input
+            v-model="customSearch"
+            type="text"
+            :placeholder="locale === 'fr' ? 'Filtrer les 196 pays...' : 'Filter 196 countries...'"
+            class="w-full px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-white"
+          />
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[380px] overflow-y-auto pr-1">
+            <button
+              v-for="c in filteredCustomCountries"
+              :key="'cb-' + c.id"
+              type="button"
+              @click="toggleCustomCountry(c.id)"
+              class="p-2.5 rounded-xl border text-left text-xs font-bold flex items-center gap-2 transition cursor-pointer"
+              :class="customSelectedIds.includes(c.id)
+                ? 'border-sky-500 bg-sky-500/15 text-sky-400'
+                : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] text-slate-700 dark:text-slate-300'"
+            >
+              <img :src="`https://flagcdn.com/w40/${c.iso}.png`" class="h-3.5 w-auto rounded-2xs shrink-0" alt="" />
+              <span class="truncate">{{ c.name }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </transition>
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
-import { useI18n } from 'vue-i18n'; 
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import ALL_COUNTRIES from '../data/countries.js';
 
 import "leaflet/dist/leaflet.css";
 import { LMap, LTileLayer, LPopup, LCircleMarker } from "@vue-leaflet/vue-leaflet";
-import L from 'leaflet';
 
 const { t, locale } = useI18n();
 const route = useRoute();
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
-
+const router = useRouter();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
-const countriesData = ref(ALL_COUNTRIES);
 
 // =========================================================
-// SYNTHÉTISEUR D'EFFETS SONORES (WEB AUDIO API)
+// DICTIONNAIRE D'ALIAS POUR SAISIE NATURELLE (CHRONO & GRILLE)
 // =========================================================
-const soundEnabled = ref(localStorage.getItem('geolearn_sound') !== 'false');
+const COUNTRY_ALIASES = {
+  usa: 'us', 'etats unis': 'us', 'united states': 'us', 'united states of america': 'us',
+  uk: 'gb', 'royaume uni': 'gb', angleterre: 'gb', 'great britain': 'gb',
+  rdc: 'cd', 'congo kinshasa': 'cd', 'dr congo': 'cd', 'republique democratique du congo': 'cd',
+  'congo brazzaville': 'cg', 'republique du congo': 'cg',
+  eau: 'ae', uae: 'ae', emirats: 'ae', 'emirats arabes unis': 'ae',
+  'pays bas': 'nl', hollande: 'nl', netherlands: 'nl',
+  russie: 'ru', russia: 'ru',
+  vatican: 'va', 'saint siege': 'va',
+  tchequie: 'cz', 'republique tcheque': 'cz', czechia: 'cz',
+  birmanie: 'mm', myanmar: 'mm',
+  eswatini: 'sz', swaziland: 'sz',
+  'cap vert': 'cv', 'cabo verde': 'cv',
+  'timor oriental': 'tl', 'east timor': 'tl', 'timor leste': 'tl',
+  'cote divoire': 'ci', 'cote d ivoire': 'ci', 'ivory coast': 'ci',
+  'coree du sud': 'kr', 'south korea': 'kr',
+  'coree du nord': 'kp', 'north korea': 'kp',
+  macedoine: 'mk', 'macedoine du nord': 'mk',
+  bosnie: 'ba', 'bosnie herzegovine': 'ba',
+   Centrafrique: 'cf', 'republique centrafricaine': 'cf', 'central african republic': 'cf'
+};
+
+// =========================================================
+// SYNTHÉTISEUR AUDIO WEB AUDIO API
+// =========================================================
+const soundEnabled = ref(localStorage.getItem('geolearn_sound') !== 'off');
 let audioCtx = null;
 
-const getAudioContext = () => {
-  if (!audioCtx && typeof window !== 'undefined') {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (AudioContextClass) audioCtx = new AudioContextClass();
-  }
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-  return audioCtx;
+const toggleSound = () => {
+  soundEnabled.value = !soundEnabled.value;
+  localStorage.setItem('geolearn_sound', soundEnabled.value ? 'on' : 'off');
 };
 
 const playSound = (type) => {
-  if (!soundEnabled.value) return;
+  if (!soundEnabled.value || typeof window === 'undefined') return;
   try {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-    const now = ctx.currentTime;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
     if (type === 'correct') {
-      [523.25, 659.25].forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-        gain.gain.setValueAtTime(0.12, now + idx * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.22);
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.start(now + idx * 0.08); osc.stop(now + idx * 0.08 + 0.23);
-      });
-    } else if (type === 'wrong') {
-      [220, 185].forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.1);
-        gain.gain.setValueAtTime(0.12, now + idx * 0.1);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.25);
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.start(now + idx * 0.1); osc.stop(now + idx * 0.1 + 0.26);
-      });
-    } else if (type === 'flip') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(360, now);
-      osc.frequency.exponentialRampToValueAtTime(540, now + 0.06);
-      gain.gain.setValueAtTime(0.06, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.start(now); osc.stop(now + 0.08);
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    } else if (type === 'wrong') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(150, now + 0.22);
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.start(now);
+      osc.stop(now + 0.25);
     } else if (type === 'victory') {
-      [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
-        gain.gain.setValueAtTime(0.14, now + idx * 0.09);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.32);
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.start(now + idx * 0.09); osc.stop(now + idx * 0.09 + 0.34);
-      });
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.35);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.start(now);
+      osc.stop(now + 0.4);
     }
   } catch (e) {}
 };
 
-const toggleSound = () => {
-  soundEnabled.value = !soundEnabled.value;
-  localStorage.setItem('geolearn_sound', soundEnabled.value ? 'true' : 'false');
-  if (soundEnabled.value) playSound('correct');
-};
-
-const currentMode = ref('menu'); 
-const retourMenu = () => {
-  currentMode.value = 'menu';
-  arreterChrono();
-  stopFlagGridTimer();
-  stopFlash60Timer();
-};
-
-const lancerMode = (mode, type = null) => {
-  arreterChrono();
-  stopFlagGridTimer();
-  stopFlash60Timer();
-  activeDuelTarget.value = null;
-  currentMode.value = mode;
-  if (mode === 'qcm') initQcm(type || 'capital');
-  if (mode === 'mystery') initDailyMystery();
-  if (mode === 'detective') initDetectiveGame();
-  if (mode === 'map-click') initMapClickGame();
-  if (mode === 'flag-grid') initFlagGrid();
-  if (mode === 'flashcards') initFlashcards();
-  if (mode === 'flash60') {
-    flash60Running.value = false;
-    flash60Finished.value = false;
-  }
-  if (mode === 'custom-builder') {
-    customLinkCopied.value = false;
-  }
-  if (mode === 'chrono') {
-    isChronoStarted.value = false;
-    paysTrouves.value = [];
-    chronoFini.value = false;
-    chronoDuplicateMsg.value = '';
-    selectChronoMode(chronoRegion.value);
-  }
-};
-
-const sauvegarderScore = async (mode, score, maxScore) => {
-  const savedUser = localStorage.getItem('geolearn_user');
-  if (!savedUser) return; 
-  try {
-    const parsed = JSON.parse(savedUser);
-    const userId = parsed.id || (parsed.user && parsed.user.id);
-    if (!userId) return;
-    await fetch(`${API_URL}/api/scores`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, mode: mode, score: score, max_score: maxScore })
-    });
-  } catch (error) {
-    console.error("Erreur serveur scores:", error);
-  }
-};
-
-const normalizeStr = (str = '') =>
-  str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-']/g, " ").toLowerCase().trim();
+// =========================================================
+// BASE DES 196 PAYS AVEC IDENTIFIANT UNIQUE GARANTI (FIX 15 QCM)
+// =========================================================
+const countriesData = ref(ALL_COUNTRIES);
 
 const parseNumericPopulation = (popStr = '') => {
   if (!popStr) return 0;
@@ -1744,7 +1459,7 @@ const parseNumericPopulation = (popStr = '') => {
   if (/Md|B/i.test(s)) return num * 1_000_000_000;
   if (/M/i.test(s)) return num * 1_000_000;
   if (/K/i.test(s)) return num * 1_000;
-  return parseFloat(s.replace(/\s+/g, '')) || 0;
+  return num;
 };
 
 const localizedCountries = computed(() => {
@@ -1763,677 +1478,495 @@ const localizedCountries = computed(() => {
   }));
 });
 
-const getCountry = (id) => localizedCountries.value.find(c => c.id === id);
-const getLocalizedName = (id) => getCountry(id)?.name || '';
-const getIso = (id) => getCountry(id)?.iso || '';
+const normalizeString = (str = '') =>
+  str
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[-']/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-// Formule de Haversine + Direction Boussole 🧭
-const computeDistanceKm = (lat1, lon1, lat2, lon2) => {
-  const toRad = d => (d * Math.PI) / 180;
-  const R = 6371;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return Math.round(2 * R * Math.asin(Math.min(1, Math.sqrt(a))));
-};
-
-const computeCompassDirection = (lat1, lon1, lat2, lon2) => {
-  const toRad = d => (d * Math.PI) / 180;
-  const toDeg = r => (r * 180) / Math.PI;
-  const dLon = toRad(lon2 - lon1);
-  const y = Math.sin(dLon) * Math.cos(toRad(lat2));
-  const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) - Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLon);
-  const brng = (toDeg(Math.atan2(y, x)) + 360) % 360;
-  const dirsFr = ['⬆️ N', '↗️ NE', '➡️ E', '↘️ SE', '⬇️ S', '↙️ SO', '⬅️ O', '↖️ NO'];
-  const dirsEn = ['⬆️ N', '↗️ NE', '➡️ E', '↘️ SE', '⬇️ S', '↙️ SW', '⬅️ W', '↖️ NW'];
-  const idx = Math.round(brng / 45) % 8;
-  return locale.value === 'fr' ? dirsFr[idx] : dirsEn[idx];
-};
+const blankTileUrl = computed(() => {
+  const isDark = document.documentElement.classList.contains('dark');
+  return isDark
+    ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+    : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+});
 
 // =========================================================
-// NOUVEAU MODE : CONTRE-LA-MONTRE 60 SECONDES (QCM FLASH)
+// MOTEUR GLOBE 3D VECTORIEL PARTAGÉ (POUR CHRONO & WORLDLE)
 // =========================================================
-const flash60Topic = ref('mix');
-const flash60Running = ref(false);
-const flash60Finished = ref(false);
-const flash60TimeLeft = ref(60);
-const flash60Score = ref(0);
-const flash60CorrectCount = ref(0);
-const flash60Streak = ref(0);
-const flash60BestStreak = ref(0);
-const flash60Question = ref(null);
-const flash60BonusToast = ref(false);
-let flash60Interval = null;
+const chronoGlobeCanvasRef = ref(null);
+const mysteryGlobeCanvasRef = ref(null);
+let worldRings = [];
+let globeAnimId = null;
 
-const flash60Multiplier = computed(() => Math.min(4, 1 + Math.floor(flash60Streak.value / 3)));
+let qRotLon = -12;
+let qRotLat = -38;
+let qTargetLon = -12;
+let qTargetLat = -38;
+let qVelLon = 0;
+let qVelLat = 0;
+let qIsLocked = false;
+let qIsDragging = false;
+let qLastX = 0;
+let qLastY = 0;
+let qPulse = 0;
 
-const stopFlash60Timer = () => {
-  if (flash60Interval) {
-    clearInterval(flash60Interval);
-    flash60Interval = null;
-  }
-};
-
-const nextFlash60Question = () => {
-  const shuffled = [...localizedCountries.value].sort(() => 0.5 - Math.random());
-  const target = shuffled[0];
-  const distractors = shuffled.slice(1, 4);
-  const options = [target, ...distractors].sort(() => 0.5 - Math.random());
-  const qType =
-    flash60Topic.value === 'mix'
-      ? (Math.random() < 0.5 ? 'capital' : 'flag')
-      : flash60Topic.value;
-
-  flash60Question.value = { target, options, qType };
-};
-
-const startFlash60 = () => {
-  stopFlash60Timer();
-  flash60Score.value = 0;
-  flash60CorrectCount.value = 0;
-  flash60Streak.value = 0;
-  flash60BestStreak.value = 0;
-  flash60TimeLeft.value = 60;
-  flash60Finished.value = false;
-  flash60Running.value = true;
-  nextFlash60Question();
-
-  flash60Interval = setInterval(() => {
-    if (flash60TimeLeft.value > 0) {
-      flash60TimeLeft.value--;
-    } else {
-      stopFlash60Timer();
-      flash60Running.value = false;
-      flash60Finished.value = true;
-      playSound('victory');
-      sauvegarderScore('QCM Flash 60s', flash60Score.value, 40);
-    }
-  }, 1000);
-};
-
-const answerFlash60 = (chosenCountry) => {
-  if (!flash60Running.value || !flash60Question.value) return;
-  if (chosenCountry.id === flash60Question.value.target.id) {
-    flash60Streak.value++;
-    if (flash60Streak.value > flash60BestStreak.value) {
-      flash60BestStreak.value = flash60Streak.value;
-    }
-    flash60CorrectCount.value++;
-    flash60Score.value += flash60Multiplier.value;
-
-    // Bonus de +2 secondes toutes les 5 bonnes réponses consécutives
-    if (flash60Streak.value % 5 === 0) {
-      flash60TimeLeft.value += 2;
-      flash60BonusToast.value = true;
-      setTimeout(() => { flash60BonusToast.value = false; }, 1200);
-    }
-    playSound('correct');
-  } else {
-    flash60Streak.value = 0;
-    playSound('wrong');
-  }
-  nextFlash60Question();
-};
-
-// =========================================================
-// NOUVEAU MODE : CRÉATEUR DE DÉFIS PERSONNALISÉS
-// =========================================================
-const customBuilderType = ref('capital');
-const customSearchQuery = ref('');
-const customContinentFilter = ref('');
-const customSelectedIds = ref([]);
-const customLinkCopied = ref(false);
-
-const filteredCustomCountries = computed(() => {
-  const q = normalizeStr(customSearchQuery.value);
-  return localizedCountries.value.filter(c => {
-    if (customContinentFilter.value && c.continent !== customContinentFilter.value) return false;
-    if (q && !normalizeStr(c.name).includes(q)) return false;
-    return true;
+const extractRingsFromTopoJSON = (topology) => {
+  const rings = [];
+  if (!topology || !topology.objects || !topology.arcs) return rings;
+  const { scale, translate } = topology.transform || { scale: [1, 1], translate: [0, 0] };
+  const decodedArcs = topology.arcs.map((arc) => {
+    let x = 0, y = 0;
+    return arc.map(([dx, dy]) => {
+      x += dx; y += dy;
+      return [x * scale[0] + translate[0], y * scale[1] + translate[1]];
+    });
   });
-});
-
-const toggleCustomCountry = (id) => {
-  const idx = customSelectedIds.value.indexOf(id);
-  if (idx !== -1) {
-    customSelectedIds.value.splice(idx, 1);
-  } else if (customSelectedIds.value.length < 15) {
-    customSelectedIds.value.push(id);
-  }
-};
-
-const pickRandomCustomCountries = (count = 10) => {
-  const pool = [...filteredCustomCountries.value].sort(() => 0.5 - Math.random());
-  customSelectedIds.value = pool.slice(0, Math.min(15, count)).map(c => c.id);
-};
-
-const copyCustomChallengeLink = async () => {
-  if (customSelectedIds.value.length < 5) return;
-  try {
-    const savedUser = localStorage.getItem('geolearn_user');
-    let myName = 'Joueur';
-    if (savedUser) {
-      const p = JSON.parse(savedUser);
-      myName = p.username || p.name || p.pseudo || 'Joueur';
+  const stitchArcs = (arcIndices) => {
+    const coords = [];
+    for (const idx of arcIndices) {
+      const arc = idx >= 0 ? decodedArcs[idx] : [...decodedArcs[~idx]].reverse();
+      if (arc) coords.push(...arc);
     }
-    const payload = `${customBuilderType.value}:${customSelectedIds.value.join('-')}:0:${encodeURIComponent(myName)}:custom`;
-    const link = `${window.location.origin}/quiz?duel=${btoa(payload)}`;
-    await navigator.clipboard.writeText(link);
-    customLinkCopied.value = true;
-    setTimeout(() => { customLinkCopied.value = false; }, 3500);
-  } catch (e) {}
-};
-
-const playCustomChallengeNow = () => {
-  if (customSelectedIds.value.length < 5) return;
-  activeDuelTarget.value = null;
-  currentMode.value = 'qcm';
-  initQcm(customBuilderType.value, [...customSelectedIds.value]);
-};
-
-// =========================================================
-// MODE : LE PAYS MYSTÈRE (WORLDLE DU JOUR & INFINI)
-// =========================================================
-const mysteryTargetId = ref(null);
-const mysteryGuesses = ref([]);
-const mysteryQuery = ref('');
-const mysteryFinished = ref(false);
-const mysteryWon = ref(false);
-const mysteryIsDaily = ref(true);
-const mysteryCopied = ref(false);
-
-const mysteryTarget = computed(() => getCountry(mysteryTargetId.value));
-
-const mysterySuggestions = computed(() => {
-  const q = normalizeStr(mysteryQuery.value);
-  if (!q || q.length < 2) return [];
-  const guessedIds = new Set(mysteryGuesses.value.map(g => g.id));
-  return localizedCountries.value
-    .filter(c => !guessedIds.has(c.id) && normalizeStr(c.name).includes(q))
-    .slice(0, 6);
-});
-
-const initDailyMystery = () => {
-  mysteryIsDaily.value = true;
-  const todayStr = new Date().toISOString().slice(0, 10);
-  let hash = 0;
-  for (let i = 0; i < todayStr.length; i++) {
-    hash = (hash * 31 + todayStr.charCodeAt(i)) % 100000;
-  }
-  const idx = hash % localizedCountries.value.length;
-  mysteryTargetId.value = localizedCountries.value[idx].id;
-  mysteryGuesses.value = [];
-  mysteryQuery.value = '';
-  mysteryFinished.value = false;
-  mysteryWon.value = false;
-};
-
-const startInfiniteMystery = () => {
-  mysteryIsDaily.value = false;
-  const randomCountry = localizedCountries.value[Math.floor(Math.random() * localizedCountries.value.length)];
-  mysteryTargetId.value = randomCountry.id;
-  mysteryGuesses.value = [];
-  mysteryQuery.value = '';
-  mysteryFinished.value = false;
-  mysteryWon.value = false;
-};
-
-const submitMysteryGuess = (countryObj = null) => {
-  if (mysteryFinished.value || !mysteryTarget.value) return;
-  let guessed = countryObj;
-  if (!guessed) {
-    const q = normalizeStr(mysteryQuery.value);
-    guessed = localizedCountries.value.find(c =>
-      normalizeStr(c.name) === q || (c.aliases || []).some(a => normalizeStr(a) === q)
-    ) || mysterySuggestions.value[0];
-  }
-  if (!guessed) return;
-  if (mysteryGuesses.value.some(g => g.id === guessed.id)) return;
-
-  const isCorrect = guessed.id === mysteryTarget.value.id;
-  const distKm = isCorrect ? 0 : computeDistanceKm(guessed.lat, guessed.lng, mysteryTarget.value.lat, mysteryTarget.value.lng);
-  const direction = isCorrect ? '🎯' : computeCompassDirection(guessed.lat, guessed.lng, mysteryTarget.value.lat, mysteryTarget.value.lng);
-  const proximity = isCorrect ? 100 : Math.max(5, Math.min(99, Math.round((1 - distKm / 18000) * 100)));
-
-  mysteryGuesses.value.push({
-    id: guessed.id,
-    name: guessed.name,
-    iso: guessed.iso,
-    distanceKm: distKm,
-    direction,
-    proximity,
-    isCorrect
-  });
-  mysteryQuery.value = '';
-
-  if (isCorrect) {
-    mysteryWon.value = true;
-    mysteryFinished.value = true;
-    playSound('victory');
-    const pts = Math.max(1, 7 - mysteryGuesses.value.length);
-    sauvegarderScore('Pays Mystère', pts, 6);
-  } else if (mysteryGuesses.value.length >= 6) {
-    mysteryWon.value = false;
-    mysteryFinished.value = true;
-    playSound('wrong');
-    sauvegarderScore('Pays Mystère', 0, 6);
-  } else {
-    playSound('flip');
-  }
-};
-
-const copyMysteryShareGrid = async () => {
-  const rows = mysteryGuesses.value.map(g => {
-    if (g.isCorrect) return '🟩🟩🟩🟩🟩 🎯 100%';
-    const blocks = Math.max(1, Math.round(g.proximity / 20));
-    return '🟨'.repeat(blocks) + '⬛'.repeat(5 - blocks) + ` ${g.direction} (${g.proximity}%)`;
-  });
-  const text = `🌍 GeoLearn Pays Mystère (${mysteryWon.value ? mysteryGuesses.value.length : 'X'}/6)\n${rows.join('\n')}\nhttps://geolearn.fun`;
-  try {
-    await navigator.clipboard.writeText(text);
-    mysteryCopied.value = true;
-    setTimeout(() => { mysteryCopied.value = false; }, 3500);
-  } catch (e) {}
-};
-
-// =========================================================
-// MODE : ENQUÊTE GÉOGRAPHIQUE AUX 5 INDICES
-// =========================================================
-const detectiveRound = ref(1);
-const detectiveScore = ref(0);
-const detectiveTargetId = ref(null);
-const detectiveOptions = ref([]);
-const detectiveCluesRevealed = ref(1);
-const detectiveAnswered = ref(false);
-const detectiveSelected = ref(null);
-const detectiveFinished = ref(false);
-
-const detectiveTarget = computed(() => getCountry(detectiveTargetId.value));
-
-const maskedDetectiveFact = computed(() => {
-  if (!detectiveTarget.value) return '';
-  const fact = detectiveTarget.value.fact || '';
-  const regexFr = new RegExp(detectiveTarget.value.name_fr, 'gi');
-  const regexEn = new RegExp(detectiveTarget.value.name_en, 'gi');
-  return fact.replace(regexFr, '[███]').replace(regexEn, '[███]');
-});
-
-const initDetectiveGame = () => {
-  detectiveRound.value = 1;
-  detectiveScore.value = 0;
-  detectiveFinished.value = false;
-  setupDetectiveRound();
-};
-
-const setupDetectiveRound = () => {
-  detectiveCluesRevealed.value = 1;
-  detectiveAnswered.value = false;
-  detectiveSelected.value = null;
-  const shuffled = [...localizedCountries.value].sort(() => 0.5 - Math.random());
-  const target = shuffled[0];
-  detectiveTargetId.value = target.id;
-  const distractors = shuffled.slice(1, 4).map(c => c.id);
-  detectiveOptions.value = [target.id, ...distractors].sort(() => 0.5 - Math.random());
-};
-
-const answerDetective = (chosenId) => {
-  if (detectiveAnswered.value) return;
-  detectiveSelected.value = chosenId;
-  detectiveAnswered.value = true;
-  if (chosenId === detectiveTargetId.value) {
-    const ptsEarned = Math.max(1, 6 - detectiveCluesRevealed.value);
-    detectiveScore.value += ptsEarned;
-    playSound('correct');
-  } else {
-    playSound('wrong');
-  }
-  setTimeout(() => {
-    if (detectiveRound.value < 5) {
-      detectiveRound.value++;
-      setupDetectiveRound();
-    } else {
-      detectiveFinished.value = true;
-      playSound('victory');
-      sauvegarderScore('Enquête 5 Indices', detectiveScore.value, 25);
-    }
-  }, 1200);
-};
-
-// =========================================================
-// MODE : CLIQUEZ SUR LA CARTE (STYLE SETERRA)
-// =========================================================
-const mapClickScope = ref('europe');
-const mapClickCountriesPool = ref([]);
-const mapClickQueue = ref([]);
-const mapClickIndex = ref(0);
-const mapClickStatus = ref({});
-const mapClickWrongTries = ref(0);
-const mapClickScore = ref(0);
-const mapClickFinished = ref(false);
-const mapClickFeedback = ref('');
-const mapClickZoom = ref(3.8);
-const mapClickCenter = ref([54.0, 15.0]);
-
-const currentMapClickTarget = computed(() => mapClickQueue.value[mapClickIndex.value] || null);
-
-const initMapClickGame = () => {
-  mapClickStatus.value = {};
-  mapClickIndex.value = 0;
-  mapClickWrongTries.value = 0;
-  mapClickScore.value = 0;
-  mapClickFinished.value = false;
-  mapClickFeedback.value = '';
-
-  if (mapClickScope.value === 'europe') {
-    const eur = localizedCountries.value.filter(c => c.continent === 'Europe');
-    mapClickCountriesPool.value = eur;
-    mapClickQueue.value = [...eur].sort(() => 0.5 - Math.random());
-    mapClickCenter.value = [54.0, 15.0];
-    mapClickZoom.value = 3.8;
-  } else {
-    const sample = [...localizedCountries.value].sort(() => 0.5 - Math.random()).slice(0, 25);
-    mapClickCountriesPool.value = sample;
-    mapClickQueue.value = [...sample].sort(() => 0.5 - Math.random());
-    mapClickCenter.value = [20.0, 10.0];
-    mapClickZoom.value = 2;
-  }
-};
-
-const getMapClickRadius = (country) => {
-  if (currentMapClickTarget.value && mapClickWrongTries.value >= 3 && country.iso === currentMapClickTarget.value.iso) {
-    return 14;
-  }
-  return mapClickScope.value === 'europe' ? 8 : 7;
-};
-
-const getMapClickFillColor = (country) => {
-  const st = mapClickStatus.value[country.iso];
-  if (st === 'first') return '#10b981';
-  if (st === 'second') return '#f59e0b';
-  if (st === 'late') return '#ef4444';
-  if (currentMapClickTarget.value && mapClickWrongTries.value >= 3 && country.iso === currentMapClickTarget.value.iso) {
-    return '#3b82f6';
-  }
-  return '#ffffff';
-};
-
-const getMapClickBorderColor = (country) => {
-  if (mapClickStatus.value[country.iso]) return '#ffffff';
-  return '#475569';
-};
-
-const onCountryMarkerClick = (clickedCountry) => {
-  if (mapClickFinished.value || !currentMapClickTarget.value) return;
-  if (mapClickStatus.value[clickedCountry.iso]) return;
-
-  if (clickedCountry.iso === currentMapClickTarget.value.iso) {
-    mapClickFeedback.value = '';
-    if (mapClickWrongTries.value === 0) {
-      mapClickStatus.value[clickedCountry.iso] = 'first';
-      mapClickScore.value++;
-    } else if (mapClickWrongTries.value === 1) {
-      mapClickStatus.value[clickedCountry.iso] = 'second';
-    } else {
-      mapClickStatus.value[clickedCountry.iso] = 'late';
-    }
-    playSound('correct');
-    mapClickWrongTries.value = 0;
-
-    if (mapClickIndex.value < mapClickQueue.value.length - 1) {
-      mapClickIndex.value++;
-    } else {
-      mapClickFinished.value = true;
-      playSound('victory');
-      sauvegarderScore('Cliquez sur la Carte', mapClickScore.value, mapClickQueue.value.length);
-    }
-  } else {
-    mapClickWrongTries.value++;
-    playSound('wrong');
-    mapClickFeedback.value = locale.value === 'fr'
-      ? `❌ Ceci est : ${clickedCountry.name}. Cherchez ${currentMapClickTarget.value.name} !`
-      : `❌ That is ${clickedCountry.name}. Find ${currentMapClickTarget.value.name}!`;
-  }
-};
-
-// =========================================================
-// MODE : GRILLE DES DRAPEAUX
-// =========================================================
-const flagGridContinent = ref('');
-const flagGridInputs = ref({});
-const flagGridFound = ref({});
-const flagGridTime = ref(900);
-const flagGridFinished = ref(false);
-const flagInputRefs = ref({});
-let flagGridInterval = null;
-
-const setFlagInputRef = (el, index) => {
-  if (el) flagInputRefs.value[index] = el;
-};
-
-const flagGridCountries = computed(() => {
-  let list = localizedCountries.value;
-  if (flagGridContinent.value) {
-    list = list.filter(c => c.continent === flagGridContinent.value);
-  }
-  return list;
-});
-
-const flagGridFoundCount = computed(() =>
-  flagGridCountries.value.filter(c => flagGridFound.value[c.iso]).length
-);
-
-const stopFlagGridTimer = () => {
-  if (flagGridInterval) {
-    clearInterval(flagGridInterval);
-    flagGridInterval = null;
-  }
-};
-
-const initFlagGrid = () => {
-  stopFlagGridTimer();
-  flagGridInputs.value = {};
-  flagGridFound.value = {};
-  flagGridFinished.value = false;
-  flagInputRefs.value = {};
-  flagGridTime.value = flagGridContinent.value ? 300 : 900;
-
-  flagGridInterval = setInterval(() => {
-    if (flagGridTime.value > 0) {
-      flagGridTime.value--;
-    } else {
-      finishFlagGrid();
-    }
-  }, 1000);
-};
-
-const checkSingleFlagInput = async (country, currentIndex) => {
-  if (flagGridFinished.value || flagGridFound.value[country.iso]) return;
-  const userTyped = normalizeStr(flagGridInputs.value[country.iso] || '');
-  if (!userTyped) return;
-
-  const validNames = [
-    normalizeStr(country.name_fr),
-    normalizeStr(country.name_en),
-    ...(country.aliases || []).map(a => normalizeStr(a))
-  ];
-
-  if (validNames.includes(userTyped)) {
-    flagGridFound.value[country.iso] = true;
-    flagGridInputs.value[country.iso] = country.name;
-    playSound('correct');
-
-    if (flagGridFoundCount.value === flagGridCountries.value.length) {
-      finishFlagGrid();
-      return;
-    }
-
-    await nextTick();
-    const total = flagGridCountries.value.length;
-    for (let step = 1; step < total; step++) {
-      const nextIdx = (currentIndex + step) % total;
-      const nextCountry = flagGridCountries.value[nextIdx];
-      if (!flagGridFound.value[nextCountry.iso] && flagInputRefs.value[nextIdx]) {
-        flagInputRefs.value[nextIdx].focus();
-        break;
+    return coords;
+  };
+  const objKey = Object.keys(topology.objects)[0];
+  const geometries = topology.objects[objKey]?.geometries || [];
+  for (const geom of geometries) {
+    if (geom.type === 'Polygon') {
+      for (const r of geom.arcs) rings.push(stitchArcs(r));
+    } else if (geom.type === 'MultiPolygon') {
+      for (const poly of geom.arcs) {
+        for (const r of poly) rings.push(stitchArcs(r));
       }
     }
   }
+  return rings;
 };
 
-const finishFlagGrid = () => {
-  if (flagGridFinished.value) return;
-  flagGridFinished.value = true;
-  stopFlagGridTimer();
-  playSound('victory');
-  sauvegarderScore('Grille Drapeaux', flagGridFoundCount.value, flagGridCountries.value.length);
+const loadQuizVectorBorders = async () => {
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+    if (res.ok) {
+      const topo = await res.json();
+      worldRings = extractRingsFromTopoJSON(topo);
+    }
+  } catch (e) {}
+};
+
+const focusQuizGlobeOn = (lat, lng) => {
+  qVelLon = 0;
+  qVelLat = 0;
+  qTargetLon = -Number(lng || 0);
+  qTargetLat = -Math.max(-65, Math.min(65, Number(lat || 0)));
+  qIsLocked = true;
+};
+
+const onQuizGlobePointerDown = (e) => {
+  qIsDragging = true;
+  qIsLocked = false;
+  qVelLon = 0;
+  qVelLat = 0;
+  qLastX = e.clientX;
+  qLastY = e.clientY;
+};
+
+const onQuizGlobePointerMove = (e) => {
+  if (!qIsDragging) return;
+  const dx = e.clientX - qLastX;
+  const dy = e.clientY - qLastY;
+  const dLon = dx * 0.4;
+  const dLat = -dy * 0.36;
+  qRotLon += dLon;
+  qRotLat = Math.max(-68, Math.min(68, qRotLat + dLat));
+  qVelLon = dLon * 0.85;
+  qVelLat = dLat * 0.85;
+  qTargetLon = qRotLon;
+  qTargetLat = qRotLat;
+  qLastX = e.clientX;
+  qLastY = e.clientY;
+};
+
+const onQuizGlobePointerUp = () => {
+  qIsDragging = false;
+};
+
+const renderActiveQuizGlobe = () => {
+  const canvas =
+    currentMode.value === 'chrono' && chronoViewMode.value === 'globe3d'
+      ? chronoGlobeCanvasRef.value
+      : currentMode.value === 'mystery'
+        ? mysteryGlobeCanvasRef.value
+        : null;
+
+  if (canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = rect.width || 340;
+    const H = rect.height || 340;
+    if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+    }
+
+    const ctx = canvas.getContext('2d');
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const cx = W / 2;
+    const cy = H / 2;
+    const R = Math.min(W, H) * 0.43;
+
+    if (qIsLocked && !qIsDragging) {
+      const dLon = ((qTargetLon - qRotLon + 540) % 360) - 180;
+      const dLat = qTargetLat - qRotLat;
+      qRotLon += dLon * 0.09;
+      qRotLat += dLat * 0.09;
+      if (Math.abs(dLon) < 0.15 && Math.abs(dLat) < 0.15) qIsLocked = false;
+    } else if (!qIsDragging) {
+      if (Math.abs(qVelLon) > 0.01 || Math.abs(qVelLat) > 0.01) {
+        qRotLon += qVelLon;
+        qRotLat = Math.max(-68, Math.min(68, qRotLat + qVelLat));
+        qVelLon *= 0.92;
+        qVelLat *= 0.92;
+      } else {
+        qRotLon -= 0.08;
+      }
+      qTargetLon = qRotLon;
+      qTargetLat = qRotLat;
+    }
+
+    qPulse = (qPulse + 0.02) % 1;
+
+    // Sphère océanique
+    const oceanGrad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.08, cx, cy, R);
+    oceanGrad.addColorStop(0, '#0f2342');
+    oceanGrad.addColorStop(0.7, '#061022');
+    oceanGrad.addColorStop(1, '#02060f');
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = oceanGrad;
+    ctx.fill();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.clip();
+
+    const toRad = (d) => (d * Math.PI) / 180;
+    const lam0 = toRad(-qRotLon);
+    const phi0 = toRad(-qRotLat);
+    const sinPhi0 = Math.sin(phi0);
+    const cosPhi0 = Math.cos(phi0);
+
+    const projectPt = (latDeg, lonDeg) => {
+      const phi = toRad(latDeg);
+      const lam = toRad(lonDeg);
+      const dLam = lam - lam0;
+      const sinPhi = Math.sin(phi);
+      const cosPhi = Math.cos(phi);
+      const cosC = sinPhi0 * sinPhi + cosPhi0 * cosPhi * Math.cos(dLam);
+      if (cosC < 0) return null;
+      return {
+        x: cx + R * (cosPhi * Math.sin(dLam)),
+        y: cy - R * (cosPhi0 * sinPhi - sinPhi0 * cosPhi * Math.cos(dLam)),
+        z: cosC
+      };
+    };
+
+    // Frontières vectorielles
+    if (worldRings.length > 0) {
+      ctx.fillStyle = 'rgba(20, 48, 86, 0.78)';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.42)';
+      ctx.lineWidth = 0.8;
+      for (const ring of worldRings) {
+        ctx.beginPath();
+        let vis = 0;
+        let prev = null;
+        for (let i = 0; i < ring.length; i++) {
+          const [lon, lat] = ring[i];
+          const p = projectPt(lat, lon);
+          if (p) {
+            if (!prev || Math.hypot(p.x - prev.x, p.y - prev.y) > R * 0.35) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+            prev = p;
+            vis++;
+          } else prev = null;
+        }
+        if (vis > 2) {
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Rendu spécifique : Défi Chrono sur Globe 3D
+    if (currentMode.value === 'chrono') {
+      for (const c of chronoTargetCountries.value) {
+        const p = projectPt(c.lat, c.lng);
+        if (!p) continue;
+        const isFound = chronoFoundSet.value.has(c.id);
+        const isLast = chronoLastFoundCountry.value?.id === c.id;
+
+        if (isLast) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 6 + qPulse * 12, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(52, 211, 153, ${1 - qPulse})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, isFound ? 4.2 : 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = isFound
+          ? '#10b981'
+          : chronoFini.value
+            ? '#f43f5e'
+            : 'rgba(148, 163, 184, 0.38)';
+        ctx.fill();
+      }
+    }
+
+    // Rendu spécifique : Triangulation Worldle sur Globe 3D
+    if (currentMode.value === 'mystery') {
+      for (const g of mysteryGuesses.value) {
+        const cObj = localizedCountries.value.find((c) => c.id === g.id);
+        if (!cObj) continue;
+        const p = projectPt(cObj.lat, cObj.lng);
+        if (!p) continue;
+
+        const color = g.isCorrect
+          ? '#10b981'
+          : g.proximity >= 75
+            ? '#f59e0b'
+            : '#38bdf8';
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 6 + qPulse * 9, 0, Math.PI * 2);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+    }
+
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  globeAnimId = requestAnimationFrame(renderActiveQuizGlobe);
 };
 
 // =========================================================
-// MODES QCM (CAPITALES, DRAPEAUX, CULTURE) + DUEL D'AMI
+// NAVIGATION INTERNE & ENREGISTREMENT DES SCORES
 // =========================================================
-const qcmCurrentType = ref('capital'); 
-const cultureSubType = ref('lang');
-const qcmQuestionsList = ref([]);
+const currentMode = ref('menu');
+const selectedMenuCat = ref('all');
+
+const activeModeBadge = computed(() => {
+  const isFr = locale.value === 'fr';
+  const map = {
+    menu: isFr ? 'CENTRE D\'ÉVALUATION // 11 MODES' : 'EVALUATION CENTER // 11 MODES',
+    qcm: 'SESSION QCM // 15 QUESTIONS',
+    flash60: 'SPRINT 60 SECONDES // COMBO X4',
+    mystery: 'WORLDLE // TRIANGULATION 3D',
+    detective: 'ENQUÊTE // 5 CARTES D\'INDICES 3D',
+    chrono: 'JETPUNK // GLOBE 3D & CARTE MUETTE',
+    'map-click': 'SETERRA // PRÉCISION CARTOGRAPHIQUE',
+    flashcards: 'ÉTUDE ACTIVE // FLASHCARDS 3D',
+    'flag-grid': 'MATRICE VISUELLE // 196 DRAPEAUX',
+    'custom-builder': 'CRÉATEUR DE DÉFIS SUR-MESURE'
+  };
+  return map[currentMode.value] || map.menu;
+});
+
+const activeModeTitle = computed(() => {
+  const isFr = locale.value === 'fr';
+  if (currentMode.value === 'qcm') {
+    if (qcmCurrentType.value === 'flag') return t('home.mode_flags_title');
+    if (qcmCurrentType.value === 'culture') return isFr ? 'Quiz Population, Langues & Devises' : 'Population, Languages & Currencies Quiz';
+    return t('home.mode_caps_title');
+  }
+  return t('quiz.title');
+});
+
+const sauvegarderScore = async (modeName, scoreVal, maxScoreVal) => {
+  const savedUser = localStorage.getItem('geolearn_user');
+  if (!savedUser) return;
+  try {
+    const parsed = JSON.parse(savedUser);
+    const uid = parsed.id || (parsed.user && parsed.user.id);
+    if (!uid) return;
+    await fetch(`${API_URL}/api/scores`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: uid,
+        mode: modeName,
+        score: scoreVal,
+        max_score: maxScoreVal
+      })
+    });
+  } catch (e) {}
+};
+
+// =========================================================
+// MODE 1 : QCM (15 QUESTIONS GARANTIES + BILAN DES ERREURS)
+// =========================================================
 const qcmMaxQuestions = 15;
+const qcmCurrentType = ref('capital');
+const qcmQuestionsList = ref([]);
 const qcmIndex = ref(0);
 const qcmScore = ref(0);
-const qcmOptions = ref([]); 
+const qcmStreak = ref(0);
 const qcmFini = ref(false);
+const qcmOptions = ref([]);
+const qcmCorrectAnswer = ref(null);
 const qcmSelected = ref(null);
 const qcmIsAnswered = ref(false);
-const qcmCorrectAnswer = ref('');
+const qcmCultureSubType = ref('currency');
+const qcmChallengeCopied = ref(false);
+const qcmHistoryLog = ref([]);
 
-const duelChallenge = ref(null);
-const activeDuelTarget = ref(null);
-const activeDuelFrom = ref('');
-const duelLinkCopied = ref(false);
+const totalQcmQuestions = computed(() =>
+  Math.min(qcmMaxQuestions, qcmQuestionsList.value.length || qcmMaxQuestions)
+);
 
-const initQcm = (type, customQuestionIds = null) => {
+const currentQcmQuestion = computed(() =>
+  localizedCountries.value.find((c) => c.id === qcmQuestionsList.value[qcmIndex.value]) ||
+  localizedCountries.value[0]
+);
+
+const qcmCulturePrompt = computed(() => {
+  const c = currentQcmQuestion.value;
+  const isFr = locale.value === 'fr';
+  if (!c) return '';
+  if (qcmCultureSubType.value === 'currency') {
+    return isFr ? `Quelle est la monnaie officielle de : ${c.name} ?` : `What is the official currency of ${c.name}?`;
+  }
+  if (qcmCultureSubType.value === 'lang') {
+    return isFr ? `Quelle est la langue officielle principale de : ${c.name} ?` : `What is the official language of ${c.name}?`;
+  }
+  return isFr ? 'Lequel de ces 4 États est le plus peuplé ?' : 'Which of these 4 countries has the largest population?';
+});
+
+const getQcmStepBarClass = (stepIdx) => {
+  if (stepIdx < qcmHistoryLog.value.length) {
+    return qcmHistoryLog.value[stepIdx].isCorrect ? 'bg-emerald-500' : 'bg-rose-500';
+  }
+  if (stepIdx === qcmIndex.value) return 'bg-sky-400 animate-pulse';
+  return 'bg-slate-200 dark:bg-white/10';
+};
+
+const genererOptionsQcm = () => {
+  qcmIsAnswered.value = false;
+  qcmSelected.value = null;
+  const target = currentQcmQuestion.value;
+  if (!target) return;
+
+  if (qcmCurrentType.value === 'culture') {
+    const types = ['currency', 'lang', 'pop'];
+    qcmCultureSubType.value = types[qcmIndex.value % types.length];
+  }
+
+  const distractors = localizedCountries.value
+    .filter((c) => c.id !== target.id)
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 3);
+
+  const choices = [target, ...distractors].sort(() => 0.5 - Math.random());
+  qcmOptions.value = choices;
+
+  if (qcmCurrentType.value === 'culture' && qcmCultureSubType.value === 'pop') {
+    const mostPopulous = [...choices].sort((a, b) => b.populationNumeric - a.populationNumeric)[0];
+    qcmCorrectAnswer.value = mostPopulous.id;
+  } else {
+    qcmCorrectAnswer.value = target.id;
+  }
+};
+
+const initQcm = (type = 'capital', customQuestionIds = null) => {
+  currentMode.value = 'qcm';
   qcmCurrentType.value = type || 'capital';
+  qcmChallengeCopied.value = false;
+  qcmHistoryLog.value = [];
+  qcmStreak.value = 0;
+
   if (Array.isArray(customQuestionIds) && customQuestionIds.length > 0) {
     qcmQuestionsList.value = [...customQuestionIds];
   } else {
     const shuffled = [...localizedCountries.value].sort(() => 0.5 - Math.random());
-    qcmQuestionsList.value = shuffled.slice(0, qcmMaxQuestions).map(c => c.id);
+    qcmQuestionsList.value = shuffled.slice(0, qcmMaxQuestions).map((c) => c.id);
   }
+
   qcmIndex.value = 0;
   qcmScore.value = 0;
   qcmFini.value = false;
   genererOptionsQcm();
 };
 
-const copyDuelQcmLink = async () => {
-  try {
-    const savedUser = localStorage.getItem('geolearn_user');
-    let myName = 'Joueur';
-    if (savedUser) {
-      const p = JSON.parse(savedUser);
-      myName = p.username || p.name || p.pseudo || 'Joueur';
-    }
-    const payload = `${qcmCurrentType.value}:${qcmQuestionsList.value.join('-')}:${qcmScore.value}:${encodeURIComponent(myName)}`;
-    const link = `${window.location.origin}/quiz?duel=${btoa(payload)}`;
-    await navigator.clipboard.writeText(link);
-    duelLinkCopied.value = true;
-    setTimeout(() => { duelLinkCopied.value = false; }, 3500);
-  } catch (e) {}
+const getQcmOptionLabel = (opt) => {
+  if (qcmCurrentType.value === 'capital') return opt.capital;
+  if (qcmCurrentType.value === 'flag') return opt.name;
+  if (qcmCultureSubType.value === 'currency') return opt.currency;
+  if (qcmCultureSubType.value === 'lang') return opt.lang;
+  return `${opt.name}`;
 };
 
-const startDuelQcm = () => {
-  if (!duelChallenge.value) return;
-  activeDuelTarget.value = duelChallenge.value.isCustom ? null : duelChallenge.value.score;
-  activeDuelFrom.value = duelChallenge.value.from;
-  currentMode.value = 'qcm';
-  initQcm(duelChallenge.value.type, duelChallenge.value.ids);
-};
-
-const genererOptionsQcm = () => {
-  qcmIsAnswered.value = false;
-  qcmSelected.value = null;
-  const baseId = qcmQuestionsList.value[qcmIndex.value];
-  const baseCountry = getCountry(baseId);
-  if (!baseCountry) return;
-
-  if (qcmCurrentType.value === 'culture') {
-    const cycle = ['population', 'lang', 'currency'];
-    cultureSubType.value = cycle[qcmIndex.value % 3];
-
-    if (cultureSubType.value === 'population') {
-      const chosen = [baseCountry];
-      const pool = [...localizedCountries.value].sort(() => 0.5 - Math.random());
-      for (const candidate of pool) {
-        if (chosen.length >= 4) break;
-        const isDistinct = chosen.every(
-          c => c.id !== candidate.id && Math.abs(c.populationNumeric - candidate.populationNumeric) > 250_000
-        );
-        if (isDistinct) chosen.push(candidate);
-      }
-      const mostPopulous = [...chosen].sort((a, b) => b.populationNumeric - a.populationNumeric)[0];
-      qcmCorrectAnswer.value = mostPopulous.id;
-      qcmOptions.value = chosen.map(c => c.id).sort(() => 0.5 - Math.random());
-      return;
-    }
-
-    qcmCorrectAnswer.value = baseId;
-    const field = cultureSubType.value === 'lang' ? 'lang' : 'currency';
-    const usedValues = new Set([baseCountry[field]]);
-    const distractors = [];
-    const pool = [...localizedCountries.value].sort(() => 0.5 - Math.random());
-
-    for (const candidate of pool) {
-      if (distractors.length >= 3) break;
-      const val = candidate[field];
-      if (candidate.id !== baseId && val && val !== '-' && !usedValues.has(val)) {
-        usedValues.add(val);
-        distractors.push(candidate.id);
-      }
-    }
-    qcmOptions.value = [baseId, ...distractors].sort(() => 0.5 - Math.random());
-    return;
+const getQcmOptionClass = (id) => {
+  if (!qcmIsAnswered.value) {
+    return 'border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.03] hover:border-sky-500 text-slate-900 dark:text-white';
   }
-
-  qcmCorrectAnswer.value = baseId;
-  const sameContinent = localizedCountries.value
-    .filter(c => c.id !== baseId && c.continent_en === baseCountry.continent_en)
-    .map(c => c.id);
-    
-  const distractors = [...sameContinent].sort(() => 0.5 - Math.random()).slice(0, 3);
-  
-  while (distractors.length < 3) {
-    const randomC = localizedCountries.value[Math.floor(Math.random() * localizedCountries.value.length)].id;
-    if (randomC !== baseId && !distractors.includes(randomC)) {
-      distractors.push(randomC);
-    }
+  if (id === qcmCorrectAnswer.value) {
+    return 'border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300';
   }
-  
-  qcmOptions.value = [baseId, ...distractors].sort(() => 0.5 - Math.random());
-};
-
-const getOptionLabel = (choixId) => {
-  const c = getCountry(choixId);
-  if (!c) return '';
-  if (qcmCurrentType.value === 'capital') return c.capital;
-  if (qcmCurrentType.value === 'flag') return c.name;
-  if (cultureSubType.value === 'population') return c.name;
-  if (cultureSubType.value === 'lang') return c.lang;
-  return c.currency;
+  if (id === qcmSelected.value) {
+    return 'border-rose-500 bg-rose-500/15 text-rose-500';
+  }
+  return 'border-slate-200/50 dark:border-white/5 opacity-45 text-slate-400';
 };
 
 const verifierReponseQcm = (choixId) => {
-  if (qcmIsAnswered.value) return; 
+  if (qcmIsAnswered.value) return;
   qcmSelected.value = choixId;
   qcmIsAnswered.value = true;
 
-  if (choixId === qcmCorrectAnswer.value) {
+  const isCorrect = choixId === qcmCorrectAnswer.value;
+  if (isCorrect) {
     qcmScore.value++;
+    qcmStreak.value++;
     playSound('correct');
   } else {
+    qcmStreak.value = 0;
     playSound('wrong');
   }
 
-  const totalQuestions = Math.min(qcmMaxQuestions, qcmQuestionsList.value.length || qcmMaxQuestions);
+  const rightObj = qcmOptions.value.find((o) => o.id === qcmCorrectAnswer.value) || currentQcmQuestion.value;
+  qcmHistoryLog.value.push({
+    iso: rightObj.iso,
+    countryName: rightObj.name,
+    correctLabel: getQcmOptionLabel(rightObj),
+    isCorrect
+  });
 
+  const total = totalQcmQuestions.value;
   setTimeout(() => {
-    if (qcmIndex.value < totalQuestions - 1) {
+    if (qcmIndex.value < total - 1) {
       qcmIndex.value++;
       genererOptionsQcm();
     } else {
@@ -2445,450 +1978,1011 @@ const verifierReponseQcm = (choixId) => {
           : qcmCurrentType.value === 'flag'
             ? 'QCM Drapeaux'
             : 'QCM Culture';
-      sauvegarderScore(modeName, qcmScore.value, totalQuestions);
+      sauvegarderScore(modeName, qcmScore.value, total);
     }
-  }, 1150);
+  }, 1050);
+};
+
+const copyQcmDuelLink = async () => {
+  const url = `${window.location.origin}/quiz?mode=qcm&type=${qcmCurrentType.value}&custom=${qcmQuestionsList.value.join(',')}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    qcmChallengeCopied.value = true;
+  } catch (e) {}
 };
 
 // =========================================================
-// MODE FLASHCARDS 3D (BOUTONS + FLÈCHES DU CLAVIER)
+// MODE 2 : SPRINT 60 SECONDES (FLASH 60)
 // =========================================================
-const flashcardIndex = ref(0);
-const flashcardFlipped = ref(false);
-const flashcardContinent = ref('');
-const flashcardFrontPrompt = ref('flag');
-const flashcardOrderIsos = ref([]);
+const flashTimeLeft = ref(60);
+const flashScore = ref(0);
+const flashStreak = ref(0);
+const flashBestStreak = ref(0);
+const flashCorrectCount = ref(0);
+const flashFinished = ref(false);
+const flashBonusToast = ref(false);
+const currentFlashQuestion = ref(null);
+const flashOptions = ref([]);
+const flashAskFlag = ref(false);
+let flashTimer = null;
 
-const toggleFlashcardFlip = () => {
-  flashcardFlipped.value = !flashcardFlipped.value;
-  playSound('flip');
+const flashMultiplier = computed(() => Math.min(4, 1 + Math.floor(flashStreak.value / 3)));
+
+const nextFlashQuestion = () => {
+  const pool = localizedCountries.value;
+  const target = pool[Math.floor(Math.random() * pool.length)];
+  currentFlashQuestion.value = target;
+  flashAskFlag.value = Math.random() > 0.5;
+  const distractors = pool
+    .filter((c) => c.id !== target.id)
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 3);
+  flashOptions.value = [target, ...distractors].sort(() => 0.5 - Math.random());
 };
 
-const initFlashcards = () => {
-  flashcardContinent.value = '';
-  resetFlashcards();
+const startFlash60 = () => {
+  currentMode.value = 'flash60';
+  if (flashTimer) clearInterval(flashTimer);
+  flashTimeLeft.value = 60;
+  flashScore.value = 0;
+  flashStreak.value = 0;
+  flashBestStreak.value = 0;
+  flashCorrectCount.value = 0;
+  flashFinished.value = false;
+  nextFlashQuestion();
+
+  flashTimer = setInterval(() => {
+    if (flashTimeLeft.value > 1) {
+      flashTimeLeft.value--;
+    } else {
+      flashTimeLeft.value = 0;
+      flashFinished.value = true;
+      clearInterval(flashTimer);
+      playSound('victory');
+      sauvegarderScore('QCM Flash 60s', flashScore.value, 40);
+    }
+  }, 1000);
 };
 
-const resetFlashcards = () => {
-  let list = localizedCountries.value;
-  if (flashcardContinent.value) {
-    list = list.filter(c => c.continent === flashcardContinent.value);
+const submitFlashAnswer = (id) => {
+  if (flashFinished.value || !currentFlashQuestion.value) return;
+  if (id === currentFlashQuestion.value.id) {
+    playSound('correct');
+    flashStreak.value++;
+    if (flashStreak.value > flashBestStreak.value) flashBestStreak.value = flashStreak.value;
+    flashCorrectCount.value++;
+    flashScore.value += flashMultiplier.value;
+
+    if (flashStreak.value % 4 === 0) {
+      flashTimeLeft.value += 2;
+      flashBonusToast.value = true;
+      setTimeout(() => { flashBonusToast.value = false; }, 900);
+    }
+  } else {
+    playSound('wrong');
+    flashStreak.value = 0;
   }
-  flashcardOrderIsos.value = list.map(c => c.iso);
-  flashcardIndex.value = 0;
-  flashcardFlipped.value = false;
+  nextFlashQuestion();
 };
 
-const shuffleFlashcards = () => {
-  if (flashcardOrderIsos.value.length === 0) {
-    resetFlashcards();
-  }
-  flashcardOrderIsos.value = [...flashcardOrderIsos.value].sort(() => 0.5 - Math.random());
-  flashcardIndex.value = 0;
-  flashcardFlipped.value = false;
-  playSound('flip');
+// =========================================================
+// MODE 3 : LE PAYS MYSTÈRE (WORLDLE + GLOBE RADAR 3D)
+// =========================================================
+const mysteryIsDaily = ref(true);
+const mysteryTarget = ref(null);
+const mysteryQuery = ref('');
+const mysteryGuesses = ref([]);
+const mysteryFinished = ref(false);
+const mysteryWon = ref(false);
+const mysteryCopied = ref(false);
+
+const computeHaversineKm = (lat1, lon1, lat2, lon2) => {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.min(1, Math.sqrt(a))));
 };
 
-const activeFlashcards = computed(() => {
-  if (flashcardOrderIsos.value.length === 0) return localizedCountries.value;
-  const mapByIso = new Map(localizedCountries.value.map(c => [c.iso, c]));
-  return flashcardOrderIsos.value.map(iso => mapByIso.get(iso)).filter(Boolean);
+const computeCompassBearing = (lat1, lon1, lat2, lon2) => {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const toDeg = (r) => (r * 180) / Math.PI;
+  const dLon = toRad(lon2 - lon1);
+  const y = Math.sin(dLon) * Math.cos(toRad(lat2));
+  const x =
+    Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+    Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLon);
+  const brng = (toDeg(Math.atan2(y, x)) + 360) % 360;
+  const dirsFr = ['⬆️ N', '↗️ NE', '➡️ E', '↘️ SE', '⬇️ S', '↙️ SO', '⬅️ O', '↖️ NO'];
+  const dirsEn = ['⬆️ N', '↗️ NE', '➡️ E', '↘️ SE', '⬇️ S', '↙️ SW', '⬅️ W', '↖️ NW'];
+  const idx = Math.round(brng / 45) % 8;
+  return (locale.value === 'fr' ? dirsFr : dirsEn)[idx];
+};
+
+const mysterySuggestions = computed(() => {
+  const q = normalizeString(mysteryQuery.value);
+  if (!q) return [];
+  const guessedIds = new Set(mysteryGuesses.value.map((g) => g.id));
+  return localizedCountries.value
+    .filter((c) => !guessedIds.has(c.id) && normalizeString(c.name).includes(q))
+    .slice(0, 5);
 });
 
-const currentFlashcard = computed(() => activeFlashcards.value[flashcardIndex.value] || null);
+const initDailyMystery = () => {
+  currentMode.value = 'mystery';
+  mysteryIsDaily.value = true;
+  const today = new Date();
+  const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  const idx = (seed * 31) % localizedCountries.value.length;
+  mysteryTarget.value = localizedCountries.value[idx];
+  mysteryGuesses.value = [];
+  mysteryQuery.value = '';
+  mysteryFinished.value = false;
+  mysteryWon.value = false;
+  mysteryCopied.value = false;
+};
 
-const flashcardSuivante = () => {
-  const total = activeFlashcards.value.length;
-  if (total === 0) return;
-  const nextIdx = (flashcardIndex.value + 1) % total;
+const startInfiniteMystery = () => {
+  currentMode.value = 'mystery';
+  mysteryIsDaily.value = false;
+  const idx = Math.floor(Math.random() * localizedCountries.value.length);
+  mysteryTarget.value = localizedCountries.value[idx];
+  mysteryGuesses.value = [];
+  mysteryQuery.value = '';
+  mysteryFinished.value = false;
+  mysteryWon.value = false;
+  mysteryCopied.value = false;
+};
 
-  if (flashcardFlipped.value) {
-    flashcardFlipped.value = false;
-    setTimeout(() => { flashcardIndex.value = nextIdx; }, 150);
+const submitMysteryGuess = (countryObj = null) => {
+  if (mysteryFinished.value || !mysteryTarget.value) return;
+  let chosen = countryObj;
+  if (!chosen) {
+    const q = normalizeString(mysteryQuery.value);
+    const aliasIso = COUNTRY_ALIASES[q];
+    chosen =
+      (aliasIso && localizedCountries.value.find((c) => c.iso === aliasIso)) ||
+      localizedCountries.value.find((c) => normalizeString(c.name) === q) ||
+      mysterySuggestions.value[0];
+  }
+  if (!chosen) return;
+  if (mysteryGuesses.value.some((g) => g.id === chosen.id)) return;
+
+  focusQuizGlobeOn(chosen.lat, chosen.lng);
+
+  const isCorrect = chosen.id === mysteryTarget.value.id;
+  const distKm = isCorrect
+    ? 0
+    : computeHaversineKm(chosen.lat, chosen.lng, mysteryTarget.value.lat, mysteryTarget.value.lng);
+  const proximity = isCorrect ? 100 : Math.max(0, Math.round((1 - distKm / 20000) * 100));
+  const direction = isCorrect
+    ? '🎯'
+    : computeCompassBearing(chosen.lat, chosen.lng, mysteryTarget.value.lat, mysteryTarget.value.lng);
+
+  mysteryGuesses.value.push({
+    id: chosen.id,
+    iso: chosen.iso,
+    name: chosen.name,
+    distanceKm: distKm,
+    proximity,
+    direction,
+    isCorrect
+  });
+  mysteryQuery.value = '';
+
+  if (isCorrect) {
+    mysteryWon.value = true;
+    mysteryFinished.value = true;
+    playSound('victory');
+    sauvegarderScore('Pays Mystère (Worldle)', 7 - mysteryGuesses.value.length, 6);
+  } else if (mysteryGuesses.value.length >= 6) {
+    mysteryWon.value = false;
+    mysteryFinished.value = true;
+    focusQuizGlobeOn(mysteryTarget.value.lat, mysteryTarget.value.lng);
+    playSound('wrong');
   } else {
-    flashcardIndex.value = nextIdx;
+    playSound('correct');
   }
 };
 
-const flashcardPrecedente = () => {
-  const total = activeFlashcards.value.length;
-  if (total === 0) return;
-  const prevIdx = (flashcardIndex.value - 1 + total) % total;
-
-  if (flashcardFlipped.value) {
-    flashcardFlipped.value = false;
-    setTimeout(() => { flashcardIndex.value = prevIdx; }, 150);
-  } else {
-    flashcardIndex.value = prevIdx;
-  }
-};
-
-const handleFlashcardKeydown = (e) => {
-  if (currentMode.value !== 'flashcards') return;
-  const tag = (e.target?.tagName || '').toLowerCase();
-  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-
-  if (e.key === 'ArrowRight') {
-    e.preventDefault();
-    flashcardSuivante();
-  } else if (e.key === 'ArrowLeft') {
-    e.preventDefault();
-    flashcardPrecedente();
-  } else if (e.key === ' ') {
-    e.preventDefault();
-    toggleFlashcardFlip();
-  }
+const copyMysteryShareGrid = async () => {
+  const rows = mysteryGuesses.value.map((g) => {
+    const blocks = Math.round(g.proximity / 20);
+    const bar = '🟩'.repeat(blocks) + '⬛'.repeat(5 - blocks);
+    return `${bar} ${g.direction} (${g.proximity}%)`;
+  });
+  const text = `GeoLearn Worldle (${mysteryGuesses.value.length}/6)\n${rows.join('\n')}\nhttps://geolearn.fun`;
+  try {
+    await navigator.clipboard.writeText(text);
+    mysteryCopied.value = true;
+  } catch (e) {}
 };
 
 // =========================================================
-// MODE CHRONO CARTE (CLAVIER EUROPE & MONDE + JETPUNK GRIDS)
+// MODE 4 : ENQUÊTE AUX 5 INDICES (CARTES 3D RECTO-VERSO)
 // =========================================================
-const isChronoStarted = ref(false);
-const chronoRegion = ref('europe');
-const chronoTimeLimit = ref(180);
-const chronoTemps = ref(180);
-const chronoInput = ref('');
-const paysTrouves = ref([]);
-const chronoFini = ref(false);
-const chronoDuplicateMsg = ref('');
-let intervalId = null;
-let duplicateTimer = null;
+const detectiveRound = ref(0);
+const detectiveScore = ref(0);
+const detectiveCluesRevealed = ref(1);
+const detectiveTarget = ref(null);
+const detectiveQuery = ref('');
+const detectiveRoundAnswered = ref(false);
+const detectiveRoundWon = ref(false);
+const detectiveFinished = ref(false);
 
-const mapZoom = ref(3.8);
-const mapCenter = ref([50.0, 10.0]);
-
-const chronoTimerOptions = computed(() => {
+const currentDetectiveClues = computed(() => {
+  const c = detectiveTarget.value;
   const isFr = locale.value === 'fr';
-  if (chronoRegion.value === 'europe') {
+  if (!c) return [];
+  const maskedFact = (c.fact || '').replace(new RegExp(c.name, 'gi'), '███');
+  return [
+    { type: 'text', label: isFr ? 'Continent & Superficie' : 'Continent & Area', value: `${c.subregion} • ${c.area}` },
+    { type: 'text', label: isFr ? 'Population & Monnaie' : 'Population & Currency', value: `${c.population} • ${c.currency}` },
+    { type: 'text', label: isFr ? 'Indice Culturel' : 'Cultural Clue', value: maskedFact },
+    { type: 'text', label: isFr ? 'Langue & Capitale' : 'Language & Capital', value: `${c.lang} • ${c.capital}` },
+    { type: 'flag', label: isFr ? 'Drapeau Officiel' : 'Official Flag', value: c.iso }
+  ];
+});
+
+const detectiveSuggestions = computed(() => {
+  const q = normalizeString(detectiveQuery.value);
+  if (!q) return [];
+  return localizedCountries.value.filter((c) => normalizeString(c.name).includes(q)).slice(0, 5);
+});
+
+const setupDetectiveCase = () => {
+  const pool = localizedCountries.value;
+  detectiveTarget.value = pool[Math.floor(Math.random() * pool.length)];
+  detectiveCluesRevealed.value = 1;
+  detectiveQuery.value = '';
+  detectiveRoundAnswered.value = false;
+  detectiveRoundWon.value = false;
+};
+
+const initDetective = () => {
+  currentMode.value = 'detective';
+  detectiveRound.value = 0;
+  detectiveScore.value = 0;
+  detectiveFinished.value = false;
+  setupDetectiveCase();
+};
+
+const submitDetectiveGuess = (countryObj = null) => {
+  if (detectiveRoundAnswered.value || !detectiveTarget.value) return;
+  let chosen = countryObj;
+  if (!chosen) {
+    const q = normalizeString(detectiveQuery.value);
+    const aliasIso = COUNTRY_ALIASES[q];
+    chosen =
+      (aliasIso && localizedCountries.value.find((c) => c.iso === aliasIso)) ||
+      localizedCountries.value.find((c) => normalizeString(c.name) === q) ||
+      detectiveSuggestions.value[0];
+  }
+  if (!chosen) return;
+
+  detectiveRoundAnswered.value = true;
+  if (chosen.id === detectiveTarget.value.id) {
+    detectiveRoundWon.value = true;
+    detectiveScore.value += 6 - detectiveCluesRevealed.value;
+    playSound('correct');
+  } else {
+    detectiveRoundWon.value = false;
+    detectiveCluesRevealed.value = 5;
+    playSound('wrong');
+  }
+};
+
+const nextDetectiveRound = () => {
+  if (detectiveRound.value < 4) {
+    detectiveRound.value++;
+    setupDetectiveCase();
+  } else {
+    detectiveFinished.value = true;
+    playSound('victory');
+    sauvegarderScore('Enquête 5 Indices', detectiveScore.value, 25);
+  }
+};
+
+// =========================================================
+// MODE 5 : DÉFIS CHRONO (AVEC GLOBE 3D INTERACTIF & ALIAS)
+// =========================================================
+const chronoScope = ref('europe');
+const chronoViewMode = ref('globe3d'); // 'globe3d' | 'map2d'
+const chronoDuration = ref(300);
+const chronoTimeLeft = ref(300);
+const chronoInput = ref('');
+const chronoFoundIds = ref([]);
+const chronoLastFoundCountry = ref(null);
+const chronoDuplicateMsg = ref('');
+const chronoFini = ref(false);
+const chronoMapZoom = ref(3.5);
+const chronoMapCenter = ref([52, 15]);
+let chronoTimer = null;
+
+const chronoFoundSet = computed(() => new Set(chronoFoundIds.value));
+
+const chronoTargetCountries = computed(() => {
+  if (chronoScope.value === 'europe') {
+    return localizedCountries.value.filter((c) => c.continent === 'Europe');
+  }
+  return localizedCountries.value;
+});
+
+const chronoAvailablePresets = computed(() => {
+  if (chronoScope.value === 'europe') {
     return [
-      {
-        seconds: 180,
-        label: '⏱️ 3 min',
-        subLabel: isFr ? '100% des points & XP' : '100% points & XP'
-      },
-      {
-        seconds: 300,
-        label: '⏱️ 5 min',
-        subLabel: isFr ? '-25% sur les points' : '-25% points'
-      },
-      {
-        seconds: 0,
-        label: isFr ? '∞ Illimité' : '∞ Unlimited',
-        subLabel: isFr ? 'Points & XP ÷ 2' : 'Points & XP ÷ 2'
-      }
+      { sec: 180, label: '3 min' },
+      { sec: 300, label: '5 min' },
+      { sec: 0, label: '∞ Sans limite' }
     ];
   }
   return [
-    {
-      seconds: 900,
-      label: '⏱️ 15 min',
-      subLabel: isFr ? '100% des points & XP' : '100% points & XP'
-    },
-    {
-      seconds: 0,
-      label: isFr ? '∞ Illimité' : '∞ Unlimited',
-      subLabel: isFr ? 'Points & XP ÷ 2' : 'Points & XP ÷ 2'
-    }
+    { sec: 900, label: '15 min' },
+    { sec: 0, label: '∞ Sans limite' }
   ];
 });
 
-const chronoMultiplier = computed(() => {
-  if (chronoTimeLimit.value === 0) return 0.5;
-  if (chronoRegion.value === 'europe' && chronoTimeLimit.value === 300) return 0.75;
-  return 1;
-});
-
-const chronoMultiplierBadge = computed(() => {
-  if (chronoMultiplier.value === 0.5) return locale.value === 'fr' ? 'Temps illimité (Score ÷ 2)' : 'Unlimited (Score ÷ 2)';
-  if (chronoMultiplier.value === 0.75) return locale.value === 'fr' ? 'Mode 5 min (-25% pts)' : '5 min mode (-25% pts)';
-  return locale.value === 'fr' ? 'Points 100%' : '100% Points';
-});
-
-const chronoAdjustedScore = computed(() =>
-  Math.round(paysTrouves.value.length * chronoMultiplier.value)
-);
-
-const chronoEarnedXp = computed(() => {
-  if (paysTrouves.value.length === 0) return 0;
-  const baseBonus = Math.round(25 * chronoMultiplier.value);
-  return chronoAdjustedScore.value * 10 + baseBonus;
-});
-
-const selectChronoMode = (region) => {
-  chronoRegion.value = region;
-  if (region === 'europe') {
-    chronoTimeLimit.value = 180;
-    chronoTemps.value = 180;
-    mapCenter.value = [54.0, 15.0];
-    mapZoom.value = 3.8;
-  } else {
-    chronoTimeLimit.value = 900;
-    chronoTemps.value = 900;
-    mapCenter.value = [20.0, 10.0];
-    mapZoom.value = 2;
-  }
-};
-
-const selectChronoDuration = (seconds) => {
-  chronoTimeLimit.value = seconds;
-  chronoTemps.value = seconds;
-};
-
-const targetCountries = computed(() => {
-  if (chronoRegion.value === 'europe') {
-    return localizedCountries.value
-      .filter(c => c.continent === 'Europe')
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }
-  return [...localizedCountries.value].sort((a, b) => a.name.localeCompare(b.name));
-});
-
-const worldContinentGroups = computed(() => {
+const chronoContinentGroups = computed(() => {
   const isFr = locale.value === 'fr';
-  const defs = [
-    { key: 'Europe', label: 'Europe' },
-    { key: 'Asia', label: isFr ? 'Asie' : 'Asia' },
-    { key: 'Africa', label: isFr ? 'Afrique' : 'Africa' },
-    { key: 'North America', label: isFr ? 'Amérique du Nord' : 'North America' },
-    { key: 'South America', label: isFr ? 'Amérique du Sud' : 'South America' },
-    { key: 'Oceania', label: isFr ? 'Océanie' : 'Oceania' }
-  ];
+  const labels = {
+    Europe: 'Europe',
+    Asia: isFr ? 'Asie' : 'Asia',
+    Africa: isFr ? 'Afrique' : 'Africa',
+    'North America': isFr ? 'Amérique du Nord' : 'North America',
+    'South America': isFr ? 'Amérique du Sud' : 'South America',
+    Oceania: isFr ? 'Océanie' : 'Oceania'
+  };
+  const order = chronoScope.value === 'europe'
+    ? ['Europe']
+    : ['Europe', 'Asia', 'Africa', 'North America', 'South America', 'Oceania'];
 
-  return defs.map(d => {
-    const list = targetCountries.value
-      .filter(c => c.continent === d.key)
+  return order.map((cont) => {
+    const list = chronoTargetCountries.value
+      .filter((c) => c.continent === cont)
       .sort((a, b) => a.name.localeCompare(b.name));
-    const foundCount = list.filter(c => paysTrouves.value.includes(c.iso)).length;
     return {
-      key: d.key,
-      label: d.label,
+      continent: cont,
+      label: labels[cont] || cont,
       countries: list,
-      foundCount
+      foundCount: list.filter((c) => chronoFoundSet.value.has(c.id)).length
     };
   });
 });
 
-const europeColumns = computed(() => {
-  const list = targetCountries.value;
-  const cols = [[], [], [], []];
-  const perCol = Math.ceil(list.length / 4);
-  list.forEach((country, idx) => {
-    const colIdx = Math.min(3, Math.floor(idx / perCol));
-    cols[colIdx].push(country);
-  });
-  return cols;
-});
-
-const getMarkerRadius = (iso) => {
-  if (chronoRegion.value === 'europe') {
-    const micro = ['ad', 'li', 'mt', 'mc', 'sm', 'va']; 
-    const massive = ['ru', 'fr', 'de', 'es', 'se', 'no', 'fi', 'pl', 'it', 'gb', 'ua', 'ro', 'by']; 
-    if (micro.includes(iso)) return 5;
-    if (massive.includes(iso)) return 14;
-    return 9;
-  }
-  return 6;
-};
-
-const terminerChrono = () => {
-  if (chronoFini.value) return;
-  chronoFini.value = true;
-  chronoDuplicateMsg.value = '';
-  arreterChrono();
-  playSound('victory');
-  const modeLabel = chronoRegion.value === 'europe' ? 'Défi Europe' : 'Défi Monde';
-  sauvegarderScore(modeLabel, chronoAdjustedScore.value, targetCountries.value.length);
+const formatTime = (sec) => {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
 };
 
 const demarrerChrono = () => {
-  isChronoStarted.value = true;
-  arreterChrono();
-  chronoInput.value = '';
+  currentMode.value = 'chrono';
+  if (chronoTimer) clearInterval(chronoTimer);
+  chronoFoundIds.value = [];
+  chronoLastFoundCountry.value = null;
   chronoDuplicateMsg.value = '';
-  paysTrouves.value = [];
+  chronoInput.value = '';
   chronoFini.value = false;
-  chronoTemps.value = chronoTimeLimit.value;
+  chronoTimeLeft.value = chronoDuration.value;
 
-  if (chronoTimeLimit.value > 0) {
-    intervalId = setInterval(() => {
-      if (chronoTemps.value > 0) {
-        chronoTemps.value--;
+  if (chronoScope.value === 'europe') {
+    chronoMapCenter.value = [52, 15];
+    chronoMapZoom.value = 3.5;
+    focusQuizGlobeOn(50, 14);
+  } else {
+    chronoMapCenter.value = [25, 12];
+    chronoMapZoom.value = 2;
+    focusQuizGlobeOn(25, 12);
+  }
+
+  if (chronoDuration.value > 0) {
+    chronoTimer = setInterval(() => {
+      if (chronoTimeLeft.value > 1) {
+        chronoTimeLeft.value--;
       } else {
+        chronoTimeLeft.value = 0;
         terminerChrono();
       }
     }, 1000);
   }
 };
 
-const formatTime = (seconds) => {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+const changerPorteeChrono = (scope) => {
+  chronoScope.value = scope;
+  chronoDuration.value = scope === 'europe' ? 300 : 900;
+  demarrerChrono();
 };
 
-const countryMatchesInput = (country, inputNormalise) => {
-  const mainFr = normalizeStr(country.name_fr);
-  const mainEn = normalizeStr(country.name_en);
-  const altNames = (country.aliases || []).map(a => normalizeStr(a));
-  return mainFr === inputNormalise || mainEn === inputNormalise || altNames.includes(inputNormalise);
+const changerDureeChrono = (sec) => {
+  chronoDuration.value = sec;
+  demarrerChrono();
 };
 
-const anotherUnfoundCountryStartsWith = (inputNormalise, excludeIso = null) => {
-  return targetCountries.value.some(c => {
-    if (paysTrouves.value.includes(c.iso)) return false;
-    if (excludeIso && c.iso === excludeIso) return false;
-    const names = [
-      normalizeStr(c.name_fr),
-      normalizeStr(c.name_en),
-      ...(c.aliases || []).map(a => normalizeStr(a))
-    ];
-    return names.some(n => n.length > inputNormalise.length && n.startsWith(inputNormalise));
-  });
-};
-
-const verifierSaisieChrono = (forcedByEnter = false) => {
+const verifierSaisieChrono = (forceEnter = false) => {
   if (chronoFini.value) return;
-  const rawValue = chronoInput.value || '';
-  const endedWithSpace = /\s$/.test(rawValue);
-  const inputNormalise = normalizeStr(rawValue);
-
-  if (!inputNormalise) {
+  const typed = normalizeString(chronoInput.value);
+  if (!typed) {
     chronoDuplicateMsg.value = '';
     return;
   }
 
-  const unfoundMatch = targetCountries.value.find(
-    c => !paysTrouves.value.includes(c.iso) && countryMatchesInput(c, inputNormalise)
+  const aliasIso = COUNTRY_ALIASES[typed];
+
+  // Vérifie d'abord si le pays est déjà trouvé (pour afficher le message de doublon)
+  const alreadyFound = chronoTargetCountries.value.find(
+    (c) =>
+      chronoFoundSet.value.has(c.id) &&
+      (normalizeString(c.name_fr) === typed ||
+        normalizeString(c.name_en) === typed ||
+        (aliasIso && c.iso === aliasIso))
   );
 
-  if (unfoundMatch) {
-    const isMainNameMatch =
-      normalizeStr(unfoundMatch.name_fr) === inputNormalise ||
-      normalizeStr(unfoundMatch.name_en) === inputNormalise;
+  if (alreadyFound) {
+    chronoDuplicateMsg.value =
+      locale.value === 'fr'
+        ? `${alreadyFound.name} a déjà été validé !`
+        : `${alreadyFound.name} is already found!`;
+    return;
+  }
 
-    if (
-      !isMainNameMatch &&
-      inputNormalise.length <= 3 &&
-      !forcedByEnter &&
-      !endedWithSpace &&
-      anotherUnfoundCountryStartsWith(inputNormalise, unfoundMatch.iso)
-    ) {
-      return;
-    }
+  chronoDuplicateMsg.value = '';
 
-    paysTrouves.value.push(unfoundMatch.iso);
+  const match = chronoTargetCountries.value.find(
+    (c) =>
+      !chronoFoundSet.value.has(c.id) &&
+      (normalizeString(c.name_fr) === typed ||
+        normalizeString(c.name_en) === typed ||
+        (aliasIso && c.iso === aliasIso))
+  );
+
+  if (match) {
+    chronoFoundIds.value.push(match.id);
+    chronoLastFoundCountry.value = match;
     chronoInput.value = '';
-    chronoDuplicateMsg.value = '';
+    focusQuizGlobeOn(match.lat, match.lng);
     playSound('correct');
-
-    if (paysTrouves.value.length === targetCountries.value.length) {
+    if (chronoFoundIds.value.length === chronoTargetCountries.value.length) {
       terminerChrono();
     }
+  } else if (forceEnter) {
+    playSound('wrong');
+  }
+};
+
+const terminerChrono = () => {
+  if (chronoTimer) clearInterval(chronoTimer);
+  chronoFini.value = true;
+  playSound('victory');
+  const modeLabel = chronoScope.value === 'europe' ? 'Défi Europe (Carte)' : 'Défi Monde (196 pays)';
+  sauvegarderScore(modeLabel, chronoFoundIds.value.length, chronoTargetCountries.value.length);
+};
+
+// =========================================================
+// MODE 6 : CLIQUEZ SUR LA CARTE MUETTE (SETERRA)
+// =========================================================
+const mapClickScope = ref('europe');
+const mapClickPool = ref([]);
+const mapClickTargets = ref([]);
+const mapClickIndex = ref(0);
+const mapClickScore = ref(0);
+const mapClickDoneIds = ref(new Set());
+const mapClickLastWrongId = ref(null);
+const mapClickFinished = ref(false);
+const mapClickZoom = ref(3.5);
+const mapClickCenter = ref([52, 15]);
+
+const currentMapClickTarget = computed(() => mapClickTargets.value[mapClickIndex.value] || null);
+
+const initMapClick = (scope = 'europe') => {
+  currentMode.value = 'map-click';
+  mapClickScope.value = scope;
+  const pool =
+    scope === 'europe'
+      ? localizedCountries.value.filter((c) => c.continent === 'Europe')
+      : localizedCountries.value;
+  mapClickPool.value = pool;
+  mapClickTargets.value = [...pool].sort(() => 0.5 - Math.random()).slice(0, scope === 'europe' ? 20 : 25);
+  mapClickIndex.value = 0;
+  mapClickScore.value = 0;
+  mapClickDoneIds.value = new Set();
+  mapClickFinished.value = false;
+  mapClickCenter.value = scope === 'europe' ? [52, 15] : [25, 12];
+  mapClickZoom.value = scope === 'europe' ? 3.5 : 2;
+};
+
+const skipMapClickTarget = () => {
+  if (mapClickFinished.value) return;
+  if (mapClickIndex.value < mapClickTargets.value.length - 1) {
+    mapClickIndex.value++;
+  } else {
+    mapClickFinished.value = true;
+  }
+};
+
+const handleMapClickCountry = (country) => {
+  if (mapClickFinished.value || !currentMapClickTarget.value) return;
+  if (country.id === currentMapClickTarget.value.id) {
+    playSound('correct');
+    mapClickScore.value++;
+    const nextSet = new Set(mapClickDoneIds.value);
+    nextSet.add(country.id);
+    mapClickDoneIds.value = nextSet;
+    mapClickLastWrongId.value = null;
+
+    if (mapClickIndex.value < mapClickTargets.value.length - 1) {
+      mapClickIndex.value++;
+    } else {
+      mapClickFinished.value = true;
+      playSound('victory');
+      sauvegarderScore('Cliquez sur la Carte', mapClickScore.value, mapClickTargets.value.length);
+    }
+  } else {
+    playSound('wrong');
+    mapClickLastWrongId.value = country.id;
+    if (mapClickIndex.value < mapClickTargets.value.length - 1) {
+      mapClickIndex.value++;
+    } else {
+      mapClickFinished.value = true;
+    }
+  }
+};
+
+// =========================================================
+// MODE 7 : FLASHCARDS 3D INTERACTIVES
+// =========================================================
+const selectedFlashContinent = ref('all');
+const flashIndex = ref(0);
+const isFlipped = ref(false);
+const flashKnownIds = ref(new Set());
+const flashShuffleSeed = ref(0);
+
+const filteredFlashcards = computed(() => {
+  // Dépendance réactive sur flashShuffleSeed pour mélanger
+  void flashShuffleSeed.value;
+  const base =
+    selectedFlashContinent.value === 'all'
+      ? [...localizedCountries.value]
+      : localizedCountries.value.filter((c) => c.continent === selectedFlashContinent.value);
+  return base;
+});
+
+const currentFlashcard = computed(() => filteredFlashcards.value[flashIndex.value] || null);
+
+const changerContinentFlash = () => {
+  flashIndex.value = 0;
+  isFlipped.value = false;
+};
+
+const melangerFlashcards = () => {
+  countriesData.value = [...countriesData.value].sort(() => 0.5 - Math.random());
+  flashIndex.value = 0;
+  isFlipped.value = false;
+};
+
+const marquerFlashAcquise = () => {
+  if (!currentFlashcard.value) return;
+  const next = new Set(flashKnownIds.value);
+  next.add(currentFlashcard.value.id);
+  flashKnownIds.value = next;
+  playSound('correct');
+  carteSuivante();
+};
+
+const carteSuivante = () => {
+  if (!filteredFlashcards.value.length) return;
+  isFlipped.value = false;
+  flashIndex.value = (flashIndex.value + 1) % filteredFlashcards.value.length;
+};
+
+const cartePrecedente = () => {
+  if (!filteredFlashcards.value.length) return;
+  isFlipped.value = false;
+  flashIndex.value =
+    (flashIndex.value - 1 + filteredFlashcards.value.length) % filteredFlashcards.value.length;
+};
+
+// =========================================================
+// MODE 8 : GRILLE MONDIALE DES 196 DRAPEAUX (AVEC AUTO-FOCUS)
+// =========================================================
+const flagGridContinent = ref('all');
+const flagGridInputs = ref({});
+const flagGridSolvedSet = ref(new Set());
+
+const filteredFlagGridCountries = computed(() => {
+  if (flagGridContinent.value === 'all') return localizedCountries.value;
+  return localizedCountries.value.filter((c) => c.continent === flagGridContinent.value);
+});
+
+const flagGridFoundCount = computed(
+  () => filteredFlagGridCountries.value.filter((c) => flagGridSolvedSet.value.has(c.id)).length
+);
+
+const checkFlagGridItem = (country, idx) => {
+  const val = normalizeString(flagGridInputs.value[country.id] || '');
+  const aliasIso = COUNTRY_ALIASES[val];
+  if (
+    val === normalizeString(country.name_fr) ||
+    val === normalizeString(country.name_en) ||
+    (aliasIso && country.iso === aliasIso)
+  ) {
+    const next = new Set(flagGridSolvedSet.value);
+    next.add(country.id);
+    flagGridSolvedSet.value = next;
+    playSound('correct');
+
+    // Auto-focus fluide sur le champ suivant non résolu
+    nextTick(() => {
+      for (let nextIdx = idx + 1; nextIdx < filteredFlagGridCountries.value.length; nextIdx++) {
+        const nextCountry = filteredFlagGridCountries.value[nextIdx];
+        if (!flagGridSolvedSet.value.has(nextCountry.id)) {
+          const el = document.getElementById(`flag-input-${nextIdx}`);
+          if (el) {
+            el.focus();
+            break;
+          }
+        }
+      }
+    });
+  }
+};
+
+// =========================================================
+// MODE 9 : CRÉATEUR DE DÉFIS SUR-MESURE
+// =========================================================
+const customSearch = ref('');
+const customSelectedIds = ref([]);
+const customBuilderType = ref('capital');
+const customLinkCopied = ref(false);
+
+const filteredCustomCountries = computed(() => {
+  const q = normalizeString(customSearch.value);
+  if (!q) return localizedCountries.value;
+  return localizedCountries.value.filter((c) => normalizeString(c.name).includes(q));
+});
+
+const toggleCustomCountry = (id) => {
+  const idx = customSelectedIds.value.indexOf(id);
+  if (idx !== -1) {
+    customSelectedIds.value.splice(idx, 1);
+  } else if (customSelectedIds.value.length < 15) {
+    customSelectedIds.value.push(id);
+  }
+};
+
+const pickRandomCustomSet = (count = 10) => {
+  const shuffled = [...localizedCountries.value].sort(() => 0.5 - Math.random());
+  customSelectedIds.value = shuffled.slice(0, count).map((c) => c.id);
+};
+
+const copyCustomBuilderLink = async () => {
+  const url = `${window.location.origin}/quiz?mode=qcm&type=${customBuilderType.value}&custom=${customSelectedIds.value.join(',')}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    customLinkCopied.value = true;
+  } catch (e) {}
+};
+
+const launchCustomBuiltQuiz = () => {
+  if (customSelectedIds.value.length < 5) return;
+  initQcm(customBuilderType.value, customSelectedIds.value);
+};
+
+// =========================================================
+// CATALOGUE DU MENU QUIZ & ROUTAGE PAR QUERY
+// =========================================================
+const menuCategories = computed(() => {
+  const isFr = locale.value === 'fr';
+  return [
+    { id: 'all', label: isFr ? 'Tous les modes (11)' : 'All Modes (11)' },
+    { id: 'featured', label: isFr ? 'Défis Phares 3D' : '3D Featured' },
+    { id: 'classics', label: isFr ? 'QCM & Chrono' : 'QCM & Timed' },
+    { id: 'study', label: isFr ? 'Révision & Sur-mesure' : 'Study & Custom' }
+  ];
+});
+
+const allMenuCards = computed(() => {
+  const isFr = locale.value === 'fr';
+  return [
+    {
+      id: 'mystery',
+      cat: 'featured',
+      tag: 'WORLDLE + RADAR 3D',
+      metric: '6 ESSAIS',
+      title: isFr ? 'Le Pays Mystère (Worldle)' : 'Mystery Country (Worldle)',
+      desc: isFr
+        ? 'Devinez le pays secret en 6 tentatives grâce à la distance en kilomètres, la boussole et le Globe Radar 3D de triangulation.'
+        : 'Guess the secret country in 6 tries using distance in km, compass bearing, and the 3D Triangulation Globe.',
+      cta: isFr ? 'Lancer le Pays Mystère' : 'Play Mystery Country',
+      badgeClass: 'bg-amber-500/10 text-amber-500 border-amber-500/30',
+      action: () => initDailyMystery()
+    },
+    {
+      id: 'chrono',
+      cat: 'featured',
+      tag: 'GLOBE 3D + JETPUNK',
+      metric: '47 / 196',
+      title: isFr ? 'Défis Chrono (Globe 3D & Carte)' : 'Timed Challenge (3D Globe & Map)',
+      desc: isFr
+        ? 'Saisissez au clavier les 47 pays d\'Europe ou les 196 pays du Monde et regardez le Globe 3D tourner et s\'illuminer à chaque pays trouvé.'
+        : 'Type all 47 European countries or all 196 World countries as the 3D Globe spins and lights up on every hit.',
+      cta: isFr ? 'Lancer le Défi Chrono 3D' : 'Start 3D Timed Challenge',
+      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      action: () => demarrerChrono()
+    },
+    {
+      id: 'flash60',
+      cat: 'featured',
+      tag: 'SPRINT 60S',
+      metric: 'COMBO X4',
+      title: isFr ? 'Contre-la-montre 60 secondes' : '60-Second Flash Sprint',
+      desc: isFr
+        ? 'Enchaînez un maximum de capitales et drapeaux en 60 secondes avec multiplicateur de combo et bonus de +2s.'
+        : 'Chain as many capitals and flags as possible in 60 seconds with combo multipliers and +2s bonuses.',
+      cta: isFr ? 'Démarrer le Sprint 60s' : 'Start 60s Sprint',
+      badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+      action: () => startFlash60()
+    },
+    {
+      id: 'detective',
+      cat: 'featured',
+      tag: 'CARTES 3D',
+      metric: '25 PTS MAX',
+      title: isFr ? 'Enquête aux 5 Indices 3D' : '5-Clue 3D Detective',
+      desc: isFr
+        ? 'Retournez les cartes d\'indices en 3D une par une (superficie, monnaie, anecdote, capitale, drapeau) pour démasquer l\'État.'
+        : 'Flip 3D clue cards one by one to unmask the target sovereign state with maximum points.',
+      cta: isFr ? 'Ouvrir le dossier' : 'Start Investigation',
+      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      action: () => initDetective()
+    },
+    {
+      id: 'qcm-cap',
+      cat: 'classics',
+      tag: 'CAPITALES',
+      metric: '15 QUESTIONS',
+      title: t('home.mode_caps_title'),
+      desc: t('home.mode_caps_desc'),
+      cta: isFr ? 'Lancer les 15 questions' : 'Start 15 Questions',
+      badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+      action: () => initQcm('capital')
+    },
+    {
+      id: 'qcm-flag',
+      cat: 'classics',
+      tag: 'DRAPEAUX',
+      metric: '15 QUESTIONS',
+      title: t('home.mode_flags_title'),
+      desc: t('home.mode_flags_desc'),
+      cta: isFr ? 'Lancer les 15 questions' : 'Start 15 Questions',
+      badgeClass: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+      action: () => initQcm('flag')
+    },
+    {
+      id: 'qcm-culture',
+      cat: 'classics',
+      tag: 'CULTURE & DÉMO',
+      metric: '15 QUESTIONS',
+      title: isFr ? 'Population, Langues & Devises' : 'Population, Languages & Currencies',
+      desc: isFr
+        ? 'Comparez les ordres de grandeur démographiques et identifiez les langues officielles et les monnaies.'
+        : 'Compare population magnitudes and identify official languages and national currencies.',
+      cta: isFr ? 'Lancer le quiz culture' : 'Start Culture Quiz',
+      badgeClass: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30',
+      action: () => initQcm('culture')
+    },
+    {
+      id: 'map-click',
+      cat: 'classics',
+      tag: 'SETERRA',
+      metric: 'SANS CLAVIER',
+      title: isFr ? 'Cliquez sur la Carte Muette' : 'Click on the Blank Map',
+      desc: isFr
+        ? 'Pointez directement chaque État demandé sur la carte muette sans aucune saisie clavier.'
+        : 'Click directly on each requested country on the blank map with zero typing.',
+      cta: isFr ? 'Tester ma précision' : 'Test Map Accuracy',
+      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      action: () => initMapClick('europe')
+    },
+    {
+      id: 'flashcards',
+      cat: 'study',
+      tag: 'ÉTUDE 3D',
+      metric: '196 FICHES',
+      title: t('home.mode_flash_title'),
+      desc: isFr
+        ? 'Révisez sans pression avec les cartes mémoire 3D recto-verso filtrables par continent.'
+        : 'Study with zero pressure using 3D flip flashcards filterable by continent.',
+      cta: isFr ? 'Ouvrir les Flashcards 3D' : 'Open 3D Flashcards',
+      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      action: () => { currentMode.value = 'flashcards'; }
+    },
+    {
+      id: 'flag-grid',
+      cat: 'study',
+      tag: '196 DRAPEAUX',
+      metric: 'AUTO-FOCUS',
+      title: isFr ? 'Grille Mondiale des Drapeaux' : 'World Flag Matrix',
+      desc: isFr
+        ? 'Visualisez simultanément tous les drapeaux d\'un continent ou du monde avec passage automatique au drapeau suivant.'
+        : 'View all flags from a continent or the world simultaneously with auto-focusing inputs.',
+      cta: isFr ? 'Ouvrir la Grille' : 'Open Flag Matrix',
+      badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+      action: () => { currentMode.value = 'flag-grid'; }
+    },
+    {
+      id: 'custom-builder',
+      cat: 'study',
+      tag: 'SUR-MESURE',
+      metric: '5 À 15 PAYS',
+      title: isFr ? 'Créateur de Défis Personnalisés' : 'Custom Challenge Builder',
+      desc: isFr
+        ? 'Sélectionnez de 5 à 15 pays précis pour générer un lien de défi sur-mesure à envoyer à vos amis.'
+        : 'Select 5 to 15 specific countries to generate a shareable custom challenge link.',
+      cta: isFr ? 'Créer un défi' : 'Build Challenge',
+      badgeClass: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30',
+      action: () => { currentMode.value = 'custom-builder'; }
+    }
+  ];
+});
+
+const filteredMenuCards = computed(() => {
+  if (selectedMenuCat.value === 'all') return allMenuCards.value;
+  return allMenuCards.value.filter((c) => c.cat === selectedMenuCat.value);
+});
+
+const retourMenu = () => {
+  if (flashTimer) clearInterval(flashTimer);
+  if (chronoTimer) clearInterval(chronoTimer);
+  currentMode.value = 'menu';
+  router.replace({ path: '/quiz', query: {} });
+};
+
+const applyRouteQuery = (q) => {
+  const m = q?.mode;
+  if (!m) {
+    currentMode.value = 'menu';
     return;
   }
+  if (m === 'qcm') {
+    const customList = q.custom ? q.custom.split(',').filter(Boolean) : null;
+    initQcm(q.type || 'capital', customList);
+  } else if (m === 'flash60') {
+    startFlash60();
+  } else if (m === 'mystery') {
+    initDailyMystery();
+  } else if (m === 'detective') {
+    initDetective();
+  } else if (m === 'chrono') {
+    demarrerChrono();
+  } else if (m === 'map-click') {
+    initMapClick('europe');
+  } else if (m === 'flashcards') {
+    currentMode.value = 'flashcards';
+  } else if (m === 'flag-grid') {
+    currentMode.value = 'flag-grid';
+  } else if (m === 'custom-builder') {
+    currentMode.value = 'custom-builder';
+  }
+};
 
-  const alreadyFoundMatch = targetCountries.value.find(
-    c => paysTrouves.value.includes(c.iso) && countryMatchesInput(c, inputNormalise)
-  );
+// Raccourcis clavier universels (Flèches/Espace en Flashcards, Touches 1-4 en QCM & Sprint 60s)
+const handleKeydown = (e) => {
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
 
-  if (alreadyFoundMatch) {
-    if (!forcedByEnter && anotherUnfoundCountryStartsWith(inputNormalise, alreadyFoundMatch.iso)) {
-      return;
+  if (currentMode.value === 'flashcards') {
+    if (e.key === 'ArrowRight') carteSuivante();
+    else if (e.key === 'ArrowLeft') cartePrecedente();
+    else if (e.key === ' ') {
+      e.preventDefault();
+      isFlipped.value = !isFlipped.value;
     }
-
-    chronoDuplicateMsg.value = locale.value === 'fr'
-      ? `Pays déjà trouvé : ${alreadyFoundMatch.name} !`
-      : `Country already found: ${alreadyFoundMatch.name}!`;
-    chronoInput.value = '';
-    playSound('wrong');
-    if (duplicateTimer) clearTimeout(duplicateTimer);
-    duplicateTimer = setTimeout(() => {
-      chronoDuplicateMsg.value = '';
-    }, 2800);
+  } else if (currentMode.value === 'qcm' && !qcmFini.value && !qcmIsAnswered.value) {
+    const idx = ['1', '2', '3', '4'].indexOf(e.key);
+    if (idx !== -1 && qcmOptions.value[idx]) {
+      verifierReponseQcm(qcmOptions.value[idx].id);
+    }
+  } else if (currentMode.value === 'flash60' && !flashFinished.value) {
+    const idx = ['1', '2', '3', '4'].indexOf(e.key);
+    if (idx !== -1 && flashOptions.value[idx]) {
+      submitFlashAnswer(flashOptions.value[idx].id);
+    }
   }
 };
 
-const arreterChrono = () => {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
+watch(
+  () => route.query,
+  (newQuery) => {
+    applyRouteQuery(newQuery);
   }
-  if (duplicateTimer) {
-    clearTimeout(duplicateTimer);
-    duplicateTimer = null;
-  }
-};
+);
 
 onMounted(() => {
-  if (typeof window !== 'undefined') {
-    window.addEventListener('keydown', handleFlashcardKeydown);
-  }
-
-  // Réception d'un lien de Duel ou Défi Personnalisé
-  if (route.query.duel) {
-    try {
-      const decoded = atob(route.query.duel);
-      const [type, idsStr, targetScore, fromName, flagCustom] = decoded.split(':');
-      const ids = idsStr.split('-').map(Number).filter(Boolean);
-      if (ids.length > 0) {
-        duelChallenge.value = {
-          type: type || 'capital',
-          ids,
-          score: Number(targetScore || 0),
-          from: decodeURIComponent(fromName || 'Ami'),
-          isCustom: flagCustom === 'custom'
-        };
-      }
-    } catch (e) {}
-  }
-
-  // Ouverture automatique d'un mode cliqué depuis Accueil.vue (?mode=...)
-  if (route.query.mode) {
-    lancerMode(String(route.query.mode), route.query.type ? String(route.query.type) : null);
-  }
+  loadQuizVectorBorders();
+  renderActiveQuizGlobe();
+  applyRouteQuery(route.query);
+  window.addEventListener('keydown', handleKeydown);
 });
 
 onUnmounted(() => {
-  arreterChrono();
-  stopFlagGridTimer();
-  stopFlash60Timer();
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('keydown', handleFlashcardKeydown);
-  }
+  if (globeAnimId) cancelAnimationFrame(globeAnimId);
+  if (flashTimer) clearInterval(flashTimer);
+  if (chronoTimer) clearInterval(chronoTimer);
+  window.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
 <style scoped>
-.leaflet-container {
-  z-index: 10;
-  background-color: #aad3df !important;
-}
-:global(.dark) .leaflet-container,
-:global(body.dark-mode) .leaflet-container {
-  background-color: #1e293b !important;
+.grid-cols-15 {
+  grid-template-columns: repeat(15, minmax(0, 1fr));
 }
 
-.flip-scene {
-  perspective: 1500px;
-  margin-bottom: 1.5rem;
+/* Transitions spatiales entre les modes et questions */
+.stage-morph-enter-active,
+.stage-morph-leave-active,
+.card-flip-fade-enter-active,
+.card-flip-fade-leave-active {
+  transition:
+    opacity 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.flip-card-inner {
-  display: grid;
-  grid-template-columns: 1fr;
-  position: relative;
-  width: 100%;
-  min-height: 540px;
-  transform-style: preserve-3d;
-  transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+.stage-morph-enter-from,
+.card-flip-fade-enter-from {
+  opacity: 0;
+  transform: translateY(12px) scale(0.985);
+}
+
+.stage-morph-leave-to,
+.card-flip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.985);
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* Flashcards 3D & Cartes d'Indices 3D Recto-Verso */
+.flash-3d-scene,
+.clue-3d-scene {
+  perspective: 1400px;
   cursor: pointer;
 }
 
-.flip-card-inner.is-flipped {
+.flash-3d-inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  min-height: 360px;
+  transform-style: preserve-3d;
+  transition: transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.clue-3d-inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  min-height: 122px;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.flash-3d-inner.is-flipped,
+.clue-3d-inner.is-flipped {
   transform: rotateY(180deg);
 }
 
-.flip-card-face {
+.flash-3d-face,
+.clue-3d-face {
   grid-area: 1 / 1;
   width: 100%;
   height: 100%;
@@ -2896,11 +2990,13 @@ onUnmounted(() => {
   -webkit-backface-visibility: hidden;
 }
 
-.flip-card-front {
+.flash-3d-front,
+.clue-3d-front {
   transform: rotateY(0deg);
 }
 
-.flip-card-back {
+.flash-3d-back,
+.clue-3d-back {
   transform: rotateY(180deg);
 }
 </style>
