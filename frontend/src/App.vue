@@ -424,6 +424,17 @@ body.dark-mode .card {
   color: var(--text-main) !important;
 }
 
+
+body.dark-mode,
+body.dark,
+.dark-mode {
+  --bg-main: #03050a;
+  --bg-elevated: #070b14;
+  --bg-subtle: #0d1322;
+  --bg-nav: rgba(3, 5, 10, 0.88);
+  --card-bg: #070b14;
+}
+
 body.dark-mode input,
 body.dark-mode select,
 body.dark-mode textarea {
@@ -509,6 +520,8 @@ body.dark-mode textarea {
   color: var(--text-main);
 }
 
+
+
 .brand-tag {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 0.62rem;
@@ -516,6 +529,7 @@ body.dark-mode textarea {
   letter-spacing: 0.08em;
   color: var(--text-muted);
   margin-top: 2px;
+  white-space: nowrap;
 }
 
 .primary-nav {
