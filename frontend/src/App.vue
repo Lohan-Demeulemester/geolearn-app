@@ -16,7 +16,7 @@
           </div>
           <div class="brand-text-group">
             <span class="brand-name">GeoLearn</span>
-            <span class="brand-tag">196 ÉTATS</span>
+            <span class="brand-tag">{{ locale === 'fr' ? '196 ÉTATS' : '196 COUNTRIES' }}</span>
           </div>
         </router-link>
 
@@ -251,7 +251,7 @@ const mobileMenuOpen = ref(false);
 const currentUser = ref(null);
 const isDarkMode = ref(true);
 
-const isHomePage = computed(() => route.path === '/');
+const isHomePage = computed(() => route.path === '/' || route.path === '/explorer');
 
 const ADMIN_EMAILS = [
   'lohan.dtr@gmail.com',

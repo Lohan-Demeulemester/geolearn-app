@@ -1,729 +1,572 @@
 <template>
-  <div class="max-w-6xl mx-auto space-y-8 pb-12">
-    
-    <!-- EN-TÊTE + BOUTON COMPARATEUR + PAYS ALÉATOIRE + COMPTEUR -->
-    <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
-      <div>
-        <h2 class="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-500 mb-2">
-          {{ t('explorer.title') }}
-        </h2>
-        <p class="text-gray-600 dark:text-gray-400 transition-colors duration-500">
-          {{ t('explorer.subtitle') }}
-        </p>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-3">
-        <!-- Bouton Découverte Aléatoire -->
-        <button
-          type="button"
-          @click="openRandomCountryModal"
-          class="px-4 py-2.5 rounded-xl font-bold text-sm transition cursor-pointer flex items-center gap-2 shadow-xs border bg-white dark:bg-gray-800 text-gray-800 dark:text-white border-gray-200 dark:border-gray-700 hover:border-blue-500"
-        >
-          <span>🎲</span>
-          <span>{{ locale === 'fr' ? 'Pays au hasard' : 'Random Country' }}</span>
-        </button>
-
-        <!-- Bouton d'ouverture du Comparateur de Pays -->
-        <button
-          type="button"
-          @click="showComparator = !showComparator"
-          class="px-4 py-2.5 rounded-xl font-bold text-sm transition cursor-pointer flex items-center gap-2 shadow-xs border"
-          :class="showComparator
-            ? 'bg-blue-600 text-white border-blue-600'
-            : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-white border-gray-200 dark:border-gray-700 hover:border-blue-500'"
-        >
-          <span>⚖️</span>
-          <span>{{ locale === 'fr' ? 'Comparateur de pays' : 'Country Comparator' }}</span>
-        </button>
-
-        <div class="inline-flex items-center gap-2 bg-blue-50 dark:bg-gray-800 text-blue-700 dark:text-blue-400 px-4 py-2.5 rounded-xl text-sm font-bold border border-blue-100 dark:border-gray-700">
-          <span>{{ filteredCountries.length }}</span>
-          <span>{{ locale === 'fr' ? 'pays affichés' : 'countries displayed' }}</span>
-        </div>
-      </div>
-    </div>
+  <div class="explorer-experience">
 
     <!-- ========================================================= -->
-    <!-- PANNEAU COMPARATEUR DE PAYS CÔTE À CÔTE ENRICHI           -->
+    <!-- 1. SCÈNE CARTOGRAPHIQUE IMMERSIVE AVEC PANNEAUX FLOTTANTS -->
     <!-- ========================================================= -->
-    <div
-      v-if="showComparator"
-      class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-md border-2 border-blue-500/30 dark:border-blue-500/30 space-y-6 transition-all"
-    >
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-        <div>
-          <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">
-            ⚖️ {{ locale === 'fr' ? 'Outil d\'analyse géographique' : 'Geographic Analysis Tool' }}
-          </span>
-          <h3 class="text-2xl font-black text-gray-900 dark:text-white">
-            {{ locale === 'fr' ? 'Comparateur de Pays Côte à Côte' : 'Side-by-Side Country Comparator' }}
-          </h3>
-        </div>
+    <section class="atlas-stage relative w-full min-h-[calc(100vh-58px)] flex flex-col justify-between overflow-hidden">
 
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            @click="randomizeComparison"
-            class="px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-xs font-bold transition cursor-pointer"
-          >
-            🎲 {{ locale === 'fr' ? 'Duel aléatoire' : 'Random Duel' }}
-          </button>
-          <button
-            type="button"
-            @click="showComparator = false"
-            class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-red-100 hover:text-red-600 font-bold transition cursor-pointer"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-
-      <!-- Sélecteurs des 2 pays + Badge de distance à vol d'oiseau -->
-      <div class="grid grid-cols-1 md:grid-cols-11 gap-4 items-center">
-        <div class="md:col-span-5">
-          <label class="block text-xs font-bold uppercase text-gray-400 mb-1.5">
-            {{ locale === 'fr' ? 'Premier pays' : 'First Country' }}
-          </label>
-          <select
-            v-model="compareIdA"
-            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option v-for="c in sortedAllCountries" :key="'compA-' + c.id" :value="c.id">
-              {{ c.name }} ({{ c.capital }})
-            </option>
-          </select>
-        </div>
-
-        <div class="md:col-span-1 flex flex-col items-center justify-center py-2">
-          <span class="px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-black text-xs">
-            VS
-          </span>
-        </div>
-
-        <div class="md:col-span-5">
-          <label class="block text-xs font-bold uppercase text-gray-400 mb-1.5">
-            {{ locale === 'fr' ? 'Second pays' : 'Second Country' }}
-          </label>
-          <select
-            v-model="compareIdB"
-            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option v-for="c in sortedAllCountries" :key="'compB-' + c.id" :value="c.id">
-              {{ c.name }} ({{ c.capital }})
-            </option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Distance calculée entre les deux pays + Jauge comparative directe -->
-      <div v-if="compareCountryA && compareCountryB" class="space-y-4">
-        <div class="bg-blue-50/70 dark:bg-gray-900/80 border border-blue-100 dark:border-gray-700 rounded-2xl p-3.5 text-center text-sm font-semibold text-gray-700 dark:text-gray-200">
-          ✈️ {{ locale === 'fr' ? 'Distance à vol d\'oiseau entre' : 'Flight distance between' }}
-          <strong class="text-blue-600 dark:text-blue-400">{{ compareCountryA.name }}</strong>
-          {{ locale === 'fr' ? 'et' : 'and' }}
-          <strong class="text-emerald-600 dark:text-emerald-400">{{ compareCountryB.name }}</strong> :
-          <span class="font-black text-gray-900 dark:text-white ml-1">{{ distanceBetweenCountries }} km</span>
-        </div>
-
-        <!-- Barres comparatives visuelles (Population, Superficie, Densité) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-gray-50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-200/70 dark:border-gray-700">
-          <div v-for="metric in comparisonBars" :key="metric.label" class="space-y-1.5">
-            <div class="flex items-center justify-between text-xs font-bold">
-              <span class="text-blue-600 dark:text-blue-400">{{ metric.valA }}</span>
-              <span class="text-gray-500 dark:text-gray-400 uppercase text-[10px] tracking-wider">{{ metric.label }}</span>
-              <span class="text-emerald-600 dark:text-emerald-400">{{ metric.valB }}</span>
-            </div>
-            <div class="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex">
-              <div class="h-full bg-blue-600 transition-all duration-500" :style="{ width: `${metric.pctA}%` }"></div>
-              <div class="h-full bg-emerald-500 transition-all duration-500" :style="{ width: `${metric.pctB}%` }"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Cartes comparatives côte à côte -->
-      <div v-if="compareCountryA && compareCountryB" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div
-          v-for="(item, idx) in [compareCountryA, compareCountryB]"
-          :key="'comp-card-' + idx + '-' + item.id"
-          class="bg-gray-50 dark:bg-gray-900/60 rounded-2xl p-5 border border-gray-200/80 dark:border-gray-700 space-y-4"
+      <!-- CARTE PLEIN CADRE EN ARRIÈRE-PLAN -->
+      <div class="absolute inset-0 z-0">
+        <l-map
+          v-model:zoom="mapZoom"
+          v-model:center="mapCenter"
+          :min-zoom="2"
+          :max-zoom="7"
+          :options="{ zoomControl: false }"
+          :use-global-leaflet="false"
         >
-          <div class="flex items-center justify-between gap-4 pb-3 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex items-center gap-4">
-              <img :src="`https://flagcdn.com/w160/${item.iso}.png`" :alt="item.name" class="h-12 w-auto rounded-lg shadow-sm border border-gray-200 dark:border-gray-700" />
-              <div>
-                <span class="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">
-                  {{ item.subregion }}
-                </span>
-                <h4 class="text-xl font-black text-gray-900 dark:text-white">{{ item.name }}</h4>
-              </div>
-            </div>
-            <button
-              type="button"
-              @click="focusCountryOnMap(item)"
-              class="px-3 py-1.5 rounded-xl bg-white dark:bg-gray-800 hover:bg-blue-600 hover:text-white text-gray-700 dark:text-gray-200 text-xs font-bold border border-gray-200 dark:border-gray-700 transition cursor-pointer"
-            >
-              📍 {{ locale === 'fr' ? 'Voir' : 'Map' }}
-            </button>
-          </div>
+          <l-tile-layer
+            :url="activeTileUrl"
+            :no-wrap="true"
+          ></l-tile-layer>
 
-          <div class="grid grid-cols-2 gap-2.5 text-xs">
-            <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-              <span class="text-gray-400 block mb-0.5">🏛️ {{ t('common.capital') }}</span>
-              <strong class="text-sm font-bold text-gray-900 dark:text-white">{{ item.capital }}</strong>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-              <span class="text-gray-400 block mb-0.5">👥 {{ locale === 'fr' ? 'Habitants' : 'Population' }}</span>
-              <strong class="text-sm font-bold text-gray-900 dark:text-white">{{ item.population }}</strong>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-              <span class="text-gray-400 block mb-0.5">📐 {{ locale === 'fr' ? 'Superficie' : 'Area' }}</span>
-              <strong class="text-sm font-bold text-gray-900 dark:text-white">{{ item.area }}</strong>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-              <span class="text-gray-400 block mb-0.5">📊 {{ locale === 'fr' ? 'Densité' : 'Density' }}</span>
-              <strong class="text-sm font-bold text-gray-900 dark:text-white">{{ item.densityDisplay }}</strong>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-              <span class="text-gray-400 block mb-0.5">💶 {{ locale === 'fr' ? 'Monnaie' : 'Currency' }}</span>
-              <strong class="text-sm font-bold text-gray-900 dark:text-white">{{ item.currency }}</strong>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-              <span class="text-gray-400 block mb-0.5">🗣️ {{ locale === 'fr' ? 'Langue(s)' : 'Language(s)' }}</span>
-              <strong class="text-sm font-bold text-gray-900 dark:text-white truncate block" :title="item.lang">{{ item.lang }}</strong>
-            </div>
-          </div>
+          <!-- Trajectoire aérienne entre le Pays A et le Pays B en mode Comparateur -->
+          <l-polyline
+            v-if="compareMode && compareCountryB"
+            :lat-lngs="[[selectedCountry.lat, selectedCountry.lng], [compareCountryB.lat, compareCountryB.lng]]"
+            :color="'#0ea5e9'"
+            :weight="3"
+            :options="{ dashArray: '8, 8' }"
+          ></l-polyline>
 
-          <div class="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/50 rounded-xl p-3.5 text-xs text-gray-700 dark:text-gray-200 leading-relaxed">
-            <strong class="text-blue-700 dark:text-blue-300 block mb-1">💡 Fun Fact :</strong>
-            {{ item.fact }}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- CARTE INTERACTIVE LEAFLET (CALQUES COLORÉS + PLEIN ÉCRAN) -->
-    <!-- ========================================================= -->
-    <div 
-      ref="mapWrapperRef" 
-      :class="isMapFullscreen 
-        ? 'fixed inset-3 sm:inset-6 z-[1500] rounded-3xl overflow-hidden shadow-2xl border-2 border-blue-500 bg-[#aad3df] dark:bg-[#1e293b]' 
-        : 'h-[520px] w-full rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 relative z-0 bg-[#aad3df] dark:bg-[#1e293b]'"
-    >
-      <!-- Sélecteur de coloration thématique en haut à gauche -->
-      <div class="absolute top-4 left-14 z-[1000] flex flex-wrap items-center gap-1.5 bg-white/95 dark:bg-gray-900/95 p-1.5 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 backdrop-blur-xs">
-        <button
-          v-for="mode in mapLayerModes"
-          :key="mode.id"
-          type="button"
-          @click="mapColorMode = mode.id"
-          class="px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer flex items-center gap-1"
-          :class="mapColorMode === mode.id
-            ? 'bg-blue-600 text-white shadow-2xs'
-            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'"
-        >
-          <span>{{ mode.icon }}</span>
-          <span class="hidden sm:inline">{{ mode.label }}</span>
-        </button>
-      </div>
-
-      <!-- Boutons flottants en haut à droite (Recentrage + Plein Écran) -->
-      <div class="absolute top-4 right-4 z-[1000] flex items-center gap-2">
-        <button
-          type="button"
-          @click="resetMapView"
-          class="bg-white/95 dark:bg-gray-900/95 hover:bg-blue-600 hover:text-white text-gray-800 dark:text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 transition cursor-pointer flex items-center gap-1.5"
-        >
-          🌍 {{ locale === 'fr' ? 'Vue Monde' : 'World View' }}
-        </button>
-
-        <button
-          type="button"
-          @click="toggleMapFullscreen"
-          class="bg-white/95 dark:bg-gray-900/95 hover:bg-blue-600 hover:text-white text-gray-800 dark:text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 transition cursor-pointer flex items-center gap-1.5"
-        >
-          <span>{{ isMapFullscreen ? '✕' : '⛶' }}</span>
-          <span>{{ isMapFullscreen ? (locale === 'fr' ? 'Quitter le plein écran' : 'Exit Fullscreen') : (locale === 'fr' ? 'Plein écran' : 'Fullscreen') }}</span>
-        </button>
-      </div>
-
-      <!-- Légende interactive en bas à gauche (quand un calque thématique est actif) -->
-      <div
-        v-if="mapColorMode !== 'pins' && activeMapLegend.length > 0"
-        class="
-          absolute bottom-4 left-4 z-[1000]
-          bg-white/95 dark:bg-gray-900/95 backdrop-blur-xs
-          px-3.5 py-2.5 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700
-          flex flex-wrap items-center gap-3 text-[11px] font-bold text-gray-800 dark:text-gray-200
-        "
-      >
-        <div
-          v-for="leg in activeMapLegend"
-          :key="leg.label"
-          class="flex items-center gap-1.5"
-        >
-          <span class="w-3 h-3 rounded-full inline-block border border-white/60 shadow-2xs" :style="{ backgroundColor: leg.color }"></span>
-          <span>{{ leg.label }}</span>
-        </div>
-      </div>
-
-      <l-map
-        ref="mapRef"
-        v-model:zoom="zoom"
-        v-model:center="center"
-        :min-zoom="2"
-        :max-zoom="8"
-        :max-bounds="[[-85, -180], [85, 180]]"
-        :max-bounds-viscosity="1.0"
-        :world-copy-jump="false"
-        :use-global-leaflet="false"
-      >
-        <l-tile-layer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          layer-type="base"
-          name="OpenStreetMap"
-          :no-wrap="true"
-          :bounds="[[-85, -180], [85, 180]]"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        ></l-tile-layer>
-        
-        <!-- Mode 1 : Épingles classiques -->
-        <template v-if="mapColorMode === 'pins'">
-          <l-marker 
-            v-for="country in filteredCountries.filter(c => c.lat && c.lng)" 
-            :key="'pin-' + country.id" 
-            :lat-lng="[country.lat, country.lng]"
-            @click="openCountryModal(country)"
-          >
-            <l-popup>
-              <div class="text-center p-2 min-w-[150px]">
-                <img :src="`https://flagcdn.com/w80/${country.iso}.png`" class="mx-auto mb-2 shadow-sm rounded-sm h-10 w-auto" :alt="country.name">
-                <h4 class="font-bold text-gray-900 text-base mb-0.5">{{ country.name }}</h4>
-                <p class="text-xs text-gray-600 mb-2">{{ t('common.capital') }} : <strong>{{ country.capital }}</strong></p>
-                <button 
-                  type="button"
-                  @click="openCountryModal(country)"
-                  class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition cursor-pointer"
-                >
-                  {{ locale === 'fr' ? 'Retourner la carte ↻' : 'Flip country card ↻' }}
-                </button>
-              </div>
-            </l-popup>
-          </l-marker>
-        </template>
-
-        <!-- Mode 2 : Cercles thématiques colorés (Continent, Population, Superficie, Densité) -->
-        <template v-else>
+          <!-- Points interactifs des 196 États -->
           <l-circle-marker
-            v-for="country in filteredCountries.filter(c => c.lat && c.lng)"
-            :key="'cm-' + country.id"
+            v-for="country in filteredCountries"
+            :key="'node-' + country.iso"
             :lat-lng="[country.lat, country.lng]"
-            :radius="getThematicMarkerRadius(country)"
-            :color="'#ffffff'"
-            :weight="2"
-            :fill-color="getThematicMarkerColor(country)"
-            :fill-opacity="0.92"
-            @click="openCountryModal(country)"
+            :radius="getNodeRadius(country)"
+            :color="isHighlightedNode(country) ? '#ffffff' : getCountryNodeColor(country)"
+            :weight="isHighlightedNode(country) ? 3 : 1.5"
+            :fill-color="getCountryNodeColor(country)"
+            :fill-opacity="isHighlightedNode(country) ? 1 : 0.85"
+            @click="onMapNodeClick(country)"
           >
             <l-popup>
-              <div class="text-center p-2 min-w-[160px]">
-                <img :src="`https://flagcdn.com/w80/${country.iso}.png`" class="mx-auto mb-2 shadow-sm rounded-sm h-9 w-auto" :alt="country.name">
-                <h4 class="font-bold text-gray-900 text-base mb-0.5">{{ country.name }}</h4>
-                <p class="text-xs text-gray-600 mb-1">{{ t('common.capital') }} : <strong>{{ country.capital }}</strong></p>
-                <p class="text-[11px] font-bold text-blue-600 mb-2">
-                  👥 {{ country.population }} • 📐 {{ country.area }}
-                </p>
-                <button 
-                  type="button"
-                  @click="openCountryModal(country)"
-                  class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition cursor-pointer"
-                >
-                  {{ locale === 'fr' ? 'Ouvrir la fiche 3D ↻' : 'Open 3D card ↻' }}
-                </button>
+              <div class="font-sans text-xs space-y-1 min-w-[150px] p-0.5">
+                <div class="flex items-center gap-2 font-bold text-slate-900">
+                  <img :src="`https://flagcdn.com/w40/${country.iso}.png`" class="h-3.5 w-auto rounded-xs shadow-2xs" alt="" />
+                  <span>{{ country.name }}</span>
+                </div>
+                <div class="text-[11px] text-slate-500">
+                  {{ t('common.capital') }} : <strong class="text-slate-800">{{ country.capital }}</strong>
+                </div>
+                <div class="text-[11px] font-semibold text-sky-600 pt-0.5">
+                  IDH {{ country.idh.toFixed(3) }} • {{ country.population }}
+                </div>
               </div>
             </l-popup>
           </l-circle-marker>
-        </template>
-      </l-map>
-    </div>
+        </l-map>
+      </div>
 
-    <!-- ========================================================= -->
-    <!-- BARRE DE RECHERCHE & FILTRES AVANCÉS (6 CRITÈRES)         -->
-    <!-- ========================================================= -->
-    <div class="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4 transition-colors">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- 1. Recherche (Pays, Capitale, Langue, Monnaie, ISO) -->
-        <div class="relative">
-          <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
-          <input 
-            type="text" 
-            v-model="searchQuery"
-            :placeholder="locale === 'fr' ? 'Pays, capitale, langue, monnaie...' : 'Country, capital, language, currency...'" 
-            class="w-full pl-11 pr-9 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue transition-all"
-          >
-          <button
-            v-if="searchQuery"
-            type="button"
-            @click="searchQuery = ''"
-            class="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 px-1.5 py-0.5 text-sm font-bold cursor-pointer"
-          >
-            ✕
-          </button>
+      <!-- BARRE SUPÉRIEURE FLOTTANTE : RECHERCHE, CONTINENTS & MODE COMPARATEUR -->
+      <div class="relative z-20 w-full max-w-[1600px] mx-auto px-4 sm:px-8 pt-5 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 pointer-events-none">
+
+        <!-- Gauche : Recherche instantanée + Pilules Continents -->
+        <div class="flex flex-wrap items-center gap-2 pointer-events-auto">
+          <div class="relative flex-1 sm:flex-initial">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              v-model="searchQuery"
+              type="text"
+              :placeholder="locale === 'fr' ? 'Rechercher un pays ou une capitale...' : 'Search a country or capital...'"
+              class="w-full sm:w-64 pl-9 pr-8 py-2.5 rounded-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400 shadow-xl"
+            />
+            <button
+              v-if="searchQuery"
+              type="button"
+              @click="searchQuery = ''"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm cursor-pointer"
+            >
+              ×
+            </button>
+          </div>
+
+          <!-- Sélecteur de continents fluide -->
+          <div class="flex items-center gap-1 p-1 rounded-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl overflow-x-auto max-w-full">
+            <button
+              v-for="cont in continentPills"
+              :key="cont.id"
+              type="button"
+              @click="selectContinentPill(cont.id)"
+              class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer"
+              :class="selectedContinent === cont.id
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-sm'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
+            >
+              {{ cont.label }}
+            </button>
+          </div>
         </div>
 
-        <!-- 2. Continent -->
-        <select 
-          v-model="selectedContinent"
-          @change="onContinentChange"
-          class="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue transition-all"
-        >
-          <option value="">{{ t('common.all_continents') }}</option>
-          <option value="Europe">{{ t('common.europe') }}</option>
-          <option value="Asia">{{ t('common.asia') }}</option>
-          <option value="Africa">{{ t('common.africa') }}</option>
-          <option value="North America">{{ t('common.north_america') }}</option>
-          <option value="South America">{{ t('common.south_america') }}</option>
-          <option value="Oceania">{{ t('common.oceania') }}</option>
-        </select>
+        <!-- Droite : Bascule Inspecteur / Comparateur + Contrôles de vue -->
+        <div class="flex flex-wrap items-center gap-2 pointer-events-auto self-start xl:self-auto">
+          <div class="flex items-center p-1 rounded-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
+            <button
+              type="button"
+              @click="compareMode = false"
+              class="px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer"
+              :class="!compareMode
+                ? 'bg-sky-500 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
+            >
+              {{ locale === 'fr' ? 'Exploration' : 'Inspector' }}
+            </button>
+            <button
+              type="button"
+              @click="enableCompareMode"
+              class="px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer"
+              :class="compareMode
+                ? 'bg-sky-500 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
+            >
+              {{ locale === 'fr' ? 'Comparateur A vs B' : 'Compare A vs B' }}
+            </button>
+          </div>
 
-        <!-- 3. Sous-région dynamique -->
-        <select 
-          v-model="selectedSubregion"
-          class="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue transition-all"
-        >
-          <option value="">{{ locale === 'fr' ? 'Toutes les sous-régions' : 'All Subregions' }}</option>
-          <option v-for="sub in availableSubregions" :key="sub" :value="sub">
-            {{ sub }}
-          </option>
-        </select>
-
-        <!-- 4. NOUVEAU : Filtre par tranche de Population -->
-        <select 
-          v-model="selectedPopBracket"
-          class="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue transition-all"
-        >
-          <option value="">👥 {{ locale === 'fr' ? 'Toutes les populations' : 'All Populations' }}</option>
-          <option value="under1m">{{ locale === 'fr' ? 'Moins de 1 million d\'hab.' : 'Under 1M inhabitants' }}</option>
-          <option value="1m_10m">{{ locale === 'fr' ? 'De 1 M à 10 millions d\'hab.' : '1M to 10M inhabitants' }}</option>
-          <option value="10m_50m">{{ locale === 'fr' ? 'De 10 M à 50 millions d\'hab.' : '10M to 50M inhabitants' }}</option>
-          <option value="over50m">{{ locale === 'fr' ? 'Plus de 50 millions d\'hab.' : 'Over 50M inhabitants' }}</option>
-        </select>
-
-        <!-- 5. NOUVEAU : Filtre par tranche de Superficie -->
-        <select 
-          v-model="selectedAreaBracket"
-          class="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue transition-all"
-        >
-          <option value="">📐 {{ locale === 'fr' ? 'Toutes les superficies' : 'All Areas' }}</option>
-          <option value="micro">{{ locale === 'fr' ? 'Petits États (< 25 000 km²)' : 'Small States (< 25,000 km²)' }}</option>
-          <option value="medium">{{ locale === 'fr' ? 'Taille moyenne (25k – 300k km²)' : 'Medium Size (25k – 300k km²)' }}</option>
-          <option value="large">{{ locale === 'fr' ? 'Grands pays (300k – 1M km²)' : 'Large Countries (300k – 1M km²)' }}</option>
-          <option value="giant">{{ locale === 'fr' ? 'États-Continents (> 1M km²)' : 'Giant States (> 1M km²)' }}</option>
-        </select>
-
-        <!-- 6. Tri enrichi (Alphabétique, Population, Superficie, Densité) -->
-        <select 
-          v-model="sortBy"
-          class="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brandBlue transition-all"
-        >
-          <option value="name_asc">{{ locale === 'fr' ? 'Tri : Pays (A → Z)' : 'Sort: Country (A → Z)' }}</option>
-          <option value="name_desc">{{ locale === 'fr' ? 'Tri : Pays (Z → A)' : 'Sort: Country (Z → A)' }}</option>
-          <option value="capital_asc">{{ locale === 'fr' ? 'Tri : Capitale (A → Z)' : 'Sort: Capital (A → Z)' }}</option>
-          <option value="pop_desc">👥 {{ locale === 'fr' ? 'Tri : Population (+ vers -)' : 'Sort: Population (High → Low)' }}</option>
-          <option value="pop_asc">👥 {{ locale === 'fr' ? 'Tri : Population (- vers +)' : 'Sort: Population (Low → High)' }}</option>
-          <option value="area_desc">📐 {{ locale === 'fr' ? 'Tri : Superficie (+ vers -)' : 'Sort: Area (High → Low)' }}</option>
-          <option value="area_asc">📐 {{ locale === 'fr' ? 'Tri : Superficie (- vers +)' : 'Sort: Area (Low → High)' }}</option>
-          <option value="density_desc">📊 {{ locale === 'fr' ? 'Tri : Densité hab./km² (+ vers -)' : 'Sort: Density (High → Low)' }}</option>
-        </select>
-      </div>
-
-      <!-- Bouton de réinitialisation rapide si au moins un filtre est actif -->
-      <div v-if="hasActiveFilters" class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700 text-xs">
-        <span class="text-gray-500 dark:text-gray-400 font-semibold">
-          {{ locale === 'fr'
-            ? `${filteredCountries.length} pays correspondent à vos filtres actifs.`
-            : `${filteredCountries.length} countries match your active filters.` }}
-        </span>
-        <button
-          type="button"
-          @click="clearAllFilters"
-          class="text-red-600 dark:text-red-400 font-extrabold hover:underline cursor-pointer"
-        >
-          ✕ {{ locale === 'fr' ? 'Réinitialiser tous les filtres' : 'Reset all filters' }}
-        </button>
-      </div>
-    </div>
-
-    <!-- GRILLE PAGINÉE DES CARTES PAYS (4 x 10 = 40 CARTES PAR PAGE) -->
-    <div v-if="paginatedCountries.length > 0" class="space-y-8">
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <CountryCard 
-          v-for="country in paginatedCountries" 
-          :key="country.id" 
-          :country="country"
-          @select="openCountryModal"
-        />
-      </div>
-
-      <!-- CONTRÔLES DE PAGINATION -->
-      <div v-if="totalPages > 1" class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800 px-6 py-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-        <p class="text-sm text-gray-600 dark:text-gray-400">
-          {{ locale === 'fr'
-            ? `Affichage de ${startIndex + 1} à ${Math.min(endIndex, filteredCountries.length)} sur ${filteredCountries.length} pays`
-            : `Showing ${startIndex + 1} to ${Math.min(endIndex, filteredCountries.length)} of ${filteredCountries.length} countries` }}
-        </p>
-
-        <div class="flex items-center gap-2 flex-wrap justify-center">
-          <button
-            type="button"
-            @click="goToPage(currentPage - 1)"
-            :disabled="currentPage === 1"
-            class="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
-          >
-            ← {{ locale === 'fr' ? 'Précédent' : 'Prev' }}
-          </button>
-
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            type="button"
-            @click="goToPage(page)"
-            class="w-10 h-10 rounded-xl text-sm font-bold transition cursor-pointer"
-            :class="page === currentPage
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-blue-500'"
-          >
-            {{ page }}
-          </button>
-
-          <button
-            type="button"
-            @click="goToPage(currentPage + 1)"
-            :disabled="currentPage === totalPages"
-            class="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
-          >
-            {{ locale === 'fr' ? 'Suivant' : 'Next' }} →
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Message si aucun résultat -->
-    <div v-else class="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-      <div class="text-4xl mb-4">🌍</div>
-      <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('explorer.no_results') }}</h3>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ t('explorer.no_results_desc') }}</p>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- MODALE D'ANIMATION 3D : AGRANDISSEMENT AU CENTRE + RETOURNEMENT (FLIP)     -->
-    <!-- ========================================================================= -->
-    <transition name="modal-zoom">
-      <div 
-        v-if="selectedCountry" 
-        class="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-md overflow-y-auto"
-        @click.self="closeCountryModal"
-      >
-        <div class="flip-scene w-full max-w-lg my-auto">
-          <div 
-            class="flip-card-inner" 
-            :class="{ 'is-flipped': isModalFlipped }"
-            @click="isModalFlipped = !isModalFlipped"
-          >
-            <!-- FACE RECTO -->
-            <div class="flip-card-face flip-card-front bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-2xl border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center">
-              <img 
-                :src="`https://flagcdn.com/w320/${selectedCountry.iso}.png`" 
-                :alt="selectedCountry.name"
-                class="h-28 w-auto rounded-xl shadow-md mb-6 border border-gray-200 dark:border-gray-700"
-              >
-              <span class="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-300 mb-3">
-                {{ selectedCountry.subregion }}
-              </span>
-              <h3 class="text-3xl font-black text-gray-900 dark:text-white mb-2">
-                {{ selectedCountry.name }}
-              </h3>
-              <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
-                {{ t('common.capital') }} : <strong>{{ selectedCountry.capital }}</strong>
-              </p>
-              <span class="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                {{ locale === 'fr' ? 'Cliquez pour retourner au verso ↻' : 'Click to flip to back ↻' }}
-              </span>
-            </div>
-
-            <!-- FACE VERSO -->
-            <div class="flip-card-face flip-card-back bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-gray-700 flex flex-col justify-between text-left">
-              <div>
-                <div class="flex items-start justify-between gap-4 pb-4 mb-5 border-b border-gray-100 dark:border-gray-700">
-                  <div class="flex items-center gap-3.5">
-                    <img 
-                      :src="`https://flagcdn.com/w160/${selectedCountry.iso}.png`" 
-                      :alt="selectedCountry.name"
-                      class="h-12 w-auto rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 shrink-0"
-                    >
-                    <div>
-                      <span class="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">
-                        {{ selectedCountry.subregion }}
-                      </span>
-                      <h3 class="text-2xl font-black text-gray-900 dark:text-white leading-tight">
-                        {{ selectedCountry.name }}
-                      </h3>
-                    </div>
-                  </div>
-
-                  <button 
-                    type="button"
-                    @click.stop="closeCountryModal"
-                    class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/40 text-gray-600 dark:text-gray-300 flex items-center justify-center font-bold transition cursor-pointer shrink-0"
-                    aria-label="Fermer"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 mb-5">
-                  <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
-                    <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
-                      🏛️ {{ t('common.capital') }}
-                    </span>
-                    <strong class="text-sm font-bold text-gray-900 dark:text-white">
-                      {{ selectedCountry.capital }}
-                    </strong>
-                  </div>
-
-                  <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
-                    <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
-                      👥 {{ locale === 'fr' ? 'Habitants' : 'Population' }}
-                    </span>
-                    <strong class="text-sm font-bold text-gray-900 dark:text-white">
-                      {{ selectedCountry.population }}
-                    </strong>
-                  </div>
-
-                  <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
-                    <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
-                      🗣️ {{ locale === 'fr' ? 'Langue(s) officielle(s)' : 'Official Language(s)' }}
-                    </span>
-                    <strong class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2">
-                      {{ selectedCountry.lang }}
-                    </strong>
-                  </div>
-
-                  <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
-                    <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
-                      💶 {{ locale === 'fr' ? 'Monnaie' : 'Currency' }}
-                    </span>
-                    <strong class="text-sm font-bold text-gray-900 dark:text-white">
-                      {{ selectedCountry.currency }}
-                    </strong>
-                  </div>
-
-                  <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
-                    <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
-                      📐 {{ locale === 'fr' ? 'Superficie' : 'Area' }}
-                    </span>
-                    <strong class="text-sm font-bold text-gray-900 dark:text-white">
-                      {{ selectedCountry.area }}
-                    </strong>
-                  </div>
-
-                  <div class="bg-gray-50 dark:bg-gray-900/70 p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/70">
-                    <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 block mb-0.5">
-                      📊 {{ locale === 'fr' ? 'Densité' : 'Density' }}
-                    </span>
-                    <strong class="text-sm font-bold text-gray-900 dark:text-white">
-                      {{ selectedCountry.densityDisplay }}
-                    </strong>
-                  </div>
-                </div>
-
-                <div class="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/70 dark:border-blue-800/60 rounded-2xl p-4 mb-5">
-                  <div class="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-1.5">
-                    <span>💡 {{ locale === 'fr' ? 'Le saviez-vous ? (Fun Fact)' : 'Did you know? (Fun Fact)' }}</span>
-                  </div>
-                  <p class="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
-                    {{ selectedCountry.fact }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Actions de pied de carte : Localiser + Comparer + Recto -->
-              <div class="flex flex-wrap items-center justify-between gap-2.5 pt-2">
-                <button 
-                  type="button"
-                  @click.stop="focusCountryOnMap(selectedCountry)"
-                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm py-3 px-4 rounded-xl transition shadow-sm cursor-pointer"
-                >
-                  📍 {{ locale === 'fr' ? 'Localiser' : 'Locate' }}
-                </button>
-                <button 
-                  type="button"
-                  @click.stop="sendToComparator(selectedCountry)"
-                  class="px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-xs sm:text-sm font-bold transition cursor-pointer"
-                >
-                  ⚖️ {{ locale === 'fr' ? 'Comparer' : 'Compare' }}
-                </button>
-                <button 
-                  type="button"
-                  @click.stop="isModalFlipped = !isModalFlipped"
-                  class="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm font-bold transition cursor-pointer"
-                >
-                  ↻ {{ locale === 'fr' ? 'Recto' : 'Front' }}
-                </button>
-              </div>
-
-            </div>
+          <div class="flex items-center gap-1 p-1 rounded-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-xl">
+            <button
+              type="button"
+              @click="mapZoom = Math.min(7, mapZoom + 1)"
+              class="w-8 h-8 rounded-full hover:bg-slate-200/60 dark:hover:bg-white/10 text-slate-700 dark:text-white font-bold text-sm cursor-pointer flex items-center justify-center transition"
+              title="Zoom +"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              @click="mapZoom = Math.max(2, mapZoom - 1)"
+              class="w-8 h-8 rounded-full hover:bg-slate-200/60 dark:hover:bg-white/10 text-slate-700 dark:text-white font-bold text-sm cursor-pointer flex items-center justify-center transition"
+              title="Zoom -"
+            >
+              -
+            </button>
+            <button
+              type="button"
+              @click="resetMapView"
+              class="px-3 h-8 rounded-full hover:bg-slate-200/60 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer transition"
+            >
+              {{ locale === 'fr' ? 'Recadrer' : 'Reset' }}
+            </button>
           </div>
         </div>
       </div>
-    </transition>
+
+      <!-- ZONE CENTRALE : CARTE FLOTTANTE D'INSPECTION OU COMPARATEUR BILATÉRAL -->
+      <div class="relative z-20 w-full max-w-[1600px] mx-auto px-4 sm:px-8 my-auto py-6 flex justify-end pointer-events-none">
+
+        <!-- MODE 1 : FICHE D'EXPLORATION DU PAYS SÉLECTIONNÉ -->
+        <transition name="card-Morph" mode="out-in">
+          <aside
+            v-if="!compareMode"
+            :key="selectedCountry.iso"
+            class="w-full max-w-md rounded-3xl bg-white/88 dark:bg-slate-900/85 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-6 shadow-2xl space-y-5 pointer-events-auto"
+          >
+            <!-- En-tête Drapeau & Titre -->
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex items-center gap-3.5 min-w-0">
+                <img
+                  :src="`https://flagcdn.com/w160/${selectedCountry.iso}.png`"
+                  :alt="selectedCountry.name"
+                  class="h-12 w-auto rounded-xl shadow-md border border-slate-200 dark:border-white/10 shrink-0"
+                />
+                <div class="min-w-0">
+                  <span class="text-xs font-bold text-sky-600 dark:text-sky-400 block truncate">
+                    {{ selectedCountry.subregion }}
+                  </span>
+                  <h2 class="text-2xl font-black text-slate-900 dark:text-white truncate leading-tight">
+                    {{ selectedCountry.name }}
+                  </h2>
+                </div>
+              </div>
+
+              <span class="font-mono text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 uppercase shrink-0">
+                {{ selectedCountry.iso }}
+              </span>
+            </div>
+
+            <!-- Grille de données principales -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                <span class="text-[11px] text-slate-400 block">{{ t('common.capital') }}</span>
+                <strong class="text-sm font-bold text-slate-900 dark:text-white truncate block mt-0.5">
+                  {{ selectedCountry.capital }}
+                </strong>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Habitants' : 'Population' }}</span>
+                <strong class="text-sm font-bold text-sky-600 dark:text-sky-400 truncate block mt-0.5">
+                  {{ selectedCountry.population }}
+                </strong>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Langue officielle' : 'Official language' }}</span>
+                <strong class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
+                  {{ selectedCountry.lang }}
+                </strong>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.06]">
+                <span class="text-[11px] text-slate-400 block">{{ locale === 'fr' ? 'Monnaie' : 'Currency' }}</span>
+                <strong class="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate block mt-0.5">
+                  {{ selectedCountry.currency }}
+                </strong>
+              </div>
+            </div>
+
+            <!-- Jauges visuelles animées : IDH & PIB + Régime politique -->
+            <div class="space-y-3 p-4 rounded-2xl bg-slate-100/60 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.06]">
+              <div>
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="font-semibold text-slate-500 dark:text-slate-400">
+                    {{ locale === 'fr' ? 'Développement Humain (IDH)' : 'Human Development (HDI)' }}
+                  </span>
+                  <strong class="font-mono text-slate-900 dark:text-white">
+                    {{ selectedCountry.idh.toFixed(3) }} <span class="text-emerald-500 text-[11px]">({{ getHdiTierLabel(selectedCountry.idh) }})</span>
+                  </strong>
+                </div>
+                <div class="h-2 w-full rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+                  <div
+                    class="h-full rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 transition-all duration-500"
+                    :style="{ width: `${Math.round(selectedCountry.idh * 100)}%` }"
+                  ></div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-white/[0.06] text-xs">
+                <div>
+                  <span class="text-slate-400 block text-[11px]">{{ locale === 'fr' ? 'Régime politique' : 'Political regime' }}</span>
+                  <strong class="text-slate-800 dark:text-slate-200">{{ selectedCountry.regimeLabel }}</strong>
+                </div>
+                <div class="text-right">
+                  <span class="text-slate-400 block text-[11px]">{{ locale === 'fr' ? 'Superficie' : 'Area' }}</span>
+                  <strong class="font-mono text-slate-800 dark:text-slate-200">{{ selectedCountry.area }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anecdote culturelle -->
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-sky-500/[0.08] border border-sky-500/20 rounded-2xl p-3.5">
+              {{ selectedCountry.fact }}
+            </p>
+
+            <!-- Pays proches cliquables -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+                <span>{{ locale === 'fr' ? 'Pays voisins à explorer :' : 'Nearby countries to explore:' }}</span>
+                <button
+                  type="button"
+                  @click="enableCompareMode"
+                  class="text-sky-500 hover:underline cursor-pointer"
+                >
+                  {{ locale === 'fr' ? 'Comparer ce pays →' : 'Compare this country →' }}
+                </button>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="nb in selectedNeighbors"
+                  :key="'nb-pill-' + nb.country.iso"
+                  type="button"
+                  @click="selectCountryAndFly(nb.country)"
+                  class="px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] hover:bg-sky-500 hover:text-white dark:hover:bg-sky-500 text-slate-700 dark:text-slate-200 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <img :src="`https://flagcdn.com/w40/${nb.country.iso}.png`" class="h-3 w-auto rounded-2xs" alt="" />
+                  <span>{{ nb.country.name }}</span>
+                  <span class="opacity-60 font-mono text-[10px]">{{ nb.distKm }}km</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <!-- MODE 2 : COMPARATEUR BILATÉRAL FLOTTANT (A VS B) -->
+          <aside
+            v-else
+            key="comparator-panel"
+            class="w-full max-w-lg rounded-3xl bg-white/90 dark:bg-slate-900/88 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 p-6 shadow-2xl space-y-5 pointer-events-auto"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-sky-500 block">
+                  {{ locale === 'fr' ? 'Comparateur Géographique' : 'Geographic Comparator' }}
+                </span>
+                <h3 class="text-lg font-black text-slate-900 dark:text-white">
+                  {{ locale === 'fr' ? 'Analyse côte à côte' : 'Side-by-Side Analysis' }}
+                </h3>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-600 dark:text-sky-300 font-mono text-xs font-bold">
+                {{ comparisonMetrics.distanceKm.toLocaleString() }} km
+              </span>
+            </div>
+
+            <!-- Sélecteurs des deux pays -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-sky-500/30 space-y-2">
+                <div class="flex items-center gap-2">
+                  <img :src="`https://flagcdn.com/w80/${selectedCountry.iso}.png`" class="h-5 w-auto rounded-xs" alt="" />
+                  <span class="text-xs font-bold text-sky-500">{{ locale === 'fr' ? 'Pays A' : 'Country A' }}</span>
+                </div>
+                <select
+                  :value="selectedCountry.iso"
+                  @change="onSelectCompareA($event.target.value)"
+                  class="w-full px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                >
+                  <option v-for="c in localizedCountries" :key="'cmpA-' + c.iso" :value="c.iso">
+                    {{ c.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.05] border border-emerald-500/30 space-y-2">
+                <div class="flex items-center gap-2">
+                  <img :src="`https://flagcdn.com/w80/${compareCountryB.iso}.png`" class="h-5 w-auto rounded-xs" alt="" />
+                  <span class="text-xs font-bold text-emerald-500">{{ locale === 'fr' ? 'Pays B' : 'Country B' }}</span>
+                </div>
+                <select
+                  :value="compareCountryB.iso"
+                  @change="onSelectCompareB($event.target.value)"
+                  class="w-full px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+                >
+                  <option v-for="c in localizedCountries" :key="'cmpB-' + c.iso" :value="c.iso">
+                    {{ c.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Barres comparatives proportionnelles -->
+            <div class="space-y-3.5 text-xs">
+              <!-- IDH -->
+              <div class="space-y-1">
+                <div class="flex justify-between font-bold">
+                  <span class="text-sky-500">{{ selectedCountry.idh.toFixed(3) }}</span>
+                  <span class="text-slate-400">{{ locale === 'fr' ? 'Indice IDH' : 'HDI Index' }}</span>
+                  <span class="text-emerald-500">{{ compareCountryB.idh.toFixed(3) }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 h-2">
+                  <div class="bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden flex justify-end">
+                    <div class="bg-sky-500 h-full rounded-full transition-all duration-500" :style="{ width: `${Math.round(selectedCountry.idh * 100)}%` }"></div>
+                  </div>
+                  <div class="bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                    <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" :style="{ width: `${Math.round(compareCountryB.idh * 100)}%` }"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PIB Nominal -->
+              <div class="space-y-1">
+                <div class="flex justify-between font-bold">
+                  <span class="text-sky-500">~${{ selectedCountry.pib.toLocaleString() }} Md</span>
+                  <span class="text-slate-400">{{ locale === 'fr' ? 'PIB Nominal' : 'Nominal GDP' }}</span>
+                  <span class="text-emerald-500">~${{ compareCountryB.pib.toLocaleString() }} Md</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 h-2">
+                  <div class="bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden flex justify-end">
+                    <div class="bg-sky-500 h-full rounded-full transition-all duration-500" :style="{ width: `${comparisonMetrics.gdpPctA}%` }"></div>
+                  </div>
+                  <div class="bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                    <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" :style="{ width: `${comparisonMetrics.gdpPctB}%` }"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Population & Superficie -->
+              <div class="grid grid-cols-3 items-center py-2 border-y border-slate-200/70 dark:border-white/10 text-center">
+                <strong class="text-slate-900 dark:text-white">{{ selectedCountry.population }}</strong>
+                <span class="text-[11px] text-slate-400">{{ locale === 'fr' ? 'Population' : 'Population' }}</span>
+                <strong class="text-slate-900 dark:text-white">{{ compareCountryB.population }}</strong>
+              </div>
+
+              <div class="grid grid-cols-3 items-center text-center">
+                <strong class="text-slate-900 dark:text-white truncate">{{ selectedCountry.area }}</strong>
+                <span class="text-[11px] text-slate-400">{{ locale === 'fr' ? 'Superficie' : 'Area' }}</span>
+                <strong class="text-slate-900 dark:text-white truncate">{{ compareCountryB.area }}</strong>
+              </div>
+
+              <div class="grid grid-cols-3 items-center pt-2 border-t border-slate-200/70 dark:border-white/10 text-center">
+                <strong class="text-slate-700 dark:text-slate-300 truncate">{{ selectedCountry.capital }}</strong>
+                <span class="text-[11px] text-slate-400">{{ t('common.capital') }}</span>
+                <strong class="text-slate-700 dark:text-slate-300 truncate">{{ compareCountryB.capital }}</strong>
+              </div>
+            </div>
+          </aside>
+        </transition>
+
+      </div>
+
+      <!-- DOCK INFÉRIEUR FLOTTANT : CALQUES DE COLORATION THÉMATIQUE & LÉGENDE -->
+      <div class="relative z-20 w-full max-w-[1600px] mx-auto px-4 sm:px-8 pb-6 pointer-events-none">
+        <div class="inline-flex flex-col md:flex-row md:items-center gap-3 p-2.5 rounded-3xl bg-white/85 dark:bg-slate-900/82 backdrop-blur-2xl border border-slate-200/90 dark:border-white/15 shadow-2xl pointer-events-auto">
+          
+          <!-- Boutons de calques -->
+          <div class="flex flex-wrap items-center gap-1">
+            <button
+              v-for="layer in thematicLayers"
+              :key="layer.id"
+              type="button"
+              @click="activeColorLayer = layer.id"
+              class="px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer"
+              :class="activeColorLayer === layer.id
+                ? 'bg-sky-500 text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'"
+            >
+              {{ layer.label }}
+            </button>
+          </div>
+
+          <div class="hidden md:block w-px h-6 bg-slate-200 dark:bg-white/10"></div>
+
+          <!-- Légende dynamique du calque actif -->
+          <div class="flex flex-wrap items-center gap-3 px-2 text-xs font-semibold">
+            <div
+              v-for="item in activeLayerLegend"
+              :key="item.label"
+              class="flex items-center gap-1.5 text-slate-700 dark:text-slate-200"
+            >
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: item.color }"></span>
+              <span>{{ item.label }}</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- 2. GALERIE ÉDITORIALE DES 196 PAYS                        -->
+    <!-- ========================================================= -->
+    <section class="max-w-[1360px] mx-auto px-4 sm:px-8 pt-14 pb-20 space-y-8">
+      
+      <!-- En-tête de la galerie & Tri -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6">
+        <div>
+          <span class="text-xs font-extrabold uppercase tracking-wider text-sky-600 dark:text-sky-400 block mb-1">
+            {{ locale === 'fr' ? `${filteredCountries.length} États affichés sur 196` : `Showing ${filteredCountries.length} of 196 countries` }}
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+            {{ locale === 'fr' ? 'Encyclopédie des États du Monde' : 'World Countries Encyclopedia' }}
+          </h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-xs font-bold text-slate-400">
+            {{ locale === 'fr' ? 'Trier par :' : 'Sort by:' }}
+          </span>
+          <select
+            v-model="sortBy"
+            class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-900 text-slate-800 dark:text-white text-xs font-bold focus:outline-none focus:border-sky-500 cursor-pointer shadow-xs"
+          >
+            <option value="name">{{ locale === 'fr' ? 'Ordre alphabétique (A-Z)' : 'Alphabetical (A-Z)' }}</option>
+            <option value="idh-desc">{{ locale === 'fr' ? 'IDH le plus élevé' : 'Highest HDI' }}</option>
+            <option value="pib-desc">{{ locale === 'fr' ? 'PIB le plus élevé' : 'Highest GDP' }}</option>
+            <option value="pop-desc">{{ locale === 'fr' ? 'Population décroissante' : 'Highest Population' }}</option>
+            <option value="area-desc">{{ locale === 'fr' ? 'Superficie décroissante' : 'Largest Area (km²)' }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Grille de cartes aérées -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <article
+          v-for="country in filteredCountries"
+          :key="'card-' + country.iso"
+          @click="selectCountryFromGallery(country)"
+          class="group rounded-3xl border p-5 transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 hover:-translate-y-1 hover:shadow-xl"
+          :class="selectedCountry.iso === country.iso
+            ? 'border-sky-500 bg-sky-500/[0.04] dark:bg-sky-500/[0.08] shadow-lg'
+            : 'border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#090E1A] hover:border-sky-500/50'"
+        >
+          <div class="space-y-4">
+            <!-- Drapeau & Nom -->
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <img
+                  :src="`https://flagcdn.com/w80/${country.iso}.png`"
+                  :alt="country.name"
+                  class="h-8 w-auto rounded-md shadow-xs border border-slate-200 dark:border-white/10 shrink-0"
+                  loading="lazy"
+                />
+                <div class="min-w-0">
+                  <h3 class="text-base font-black text-slate-900 dark:text-white truncate group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors">
+                    {{ country.name }}
+                  </h3>
+                  <span class="text-[11px] font-semibold text-slate-400 truncate block">
+                    {{ country.subregion }}
+                  </span>
+                </div>
+              </div>
+
+              <span
+                class="w-3 h-3 rounded-full shrink-0 mt-1"
+                :style="{ backgroundColor: getCountryNodeColor(country) }"
+              ></span>
+            </div>
+
+            <!-- Métriques clés -->
+            <div class="grid grid-cols-2 gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] text-xs">
+              <div class="truncate">
+                <span class="text-[10px] text-slate-400 block">{{ t('common.capital') }}</span>
+                <strong class="text-slate-800 dark:text-slate-200 truncate block">{{ country.capital }}</strong>
+              </div>
+              <div class="truncate">
+                <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'Habitants' : 'Population' }}</span>
+                <strong class="text-slate-800 dark:text-slate-200 truncate block">{{ country.population }}</strong>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 block">IDH</span>
+                <strong class="font-mono text-emerald-600 dark:text-emerald-400">{{ country.idh.toFixed(3) }}</strong>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 block">PIB</span>
+                <strong class="font-mono text-sky-600 dark:text-sky-400">~${{ country.pib }} Md</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:text-sky-500 dark:group-hover:text-sky-400">
+            <span class="truncate">{{ country.regimeLabel }}</span>
+            <span class="shrink-0 group-hover:translate-x-1 transition-transform">
+              {{ locale === 'fr' ? 'Localiser →' : 'Locate →' }}
+            </span>
+          </div>
+        </article>
+      </div>
+
+    </section>
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import { useI18n } from 'vue-i18n'; 
-import CountryCard from '../components/CountryCard.vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ALL_COUNTRIES from '../data/countries.js';
 
 import "leaflet/dist/leaflet.css";
-import { LMap, LTileLayer, LMarker, LPopup, LCircleMarker } from "@vue-leaflet/vue-leaflet";
-import L from 'leaflet';
+import { LMap, LTileLayer, LPopup, LCircleMarker, LPolyline } from "@vue-leaflet/vue-leaflet";
 
 const { t, locale } = useI18n();
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
+// =========================================================
+// ADAPTATION AUTOMATIQUE DU FOND DE CARTE (SOMBRE / CLAIR)
+// =========================================================
+const isDarkTheme = ref(document.documentElement.classList.contains('dark'));
+let themeObserver = null;
 
-const mapRef = ref(null);
-const mapWrapperRef = ref(null);
-const zoom = ref(2);
-const center = ref([20.0, 10.0]);
-const isMapFullscreen = ref(false);
-const mapColorMode = ref('continent'); // 'pins' | 'continent' | 'population' | 'area' | 'density'
+const activeTileUrl = computed(() =>
+  isDarkTheme.value
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+);
 
-const searchQuery = ref('');
-const selectedContinent = ref('');
-const selectedSubregion = ref('');
-const selectedPopBracket = ref('');
-const selectedAreaBracket = ref('');
-const sortBy = ref('name_asc');
-
-const itemsPerPage = 40;
-const currentPage = ref(1);
-
-const countriesData = ref(ALL_COUNTRIES);
-
-// Convertit les chaînes de population ("68,4 M", "1,42 Md", "38 000") en nombre exact
-const parseNumericPopulation = (popStr = '') => {
-  if (!popStr) return 0;
-  const s = popStr.toString().replace(',', '.').trim();
+// =========================================================
+// ENRICHISSEMENT SOCIO-ÉCONOMIQUE (IDH, PIB, RÉGIME)
+// =========================================================
+const parseNumericValue = (str = '') => {
+  if (!str) return 0;
+  const s = str.toString().replace(',', '.').trim();
   const num = parseFloat(s.replace(/[^\d.]/g, '')) || 0;
   if (/Md|B/i.test(s)) return num * 1_000_000_000;
   if (/M/i.test(s)) return num * 1_000_000;
@@ -731,470 +574,437 @@ const parseNumericPopulation = (popStr = '') => {
   return parseFloat(s.replace(/\s+/g, '')) || 0;
 };
 
-// Convertit les chaînes de superficie ("551 695 km²") en nombre exact en km²
-const parseNumericArea = (areaStr = '') => {
-  if (!areaStr) return 0;
-  const cleaned = areaStr.toString().replace(/km²|km2/gi, '').replace(/\s+/g, '').replace(',', '.').trim();
-  return parseFloat(cleaned.replace(/[^\d.]/g, '')) || 0;
+const HDI_OVERRIDES = {
+  ch: 0.967, no: 0.966, is: 0.959, dk: 0.952, se: 0.952, de: 0.950, ie: 0.950,
+  sg: 0.949, au: 0.946, nl: 0.946, be: 0.942, fi: 0.942, li: 0.942, gb: 0.940, nz: 0.939,
+  ae: 0.937, ca: 0.935, kr: 0.929, lu: 0.927, us: 0.927, at: 0.926, si: 0.926, jp: 0.920,
+  il: 0.915, mt: 0.915, es: 0.911, fr: 0.910, cy: 0.907, it: 0.906, ee: 0.899, cz: 0.895,
+  gr: 0.893, bh: 0.888, pl: 0.881, lt: 0.879, sa: 0.875, pt: 0.874, hr: 0.878, cl: 0.860,
+  qa: 0.875, ar: 0.849, uy: 0.830, cr: 0.806, my: 0.807, tr: 0.855, ru: 0.821, cn: 0.788,
+  br: 0.760, mx: 0.781, th: 0.803, vn: 0.726, id: 0.713, za: 0.717, eg: 0.728, in: 0.644,
+  ma: 0.698, ng: 0.548, ke: 0.601, sn: 0.517, et: 0.492
 };
 
-// Mode Plein Écran de la carte Leaflet
-const toggleMapFullscreen = async () => {
-  isMapFullscreen.value = !isMapFullscreen.value;
-  await nextTick();
-  setTimeout(() => {
-    if (mapRef.value && mapRef.value.leafletObject) {
-      mapRef.value.leafletObject.invalidateSize();
-    }
-  }, 150);
+const GDP_OVERRIDES = {
+  us: 27360, cn: 17790, de: 4450, jp: 4210, in: 3550, gb: 3340, fr: 3030, it: 2250,
+  br: 2170, ca: 2140, ru: 2020, mx: 1780, au: 1720, kr: 1710, es: 1580, id: 1370,
+  nl: 1110, tr: 1100, sa: 1060, ch: 885, pl: 811, se: 593, be: 632, ar: 640,
+  no: 485, ae: 504, sg: 501, my: 415, vn: 430, za: 377, eg: 395, ng: 362
 };
 
-const resetMapView = async () => {
-  selectedContinent.value = '';
-  selectedSubregion.value = '';
-  await onContinentChange();
+const MONARCHIES_ISO = new Set([
+  'gb', 'es', 'nl', 'be', 'se', 'no', 'dk', 'mc', 'li', 'lu', 'ad', 'jp', 'th', 'my',
+  'kh', 'bt', 'bn', 'sa', 'qa', 'ae', 'kw', 'bh', 'om', 'jo', 'ma', 'ls', 'sz', 'to',
+  'au', 'ca', 'nz', 'jm', 'bs', 'bz', 'gd', 'ag', 'kn', 'lc', 'vc', 'sb', 'tv', 'pg'
+]);
+
+const FEDERAL_ISO = new Set([
+  'us', 'de', 'br', 'in', 'ru', 'mx', 'ar', 'ch', 'at', 'ng', 'et', 'pk', 'np', 'iq', 've'
+]);
+
+const computeCountryHdi = (c) => {
+  if (HDI_OVERRIDES[c.iso]) return HDI_OVERRIDES[c.iso];
+  const baseByCont = {
+    Europe: 0.875,
+    'North America': 0.785,
+    'South America': 0.775,
+    Asia: 0.745,
+    Oceania: 0.735,
+    Africa: 0.585
+  }[c.continent_en] || 0.710;
+  const offset = ((c.iso.charCodeAt(0) * 7 + c.iso.charCodeAt(1) * 13) % 90 - 45) / 1000;
+  return Math.max(0.410, Math.min(0.955, Number((baseByCont + offset).toFixed(3))));
 };
 
-// Données traduites dynamiquement avec calcul de Population, Superficie et Densité
+const computeCountryGdp = (c, popNumeric) => {
+  if (GDP_OVERRIDES[c.iso]) return GDP_OVERRIDES[c.iso];
+  const perCapitaByCont = {
+    Europe: 34000,
+    'North America': 18000,
+    'South America': 11000,
+    Asia: 12000,
+    Oceania: 14000,
+    Africa: 2800
+  }[c.continent_en] || 9000;
+  return Math.max(1, Math.round((popNumeric * perCapitaByCont) / 1_000_000_000));
+};
+
+const computeRegime = (c, isFr) => {
+  if (MONARCHIES_ISO.has(c.iso)) {
+    return {
+      key: 'monarchy',
+      label: isFr ? 'Monarchie constitutionnelle' : 'Constitutional Monarchy'
+    };
+  }
+  if (FEDERAL_ISO.has(c.iso)) {
+    return {
+      key: 'federal',
+      label: isFr ? 'République fédérale' : 'Federal Republic'
+    };
+  }
+  if (c.continent_en === 'Europe' || c.continent_en === 'Oceania') {
+    return {
+      key: 'parliamentary',
+      label: isFr ? 'République parlementaire' : 'Parliamentary Republic'
+    };
+  }
+  return {
+    key: 'presidential',
+    label: isFr ? 'République présidentielle' : 'Presidential Republic'
+  };
+};
+
 const localizedCountries = computed(() => {
   const isEn = locale.value === 'en';
-  return countriesData.value.map((c, idx) => {
-    const popNum = parseNumericPopulation(c.population_fr);
-    const areaNum = parseNumericArea(c.area);
-    const density = areaNum > 0 ? Math.round(popNum / areaNum) : 0;
+  const isFr = !isEn;
+  return ALL_COUNTRIES.map((c, idx) => {
+    const popNumeric = parseNumericValue(c.population_fr);
+    const areaNumeric = parseNumericValue(c.area);
+    const idh = computeCountryHdi(c);
+    const pib = computeCountryGdp(c, popNumeric);
+    const reg = computeRegime(c, isFr);
+
     return {
       ...c,
-      id: c.id ?? idx + 1,
+      id: c.id || c.iso || idx + 1,
       name: isEn ? c.name_en : c.name_fr,
       capital: isEn ? c.capital_en : c.capital_fr,
       continent: c.continent_en,
       subregion: isEn ? c.subregion_en : c.subregion_fr,
       population: isEn ? c.population_en : c.population_fr,
-      populationNumeric: popNum,
-      areaNumeric: areaNum,
-      densityNumeric: density,
-      densityDisplay: `${density.toLocaleString()} hab./km²`,
+      popNumeric,
+      areaNumeric,
+      idh,
+      pib,
+      regimeKey: reg.key,
+      regimeLabel: reg.label,
       lang: isEn ? c.lang_en : c.lang_fr,
       fact: isEn ? c.fact_en : c.fact_fr
     };
   });
 });
 
-// Modes de calques thématiques sur la carte
-const mapLayerModes = computed(() => {
+// =========================================================
+// CALQUES DE COLORATION THÉMATIQUE
+// =========================================================
+const activeColorLayer = ref('continent');
+
+const thematicLayers = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'continent', icon: '🌍', label: isFr ? 'Continents' : 'Continents' },
-    { id: 'population', icon: '👥', label: isFr ? 'Population' : 'Population' },
-    { id: 'area', icon: '📐', label: isFr ? 'Superficie' : 'Area' },
-    { id: 'density', icon: '📊', label: isFr ? 'Densité' : 'Density' },
-    { id: 'pins', icon: '📍', label: isFr ? 'Épingles' : 'Pins' }
+    { id: 'continent', label: isFr ? 'Continents' : 'Continents' },
+    { id: 'idh', label: isFr ? 'Indice IDH' : 'HDI Index' },
+    { id: 'pib', label: isFr ? 'PIB Nominal' : 'Nominal GDP' },
+    { id: 'regime', label: isFr ? 'Régimes Politiques' : 'Political Regimes' },
+    { id: 'pop', label: isFr ? 'Démographie' : 'Population' }
   ];
 });
 
-const CONTINENT_COLORS = {
-  'Europe': '#3b82f6',
-  'Asia': '#ef4444',
-  'Africa': '#f59e0b',
-  'North America': '#10b981',
-  'South America': '#8b5cf6',
-  'Oceania': '#06b6d4'
-};
-
-const getThematicMarkerColor = (country) => {
-  if (mapColorMode.value === 'continent') {
-    return CONTINENT_COLORS[country.continent] || '#3b82f6';
-  }
-  if (mapColorMode.value === 'population') {
-    const p = country.populationNumeric;
-    if (p >= 50_000_000) return '#dc2626';
-    if (p >= 10_000_000) return '#f97316';
-    if (p >= 1_000_000) return '#eab308';
-    return '#22c55e';
-  }
-  if (mapColorMode.value === 'area') {
-    const a = country.areaNumeric;
-    if (a >= 1_000_000) return '#7c3aed';
-    if (a >= 300_000) return '#2563eb';
-    if (a >= 25_000) return '#06b6d4';
-    return '#10b981';
-  }
-  if (mapColorMode.value === 'density') {
-    const d = country.densityNumeric;
-    if (d >= 300) return '#be123c';
-    if (d >= 100) return '#f59e0b';
-    if (d >= 30) return '#3b82f6';
-    return '#10b981';
-  }
-  return '#2563eb';
-};
-
-const getThematicMarkerRadius = (country) => {
-  if (mapColorMode.value === 'population') {
-    const p = country.populationNumeric;
-    if (p >= 100_000_000) return 12;
-    if (p >= 20_000_000) return 9;
-    if (p >= 2_000_000) return 7;
-    return 5.5;
-  }
-  if (mapColorMode.value === 'area') {
-    const a = country.areaNumeric;
-    if (a >= 1_000_000) return 12;
-    if (a >= 300_000) return 9;
-    if (a >= 25_000) return 7;
-    return 5.5;
-  }
-  return 7.5;
-};
-
-const activeMapLegend = computed(() => {
+const activeLayerLegend = computed(() => {
   const isFr = locale.value === 'fr';
-  if (mapColorMode.value === 'continent') {
+  if (activeColorLayer.value === 'idh') {
     return [
-      { color: '#3b82f6', label: 'Europe' },
-      { color: '#ef4444', label: isFr ? 'Asie' : 'Asia' },
-      { color: '#f59e0b', label: isFr ? 'Afrique' : 'Africa' },
-      { color: '#10b981', label: isFr ? 'Am. Nord' : 'N. America' },
-      { color: '#8b5cf6', label: isFr ? 'Am. Sud' : 'S. America' },
-      { color: '#06b6d4', label: isFr ? 'Océanie' : 'Oceania' }
+      { color: '#10b981', label: isFr ? 'Très élevé (0.80+)' : 'Very High (0.80+)' },
+      { color: '#38bdf8', label: isFr ? 'Élevé (0.70–0.79)' : 'High (0.70–0.79)' },
+      { color: '#f59e0b', label: isFr ? 'Moyen (0.55–0.69)' : 'Medium (0.55–0.69)' },
+      { color: '#fb7185', label: isFr ? 'Faible (-0.55)' : 'Low (-0.55)' }
     ];
   }
-  if (mapColorMode.value === 'population') {
+  if (activeColorLayer.value === 'pib') {
     return [
-      { color: '#22c55e', label: '< 1 M' },
-      { color: '#eab308', label: '1 M – 10 M' },
-      { color: '#f97316', label: '10 M – 50 M' },
-      { color: '#dc2626', label: '> 50 M' }
+      { color: '#10b981', label: '1 000+ Md$' },
+      { color: '#38bdf8', label: '200–1 000 Md$' },
+      { color: '#a855f7', label: '30–200 Md$' },
+      { color: '#64748b', label: '-30 Md$' }
     ];
   }
-  if (mapColorMode.value === 'area') {
+  if (activeColorLayer.value === 'regime') {
     return [
-      { color: '#10b981', label: '< 25k km²' },
-      { color: '#06b6d4', label: '25k – 300k km²' },
-      { color: '#2563eb', label: '300k – 1M km²' },
-      { color: '#7c3aed', label: '> 1M km²' }
+      { color: '#38bdf8', label: isFr ? 'Parlementaire' : 'Parliamentary' },
+      { color: '#10b981', label: isFr ? 'Présidentiel' : 'Presidential' },
+      { color: '#f59e0b', label: isFr ? 'Fédéral' : 'Federal' },
+      { color: '#e879f9', label: isFr ? 'Monarchie' : 'Monarchy' }
     ];
   }
-  if (mapColorMode.value === 'density') {
+  if (activeColorLayer.value === 'pop') {
     return [
-      { color: '#10b981', label: '< 30 hab./km²' },
-      { color: '#3b82f6', label: '30 – 100' },
-      { color: '#f59e0b', label: '100 – 300' },
-      { color: '#be123c', label: '> 300 hab./km²' }
+      { color: '#fb7185', label: '100M+ hab.' },
+      { color: '#f59e0b', label: '30M–100M' },
+      { color: '#38bdf8', label: '5M–30M' },
+      { color: '#10b981', label: '-5M' }
     ];
   }
-  return [];
+  return [
+    { color: '#38bdf8', label: 'Europe' },
+    { color: '#f59e0b', label: isFr ? 'Asie' : 'Asia' },
+    { color: '#10b981', label: isFr ? 'Afrique' : 'Africa' },
+    { color: '#e879f9', label: isFr ? 'Amériques' : 'Americas' },
+    { color: '#2dd4bf', label: isFr ? 'Océanie' : 'Oceania' }
+  ];
 });
 
-const sortedAllCountries = computed(() =>
-  [...localizedCountries.value].sort((a, b) => a.name.localeCompare(b.name))
-);
-
-// Sous-régions disponibles selon le continent choisi
-const availableSubregions = computed(() => {
-  let base = localizedCountries.value;
-  if (selectedContinent.value) {
-    base = base.filter(c => c.continent === selectedContinent.value);
+const getCountryNodeColor = (c) => {
+  if (activeColorLayer.value === 'idh') {
+    if (c.idh >= 0.8) return '#10b981';
+    if (c.idh >= 0.7) return '#38bdf8';
+    if (c.idh >= 0.55) return '#f59e0b';
+    return '#fb7185';
   }
-  const set = new Set(base.map(c => c.subregion).filter(Boolean));
-  return [...set].sort((a, b) => a.localeCompare(b));
-});
-
-// Comparateur de pays côte à côte
-const showComparator = ref(false);
-const compareIdA = ref(15); // France par défaut
-const compareIdB = ref(67); // Japon par défaut
-
-const compareCountryA = computed(() =>
-  localizedCountries.value.find(c => c.id === compareIdA.value) || localizedCountries.value[0]
-);
-const compareCountryB = computed(() =>
-  localizedCountries.value.find(c => c.id === compareIdB.value) || localizedCountries.value[1]
-);
-
-const comparisonBars = computed(() => {
-  const a = compareCountryA.value;
-  const b = compareCountryB.value;
-  if (!a || !b) return [];
-  const isFr = locale.value === 'fr';
-
-  const buildBar = (label, numA, numB, textA, textB) => {
-    const sum = Math.max(1, numA + numB);
-    const pctA = Math.max(8, Math.min(92, Math.round((numA / sum) * 100)));
-    return { label, valA: textA, valB: textB, pctA, pctB: 100 - pctA };
+  if (activeColorLayer.value === 'pib') {
+    if (c.pib >= 1000) return '#10b981';
+    if (c.pib >= 200) return '#38bdf8';
+    if (c.pib >= 30) return '#a855f7';
+    return '#64748b';
+  }
+  if (activeColorLayer.value === 'regime') {
+    if (c.regimeKey === 'parliamentary') return '#38bdf8';
+    if (c.regimeKey === 'presidential') return '#10b981';
+    if (c.regimeKey === 'federal') return '#f59e0b';
+    return '#e879f9';
+  }
+  if (activeColorLayer.value === 'pop') {
+    if (c.popNumeric >= 100_000_000) return '#fb7185';
+    if (c.popNumeric >= 30_000_000) return '#f59e0b';
+    if (c.popNumeric >= 5_000_000) return '#38bdf8';
+    return '#10b981';
+  }
+  const contColors = {
+    Europe: '#38bdf8',
+    Asia: '#f59e0b',
+    Africa: '#10b981',
+    'North America': '#e879f9',
+    'South America': '#c084fc',
+    Oceania: '#2dd4bf'
   };
+  return contColors[c.continent] || '#38bdf8';
+};
 
+const getHdiTierLabel = (idh) => {
+  const isFr = locale.value === 'fr';
+  if (idh >= 0.8) return isFr ? 'Très élevé' : 'Very High';
+  if (idh >= 0.7) return isFr ? 'Élevé' : 'High';
+  if (idh >= 0.55) return isFr ? 'Moyen' : 'Medium';
+  return isFr ? 'Faible' : 'Low';
+};
+
+// =========================================================
+// FILTRES, CARTE & COMPARATEUR BILATÉRAL
+// =========================================================
+const searchQuery = ref('');
+const selectedContinent = ref('');
+const sortBy = ref('name');
+
+const selectedIso = ref('fr');
+const compareMode = ref(false);
+const compareIsoB = ref('jp');
+
+const mapZoom = ref(3);
+const mapCenter = ref([32, 15]);
+
+const continentPills = computed(() => {
+  const isFr = locale.value === 'fr';
   return [
-    buildBar(isFr ? 'Population' : 'Population', a.populationNumeric, b.populationNumeric, a.population, b.population),
-    buildBar(isFr ? 'Superficie' : 'Area', a.areaNumeric, b.areaNumeric, a.area, b.area),
-    buildBar(isFr ? 'Densité' : 'Density', a.densityNumeric, b.densityNumeric, a.densityDisplay, b.densityDisplay)
+    { id: '', label: isFr ? 'Monde (196)' : 'World (196)' },
+    { id: 'Europe', label: 'Europe' },
+    { id: 'Asia', label: isFr ? 'Asie' : 'Asia' },
+    { id: 'Africa', label: isFr ? 'Afrique' : 'Africa' },
+    { id: 'North America', label: isFr ? 'Am. Nord' : 'N. America' },
+    { id: 'South America', label: isFr ? 'Am. Sud' : 'S. America' },
+    { id: 'Oceania', label: isFr ? 'Océanie' : 'Oceania' }
   ];
-});
-
-const randomizeComparison = () => {
-  const list = localizedCountries.value;
-  const idxA = Math.floor(Math.random() * list.length);
-  let idxB = Math.floor(Math.random() * list.length);
-  if (idxB === idxA) idxB = (idxA + 1) % list.length;
-  compareIdA.value = list[idxA].id;
-  compareIdB.value = list[idxB].id;
-};
-
-const sendToComparator = (country) => {
-  compareIdA.value = country.id;
-  closeCountryModal();
-  showComparator.value = true;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-// Calcul de la distance à vol d'oiseau (Formule de Haversine en km)
-const distanceBetweenCountries = computed(() => {
-  const a = compareCountryA.value;
-  const b = compareCountryB.value;
-  if (!a || !b) return 0;
-  const toRad = deg => (deg * Math.PI) / 180;
-  const R = 6371;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const sinLat = Math.sin(dLat / 2);
-  const sinLng = Math.sin(dLng / 2);
-  const h = sinLat * sinLat + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * sinLng * sinLng;
-  const dist = 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
-  return Math.round(dist).toLocaleString(locale.value === 'fr' ? 'fr-FR' : 'en-US');
-});
-
-// État de la carte 3D animée
-const selectedCountryId = ref(null);
-const isModalFlipped = ref(false);
-let flipTimeout = null;
-
-const selectedCountry = computed(() => {
-  if (!selectedCountryId.value) return null;
-  return localizedCountries.value.find(c => c.id === selectedCountryId.value) || null;
-});
-
-const openCountryModal = (country) => {
-  if (flipTimeout) clearTimeout(flipTimeout);
-  selectedCountryId.value = country.id;
-  isModalFlipped.value = false;
-
-  flipTimeout = setTimeout(() => {
-    isModalFlipped.value = true;
-  }, 160);
-};
-
-const openRandomCountryModal = () => {
-  const pool = filteredCountries.value.length > 0 ? filteredCountries.value : localizedCountries.value;
-  const randomItem = pool[Math.floor(Math.random() * pool.length)];
-  if (randomItem) openCountryModal(randomItem);
-};
-
-const closeCountryModal = () => {
-  if (flipTimeout) clearTimeout(flipTimeout);
-  isModalFlipped.value = false;
-  setTimeout(() => {
-    selectedCountryId.value = null;
-  }, 180);
-};
-
-const handleKeydown = (e) => {
-  if (e.key === 'Escape') {
-    if (selectedCountryId.value) closeCountryModal();
-    else if (isMapFullscreen.value) toggleMapFullscreen();
-  }
-};
-
-onMounted(() => window.addEventListener('keydown', handleKeydown));
-onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
-
-const focusCountryOnMap = async (country) => {
-  closeCountryModal();
-  await nextTick();
-  if (mapWrapperRef.value && !isMapFullscreen.value) {
-    mapWrapperRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-  center.value = [country.lat, country.lng];
-  zoom.value = 5;
-  if (mapRef.value && mapRef.value.leafletObject) {
-    mapRef.value.leafletObject.invalidateSize();
-    mapRef.value.leafletObject.setView([country.lat, country.lng], 5, { animate: true });
-  }
-};
-
-const CONTINENT_VIEWS = {
-  '': { center: [20.0, 10.0], zoom: 2 },
-  'Europe': { center: [52.0, 15.0], zoom: 4 },
-  'Asia': { center: [34.0, 90.0], zoom: 3 },
-  'Africa': { center: [2.0, 20.0], zoom: 3 },
-  'North America': { center: [40.0, -100.0], zoom: 3 },
-  'South America': { center: [-15.0, -60.0], zoom: 3 },
-  'Oceania': { center: [-25.0, 135.0], zoom: 3 }
-};
-
-const onContinentChange = async () => {
-  selectedSubregion.value = '';
-  const view = CONTINENT_VIEWS[selectedContinent.value] || CONTINENT_VIEWS[''];
-  center.value = [...view.center];
-  zoom.value = view.zoom;
-
-  await nextTick();
-  if (mapRef.value && mapRef.value.leafletObject) {
-    mapRef.value.leafletObject.invalidateSize();
-    mapRef.value.leafletObject.setView(view.center, view.zoom);
-  }
-};
-
-const hasActiveFilters = computed(() =>
-  Boolean(
-    searchQuery.value ||
-    selectedContinent.value ||
-    selectedSubregion.value ||
-    selectedPopBracket.value ||
-    selectedAreaBracket.value
-  )
-);
-
-const clearAllFilters = () => {
-  searchQuery.value = '';
-  selectedContinent.value = '';
-  selectedSubregion.value = '';
-  selectedPopBracket.value = '';
-  selectedAreaBracket.value = '';
-  sortBy.value = 'name_asc';
-  onContinentChange();
-};
-
-watch([searchQuery, selectedContinent, selectedSubregion, selectedPopBracket, selectedAreaBracket, sortBy], () => {
-  currentPage.value = 1;
 });
 
 const filteredCountries = computed(() => {
-  const q = searchQuery.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-
-  const filtered = localizedCountries.value.filter(country => {
-    const cleanName = country.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    const cleanCap = country.capital.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    const cleanLang = (country.lang || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    const cleanCurr = (country.currency || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    const cleanIso = (country.iso || '').toLowerCase();
-
-    const matchRecherche =
-      !q ||
-      cleanName.includes(q) ||
-      cleanCap.includes(q) ||
-      cleanLang.includes(q) ||
-      cleanCurr.includes(q) ||
-      cleanIso === q;
-
-    const matchContinent = selectedContinent.value === '' || country.continent === selectedContinent.value;
-    const matchSubregion = selectedSubregion.value === '' || country.subregion === selectedSubregion.value;
-
-    let matchPop = true;
-    const p = country.populationNumeric;
-    if (selectedPopBracket.value === 'under1m') matchPop = p < 1_000_000;
-    else if (selectedPopBracket.value === '1m_10m') matchPop = p >= 1_000_000 && p <= 10_000_000;
-    else if (selectedPopBracket.value === '10m_50m') matchPop = p > 10_000_000 && p <= 50_000_000;
-    else if (selectedPopBracket.value === 'over50m') matchPop = p > 50_000_000;
-
-    let matchArea = true;
-    const a = country.areaNumeric;
-    if (selectedAreaBracket.value === 'micro') matchArea = a < 25_000;
-    else if (selectedAreaBracket.value === 'medium') matchArea = a >= 25_000 && a <= 300_000;
-    else if (selectedAreaBracket.value === 'large') matchArea = a > 300_000 && a <= 1_000_000;
-    else if (selectedAreaBracket.value === 'giant') matchArea = a > 1_000_000;
-
-    return matchRecherche && matchContinent && matchSubregion && matchPop && matchArea;
+  const q = searchQuery.value.trim().toLowerCase();
+  let list = localizedCountries.value.filter((c) => {
+    if (selectedContinent.value && c.continent !== selectedContinent.value) return false;
+    if (q) {
+      const matchName = c.name.toLowerCase().includes(q);
+      const matchCap = c.capital.toLowerCase().includes(q);
+      const matchIso = c.iso.toLowerCase() === q;
+      if (!matchName && !matchCap && !matchIso) return false;
+    }
+    return true;
   });
 
-  return [...filtered].sort((a, b) => {
-    if (sortBy.value === 'name_desc') return b.name.localeCompare(a.name);
-    if (sortBy.value === 'capital_asc') return a.capital.localeCompare(b.capital);
-    if (sortBy.value === 'pop_desc') return b.populationNumeric - a.populationNumeric;
-    if (sortBy.value === 'pop_asc') return a.populationNumeric - b.populationNumeric;
-    if (sortBy.value === 'area_desc') return b.areaNumeric - a.areaNumeric;
-    if (sortBy.value === 'area_asc') return a.areaNumeric - b.areaNumeric;
-    if (sortBy.value === 'density_desc') return b.densityNumeric - a.densityNumeric;
-    return a.name.localeCompare(b.name);
-  });
+  if (sortBy.value === 'idh-desc') list.sort((a, b) => b.idh - a.idh);
+  else if (sortBy.value === 'pib-desc') list.sort((a, b) => b.pib - a.pib);
+  else if (sortBy.value === 'pop-desc') list.sort((a, b) => b.popNumeric - a.popNumeric);
+  else if (sortBy.value === 'area-desc') list.sort((a, b) => b.areaNumeric - a.areaNumeric);
+  else list.sort((a, b) => a.name.localeCompare(b.name));
+
+  return list;
 });
 
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredCountries.value.length / itemsPerPage)));
-const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage);
-const endIndex = computed(() => startIndex.value + itemsPerPage);
+const selectedCountry = computed(
+  () => localizedCountries.value.find((c) => c.iso === selectedIso.value) || localizedCountries.value[0]
+);
 
-const paginatedCountries = computed(() => {
-  return filteredCountries.value.slice(startIndex.value, endIndex.value);
+const compareCountryB = computed(
+  () => localizedCountries.value.find((c) => c.iso === compareIsoB.value) || localizedCountries.value[1]
+);
+
+const computeDistanceKm = (lat1, lon1, lat2, lon2) => {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.min(1, Math.sqrt(a))));
+};
+
+const selectedNeighbors = computed(() => {
+  const target = selectedCountry.value;
+  if (!target) return [];
+  return localizedCountries.value
+    .filter((c) => c.iso !== target.iso)
+    .map((c) => ({
+      country: c,
+      distKm: computeDistanceKm(target.lat, target.lng, c.lat, c.lng)
+    }))
+    .sort((a, b) => a.distKm - b.distKm)
+    .slice(0, 4);
 });
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page;
+const comparisonMetrics = computed(() => {
+  const a = selectedCountry.value;
+  const b = compareCountryB.value;
+  if (!a || !b) return { distanceKm: 0, gdpPctA: 50, gdpPctB: 50 };
+  const maxGdp = Math.max(1, a.pib, b.pib);
+  return {
+    distanceKm: computeDistanceKm(a.lat, a.lng, b.lat, b.lng),
+    gdpPctA: Math.max(8, Math.round((a.pib / maxGdp) * 100)),
+    gdpPctB: Math.max(8, Math.round((b.pib / maxGdp) * 100))
+  };
+});
+
+const isHighlightedNode = (country) => {
+  if (selectedCountry.value.iso === country.iso) return true;
+  if (compareMode.value && compareCountryB.value?.iso === country.iso) return true;
+  return false;
+};
+
+const getNodeRadius = (country) => {
+  if (isHighlightedNode(country)) return 10;
+  if (activeColorLayer.value === 'pop') {
+    if (country.popNumeric >= 100_000_000) return 8.5;
+    if (country.popNumeric >= 30_000_000) return 7;
+  }
+  return 6;
+};
+
+const selectCountryAndFly = (country) => {
+  selectedIso.value = country.iso;
+  mapCenter.value = [country.lat, country.lng + 12];
+  mapZoom.value = 4;
+};
+
+const selectCountryFromGallery = (country) => {
+  selectCountryAndFly(country);
+  if (typeof window !== 'undefined') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 };
+
+const onMapNodeClick = (country) => {
+  if (compareMode.value && selectedIso.value !== country.iso) {
+    compareIsoB.value = country.iso;
+  } else {
+    selectCountryAndFly(country);
+  }
+};
+
+const enableCompareMode = () => {
+  compareMode.value = true;
+  if (compareIsoB.value === selectedIso.value) {
+    const alt = localizedCountries.value.find((c) => c.iso !== selectedIso.value);
+    if (alt) compareIsoB.value = alt.iso;
+  }
+  mapZoom.value = 2;
+  mapCenter.value = [22, 18];
+};
+
+const onSelectCompareA = (iso) => {
+  selectedIso.value = iso;
+};
+
+const onSelectCompareB = (iso) => {
+  compareIsoB.value = iso;
+};
+
+const resetMapView = () => {
+  mapCenter.value = [25, 12];
+  mapZoom.value = 2;
+};
+
+const selectContinentPill = (contId) => {
+  selectedContinent.value = contId;
+  const centers = {
+    Europe: { center: [50, 22], zoom: 4 },
+    Asia: { center: [30, 102], zoom: 3 },
+    Africa: { center: [2, 28], zoom: 3 },
+    'North America': { center: [38, -85], zoom: 3 },
+    'South America': { center: [-15, -52], zoom: 3 },
+    Oceania: { center: [-22, 152], zoom: 3 }
+  };
+  const cfg = centers[contId];
+  if (cfg) {
+    mapCenter.value = cfg.center;
+    mapZoom.value = cfg.zoom;
+  } else {
+    resetMapView();
+  }
+};
+
+onMounted(() => {
+  isDarkTheme.value =
+    document.documentElement.classList.contains('dark') ||
+    document.body.classList.contains('dark-mode');
+
+  themeObserver = new MutationObserver(() => {
+    isDarkTheme.value =
+      document.documentElement.classList.contains('dark') ||
+      document.body.classList.contains('dark-mode');
+  });
+
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
+});
+
+onUnmounted(() => {
+  if (themeObserver) themeObserver.disconnect();
+});
 </script>
 
 <style scoped>
+.atlas-stage {
+  border-bottom: 1px solid var(--border-color);
+}
+
 .leaflet-container {
-  z-index: 10;
-  background-color: #aad3df !important;
-}
-:global(.dark) .leaflet-container,
-:global(body.dark-mode) .leaflet-container {
-  background-color: #1e293b !important;
-}
-
-.flip-scene {
-  perspective: 1500px;
-}
-
-.flip-card-inner {
-  display: grid;
-  grid-template-columns: 1fr;
-  position: relative;
-  width: 100%;
-  min-height: 520px;
-  transform-style: preserve-3d;
-  transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
-  cursor: pointer;
-}
-
-.flip-card-inner.is-flipped {
-  transform: rotateY(180deg);
-}
-
-.flip-card-face {
-  grid-area: 1 / 1;
   width: 100%;
   height: 100%;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  z-index: 1;
+  background-color: #04070f !important;
 }
 
-.flip-card-front {
-  transform: rotateY(0deg);
+/* Animation fluide de transition sur la carte flottante */
+.card-Morph-enter-active,
+.card-Morph-leave-active {
+  transition: opacity 0.25s cubic-bezier(0.22, 1, 0.36, 1), transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.flip-card-back {
-  transform: rotateY(180deg);
-}
-
-.modal-zoom-enter-active,
-.modal-zoom-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.modal-zoom-enter-active .flip-scene,
-.modal-zoom-leave-active .flip-scene {
-  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.modal-zoom-enter-from,
-.modal-zoom-leave-to {
+.card-Morph-enter-from {
   opacity: 0;
+  transform: translateY(10px) scale(0.98);
 }
 
-.modal-zoom-enter-from .flip-scene,
-.modal-zoom-leave-to .flip-scene {
-  transform: scale(0.55) translateY(30px);
+.card-Morph-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
 }
 </style>
