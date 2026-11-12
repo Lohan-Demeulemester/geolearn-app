@@ -2006,10 +2006,10 @@ const initThreeWebglController = async () => {
     const H = mount.clientHeight || 340;
 
     threeScene = new THREE.Scene();
-    // Caméra reculée à z = 9.2 et orientée vers y = -0.15 pour que le socle et les poignées ne soient jamais coupés en bas
+    // Caméra reculée à z = 6.8 et orientée vers y = 0.15 pour que le socle et les poignées ne soient jamais coupés en bas
     threeCamera = new THREE.PerspectiveCamera(34, W / H, 0.1, 100);
-    threeCamera.position.set(0, 0.25, 9.2);
-    threeCamera.lookAt(0, -0.15, 0);
+    threeCamera.position.set(0, 0.25, 6.8);
+    threeCamera.lookAt(0, 0.15, 0);
 
     threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     threeRenderer.setSize(W, H);
