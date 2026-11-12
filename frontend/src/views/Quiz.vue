@@ -2054,7 +2054,7 @@ const initThreeWebglController = async () => {
 
     threeScene = new THREE.Scene();
     threeCamera = new THREE.PerspectiveCamera(36, W / H, 0.1, 100);
-    threeCamera.position.set(0, 0.22, 6.1);
+    threeCamera.position.set(0, 0.22, 6.4);
     threeCamera.lookAt(0, -0.12, 0);
 
     threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
