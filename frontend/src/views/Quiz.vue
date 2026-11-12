@@ -221,8 +221,8 @@
               </transition>
             </div>
 
-            <!-- Centre (5 cols) : SCÈNE WEBGL THREE.JS DE LA MANETTE 3D NEXT-GEN -->
-            <div class="lg:col-span-5 flex flex-col items-center justify-center relative order-1 lg:order-2">
+            <!-- Centre (5 cols) : SCÈNE WEBGL THREE.JS EN PREMIER PLAN SANS COUPURE -->
+            <div class="lg:col-span-5 flex flex-col items-center justify-center relative order-1 lg:order-2 z-25 overflow-visible">
               <div
                 ref="webglContainerRef"
                 class="webgl-controller-mount relative flex items-center justify-center cursor-grab active:cursor-grabbing"
@@ -233,7 +233,7 @@
                 @click="triggerWebglPulse"
               ></div>
 
-              <div class="pointer-events-none -mt-3 px-3.5 py-1 rounded-full bg-slate-900/75 dark:bg-white/[0.05] border border-white/10 font-mono text-[10px] text-indigo-300 backdrop-blur-md">
+              <div class="relative z-30 pointer-events-none mt-2 px-3.5 py-1 rounded-full bg-slate-900/85 dark:bg-[#0B1023]/90 border border-white/15 font-mono text-[10px] text-indigo-300 backdrop-blur-md shadow-lg">
                 {{ locale === 'fr' ? '↻ GLISSER EN 3D (WEBGL) • CLIQUER POUR IMPULSION' : '↻ DRAG IN 3D (WEBGL) • CLICK FOR PULSE' }}
               </div>
             </div>
@@ -2049,13 +2049,13 @@ const initThreeWebglController = async () => {
     const mount = webglContainerRef.value;
     if (!mount) return;
 
-    const W = mount.clientWidth || 640;
-    const H = mount.clientHeight || 450;
+    const W = mount.clientWidth || 760;
+    const H = mount.clientHeight || 680;
 
     threeScene = new THREE.Scene();
-    threeCamera = new THREE.PerspectiveCamera(36, W / H, 0.1, 100);
-    threeCamera.position.set(0, 0.22, 6.4);
-    threeCamera.lookAt(0, -0.12, 0);
+    threeCamera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+    threeCamera.position.set(0, 0.15, 7.6);
+    threeCamera.lookAt(0, -0.1, 0);
 
     threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     threeRenderer.setSize(W, H);
@@ -2380,8 +2380,8 @@ if (controllerGroup) {
 
 const handleWindowResize = () => {
   if (!threeRenderer || !threeCamera || !webglContainerRef.value) return;
-  const W = webglContainerRef.value.clientWidth || 540;
-  const H = webglContainerRef.value.clientHeight || 400;
+  const W = webglContainerRef.value.clientWidth || 760;
+  const H = webglContainerRef.value.clientHeight || 680;
   threeCamera.aspect = W / H;
   threeCamera.updateProjectionMatrix();
   threeRenderer.setSize(W, H);
@@ -4039,9 +4039,24 @@ onUnmounted(() => {
 }
 
 .webgl-controller-mount {
-  width: min(94vw, 680px);
-  height: 450px;
-  min-height: 410px;
+  position: relative;
+  z-index: 25;
+  width: min(96vw, 760px);
+  height: 680px;
+  min-height: 680px;
+  margin-top: -115px;
+  margin-bottom: -115px;
+  pointer-events: auto;
+}
+
+@media (max-width: 1023px) {
+  .webgl-controller-mount {
+    width: min(96vw, 480px);
+    height: 460px;
+    min-height: 460px;
+    margin-top: -60px;
+    margin-bottom: -60px;
+  }
 }
 
 .ambient-halo {
