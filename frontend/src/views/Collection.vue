@@ -172,7 +172,7 @@
               :style="{ background: selectedBadge.accentHex }"
             ></div>
 
-            <!-- Gauche (5 cols) : Scène 3D Interactive du Cristal / Trophée -->
+            <!-- Gauche (5 cols) : Scène 3D Interactive du Trophée Agrandi (Sans étiquette inférieure) -->
             <div class="lg:col-span-5 flex flex-col items-center justify-center relative">
               <div class="w-full flex items-center justify-between font-mono text-[10px] text-slate-400 pb-2 border-b border-slate-200 dark:border-white/10">
                 <span class="text-sky-500 dark:text-sky-400 font-bold">{{ selectedBadge.code }} // 3D RELIC</span>
@@ -181,19 +181,15 @@
 
               <canvas
                 ref="relicCanvasRef"
-                width="320"
-                height="300"
-                class="w-[270px] h-[250px] sm:w-[310px] sm:h-[285px] cursor-grab active:cursor-grabbing my-1"
+                width="420"
+                height="360"
+                class="w-[320px] h-[280px] sm:w-[400px] sm:h-[340px] cursor-grab active:cursor-grabbing my-1"
                 style="touch-action: none;"
                 @pointerdown="onRelicPointerDown"
                 @pointermove="onRelicPointerMove"
                 @pointerup="onRelicPointerUp"
                 @pointerleave="onRelicPointerUp"
               ></canvas>
-
-              <span class="px-3.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 font-mono text-[10px] text-slate-500 dark:text-sky-300">
-                {{ locale === 'fr' ? 'GLISSER POUR TOURNER L\'INSIGNE 3D' : 'DRAG TO ROTATE 3D INSIGNIA' }}
-              </span>
             </div>
 
             <!-- Droite (7 cols) : Détails du Trophée & Échelle des 5 Paliers (I -> V) -->
@@ -920,118 +916,33 @@ const operatorRankTitle = computed(() => {
 const getTierBadgeClass = (tier) => {
   if (tier >= 5) return 'bg-sky-500/20 text-sky-300 border-sky-400/50';
   if (tier === 4) return 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50';
-  if (tier === 3) return 'bg-amber-500/20 text-amber-300 border-amber-400/50';
-  if (tier >= 1) return 'bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-white/20';
+  if (tier === 3) return 'bg-yellow-400/20 text-yellow-300 border-yellow-400/55';
+  if (tier === 2) return 'bg-slate-300/20 text-slate-200 border-slate-300/45';
+  if (tier === 1) return 'bg-orange-800/30 text-orange-300 border-orange-600/50';
   return 'bg-slate-100 dark:bg-white/[0.03] text-slate-400 border-slate-200 dark:border-white/10';
 };
 
 // =========================================================
-// PASSEPORT GÉODÉSIQUE DES 196 ÉTATS
+// PALETTE OFFICIELLE PAR PALIER (BRONZE CUIVRÉ VS OR JAUNE)
 // =========================================================
-const passportContinent = ref('all');
-const passportQuery = ref('');
-
-// Détermine de manière déterministe combien d'États sont tamponnés selon l'activité réelle du joueur
-const stampedCountriesCount = computed(() => {
-  const m = metrics.value;
-  const raw = Math.max(
-    m.worldBest,
-    m.europeBest + m.totalGames * 4 + totalTiersEarned.value * 3
-  );
-  return Math.min(196, raw);
-});
-
-const localizedPassportCountries = computed(() => {
-  const isEn = locale.value === 'en';
-  const limit = stampedCountriesCount.value;
-  return ALL_COUNTRIES.map((c, idx) => ({
-    ...c,
-    name: isEn ? c.name_en : c.name_fr,
-    capital: isEn ? c.capital_en : c.capital_fr,
-    continent: c.continent_en,
-    isStamped: idx < limit
-  }));
-});
-
-const passportContinents = computed(() => {
-  const isFr = locale.value === 'fr';
-  const list = localizedPassportCountries.value;
-  const groups = [
-    { id: 'all', label: isFr ? 'Monde' : 'World' },
-    { id: 'Europe', label: 'Europe' },
-    { id: 'Asia', label: isFr ? 'Asie' : 'Asia' },
-    { id: 'Africa', label: isFr ? 'Afrique' : 'Africa' },
-    { id: 'North America', label: isFr ? 'Am. Nord' : 'N. America' },
-    { id: 'South America', label: isFr ? 'Am. Sud' : 'S. America' },
-    { id: 'Oceania', label: isFr ? 'Océanie' : 'Oceania' }
-  ];
-
-  return groups.map((g) => {
-    const sub = g.id === 'all' ? list : list.filter((c) => c.continent === g.id);
-    return {
-      ...g,
-      total: sub.length,
-      stamped: sub.filter((c) => c.isStamped).length
-    };
-  });
-});
-
-const filteredPassportCountries = computed(() => {
-  const q = passportQuery.value.trim().toLowerCase();
-  return localizedPassportCountries.value.filter((c) => {
-    if (passportContinent.value !== 'all' && c.continent !== passportContinent.value) return false;
-    if (q) {
-      return c.name.toLowerCase().includes(q) || c.capital.toLowerCase().includes(q) || c.iso.toLowerCase() === q;
-    }
-    return true;
-  });
-});
-
-// =========================================================
-// CARTES HOLOGRAPHIQUES 3D TILT & REFLET SPÉCULAIRE
-// =========================================================
-const cardTilts = ref({});
-
-const onCardPointerMove = (e, id) => {
-  const rect = e.currentTarget.getBoundingClientRect();
-  const px = (e.clientX - rect.left) / rect.width;
-  const py = (e.clientY - rect.top) / rect.height;
-  cardTilts.value[id] = {
-    rx: Number(((0.5 - py) * 11).toFixed(2)),
-    ry: Number(((px - 0.5) * 13).toFixed(2)),
-    gx: Math.round(px * 100),
-    gy: Math.round(py * 100)
-  };
+const TIER_PALETTE = {
+  0: { name: 'LOCKED', primary: '#475569', secondary: '#1e293b', specular: '#94a3b8', glow: 'rgba(71, 85, 105, 0.22)' },
+  1: { name: 'BRONZE I', primary: '#b85d38', secondary: '#5c2410', specular: '#f0a686', glow: 'rgba(184, 93, 56, 0.40)' },
+  2: { name: 'SILVER II', primary: '#cbd5e1', secondary: '#475569', specular: '#ffffff', glow: 'rgba(203, 213, 225, 0.38)' },
+  3: { name: 'GOLD III', primary: '#facc15', secondary: '#854d0e', specular: '#fef9c3', glow: 'rgba(250, 204, 21, 0.48)' },
+  4: { name: 'EMERALD IV', primary: '#10b981', secondary: '#065f46', specular: '#6ee7b7', glow: 'rgba(16, 185, 129, 0.45)' },
+  5: { name: 'DIAMOND V', primary: '#38bdf8', secondary: '#0369a1', specular: '#e0f2fe', glow: 'rgba(56, 189, 248, 0.52)' }
 };
 
-const onCardPointerLeave = (id) => {
-  cardTilts.value[id] = { rx: 0, ry: 0, gx: 50, gy: 50 };
-};
-
-const getCardTiltStyle = (id) => {
-  const t = cardTilts.value[id];
-  if (!t || (t.rx === 0 && t.ry === 0)) {
-    return { transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg)' };
-  }
-  return {
-    transform: `perspective(1000px) rotateX(${t.rx}deg) rotateY(${t.ry}deg) translateY(-4px)`
-  };
-};
-
-const getCardGlareStyle = (id, hex) => {
-  const t = cardTilts.value[id] || { gx: 50, gy: 50 };
-  return {
-    background: `radial-gradient(circle at ${t.gx}% ${t.gy}%, ${hex}26 0%, transparent 65%)`
-  };
-};
+const getTierHex = (tier = 0) => (TIER_PALETTE[tier] || TIER_PALETTE[0]).primary;
 
 // =========================================================
-// MOTEUR 3D PROCÉDURAL DE L'INSIGNE ORBITAL (RELIC CANVAS)
+// MOTEUR 3D DU TROPHÉE (AGRANDI + AXE GAUCHE/DROITE INVERSÉ)
 // =========================================================
 const relicCanvasRef = ref(null);
 let relicAnimId = null;
 let relicYaw = 0.4;
-let relicPitch = 0.25;
+let relicPitch = 0.22;
 let relicVelYaw = 0;
 let relicVelPitch = 0;
 let relicDragging = false;
@@ -1040,7 +951,7 @@ let relicLastY = 0;
 
 const selectBadgeFor3D = (badge) => {
   selectedBadgeId.value = badge.id;
-  relicVelYaw = 0.08;
+  relicVelYaw = -0.08;
 };
 
 const onRelicPointerDown = (e) => {
@@ -1055,9 +966,10 @@ const onRelicPointerMove = (e) => {
   if (!relicDragging) return;
   const dx = e.clientX - relicLastX;
   const dy = e.clientY - relicLastY;
-  relicYaw += dx * 0.012;
-  relicPitch = Math.max(-0.9, Math.min(0.9, relicPitch + dy * 0.012));
-  relicVelYaw = dx * 0.009;
+  // Axe horizontal (gauche/droite) inversé (-= dx), axe vertical (haut/bas) conservé (+= dy)
+  relicYaw -= dx * 0.012;
+  relicPitch = Math.max(-0.65, Math.min(0.65, relicPitch + dy * 0.012));
+  relicVelYaw = -dx * 0.009;
   relicVelPitch = dy * 0.009;
   relicLastX = e.clientX;
   relicLastY = e.clientY;
@@ -1067,20 +979,6 @@ const onRelicPointerUp = () => {
   relicDragging = false;
 };
 
-// =========================================================
-// PALETTE OFFICIELLE PAR PALIER (INDÉPENDANTE DU MODE)
-// =========================================================
-const TIER_PALETTE = {
-  0: { name: 'LOCKED', primary: '#475569', secondary: '#1e293b', specular: '#94a3b8', glow: 'rgba(71, 85, 105, 0.22)' },
-  1: { name: 'BRONZE I', primary: '#d97706', secondary: '#78350f', specular: '#fcd34d', glow: 'rgba(217, 119, 6, 0.35)' },
-  2: { name: 'SILVER II', primary: '#cbd5e1', secondary: '#475569', specular: '#ffffff', glow: 'rgba(203, 213, 225, 0.38)' },
-  3: { name: 'GOLD III', primary: '#f59e0b', secondary: '#92400e', specular: '#fef08a', glow: 'rgba(245, 158, 11, 0.45)' },
-  4: { name: 'EMERALD IV', primary: '#10b981', secondary: '#065f46', specular: '#6ee7b7', glow: 'rgba(16, 185, 129, 0.45)' },
-  5: { name: 'DIAMOND V', primary: '#38bdf8', secondary: '#0369a1', specular: '#e0f2fe', glow: 'rgba(56, 189, 248, 0.52)' }
-};
-
-const getTierHex = (tier = 0) => (TIER_PALETTE[tier] || TIER_PALETTE[0]).primary;
-
 const renderRelic3DLoop = () => {
   const canvas = relicCanvasRef.value;
   if (canvas && activeSection.value === 'trophies') {
@@ -1088,7 +986,7 @@ const renderRelic3DLoop = () => {
     const W = canvas.width;
     const H = canvas.height;
     const cx = W / 2;
-    const cy = H / 2 + 10;
+    const cy = H / 2 + 16;
     ctx.clearRect(0, 0, W, H);
 
     if (!relicDragging) {
@@ -1098,7 +996,7 @@ const renderRelic3DLoop = () => {
         relicVelYaw *= 0.94;
         relicVelPitch *= 0.94;
       } else {
-        relicYaw += 0.014;
+        relicYaw -= 0.012;
       }
     }
 
@@ -1106,45 +1004,50 @@ const renderRelic3DLoop = () => {
     const tier = badge?.currentTier || 0;
     const pal = TIER_PALETTE[tier] || TIER_PALETTE[0];
 
-    // 1. Halo lumineux d'arrière-plan indexé sur le Palier (I -> V)
-    const bgGlow = ctx.createRadialGradient(cx, cy - 10, 6, cx, cy - 10, 125);
+    // 1. Halo lumineux agrandi
+    const bgGlow = ctx.createRadialGradient(cx, cy - 12, 8, cx, cy - 12, 165);
     bgGlow.addColorStop(0, pal.glow);
     bgGlow.addColorStop(1, 'transparent');
     ctx.beginPath();
-    ctx.arc(cx, cy - 10, 125, 0, Math.PI * 2);
+    ctx.arc(cx, cy - 12, 165, 0, Math.PI * 2);
     ctx.fillStyle = bgGlow;
     ctx.fill();
 
     const cosY = Math.cos(relicYaw), sinY = Math.sin(relicYaw);
     const cosP = Math.cos(relicPitch), sinP = Math.sin(relicPitch);
 
-    const project3D = (x, y, z) => {
+    // Facteur d'échelle 1.36x pour rendre le trophée nettement plus grand
+    const trophyScale = 1.36;
+
+    const project3D = (rawX, rawY, rawZ) => {
+      const x = rawX * trophyScale;
+      const y = rawY * trophyScale;
+      const z = rawZ * trophyScale;
       const x1 = x * cosY + z * sinY;
       const z1 = -x * sinY + z * cosY;
       const y2 = y * cosP - z1 * sinP;
       const z2 = y * sinP + z1 * cosP;
-      const fov = 380;
-      const s = fov / (fov + z2 + 60);
-      return { x: cx + x1 * s, y: cy + y2 * s, z: z2, s };
+      const fov = 440;
+      const s = fov / (fov + z2 + 55);
+      return { x: cx + x1 * s, y: cy + y2 * s, z: z2, s: s * trophyScale };
     };
 
-    // 2. Profil de révolution 3D de la Coupe de Trophée (du socle en bas jusqu'au calice en haut)
-    // Coordonnées Y : positif vers le bas, négatif vers le haut
+    // 2. Profil de révolution 3D de la Coupe de Trophée
     const profileRings = [
-      { y: 78, r: 44, isBase: true },   // Base du socle
-      { y: 64, r: 42, isBase: true },   // Haut du socle noir
-      { y: 62, r: 34, isBase: false },  // Bague métallique inférieure
-      { y: 54, r: 28, isBase: false },  // Pied du trophée
-      { y: 30, r: 11, isBase: false },  // Tige fine
-      { y: 16, r: 17, isBase: false },  // Nœud annulaire central
-      { y: 4,  r: 12, isBase: false },  // Col sous la coupe
-      { y: -14, r: 34, isBase: false }, // Bas du calice évasé
-      { y: -42, r: 50, isBase: false }, // Milieu du calice
-      { y: -68, r: 56, isBase: false }, // Lèvre supérieure de la coupe
-      { y: -68, r: 49, isBase: true }   // Paroi interne de la coupe
+      { y: 78, r: 44, isBase: true },
+      { y: 64, r: 42, isBase: true },
+      { y: 62, r: 34, isBase: false },
+      { y: 54, r: 28, isBase: false },
+      { y: 30, r: 11, isBase: false },
+      { y: 16, r: 17, isBase: false },
+      { y: 4,  r: 12, isBase: false },
+      { y: -14, r: 34, isBase: false },
+      { y: -42, r: 50, isBase: false },
+      { y: -68, r: 56, isBase: false },
+      { y: -68, r: 49, isBase: true }
     ];
 
-    const segs = 20;
+    const segs = 22;
     const ringVertices = profileRings.map((ring) => {
       const pts = [];
       for (let i = 0; i < segs; i++) {
@@ -1178,7 +1081,7 @@ const renderRelic3DLoop = () => {
       }
     }
 
-    // 3. Deux Anses 3D incurvées à gauche (-X) et à droite (+X) de la coupe
+    // 3. Deux Anses 3D incurvées
     const handleCurve = [
       { x: 32, y: -12 },
       { x: 64, y: -18 },
@@ -1195,16 +1098,14 @@ const renderRelic3DLoop = () => {
       }
     }
 
-    // Tri Z-Buffer (du plus éloigné au plus proche de la caméra)
     quads.sort((a, b) => b.avgZ - a.avgZ);
 
-    // Dessin des anses situées à l'arrière-plan
     for (const h of handleSegments.filter((s) => s.avgZ > 0)) {
       ctx.beginPath();
       ctx.moveTo(h.a.x, h.a.y);
       ctx.lineTo(h.b.x, h.b.y);
       ctx.strokeStyle = pal.secondary;
-      ctx.lineWidth = 7 * h.a.s;
+      ctx.lineWidth = 6.5 * h.a.s;
       ctx.lineCap = 'round';
       ctx.stroke();
 
@@ -1212,12 +1113,11 @@ const renderRelic3DLoop = () => {
       ctx.moveTo(h.a.x, h.a.y);
       ctx.lineTo(h.b.x, h.b.y);
       ctx.strokeStyle = pal.primary;
-      ctx.lineWidth = 3.5 * h.a.s;
+      ctx.lineWidth = 3.2 * h.a.s;
       ctx.lineCap = 'round';
       ctx.stroke();
     }
 
-    // Dessin des facettes 3D du Trophée avec éclairage spéculaire
     for (const q of quads) {
       ctx.beginPath();
       ctx.moveTo(q.p0.x, q.p0.y);
@@ -1239,18 +1139,17 @@ const renderRelic3DLoop = () => {
         ctx.fillStyle = pal.secondary;
         ctx.strokeStyle = '#090e1a';
       }
-      ctx.lineWidth = 0.75;
+      ctx.lineWidth = 0.85;
       ctx.fill();
       ctx.stroke();
     }
 
-    // Dessin des anses situées au premier plan
     for (const h of handleSegments.filter((s) => s.avgZ <= 0)) {
       ctx.beginPath();
       ctx.moveTo(h.a.x, h.a.y);
       ctx.lineTo(h.b.x, h.b.y);
       ctx.strokeStyle = pal.secondary;
-      ctx.lineWidth = 7 * h.a.s;
+      ctx.lineWidth = 6.5 * h.a.s;
       ctx.lineCap = 'round';
       ctx.stroke();
 
@@ -1258,12 +1157,12 @@ const renderRelic3DLoop = () => {
       ctx.moveTo(h.a.x, h.a.y);
       ctx.lineTo(h.b.x, h.b.y);
       ctx.strokeStyle = pal.specular;
-      ctx.lineWidth = 3.2 * h.a.s;
+      ctx.lineWidth = 3.0 * h.a.s;
       ctx.lineCap = 'round';
       ctx.stroke();
     }
 
-    // 4. Anneau Orbital & Étoile de Grade en lévitation au-dessus de la coupe
+    // 4. Anneau Orbital & Sphère de Couronnement
     if (tier > 0) {
       ctx.beginPath();
       for (let a = 0; a <= Math.PI * 2; a += 0.12) {
@@ -1275,12 +1174,12 @@ const renderRelic3DLoop = () => {
         else ctx.lineTo(p.x, p.y);
       }
       ctx.strokeStyle = pal.primary;
-      ctx.lineWidth = 1.6;
+      ctx.lineWidth = 1.8;
       ctx.stroke();
 
       const crownCenter = project3D(0, -88, 0);
       ctx.beginPath();
-      ctx.arc(crownCenter.x, crownCenter.y, 7 * crownCenter.s, 0, Math.PI * 2);
+      ctx.arc(crownCenter.x, crownCenter.y, 6.5 * crownCenter.s, 0, Math.PI * 2);
       ctx.fillStyle = pal.specular;
       ctx.fill();
       ctx.strokeStyle = pal.primary;
