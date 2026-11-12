@@ -2053,196 +2053,238 @@ const initThreeWebglController = async () => {
     const H = mount.clientHeight || 680;
 
     threeScene = new THREE.Scene();
-    threeCamera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
-    threeCamera.position.set(0, 0.15, 7.6);
-    threeCamera.lookAt(0, -0.1, 0);
+    threeCamera = new THREE.PerspectiveCamera(38, W / H, 0.1, 100);
+    // Caméra légèrement plongeante pour bien voir la manette ET l'ellipse du socle en dessous
+    threeCamera.position.set(0, 0.95, 7.8);
+    threeCamera.lookAt(0, -0.25, 0);
 
-    threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    threeRenderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
     threeRenderer.setSize(W, H);
     threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-    threeRenderer.toneMappingExposure = 1.45;
+    threeRenderer.toneMappingExposure = 1.35;
 
     mount.innerHTML = '';
     mount.appendChild(threeRenderer.domElement);
 
-    // Éclairage Studio renforcé pour faire ressortir les volumes de la manette sur fond sombre
-    const ambient = new THREE.AmbientLight(0xffffff, 1.15);
+    // Éclairage Studio 3D équilibré
+    const ambient = new THREE.AmbientLight(0xffffff, 1.1);
     threeScene.add(ambient);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 3.0);
-    keyLight.position.set(4, 7, 6);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.8);
+    keyLight.position.set(5, 8, 6);
     threeScene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 2.8);
-    rimLight.position.set(-6, 4, -3);
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 2.5);
+    rimLight.position.set(-6, 4, -4);
     threeScene.add(rimLight);
 
-    accentPointLight = new THREE.PointLight(0xa855f7, 4.5, 14);
-    accentPointLight.position.set(0, -0.8, 2.8);
+    accentPointLight = new THREE.PointLight(0xa855f7, 4.2, 14);
+    accentPointLight.position.set(0, -0.6, 2.5);
     threeScene.add(accentPointLight);
 
-    // Matériau PBR métallisé indigo clair pour un contraste net sur le fond carbone
+    // Matériaux PBR
     const shellMat = new THREE.MeshPhysicalMaterial({
-      color: 0x3b4284,
-      metalness: 0.42,
-      roughness: 0.18,
+      color: 0x313876,
+      metalness: 0.35,
+      roughness: 0.22,
       clearcoat: 1.0,
-      clearcoatRoughness: 0.1
+      clearcoatRoughness: 0.12
     });
 
     const gripDarkMat = new THREE.MeshStandardMaterial({
-      color: 0x111827,
-      metalness: 0.6,
-      roughness: 0.42
+      color: 0x0b0f1d,
+      metalness: 0.5,
+      roughness: 0.48
     });
 
     const chromeMat = new THREE.MeshPhysicalMaterial({
       color: 0x1e293b,
-      metalness: 0.9,
-      roughness: 0.12,
+      metalness: 0.88,
+      roughness: 0.14,
       clearcoat: 1.0
     });
 
     ledMaterial = new THREE.MeshStandardMaterial({
       color: 0xa855f7,
       emissive: 0xa855f7,
-      emissiveIntensity: 2.5,
+      emissiveIntensity: 2.4,
       roughness: 0.2
     });
 
     controllerGroup = new THREE.Group();
-    controllerGroup.position.y = 0.18;
+    controllerGroup.position.set(0, 0.28, 0);
     threeScene.add(controllerGroup);
 
-    // 1. Châssis central sculpté avec biseaux 3D arrondis
-    const bodyShape = new THREE.Shape();
-    bodyShape.moveTo(-1.15, 0.68);
-    bodyShape.quadraticCurveTo(0, 0.82, 1.15, 0.68);
-    bodyShape.lineTo(1.45, -0.18);
-    bodyShape.quadraticCurveTo(0.85, -0.68, 0.52, -0.46);
-    bodyShape.quadraticCurveTo(0, -0.38, -0.52, -0.46);
-    bodyShape.quadraticCurveTo(-0.85, -0.68, -1.45, -0.18);
-    bodyShape.closePath();
+    // =========================================================
+    // 1. COQUE MONOBLOC SCULPTÉE (PONT CENTRAL + POIGNÉES UNIFIÉES)
+    // =========================================================
+    const createSculptedBodyGeo = (scaleWidth = 1, depthVal = 0.22, bevelSizeVal = 0.24, bevelThickVal = 0.28) => {
+      const s = new THREE.Shape();
+      // Haut du châssis (entre les gâchettes)
+      s.moveTo(-0.88 * scaleWidth, 0.72);
+      s.quadraticCurveTo(0, 0.82, 0.88 * scaleWidth, 0.72);
+      // Épaule droite et flanc externe descendant vers la poignée droite
+      s.quadraticCurveTo(1.42 * scaleWidth, 0.68, 1.62 * scaleWidth, 0.22);
+      s.bezierCurveTo(
+        1.78 * scaleWidth, -0.22,
+        1.68 * scaleWidth, -0.78,
+        1.42 * scaleWidth, -1.12
+      );
+      // Bout arrondi de la poignée droite
+      s.quadraticCurveTo(1.18 * scaleWidth, -1.32, 0.96 * scaleWidth, -1.05);
+      // Remontée interne de la poignée droite vers l'arche centrale
+      s.quadraticCurveTo(0.75 * scaleWidth, -0.68, 0.56 * scaleWidth, -0.36);
+      // Arche centrale inférieure (sous les joysticks)
+      s.quadraticCurveTo(0, -0.28, -0.56 * scaleWidth, -0.36);
+      // Descente interne vers la poignée gauche
+      s.quadraticCurveTo(-0.75 * scaleWidth, -0.68, -0.96 * scaleWidth, -1.05);
+      // Bout arrondi de la poignée gauche
+      s.quadraticCurveTo(-1.18 * scaleWidth, -1.32, -1.42 * scaleWidth, -1.12);
+      // Flanc externe gauche remontant vers l'épaule gauche
+      s.bezierCurveTo(
+        -1.68 * scaleWidth, -0.78,
+        -1.78 * scaleWidth, -0.22,
+        -1.62 * scaleWidth, 0.22
+      );
+      s.quadraticCurveTo(-1.42 * scaleWidth, 0.68, -0.88 * scaleWidth, 0.72);
+      s.closePath();
 
-    const coreGeo = new THREE.ExtrudeGeometry(bodyShape, {
-      depth: 0.42,
-      bevelEnabled: true,
-      bevelSegments: 16,
-      steps: 2,
-      bevelSize: 0.26,
-      bevelThickness: 0.28
-    });
-    coreGeo.center();
-    controllerGroup.add(new THREE.Mesh(coreGeo, shellMat));
+      const geo = new THREE.ExtrudeGeometry(s, {
+        depth: depthVal,
+        bevelEnabled: true,
+        bevelSegments: 20,
+        steps: 6,
+        bevelSize: bevelSizeVal,
+        bevelThickness: bevelThickVal
+      });
+      geo.center();
 
-    // 2. Poignées ergonomiques 3D Gauche & Droite (Sans sphère supérieure qui dépasse en façade)
-    for (const side of [-1, 1]) {
-      const handleGroup = new THREE.Group();
-      handleGroup.position.set(side * 1.26, -0.68, -0.18);
-      handleGroup.rotation.z = side * 0.32;
-      handleGroup.rotation.x = -0.10; // Incliné vers l'arrière pour ne jamais percer la façade avant
+      // Galbe 3D ergonomique : courbe doucement les poignées vers l'arrière (-Z) et les affine vers le bas
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        let vx = pos.getX(i);
+        let vy = pos.getY(i);
+        let vz = pos.getZ(i);
 
-      handleGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.40, 0.30, 1.55, 32), shellMat));
+        if (vy < 0.05) {
+          const drop = Math.max(0, 0.05 - vy);
+          // Courbure ergonomique vers l'arrière de la poignée
+          vz -= Math.pow(drop, 1.45) * 0.26;
+          // Affinement progressif de l'épaisseur vers la pointe des poignées
+          const taper = Math.max(0.68, 1 - drop * 0.18);
+          vz *= taper;
+        }
+        pos.setXYZ(i, vx, vy, vz);
+      }
+      geo.computeVertexNormals();
+      return geo;
+    };
 
-      const lowerGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.41, 0.31, 1.25, 32), gripDarkMat);
-      lowerGrip.position.set(side * 0.02, -0.16, -0.02);
-      handleGroup.add(lowerGrip);
+    // Coque principale bleue/indigo
+    const mainBodyGeo = createSculptedBodyGeo(1.0, 0.22, 0.24, 0.28);
+    const mainBodyMesh = new THREE.Mesh(mainBodyGeo, shellMat);
+    controllerGroup.add(mainBodyMesh);
 
-      const bottomCap = new THREE.Mesh(new THREE.SphereGeometry(0.305, 32, 24), gripDarkMat);
-      bottomCap.position.y = -0.78;
-      handleGroup.add(bottomCap);
+    // Coque inférieure / grips carbone intégrés dans le même galbe (sans jamais dépasser)
+    const lowerGripGeo = createSculptedBodyGeo(0.96, 0.18, 0.20, 0.24);
+    const lowerGripMesh = new THREE.Mesh(lowerGripGeo, gripDarkMat);
+    lowerGripMesh.position.set(0, -0.06, -0.06);
+    controllerGroup.add(lowerGripMesh);
 
-      const gripLed = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.02, 16, 48), ledMaterial);
-      gripLed.rotation.x = Math.PI / 2;
-      gripLed.position.y = 0.12;
-      handleGroup.add(gripLed);
-
-      controllerGroup.add(handleGroup);
-    }
-
-    // 3. Pavé Tactile Central + Liseré LED Néon (Placés bien en relief sur la façade à z = 0.50)
+    // =========================================================
+    // 2. PAVÉ TACTILE CENTRAL & LISERÉ LUMINEUX LED
+    // =========================================================
     const padShape = new THREE.Shape();
-    padShape.moveTo(-0.62, 0.36);
-    padShape.lineTo(0.62, 0.36);
-    padShape.lineTo(0.52, -0.18);
-    padShape.lineTo(-0.52, -0.18);
+    padShape.moveTo(-0.56, 0.34);
+    padShape.lineTo(0.56, 0.34);
+    padShape.lineTo(0.46, -0.14);
+    padShape.lineTo(-0.46, -0.14);
     padShape.closePath();
 
     const padGeo = new THREE.ExtrudeGeometry(padShape, {
-      depth: 0.08,
+      depth: 0.06,
       bevelEnabled: true,
       bevelSegments: 8,
-      bevelSize: 0.04,
-      bevelThickness: 0.04
+      bevelSize: 0.03,
+      bevelThickness: 0.03
     });
     padGeo.center();
     const padMesh = new THREE.Mesh(padGeo, gripDarkMat);
-    padMesh.position.set(0, 0.34, 0.50);
+    padMesh.position.set(0, 0.42, 0.38);
     padMesh.rotation.x = -0.08;
     controllerGroup.add(padMesh);
 
     const ledStripGeo = new THREE.ExtrudeGeometry(padShape, {
-      depth: 0.04,
+      depth: 0.03,
       bevelEnabled: true,
       bevelSegments: 4,
-      bevelSize: 0.07,
+      bevelSize: 0.055,
       bevelThickness: 0.02
     });
     ledStripGeo.center();
     const ledStripMesh = new THREE.Mesh(ledStripGeo, ledMaterial);
-    ledStripMesh.position.set(0, 0.34, 0.46);
+    ledStripMesh.position.set(0, 0.42, 0.35);
     ledStripMesh.rotation.x = -0.08;
     controllerGroup.add(ledStripMesh);
 
-    // 4. Joysticks Analogiques 3D (Avancés à z = 0.50 pour un relief net)
+    // =========================================================
+    // 3. JOYSTICKS ANALOGIQUES 3D
+    // =========================================================
     const createStickAssembly = (posX) => {
       const baseGroup = new THREE.Group();
-      baseGroup.position.set(posX, -0.22, 0.50);
-      baseGroup.add(new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.045, 16, 36), chromeMat));
+      baseGroup.position.set(posX, -0.08, 0.38);
 
-      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.23, 24, 16), gripDarkMat);
-      dome.position.z = -0.04;
+      const wellRing = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.035, 16, 36), ledMaterial);
+      baseGroup.add(wellRing);
+
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.20, 24, 16), gripDarkMat);
+      dome.position.z = -0.03;
       baseGroup.add(dome);
 
       const pivot = new THREE.Group();
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.32, 20), chromeMat);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.26, 20), chromeMat);
       stem.rotation.x = Math.PI / 2;
-      stem.position.z = 0.14;
+      stem.position.z = 0.12;
       pivot.add(stem);
 
-      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.19, 0.09, 32), gripDarkMat);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.16, 0.08, 32), gripDarkMat);
       cap.rotation.x = Math.PI / 2;
-      cap.position.z = 0.30;
+      cap.position.z = 0.25;
       pivot.add(cap);
 
-      const capLed = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.02, 16, 36), ledMaterial);
-      capLed.position.z = 0.34;
-      pivot.add(capLed);
+      const capRim = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.018, 16, 36), chromeMat);
+      capRim.position.z = 0.28;
+      pivot.add(capRim);
 
       baseGroup.add(pivot);
       controllerGroup.add(baseGroup);
       return pivot;
     };
 
-    leftStickPivot = createStickAssembly(-0.62);
-    rightStickPivot = createStickAssembly(0.62);
+    leftStickPivot = createStickAssembly(-0.56);
+    rightStickPivot = createStickAssembly(0.56);
 
-    // 5. Croix Directionnelle (D-Pad 3D avancé à z = 0.54, 100 % dégagé)
+    // =========================================================
+    // 4. CROIX DIRECTIONNELLE (GAUCHE) & BOUTONS NÉON (DROITE)
+    // =========================================================
     const dpadGroup = new THREE.Group();
-    dpadGroup.position.set(-1.12, 0.16, 0.54);
+    dpadGroup.position.set(-1.12, 0.24, 0.39);
     dpadGroup.add(
-      new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.15, 0.12), chromeMat),
-      new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.46, 0.12), chromeMat)
+      new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.14, 0.09), chromeMat),
+      new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.42, 0.09), chromeMat)
     );
     controllerGroup.add(dpadGroup);
 
-    // 6. 4 Boutons Cristal Lumineux à droite (Avancés à z = 0.55, 100 % dégagés)
     const btnColors = [
-      { dx: 0, dy: 0.22, col: 0xfbbf24 },
-      { dx: 0.22, dy: 0, col: 0xf43f5e },
-      { dx: 0, dy: -0.22, col: 0x10b981 },
-      { dx: -0.22, dy: 0, col: 0x38bdf8 }
+      { dx: 0, dy: 0.20, col: 0xfbbf24 },
+      { dx: 0.20, dy: 0, col: 0xf43f5e },
+      { dx: 0, dy: -0.20, col: 0x10b981 },
+      { dx: -0.20, dy: 0, col: 0x38bdf8 }
     ];
     for (const b of btnColors) {
       const bMat = new THREE.MeshPhysicalMaterial({
@@ -2252,66 +2294,81 @@ const initThreeWebglController = async () => {
         clearcoat: 1.0,
         roughness: 0.1
       });
-      const bMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.12, 24), bMat);
+      const bMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.09, 24), bMat);
       bMesh.rotation.x = Math.PI / 2;
-      bMesh.position.set(1.12 + b.dx, 0.16 + b.dy, 0.55);
+      bMesh.position.set(1.12 + b.dx, 0.24 + b.dy, 0.39);
       controllerGroup.add(bMesh);
     }
 
-    // 7. Gâchettes L1 / R1 / L2 / R2
+    // =========================================================
+    // 5. GÂCHETTES INTÉGRÉES L1 / R1 / L2 / R2
+    // =========================================================
     for (const side of [-1, 1]) {
-      const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.14, 0.22), chromeMat);
-      l1.position.set(side * 1.12, 0.82, 0.08);
-      l1.rotation.z = side * -0.18;
+      const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.12, 0.20), gripDarkMat);
+      l1.position.set(side * 0.98, 0.90, 0.02);
+      l1.rotation.z = side * -0.15;
       controllerGroup.add(l1);
 
-      const l2 = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.22, 0.28), gripDarkMat);
-      l2.position.set(side * 1.12, 0.76, -0.24);
-      l2.rotation.x = -0.35;
+      const l2 = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.18, 0.24), gripDarkMat);
+      l2.position.set(side * 0.98, 0.84, -0.22);
+      l2.rotation.x = -0.32;
+      l2.rotation.z = side * -0.15;
       controllerGroup.add(l2);
     }
 
-    // 8. Socle Holographique 3D incliné vers la caméra (Fini l'effet barre plate de profil)
+    // =========================================================
+    // 6. SOCLE HOLOGRAPHIQUE 3D HORIZONTAL SOUS LA MANETTE
+    // =========================================================
     const pedestalGroup = new THREE.Group();
-    pedestalGroup.position.set(0, -1.48, -0.25);
-    pedestalGroup.rotation.x = 0.98; // Incliné à ~56° pour bien voir l'ellipse 3D complète
+    pedestalGroup.position.set(0, -1.48, 0);
+    // Légère inclinaison vers l'avant (14°) pour ouvrir la perspective des anneaux
+    pedestalGroup.rotation.x = 0.24;
 
-    // Halo intérieur semi-transparent du socle
-    const discMat = new THREE.MeshBasicMaterial({
-      color: 0x6366f1,
-      transparent: true,
-      opacity: 0.14,
-      side: THREE.DoubleSide
+    // Plateau sombre biseauté du socle (comme sur l'image de référence)
+    const stageBaseGeo = new THREE.CylinderGeometry(1.75, 2.05, 0.14, 64);
+    const stageBaseMat = new THREE.MeshPhysicalMaterial({
+      color: 0x090d1c,
+      metalness: 0.7,
+      roughness: 0.2,
+      clearcoat: 1.0
     });
-    const holoDisc = new THREE.Mesh(new THREE.CircleGeometry(1.85, 64), discMat);
-    pedestalGroup.add(holoDisc);
+    const stageBaseMesh = new THREE.Mesh(stageBaseGeo, stageBaseMat);
+    stageBaseMesh.position.y = -0.08;
+    pedestalGroup.add(stageBaseMesh);
 
-    // Anneau externe principal (couleur du mode actif)
-    pedestalRing1 = new THREE.Mesh(new THREE.TorusGeometry(1.9, 0.032, 16, 96), ledMaterial);
+    // Anneau lumineux externe posé à plat sur le socle (rotation.x = Math.PI / 2)
+    pedestalRing1 = new THREE.Mesh(new THREE.TorusGeometry(1.82, 0.03, 16, 96), ledMaterial);
+    pedestalRing1.rotation.x = Math.PI / 2;
     pedestalGroup.add(pedestalRing1);
 
-    // Anneau intermédiaire cyan
+    // Anneau lumineux intermédiaire cyan posé à plat
     const ringCyanMat = new THREE.MeshStandardMaterial({
       color: 0x38bdf8,
       emissive: 0x38bdf8,
-      emissiveIntensity: 2.0
+      emissiveIntensity: 2.1
     });
     pedestalRing2 = new THREE.Mesh(new THREE.TorusGeometry(1.32, 0.022, 16, 80), ringCyanMat);
+    pedestalRing2.rotation.x = Math.PI / 2;
+    pedestalRing2.position.y = 0.02;
     pedestalGroup.add(pedestalRing2);
 
-    // Anneau interne fin
-    const innerRing = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.015, 16, 64), ledMaterial);
+    // Anneau central interne posé à plat
+    const innerRing = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.015, 16, 64), ledMaterial);
+    innerRing.rotation.x = Math.PI / 2;
+    innerRing.position.y = 0.03;
     pedestalGroup.add(innerRing);
 
     threeScene.add(pedestalGroup);
 
-    // 9. 4 Satellites 3D Géométriques en Orbite
+    // =========================================================
+    // 7. 4 SATELLITES 3D GÉOMÉTRIQUES EN ORBITE
+    // =========================================================
     orbitSatellites = [];
     const satGeos = [
-      new THREE.OctahedronGeometry(0.24, 0),
-      new THREE.IcosahedronGeometry(0.23, 0),
-      new THREE.BoxGeometry(0.32, 0.32, 0.32),
-      new THREE.TorusGeometry(0.18, 0.055, 16, 32)
+      new THREE.OctahedronGeometry(0.22, 0),
+      new THREE.IcosahedronGeometry(0.22, 0),
+      new THREE.BoxGeometry(0.30, 0.30, 0.30),
+      new THREE.TorusGeometry(0.17, 0.05, 16, 32)
     ];
     for (let i = 0; i < satGeos.length; i++) {
       const satGroup = new THREE.Group();
@@ -2335,7 +2392,7 @@ const updateThreeWebglFrame = (timeMs) => {
   if (!wglDragging) {
     if (Math.abs(wglVelY) > 0.0003 || Math.abs(wglVelX) > 0.0003) {
       wglRotY += wglVelY;
-      wglRotX = Math.max(-0.85, Math.min(0.85, wglRotX + wglVelX));
+      wglRotX = Math.max(-0.65, Math.min(0.65, wglRotX + wglVelX));
       wglVelY *= 0.94;
       wglVelX *= 0.94;
     } else {
@@ -2346,47 +2403,43 @@ const updateThreeWebglFrame = (timeMs) => {
   if (wglPulseKick > 0.005) wglPulseKick *= 0.86;
   else wglPulseKick = 0;
 
-if (controllerGroup) {
-    controllerGroup.rotation.y = wglRotY + stageParallaxX.value * 0.25;
-    controllerGroup.rotation.x = wglRotX + stageParallaxY.value * 0.18;
-    controllerGroup.rotation.z = -0.14 + Math.sin(tSec * 1.4) * 0.04;
-    controllerGroup.position.y = 0.12 + Math.sin(tSec * 2.1) * 0.1 + wglPulseKick;
-    const sc = 1.24 + wglPulseKick * 0.35;
+  if (controllerGroup) {
+    controllerGroup.rotation.y = wglRotY + stageParallaxX.value * 0.22;
+    controllerGroup.rotation.x = wglRotX + stageParallaxY.value * 0.16;
+    controllerGroup.rotation.z = -0.16 + Math.sin(tSec * 1.4) * 0.04;
+    // La manette flotte au-dessus du socle (y = 0.32) sans jamais toucher ni percer les anneaux
+    controllerGroup.position.y = 0.32 + Math.sin(tSec * 2.1) * 0.09 + wglPulseKick;
+    const sc = 1.12 + wglPulseKick * 0.3;
     controllerGroup.scale.set(sc, sc, sc);
   }
 
-  // Inclinaison réactive des deux joysticks 3D vers le curseur
   if (leftStickPivot && rightStickPivot) {
-    leftStickPivot.rotation.y = stageParallaxX.value * 0.45;
-    leftStickPivot.rotation.x = stageParallaxY.value * 0.45;
-    rightStickPivot.rotation.y = -stageParallaxX.value * 0.45;
-    rightStickPivot.rotation.x = stageParallaxY.value * 0.45;
+    leftStickPivot.rotation.y = stageParallaxX.value * 0.42;
+    leftStickPivot.rotation.x = stageParallaxY.value * 0.42;
+    rightStickPivot.rotation.y = -stageParallaxX.value * 0.42;
+    rightStickPivot.rotation.x = stageParallaxY.value * 0.42;
   }
 
-  // Synchronisation de la couleur LED 3D avec le mode actif du carrousel
   if (ledMaterial && accentPointLight && activeShowcaseCard.value?.glowColor) {
     ledMaterial.color.set(activeShowcaseCard.value.glowColor);
     ledMaterial.emissive.set(activeShowcaseCard.value.glowColor);
     accentPointLight.color.set(activeShowcaseCard.value.glowColor);
   }
 
+  // Pulsation horizontale des anneaux sur le socle (sans jamais casser leur rotation.x = Math.PI / 2)
   if (pedestalRing1 && pedestalRing2) {
-    const pScale = 1 + Math.sin(tSec * 2.5) * 0.04 + wglPulseKick * 0.45;
+    const pScale = 1 + Math.sin(tSec * 2.4) * 0.035 + wglPulseKick * 0.4;
     pedestalRing1.scale.set(pScale, pScale, 1);
     pedestalRing2.scale.set(2 - pScale, 2 - pScale, 1);
-    pedestalRing1.rotation.z = tSec * 0.4;
-    pedestalRing2.rotation.z = -tSec * 0.6;
-    pedestalRing2.rotation.x = Math.sin(tSec * 1.5) * 0.14;
   }
 
-  // Orbite 3D des satellites autour de la manette
   for (let i = 0; i < orbitSatellites.length; i++) {
     const sat = orbitSatellites[i];
     const ang = tSec * 0.65 + sat.phase;
     sat.mesh.position.set(
-      Math.cos(ang) * 2.75,
-      Math.sin(tSec * 1.8 + i) * 0.55 + (i % 2 === 0 ? 0.45 : -0.35),
-      Math.sin(ang) * 1.35
+      Math.cos(ang) * 2.55,
+      Math.sin(tSec * 1.8 + i) * 0.45 + (i % 2 === 0 ? 0.55 : -0.15),
+      Math.sin(ang) * 1.25
     );
     sat.mesh.rotation.x += 0.015;
     sat.mesh.rotation.y += 0.02;
