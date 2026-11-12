@@ -192,7 +192,25 @@
                     </button>
 
                     <div class="px-4 py-3 rounded-full bg-white/80 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 font-mono text-xs font-bold text-slate-700 dark:text-slate-200 backdrop-blur-xl">
-                      🕒 {{ activeShowcaseCard.duration }} • {{ activeShowcaseCard.metric }}
+                      <svg xmlns="http://w3.org" viewBox="0 0 100 100" width="100" height="100" fill="none">
+                        <!-- Outer Circle / Clock Face -->
+                        <circle cx="50" cy="50" r="45" fill="#ffffff" stroke="#1e293b" stroke-width="6"/>
+                        
+                        <!-- Optional Subtle Hour Ticks -->
+                        <line x1="50" y1="12" x2="50" y2="17" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="88" y1="50" x2="83" y2="50" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="50" y1="88" x2="50" y2="83" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="12" y1="50" x2="17" y2="50" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+
+                        <!-- Hour Hand (pointing to 3) -->
+                        <line x1="50" y1="50" x2="72" y2="50" stroke="#1e293b" stroke-width="5" stroke-linecap="round"/>
+                        
+                        <!-- Minute Hand (pointing to 12) -->
+                        <line x1="50" y1="50" x2="50" y2="22" stroke="#1e293b" stroke-width="4" stroke-linecap="round"/>
+                        
+                        <!-- Center Pin -->
+                        <circle cx="50" cy="50" r="4" fill="#ef4444"/>
+                      </svg> {{ activeShowcaseCard.duration }} • {{ activeShowcaseCard.metric }}
                     </div>
                   </div>
                 </div>
