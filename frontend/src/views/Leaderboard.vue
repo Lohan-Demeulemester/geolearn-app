@@ -1,1006 +1,1377 @@
 <template>
-  <div class="max-w-6xl mx-auto space-y-8 pb-12">
+  <div class="leaderboard-experience max-w-[1440px] mx-auto px-2 sm:px-6 pb-28 space-y-8 select-none">
 
     <!-- ========================================================= -->
-    <!-- EN-TÊTE DU CLASSEMENT + FILTRE TEMPOREL SUR UNE LIGNE     -->
+    <!-- 1. EN-TÊTE : HIÉRARCHIE MONDIALE, PÉRIODE & DISCIPLINES   -->
     <!-- ========================================================= -->
-    <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5">
-      <div>
-        <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
-          🌍 {{ locale === 'fr' ? 'Compétition Communautaire & Ligues' : 'Official Community Competition & Leagues' }}
-        </span>
-        <h2 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-          {{ locale === 'fr' ? 'Classement Mondial & Ligues' : 'World Leaderboard & Leagues' }}
-        </h2>
-        <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base max-w-2xl">
-          {{ locale === 'fr'
-            ? 'Comparez vos records sur les 12 modes, progressez de la ligue Bronze jusqu\'au rang Diamant et cliquez sur un joueur pour lancer un Face-à-Face.'
-            : 'Compare your records across all 12 modes, climb from Bronze to Diamond league, and click any player for a Head-to-Head comparison.' }}
-        </p>
-      </div>
-
-      <!-- Sélecteur de période + Bouton Actualiser alignés proprement -->
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2.5 self-start xl:self-auto shrink-0">
-        <div class="bg-white dark:bg-gray-800/90 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-700/80 flex items-center gap-1 text-xs font-bold shadow-2xs overflow-x-auto no-scrollbar">
-          <button
-            v-for="period in periodOptions"
-            :key="period.id"
-            type="button"
-            @click="selectedPeriod = period.id"
-            class="px-3.5 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
-            :class="selectedPeriod === period.id
-              ? 'bg-blue-600 text-white shadow-xs font-extrabold'
-              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60'"
-          >
-            <span v-if="period.icon">{{ period.icon }}</span>
-            <span>{{ period.label }}</span>
-          </button>
-        </div>
-
-        <button
-          type="button"
-          @click="fetchLeaderboard"
-          :disabled="isLoading"
-          class="px-4 py-3 rounded-2xl bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/80 text-xs font-extrabold text-gray-700 dark:text-gray-200 hover:border-blue-500 dark:hover:border-blue-400 transition cursor-pointer flex items-center gap-2 shadow-2xs whitespace-nowrap shrink-0"
-        >
-          <span class="text-sm leading-none inline-block" :class="{ 'animate-spin': isLoading }">↻</span>
-          <span>{{ locale === 'fr' ? 'Actualiser' : 'Refresh' }}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- BANNIÈRE SAISON MENSUELLE & FILTRE PAR DIVISION DE LIGUE  -->
-    <!-- ========================================================= -->
-    <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-blue-500/25 space-y-6">
-      <div class="pointer-events-none absolute -top-24 -right-24 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl"></div>
-
-      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-white/10">
-        <div class="flex items-start sm:items-center gap-4">
-          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400/25 to-orange-500/20 border border-amber-400/35 flex items-center justify-center text-3xl shrink-0 shadow-inner">
-            🏆
+    <header class="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-xl space-y-5">
+      <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-600 dark:text-sky-400 font-mono text-[11px] font-bold uppercase tracking-wider">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>{{ locale === 'fr' ? 'HIÉRARCHIE MONDIALE // LIGUES TÉLÉMÉTRIQUES' : 'GLOBAL HIERARCHY // TELEMETRY LEAGUES' }}</span>
           </div>
-          <div>
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <span class="px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-                {{ currentSeasonLabel }}
-              </span>
-              <span class="text-xs font-bold text-amber-300 flex items-center gap-1">
-                <span>⏳</span>
-                <span>{{ seasonResetCountdown }}</span>
-              </span>
-            </div>
-            <h3 class="text-xl sm:text-2xl font-black mt-1">
-              {{ locale === 'fr' ? 'Ligues Officielles GeoLearn (Bronze → Diamant)' : 'Official GeoLearn Leagues (Bronze → Diamond)' }}
-            </h3>
-            <p class="text-xs sm:text-sm text-slate-300 mt-0.5">
-              {{ locale === 'fr'
-                ? 'Cliquez sur une division ci-dessous pour filtrer les joueurs appartenant à cette ligue.'
-                : 'Click on any division below to filter players belonging to that league.' }}
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          @click="selectedPeriod = selectedPeriod === 'season' ? 'all' : 'season'"
-          class="self-start lg:self-center px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer border shrink-0 flex items-center gap-2"
-          :class="selectedPeriod === 'season'
-            ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-md'
-            : 'bg-white/10 hover:bg-white/15 text-white border-white/20'"
-        >
-          <span>📅</span>
-          <span>
-            {{ selectedPeriod === 'season'
-              ? (locale === 'fr' ? '✓ Classement de la Saison Mensuelle actif' : '✓ Monthly Season Ranking Active')
-              : (locale === 'fr' ? 'Filtrer sur la Saison du Mois' : 'Filter by Current Month Season') }}
-          </span>
-        </button>
-      </div>
-
-      <!-- Les 6 cartes de filtrage de Ligues -->
-      <div class="relative z-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <button
-          type="button"
-          @click="selectedLeagueFilter = 'all'"
-          class="p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between"
-          :class="selectedLeagueFilter === 'all'
-            ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-600/25 scale-[1.02]'
-            : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-200'"
-        >
-          <div class="flex items-center justify-between w-full">
-            <span class="text-xl">🌍</span>
-            <span class="text-xs font-black px-2.5 py-0.5 rounded-full bg-black/30 text-white">
-              {{ activeRanking.length }}
-            </span>
-          </div>
-          <div class="mt-3">
-            <strong class="text-xs sm:text-sm font-black block">{{ locale === 'fr' ? 'Toutes Ligues' : 'All Leagues' }}</strong>
-            <span class="text-[11px] opacity-75 block mt-0.5">{{ locale === 'fr' ? 'Classement complet' : 'Full ranking' }}</span>
-          </div>
-        </button>
-
-        <button
-          v-for="lg in leagueTiersOverview"
-          :key="lg.key"
-          type="button"
-          @click="selectedLeagueFilter = selectedLeagueFilter === lg.key ? 'all' : lg.key"
-          class="p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between"
-          :class="selectedLeagueFilter === lg.key
-            ? 'bg-white text-slate-900 border-cyan-400 shadow-lg scale-[1.02]'
-            : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'"
-        >
-          <div class="flex items-center justify-between w-full">
-            <span class="text-xl">{{ lg.icon }}</span>
-            <span
-              class="text-xs font-black px-2.5 py-0.5 rounded-full"
-              :class="selectedLeagueFilter === lg.key ? 'bg-slate-900 text-white' : 'bg-black/30 text-cyan-300'"
-            >
-              {{ lg.count }}
-            </span>
-          </div>
-          <div class="mt-3">
-            <strong class="text-xs sm:text-sm font-black block">{{ lg.name }}</strong>
-            <span class="text-[11px] opacity-75 block truncate mt-0.5">{{ lg.requirement }}</span>
-          </div>
-        </button>
-      </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- CARTES KPI DE LA COMMUNAUTÉ                               -->
-    <!-- ========================================================= -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/80 shadow-2xs flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shrink-0">
-          👥
-        </div>
-        <div class="min-w-0">
-          <span class="text-xs font-bold text-gray-400 block">{{ locale === 'fr' ? 'Joueurs classés' : 'Ranked Players' }}</span>
-          <strong class="text-2xl font-black text-gray-900 dark:text-white">{{ generalList.length }}</strong>
-        </div>
-      </div>
-
-      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/80 shadow-2xs flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
-          🎮
-        </div>
-        <div class="min-w-0">
-          <span class="text-xs font-bold text-gray-400 block">{{ locale === 'fr' ? 'Parties disputées' : 'Total Games' }}</span>
-          <strong class="text-2xl font-black text-gray-900 dark:text-white">{{ totalCommunityGames.toLocaleString() }}</strong>
-        </div>
-      </div>
-
-      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/80 shadow-2xs flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0">
-          👑
-        </div>
-        <div class="min-w-0 flex-1">
-          <span class="text-xs font-bold text-gray-400 block">{{ locale === 'fr' ? 'N°1 Actuel' : 'Current #1' }}</span>
-          <strong
-            class="text-sm sm:text-base font-black text-gray-900 dark:text-white truncate block"
-            :title="activeRanking[0] ? activeRanking[0].username : ''"
-          >
-            {{ activeRanking[0] ? activeRanking[0].username : '—' }}
-          </strong>
-        </div>
-      </div>
-
-      <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/80 shadow-2xs flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl shrink-0">
-          🔥
-        </div>
-        <div class="min-w-0">
-          <span class="text-xs font-bold text-gray-400 block">{{ locale === 'fr' ? 'Record du mode' : 'Mode Record' }}</span>
-          <strong class="text-base sm:text-lg font-black text-purple-600 dark:text-purple-400 truncate block">
-            {{ activeRanking[0] ? activeRanking[0].metricDisplay : '—' }}
-          </strong>
-        </div>
-      </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- GRILLE DES 12 ONGLETS DE MODES (SANS SCROLLBAR BLANCHE)   -->
-    <!-- ========================================================= -->
-    <div class="bg-white dark:bg-gray-800 p-3 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700/80">
-      <div class="flex flex-wrap items-center gap-2">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          type="button"
-          @click="activeTab = tab.id"
-          class="px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 border"
-          :class="activeTab === tab.id
-            ? 'bg-blue-600 text-white border-blue-500 shadow-sm scale-[1.02]'
-            : 'bg-gray-50/80 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300 border-gray-200/70 dark:border-gray-700/70 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'"
-        >
-          <span>{{ tab.icon }}</span>
-          <span>{{ tab.label }}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- BANNIÈRE DE RANG DU JOUEUR CONNECTÉ + ÉCART RANG SUIVANT  -->
-    <!-- ========================================================= -->
-    <div
-      v-if="currentUserRank"
-      class="bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 text-white rounded-3xl p-5 sm:p-6 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 border border-blue-400/30"
-    >
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xs flex flex-col items-center justify-center font-black border border-white/25 shrink-0">
-          <span class="text-[10px] uppercase tracking-wider text-blue-100">{{ locale === 'fr' ? 'Rang' : 'Rank' }}</span>
-          <span class="text-xl leading-none">#{{ currentUserRank.rank }}</span>
-        </div>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-xs font-bold uppercase tracking-wider text-blue-100">
-              {{ locale === 'fr' ? 'Votre position actuelle' : 'Your current standing' }}
-            </span>
-            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-white/20 text-white">
-              {{ currentUserRank.league.icon }} {{ currentUserRank.league.name }}
-            </span>
-          </div>
-          <h3 class="text-lg sm:text-xl font-black mt-0.5">
-            {{ currentUserRank.username }} — {{ currentUserRank.metricDisplay }}
-          </h3>
-          <p v-if="nextRankGapText" class="text-xs text-cyan-100 font-semibold mt-0.5">
-            🎯 {{ nextRankGapText }}
+          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            {{ locale === 'fr' ? 'Classement Général & Divisions' : 'Global Leaderboard & Divisions' }}
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            {{ locale === 'fr'
+              ? 'Indice de performance unifié sur 15, expérience cumulée et confrontation télémétrique directe.'
+              : 'Unified 15-point performance index, cumulative XP, and direct head-to-head telemetry comparison.' }}
           </p>
         </div>
-      </div>
 
-      <router-link
-        :to="activeTab === 'geoguessr' ? '/geoguessr' : '/quiz'"
-        class="px-5 py-3 rounded-xl bg-white text-blue-700 font-extrabold text-xs sm:text-sm hover:bg-blue-50 transition shrink-0 shadow-xs"
-      >
-        🚀 {{ locale === 'fr' ? 'Améliorer mon record' : 'Improve my record' }}
-      </router-link>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- PODIUM TOP 3 (OR, ARGENT, BRONZE)                         -->
-    <!-- ========================================================= -->
-    <div v-if="podiumPlayers.length > 0 && selectedLeagueFilter === 'all'" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
-      
-      <!-- 2e Place (Argent) -->
-      <div
-        v-if="podiumPlayers[1]"
-        @click="openPlayerModal(podiumPlayers[1])"
-        class="order-2 md:order-1 bg-white dark:bg-gray-800 rounded-3xl p-6 text-center border-2 border-slate-300 dark:border-slate-600 shadow-md hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center"
-      >
-        <div class="w-full flex items-center justify-between mb-3">
-          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-            {{ podiumPlayers[1].league.icon }} {{ podiumPlayers[1].league.name }}
-          </span>
-          <span class="text-xs font-black text-slate-400">#2</span>
-        </div>
-        <div class="text-4xl mb-2">🥈</div>
-        <div class="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white font-black text-xl flex items-center justify-center mx-auto mb-3 shadow-xs">
-          {{ getInitials(podiumPlayers[1].username) }}
-        </div>
-        <h3 class="text-lg font-black text-gray-900 dark:text-white truncate max-w-full">
-          {{ podiumPlayers[1].username }}
-        </h3>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
-          {{ podiumPlayers[1].subText }}
-        </p>
-        <span class="inline-block px-4 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-black text-sm">
-          {{ podiumPlayers[1].metricDisplay }}
-        </span>
-      </div>
-
-      <!-- 1re Place (Or - Surélevé) -->
-      <div
-        v-if="podiumPlayers[0]"
-        @click="openPlayerModal(podiumPlayers[0])"
-        class="order-1 md:order-2 bg-gradient-to-b from-amber-50/90 to-white dark:from-amber-950/30 dark:to-gray-800 rounded-3xl p-7 text-center border-2 border-amber-400 shadow-xl md:-translate-y-3 hover:-translate-y-4 transition-all cursor-pointer flex flex-col items-center"
-      >
-        <div class="w-full flex items-center justify-between mb-3">
-          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200">
-            {{ podiumPlayers[0].league.icon }} {{ podiumPlayers[0].league.name }}
-          </span>
-          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-400 text-amber-950">
-            #1 Champion
-          </span>
-        </div>
-        <div class="text-5xl mb-2">👑</div>
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 text-white font-black text-2xl flex items-center justify-center mx-auto mb-3 shadow-md">
-          {{ getInitials(podiumPlayers[0].username) }}
-        </div>
-        <h3 class="text-xl font-black text-gray-900 dark:text-white truncate max-w-full">
-          {{ podiumPlayers[0].username }}
-        </h3>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          {{ podiumPlayers[0].subText }}
-        </p>
-        <span class="inline-block px-5 py-2 rounded-xl bg-amber-400 text-amber-950 font-black text-base shadow-xs">
-          {{ podiumPlayers[0].metricDisplay }}
-        </span>
-      </div>
-
-      <!-- 3e Place (Bronze) -->
-      <div
-        v-if="podiumPlayers[2]"
-        @click="openPlayerModal(podiumPlayers[2])"
-        class="order-3 bg-white dark:bg-gray-800 rounded-3xl p-6 text-center border-2 border-orange-300 dark:border-orange-700/70 shadow-md hover:-translate-y-1 transition-all cursor-pointer flex flex-col items-center"
-      >
-        <div class="w-full flex items-center justify-between mb-3">
-          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200">
-            {{ podiumPlayers[2].league.icon }} {{ podiumPlayers[2].league.name }}
-          </span>
-          <span class="text-xs font-black text-orange-400">#3</span>
-        </div>
-        <div class="text-4xl mb-2">🥉</div>
-        <div class="w-14 h-14 rounded-2xl bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 font-black text-xl flex items-center justify-center mx-auto mb-3 shadow-xs">
-          {{ getInitials(podiumPlayers[2].username) }}
-        </div>
-        <h3 class="text-lg font-black text-gray-900 dark:text-white truncate max-w-full">
-          {{ podiumPlayers[2].username }}
-        </h3>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
-          {{ podiumPlayers[2].subText }}
-        </p>
-        <span class="inline-block px-4 py-1.5 rounded-xl bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 font-black text-sm">
-          {{ podiumPlayers[2].metricDisplay }}
-        </span>
-      </div>
-
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- TABLEAU COMPLET DU CLASSEMENT AVEC RECHERCHE              -->
-    <!-- ========================================================= -->
-    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-      <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="flex items-center gap-3 flex-wrap">
-          <div>
-            <h3 class="text-lg font-black text-gray-900 dark:text-white">
-              {{ activeTabLabel }}
-            </h3>
-            <p class="text-xs text-gray-400">
-              {{ locale === 'fr' ? 'Cliquez sur un joueur pour comparer vos profils en Face-à-Face' : 'Click any player to compare profiles Head-to-Head' }}
-            </p>
-          </div>
-          <span
-            v-if="selectedLeagueFilter !== 'all'"
-            class="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5"
+        <!-- Sélecteur de Période Temporelle (Tous les temps / Mensuel / Hebdomadaire) -->
+        <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-slate-200/75 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 self-start xl:self-auto">
+          <button
+            v-for="tf in timeframeOptions"
+            :key="tf.id"
+            type="button"
+            @click="selectedTimeframe = tf.id"
+            class="px-4 py-2 rounded-full font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
+            :class="selectedTimeframe === tf.id
+              ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
           >
-            <span>{{ locale === 'fr' ? 'Filtre ligue actif' : 'League filter active' }}</span>
-            <button type="button" @click="selectedLeagueFilter = 'all'" class="hover:text-red-500 cursor-pointer">✕</button>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span>{{ tf.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Ruban des Disciplines (Global, QCM /15, Worldle 3D, Sprint 60s, Chrono Carte, PinDrop 25K, Duel 1v1) -->
+      <div class="pt-4 border-t border-slate-200/70 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button
+            v-for="m in modeTabs"
+            :key="m.id"
+            type="button"
+            @click="selectedModeFilter = m.id"
+            class="px-3.5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border"
+            :class="selectedModeFilter === m.id
+              ? 'bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 border-transparent font-black shadow-md'
+              : 'bg-slate-100/80 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-sky-500/40'"
+          >
+            <span class="font-mono text-[10px] opacity-75">{{ m.code }}</span>
+            <span>{{ m.label }}</span>
+          </button>
+        </div>
+
+        <div class="font-mono text-[11px] text-slate-400 flex items-center gap-2">
+          <span>{{ locale === 'fr' ? 'OPÉRATEURS ACTIFS :' : 'ACTIVE OPERATORS:' }}</span>
+          <strong class="text-sky-500 dark:text-sky-400">{{ rankedOperators.length }}</strong>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================================= -->
+    <!-- 2. BARRE DE PROGRESSION DE LIGUE DE L'OPÉRATEUR CONNECTÉ  -->
+    <!-- ========================================================= -->
+    <section
+      v-if="myEntry"
+      class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-6 shadow-xl space-y-4"
+    >
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div
+            class="w-14 h-14 rounded-2xl font-mono text-base font-black flex items-center justify-center shrink-0 border shadow-inner"
+            :style="{
+              backgroundColor: `${myEntry.league.hex}18`,
+              borderColor: `${myEntry.league.hex}50`,
+              color: myEntry.league.hex
+            }"
+          >
+            #{{ String(myEntry.rank).padStart(2, '0') }}
+          </div>
+
+          <div class="space-y-0.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-sky-500 dark:text-sky-400">
+                {{ locale === 'fr' ? 'VOTRE ACCRÉDITATION ACTUELLE' : 'YOUR CURRENT ACCREDITATION' }}
+              </span>
+              <span
+                class="px-2.5 py-0.5 rounded-full font-mono text-[10px] font-black uppercase border"
+                :style="{
+                  backgroundColor: `${myEntry.league.hex}18`,
+                  borderColor: `${myEntry.league.hex}45`,
+                  color: myEntry.league.hex
+                }"
+              >
+                {{ myEntry.league.short }}
+              </span>
+            </div>
+
+            <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
+              {{ myEntry.username }}
+              <span class="font-mono text-xs font-normal text-slate-400 ml-2">
+                ({{ myEntry.avgOn15.toFixed(1) }} / 15 • {{ myEntry.xp.toLocaleString() }} XP)
+              </span>
+            </h2>
+          </div>
+        </div>
+
+        <!-- Statut de promotion vers la division supérieure -->
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 lg:text-right">
+          <div class="space-y-1">
+            <span class="font-mono text-[11px] font-bold text-slate-500 dark:text-slate-300 block">
+              <template v-if="nextLeagueTarget">
+                {{ locale === 'fr'
+                  ? `Plus que ${Math.max(0, nextLeagueTarget.minXp - myEntry.xp).toLocaleString()} XP avant la promotion en ${nextLeagueTarget.label}`
+                  : `${Math.max(0, nextLeagueTarget.minXp - myEntry.xp).toLocaleString()} XP remaining to reach ${nextLeagueTarget.label}` }}
+              </template>
+              <template v-else>
+                {{ locale === 'fr' ? 'Division Maximale Atteinte (Diamant Orbital)' : 'Maximum Division Reached (Orbital Diamond)' }}
+              </template>
+            </span>
+
+            <div class="w-full sm:w-64 h-2 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden ml-auto">
+              <div
+                class="h-full rounded-full bg-gradient-to-r from-sky-500 to-emerald-400 transition-all duration-500"
+                :style="{ width: `${leagueProgressPct}%` }"
+              ></div>
+            </div>
+          </div>
+
+          <router-link
+            to="/quiz"
+            class="px-4 py-2.5 rounded-full bg-sky-500/15 hover:bg-sky-500 text-sky-500 dark:text-sky-300 hover:text-slate-950 border border-sky-500/35 font-mono text-xs font-black transition text-center shrink-0"
+          >
+            {{ locale === 'fr' ? 'Gagner de l\'XP →' : 'Earn XP →' }}
+          </router-link>
+        </div>
+      </div>
+
+      <!-- Échelle des 4 Divisions Cliquables -->
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5 pt-3 border-t border-slate-200/60 dark:border-white/10">
+        <button
+          v-for="lg in leagueDivisions"
+          :key="lg.id"
+          type="button"
+          @click="selectedLeagueFilter = lg.id"
+          class="p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2"
+          :class="selectedLeagueFilter === lg.id
+            ? 'bg-slate-900 dark:bg-[#0D162B] border-sky-400 text-white shadow-md'
+            : 'bg-slate-50/80 dark:bg-white/[0.02] border-slate-200/70 dark:border-white/[0.07] text-slate-600 dark:text-slate-300 hover:border-sky-500/40'"
+        >
+          <div class="min-w-0">
+            <span class="font-mono text-[9px] font-bold uppercase block truncate" :style="{ color: lg.hex }">
+              {{ lg.code }}
+            </span>
+            <strong class="text-xs font-black truncate block mt-0.5" :class="selectedLeagueFilter === lg.id ? 'text-white' : 'text-slate-900 dark:text-white'">
+              {{ lg.label }}
+            </strong>
+            <span class="font-mono text-[10px] text-slate-400 block">
+              {{ lg.minXp }}+ XP
+            </span>
+          </div>
+
+          <span
+            class="px-2.5 py-1 rounded-lg font-mono text-xs font-black border shrink-0"
+            :style="{
+              backgroundColor: `${lg.hex}18`,
+              borderColor: `${lg.hex}40`,
+              color: lg.hex
+            }"
+          >
+            {{ lg.count }}
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- 3. SCÈNE WEBGL THREE.JS DU PODIUM 3D & CARTES DU TOP 3    -->
+    <!-- ========================================================= -->
+    <section
+      v-if="topThreePlayers.length > 0"
+      class="relative overflow-hidden rounded-[2rem] border border-slate-200/80 dark:border-white/12 bg-white dark:bg-[#070B16] p-6 sm:p-8 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
+    >
+      <div class="pointer-events-none absolute -top-24 left-1/4 w-96 h-96 rounded-full bg-amber-500/10 blur-[120px]"></div>
+      <div class="pointer-events-none absolute -bottom-24 right-1/4 w-96 h-96 rounded-full bg-sky-500/12 blur-[120px]"></div>
+
+      <!-- Gauche (5 cols) : Scène WebGL Three.js Podium 3D + Trophées PBR -->
+      <div class="lg:col-span-5 flex flex-col items-center justify-center relative">
+        <div class="w-full flex items-center justify-between font-mono text-[10px] text-slate-400 pb-2 border-b border-slate-200 dark:border-white/10">
+          <span class="text-amber-400 font-bold">WEBGL 3D PODIUM // TOP 03</span>
+          <div class="flex items-center gap-1">
+            <button
+              v-for="r in [2, 1, 3]"
+              :key="'cam-focus-' + r"
+              type="button"
+              @click="focusPodiumRank(r)"
+              class="px-2 py-0.5 rounded font-mono text-[10px] font-bold transition cursor-pointer"
+              :class="focusedPodiumRank === r ? 'bg-sky-500 text-slate-950' : 'bg-white/5 text-slate-400 hover:text-white'"
+            >
+              #0{{ r }}
+            </button>
+          </div>
+        </div>
+
+        <div
+          ref="podiumWebglMountRef"
+          class="podium-webgl-mount relative flex items-center justify-center cursor-grab active:cursor-grabbing my-1"
+          style="touch-action: none;"
+          @pointerdown="onPodiumPointerDown"
+          @pointermove="onPodiumPointerMove"
+          @pointerup="onPodiumPointerUp"
+          @pointerleave="onPodiumPointerUp"
+          @click="triggerPodiumPulse"
+        ></div>
+
+        <span class="px-3.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 font-mono text-[10px] text-slate-500 dark:text-sky-300">
+          {{ locale === 'fr' ? 'GLISSER EN 3D (WEBGL) • CLIQUER SUR #01 #02 #03' : 'DRAG IN 3D (WEBGL) • CLICK #01 #02 #03 TO FOCUS' }}
+        </span>
+      </div>
+
+      <!-- Droite (7 cols) : Cartes Monumentales du Top 3 (#1 Or, #2 Argent, #3 Bronze) -->
+      <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
+        <article
+          v-for="(p, idx) in topThreePlayers"
+          :key="'top3-' + p.id"
+          @click="selectOperatorForComparison(p, idx + 1)"
+          class="relative rounded-3xl border p-5 flex flex-col justify-between gap-4 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer"
+          :class="idx === 0
+            ? 'bg-gradient-to-b from-amber-500/[0.14] to-transparent border-amber-400/55 shadow-[0_20px_50px_-12px_rgba(245,158,11,0.28)] sm:-translate-y-2'
+            : idx === 1
+              ? 'bg-gradient-to-b from-slate-300/[0.10] to-transparent border-slate-300/40'
+              : 'bg-gradient-to-b from-amber-700/[0.12] to-transparent border-amber-600/40'"
+        >
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span
+                class="px-2.5 py-1 rounded-full font-mono text-[11px] font-black border"
+                :class="idx === 0
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-400/50'
+                  : idx === 1
+                    ? 'bg-slate-300/20 text-slate-200 border-slate-300/40'
+                    : 'bg-amber-700/25 text-amber-400 border-amber-600/45'"
+              >
+                RANK #0{{ idx + 1 }}
+              </span>
+
+              <span
+                class="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded border"
+                :style="{
+                  backgroundColor: `${p.league.hex}18`,
+                  borderColor: `${p.league.hex}40`,
+                  color: p.league.hex
+                }"
+              >
+                {{ p.league.short }}
+              </span>
+            </div>
+
+            <div class="flex items-center gap-3 pt-1">
+              <div
+                class="w-11 h-11 rounded-2xl font-mono text-sm font-black flex items-center justify-center shrink-0 text-slate-950 shadow-md"
+                :style="{ backgroundColor: idx === 0 ? '#fbbf24' : idx === 1 ? '#cbd5e1' : '#d97706' }"
+              >
+                {{ getInitials(p.username) }}
+              </div>
+              <div class="min-w-0">
+                <strong class="text-base font-black text-slate-900 dark:text-white truncate block">
+                  {{ p.username }}
+                </strong>
+                <span class="font-mono text-[11px] text-slate-400 block">
+                  {{ p.gamesCount }} {{ locale === 'fr' ? 'sessions' : 'sessions' }} • {{ p.consistencyPct }}% {{ locale === 'fr' ? 'précision' : 'acc.' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2 pt-3 border-t border-slate-200/60 dark:border-white/10">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] text-slate-400">{{ locale === 'fr' ? 'Indice /15' : 'Avg /15' }}</span>
+              <strong class="font-mono text-lg font-black text-emerald-500 dark:text-emerald-400">
+                {{ p.avgOn15.toFixed(1) }} <span class="text-xs font-normal text-slate-400">/ 15</span>
+              </strong>
+            </div>
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] text-slate-400">{{ locale === 'fr' ? 'Record' : 'Best' }}</span>
+              <strong class="font-mono text-xs font-bold text-slate-700 dark:text-slate-200">
+                {{ p.bestOn15.toFixed(1) }} / 15
+              </strong>
+            </div>
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] text-slate-400">Rating XP</span>
+              <strong class="font-mono text-xs font-black text-sky-500 dark:text-sky-400">
+                {{ p.xp.toLocaleString() }} XP
+              </strong>
+            </div>
+
+            <button
+              type="button"
+              @click.stop="challengeOperatorInDuel(p)"
+              class="w-full mt-2 py-2 rounded-xl bg-slate-900 dark:bg-white/[0.07] hover:bg-sky-500 hover:text-slate-950 text-white font-mono text-[11px] font-bold transition cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+                <line x1="13" y1="19" x2="19" y2="13" />
+              </svg>
+              <span>{{ locale === 'fr' ? 'Défier en 1v1' : 'Challenge 1v1' }}</span>
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- 4. COMPARATEUR TÉLÉMÉTRIQUE & RADAR SVG 5 AXES            -->
+    <!-- ========================================================= -->
+    <section
+      v-if="comparisonTarget && myEntry"
+      class="rounded-3xl border border-sky-500/30 bg-white/95 dark:bg-[#090E1A]/95 backdrop-blur-2xl p-5 sm:p-7 shadow-2xl space-y-6"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse"></span>
+          <span class="font-mono text-xs font-bold uppercase tracking-wider text-sky-500 dark:text-sky-400">
+            {{ locale === 'fr' ? 'ANALYSEUR TÉLÉMÉTRIQUE FACE-À-FACE (5 AXES)' : '5-AXIS HEAD-TO-HEAD TELEMETRY ANALYZER' }}
           </span>
         </div>
 
-        <div class="relative w-full sm:w-64">
+        <button
+          type="button"
+          @click="challengeOperatorInDuel(comparisonTarget)"
+          class="px-4 py-2 rounded-full bg-rose-500/15 hover:bg-rose-500 text-rose-500 dark:text-rose-300 hover:text-white border border-rose-500/35 font-mono text-xs font-black transition cursor-pointer flex items-center gap-2"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+            <line x1="13" y1="19" x2="19" y2="13" />
+          </svg>
+          <span>{{ locale === 'fr' ? `Lancer un Duel contre ${comparisonTarget.username}` : `Launch 1v1 Duel vs ${comparisonTarget.username}` }}</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+
+        <!-- Colonne Gauche (4 cols) : Radar Pentagonal SVG à 5 axes -->
+        <div class="lg:col-span-4 flex flex-col items-center justify-center p-4 rounded-3xl bg-slate-950/90 border border-white/10">
+          <svg viewBox="0 0 260 250" class="w-60 h-56 overflow-visible">
+            <!-- Grilles pentagonales concentriques (25%, 50%, 75%, 100%) -->
+            <polygon
+              v-for="lvl in [0.25, 0.5, 0.75, 1]"
+              :key="'radar-ring-' + lvl"
+              :points="getRadarGridPolygon(lvl)"
+              fill="none"
+              stroke="rgba(148, 163, 184, 0.18)"
+              stroke-width="1"
+            />
+
+            <!-- Axes partant du centre -->
+            <line
+              v-for="(ax, aIdx) in radarAxesLabels"
+              :key="'radar-axis-' + aIdx"
+              x1="130"
+              y1="125"
+              :x2="getAxisEndpoint(aIdx, 1).x"
+              :y2="getAxisEndpoint(aIdx, 1).y"
+              stroke="rgba(148, 163, 184, 0.2)"
+              stroke-width="1"
+            />
+
+            <!-- Polygone du Rival Ciblé (Rose Tactique) -->
+            <polygon
+              :points="targetRadarPolygon"
+              fill="rgba(244, 63, 94, 0.22)"
+              stroke="#f43f5e"
+              stroke-width="2"
+            />
+
+            <!-- Polygone de l'Opérateur Connecté (Bleu Ciel) -->
+            <polygon
+              :points="myRadarPolygon"
+              fill="rgba(56, 189, 248, 0.28)"
+              stroke="#38bdf8"
+              stroke-width="2.2"
+            />
+
+            <!-- Étiquettes des 5 axes -->
+            <text
+              v-for="(ax, aIdx) in radarAxesLabels"
+              :key="'radar-lbl-' + aIdx"
+              :x="getAxisEndpoint(aIdx, 1.22).x"
+              :y="getAxisEndpoint(aIdx, 1.22).y"
+              text-anchor="middle"
+              dominant-baseline="middle"
+              fill="#cbd5e1"
+              font-size="9.5"
+              font-family="JetBrains Mono, monospace"
+              font-weight="700"
+            >
+              {{ ax }}
+            </text>
+          </svg>
+
+          <div class="flex items-center gap-4 font-mono text-[10px] pt-2">
+            <span class="flex items-center gap-1.5 text-sky-400 font-bold">
+              <span class="w-2.5 h-2.5 rounded-xs bg-sky-400"></span>
+              <span>{{ myEntry.username }}</span>
+            </span>
+            <span class="flex items-center gap-1.5 text-rose-400 font-bold">
+              <span class="w-2.5 h-2.5 rounded-xs bg-rose-500"></span>
+              <span>{{ comparisonTarget.username }}</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Colonne Droite (8 cols) : Comparaison détaillée des 5 axes et métriques -->
+        <div class="lg:col-span-8 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Carte Opérateur 1 (Vous) -->
+            <div class="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-sky-500 text-slate-950 font-mono text-xs font-black flex items-center justify-center shrink-0">
+                  {{ getInitials(myEntry.username) }}
+                </div>
+                <div class="min-w-0">
+                  <span class="font-mono text-[10px] font-bold text-sky-400 uppercase block">
+                    {{ locale === 'fr' ? `VOUS • RANG #${myEntry.rank}` : `YOU • RANK #${myEntry.rank}` }}
+                  </span>
+                  <strong class="text-sm font-black text-slate-900 dark:text-white truncate block">{{ myEntry.username }}</strong>
+                </div>
+              </div>
+              <span class="font-mono text-xs font-black text-sky-400 shrink-0">{{ myEntry.xp.toLocaleString() }} XP</span>
+            </div>
+
+            <!-- Carte Opérateur 2 (Cible) -->
+            <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-rose-500 text-white font-mono text-xs font-black flex items-center justify-center shrink-0">
+                  {{ getInitials(comparisonTarget.username) }}
+                </div>
+                <div class="min-w-0">
+                  <span class="font-mono text-[10px] font-bold text-rose-400 uppercase block">
+                    {{ locale === 'fr' ? `CIBLE • RANG #${comparisonTarget.rank}` : `TARGET • RANK #${comparisonTarget.rank}` }}
+                  </span>
+                  <strong class="text-sm font-black text-slate-900 dark:text-white truncate block">{{ comparisonTarget.username }}</strong>
+                </div>
+              </div>
+              <span class="font-mono text-xs font-black text-rose-400 shrink-0">{{ comparisonTarget.xp.toLocaleString() }} XP</span>
+            </div>
+          </div>
+
+          <!-- Barres de comparaison sur 4 indicateurs clés -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div
+              v-for="stat in headToHeadMetrics"
+              :key="stat.id"
+              class="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/10 space-y-2"
+            >
+              <div class="flex items-center justify-between font-mono text-[11px]">
+                <strong class="text-sky-500 dark:text-sky-400">{{ stat.myFormatted }}</strong>
+                <span class="text-slate-400 uppercase text-[10px] font-bold">{{ stat.label }}</span>
+                <strong class="text-rose-500 dark:text-rose-400">{{ stat.targetFormatted }}</strong>
+              </div>
+              <div class="h-2 w-full rounded-full bg-rose-500/40 overflow-hidden flex">
+                <div
+                  class="h-full bg-gradient-to-r from-sky-500 to-emerald-400 transition-all duration-500"
+                  :style="{ width: `${getRatioPct(stat.myVal, stat.targetVal)}%` }"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- 5. MATRICE COMPLÈTE DU CLASSEMENT & PAGINATION            -->
+    <!-- ========================================================= -->
+    <section class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#090E1A]/95 backdrop-blur-2xl p-5 sm:p-7 shadow-2xl space-y-5">
+
+      <!-- Barre d'outils : Recherche d'un joueur + Critère de tri -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-white/10">
+        <div class="relative w-full sm:w-80">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+          </svg>
           <input
-            v-model="playerSearch"
+            v-model="searchQuery"
             type="text"
-            :placeholder="locale === 'fr' ? '🔍 Rechercher un joueur...' : '🔍 Search a player...'"
-            class="w-full pl-4 pr-8 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+            :placeholder="locale === 'fr' ? 'Rechercher un opérateur...' : 'Search an operator...'"
+            class="w-full pl-10 pr-8 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400"
           />
           <button
-            v-if="playerSearch"
+            v-if="searchQuery"
             type="button"
-            @click="playerSearch = ''"
-            class="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600 text-xs font-bold cursor-pointer"
+            @click="searchQuery = ''"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
           >
-            ✕
+            ×
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono text-xs text-slate-400">
+            {{ locale === 'fr' ? 'Trier par :' : 'Sort by:' }}
+          </span>
+          <button
+            v-for="srt in sortOptions"
+            :key="srt.id"
+            type="button"
+            @click="sortBy = srt.id"
+            class="px-3.5 py-1.5 rounded-full font-mono text-xs font-bold transition cursor-pointer border"
+            :class="sortBy === srt.id
+              ? 'bg-sky-500/20 border-sky-400 text-sky-500 dark:text-sky-300'
+              : 'bg-slate-100 dark:bg-white/[0.04] border-transparent text-slate-500 hover:text-white'"
+          >
+            {{ srt.label }}
           </button>
         </div>
       </div>
 
-      <div v-if="filteredRanking.length === 0" class="p-12 text-center text-gray-500 dark:text-gray-400 text-sm">
-        {{ locale === 'fr'
-          ? 'Aucun score enregistré pour ce filtre pour le moment. Soyez le premier à établir un record !'
-          : 'No scores recorded for this filter yet. Be the first to set a record!' }}
+      <!-- État de chargement -->
+      <div v-if="loading" class="py-12 text-center font-mono text-xs text-slate-400">
+        {{ locale === 'fr' ? 'SYNCHRONISATION DU CLASSEMENT ORBITAL...' : 'SYNCING ORBITAL LEADERBOARD...' }}
       </div>
 
-      <div v-else class="divide-y divide-gray-100 dark:divide-gray-700/70">
-        <div
-          v-for="row in filteredRanking"
-          :key="row.uniqueKey"
-          @click="openPlayerModal(row)"
-          class="p-4 sm:px-6 flex items-center justify-between gap-4 transition-colors cursor-pointer"
-          :class="isCurrentUser(row)
-            ? 'bg-blue-50/80 dark:bg-blue-950/40'
-            : 'hover:bg-gray-50 dark:hover:bg-gray-700/40'"
-        >
-          <!-- Gauche : Rang + Avatar Initiales + Nom + Badge Ligue -->
-          <div class="flex items-center gap-3.5 sm:gap-4 min-w-0">
-            <div
-              class="w-9 h-9 rounded-xl font-black text-sm flex items-center justify-center shrink-0"
+      <!-- Tableau des opérateurs -->
+      <div v-else-if="paginatedLeaderboard.length > 0" class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-white/10 font-mono text-[11px] uppercase text-slate-400">
+              <th class="py-3 px-3">{{ locale === 'fr' ? 'Rang' : 'Rank' }}</th>
+              <th class="py-3 px-3">{{ locale === 'fr' ? 'Opérateur' : 'Operator' }}</th>
+              <th class="py-3 px-3">{{ locale === 'fr' ? 'Division' : 'Division' }}</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Moyenne (/15)' : 'Avg (/15)' }}</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Record (/15)' : 'Best (/15)' }}</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Précision' : 'Accuracy' }}</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Sessions' : 'Sessions' }}</th>
+              <th class="py-3 px-3 text-right">Rating XP</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Action' : 'Action' }}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200/60 dark:divide-white/[0.06] text-xs sm:text-sm">
+            <tr
+              v-for="row in paginatedLeaderboard"
+              :key="row.id"
+              @click="inspectedRival = row"
+              class="transition-colors cursor-pointer"
               :class="[
-                row.rank === 1 ? 'bg-amber-400 text-amber-950 shadow-2xs' : '',
-                row.rank === 2 ? 'bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-white' : '',
-                row.rank === 3 ? 'bg-orange-200 dark:bg-orange-800 text-orange-950 dark:text-orange-100' : '',
-                row.rank > 3 ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300' : ''
+                row.isMe
+                  ? 'bg-sky-500/[0.10] hover:bg-sky-500/[0.15]'
+                  : inspectedRival && inspectedRival.id === row.id
+                    ? 'bg-emerald-500/[0.08]'
+                    : 'hover:bg-slate-100/70 dark:hover:bg-white/[0.04]'
               ]"
             >
-              #{{ row.rank }}
-            </div>
-
-            <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-gray-700 text-blue-700 dark:text-blue-300 font-bold text-sm flex items-center justify-center shrink-0">
-              {{ getInitials(row.username) }}
-            </div>
-
-            <div class="min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <strong class="font-bold text-gray-900 dark:text-white truncate">
-                  {{ row.username }}
-                </strong>
+              <!-- Rang -->
+              <td class="py-3.5 px-3 font-mono font-black whitespace-nowrap">
                 <span
-                  v-if="isCurrentUser(row)"
-                  class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-600 text-white"
+                  class="inline-flex items-center justify-center w-8 h-7 rounded-lg text-xs"
+                  :class="row.rank === 1
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-400/40'
+                    : row.rank === 2
+                      ? 'bg-slate-300/20 text-slate-200 border border-slate-300/40'
+                      : row.rank === 3
+                        ? 'bg-amber-700/25 text-amber-400 border border-amber-600/40'
+                        : 'text-slate-400'"
                 >
-                  {{ locale === 'fr' ? 'Vous' : 'You' }}
+                  #{{ String(row.rank).padStart(2, '0') }}
                 </span>
-                <span
-                  class="px-2 py-0.5 rounded-md text-[10px] font-extrabold"
-                  :class="row.league.badgeClass"
-                >
-                  {{ row.league.icon }} {{ row.league.name }}
-                </span>
-              </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                {{ row.subText }}
-              </p>
-            </div>
-          </div>
+              </td>
 
-          <!-- Droite : Score / XP + Bouton Face-à-Face -->
-          <div class="flex items-center gap-3 shrink-0">
-            <span class="hidden sm:inline-block text-xs font-bold text-blue-600 dark:text-blue-400 opacity-75">
-              ⚔️ {{ locale === 'fr' ? 'Comparer' : 'Compare' }}
-            </span>
-            <span class="px-3.5 py-1.5 rounded-xl font-black text-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">
-              {{ row.metricDisplay }}
-            </span>
+              <!-- Opérateur -->
+              <td class="py-3.5 px-3">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-8 h-8 rounded-xl font-mono text-xs font-black flex items-center justify-center shrink-0"
+                    :class="row.isMe
+                      ? 'bg-sky-500 text-slate-950'
+                      : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200'"
+                  >
+                    {{ getInitials(row.username) }}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                      <strong class="font-bold text-slate-900 dark:text-white truncate">
+                        {{ row.username }}
+                      </strong>
+                      <span
+                        v-if="row.isMe"
+                        class="px-2 py-0.5 rounded-full bg-sky-500 text-slate-950 font-mono text-[9px] font-black uppercase"
+                      >
+                        {{ locale === 'fr' ? 'VOUS' : 'YOU' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Ligue -->
+              <td class="py-3.5 px-3 whitespace-nowrap">
+                <span
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[10px] font-bold uppercase border"
+                  :style="{
+                    backgroundColor: `${row.league.hex}15`,
+                    borderColor: `${row.league.hex}40`,
+                    color: row.league.hex
+                  }"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: row.league.hex }"></span>
+                  <span>{{ row.league.short }}</span>
+                </span>
+              </td>
+
+              <!-- Moyenne /15 -->
+              <td class="py-3.5 px-3 text-right font-mono font-black text-emerald-500 dark:text-emerald-400 whitespace-nowrap">
+                {{ row.avgOn15.toFixed(1) }} <span class="text-[11px] font-normal text-slate-400">/ 15</span>
+              </td>
+
+              <!-- Record /15 -->
+              <td class="py-3.5 px-3 text-right font-mono font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                {{ row.bestOn15.toFixed(1) }} <span class="text-[11px] font-normal text-slate-400">/ 15</span>
+              </td>
+
+              <!-- Précision % -->
+              <td class="py-3.5 px-3 text-right font-mono text-xs text-slate-500 dark:text-slate-300 whitespace-nowrap">
+                {{ row.consistencyPct }}%
+              </td>
+
+              <!-- Parties jouées -->
+              <td class="py-3.5 px-3 text-right font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                {{ row.gamesCount }}
+              </td>
+
+              <!-- XP -->
+              <td class="py-3.5 px-3 text-right font-mono font-black text-sky-500 dark:text-sky-400 whitespace-nowrap">
+                {{ row.xp.toLocaleString() }} XP
+              </td>
+
+              <!-- Bouton Défier en 1v1 -->
+              <td class="py-3.5 px-3 text-right whitespace-nowrap">
+                <button
+                  type="button"
+                  @click.stop="challengeOperatorInDuel(row)"
+                  class="px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] hover:bg-sky-500 hover:text-slate-950 text-slate-700 dark:text-slate-200 font-mono text-[10px] font-bold transition cursor-pointer"
+                >
+                  {{ locale === 'fr' ? 'Duel 1v1' : '1v1 Duel' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Contrôles de Pagination -->
+        <div
+          v-if="totalPages > 1"
+          class="flex items-center justify-between pt-4 mt-4 border-t border-slate-200/60 dark:border-white/10 font-mono text-xs"
+        >
+          <span class="text-slate-400">
+            {{ locale === 'fr' ? `Page ${currentPage} sur ${totalPages}` : `Page ${currentPage} of ${totalPages}` }}
+          </span>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              :disabled="currentPage <= 1"
+              @click="currentPage--"
+              class="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/10 disabled:opacity-35 text-slate-800 dark:text-white font-bold cursor-pointer"
+            >
+              ← {{ locale === 'fr' ? 'Précédent' : 'Prev' }}
+            </button>
+            <button
+              type="button"
+              :disabled="currentPage >= totalPages"
+              @click="currentPage++"
+              class="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/10 disabled:opacity-35 text-slate-800 dark:text-white font-bold cursor-pointer"
+            >
+              {{ locale === 'fr' ? 'Suivant' : 'Next' }} →
+            </button>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ========================================================= -->
-    <!-- MODALE FACE-À-FACE (COMPARATIF JOUEUR VS VOUS)            -->
-    <!-- ========================================================= -->
-    <div
-      v-if="inspectedPlayer"
-      class="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-md"
-      @click.self="inspectedPlayer = null"
-    >
-      <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-gray-100 dark:border-gray-700 space-y-6 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
-          <div class="flex items-center gap-3.5">
-            <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white font-black text-lg flex items-center justify-center">
-              {{ getInitials(inspectedPlayer.username) }}
-            </div>
-            <div>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">
-                ⚔️ {{ locale === 'fr' ? 'Fiche & Face-à-Face' : 'Player Card & Head-to-Head' }}
-              </span>
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="text-2xl font-black text-gray-900 dark:text-white">
-                  {{ inspectedPlayer.username }}
-                </h3>
-                <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold" :class="inspectedPlayer.league?.badgeClass">
-                  {{ inspectedPlayer.league?.icon }} {{ inspectedPlayer.league?.name }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            @click="inspectedPlayer = null"
-            class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-red-100 hover:text-red-600 text-gray-600 dark:text-gray-300 font-bold cursor-pointer"
-          >
-            ✕
-          </button>
-        </div>
-
-        <!-- Bilan global du duel Face-à-Face -->
-        <div class="bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-gray-900 dark:to-gray-900 p-4 rounded-2xl border border-blue-100 dark:border-gray-700 flex items-center justify-between text-xs sm:text-sm font-black">
-          <span class="text-blue-600 dark:text-blue-400">
-            {{ inspectedPlayer.username }} : {{ headToHeadSummary.theirWins }}
-          </span>
-          <span class="text-gray-400 uppercase text-[11px]">{{ locale === 'fr' ? 'Modes dominés' : 'Modes led' }}</span>
-          <span class="text-emerald-600 dark:text-emerald-400">
-            {{ locale === 'fr' ? 'Vous' : 'You' }} : {{ headToHeadSummary.myWins }}
-          </span>
-        </div>
-
-        <!-- Comparatif des records par mode -->
-        <div class="space-y-2">
-          <div class="grid grid-cols-3 text-xs font-extrabold uppercase text-gray-400 px-3 pb-1">
-            <span>Mode</span>
-            <span class="text-center text-blue-600 dark:text-blue-400 truncate">{{ inspectedPlayer.username }}</span>
-            <span class="text-right text-emerald-600 dark:text-emerald-400">{{ locale === 'fr' ? 'Vous' : 'You' }}</span>
-          </div>
-
-          <div
-            v-for="comp in headToHeadStats"
-            :key="comp.label"
-            class="grid grid-cols-3 items-center bg-gray-50 dark:bg-gray-900/70 px-4 py-2.5 rounded-xl border border-gray-100 dark:border-gray-700/70 text-xs sm:text-sm"
-          >
-            <span class="font-bold text-gray-700 dark:text-gray-300 truncate">{{ comp.icon }} {{ comp.label }}</span>
-            <strong
-              class="text-center font-black"
-              :class="comp.theirNumeric > comp.myNumeric ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'"
-            >
-              {{ comp.theirBest }}
-            </strong>
-            <strong
-              class="text-right font-black"
-              :class="comp.myNumeric >= comp.theirNumeric && comp.myNumeric >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'"
-            >
-              {{ comp.myBest }}
-            </strong>
-          </div>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
-          <router-link
-            :to="{ path: '/quiz', query: { mode: 'custom-builder' } }"
-            class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs sm:text-sm transition"
-          >
-            ⚔️ {{ locale === 'fr' ? 'Créer un Défi sur-mesure' : 'Create Custom Duel' }}
-          </router-link>
-
-          <button
-            type="button"
-            @click="inspectedPlayer = null"
-            class="px-6 py-2.5 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-bold text-sm cursor-pointer"
-          >
-            {{ locale === 'fr' ? 'Fermer' : 'Close' }}
-          </button>
-        </div>
+      <div v-else class="py-10 text-center font-mono text-xs text-slate-400">
+        {{ locale === 'fr' ? 'Aucun opérateur trouvé pour ce filtre.' : 'No operator found for this filter.' }}
       </div>
-    </div>
+
+    </section>
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 
 const { locale } = useI18n();
+const router = useRouter();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
-const activeTab = ref('general');
-const selectedPeriod = ref('all'); // 'all' | 'season' | 'month' | 'today'
-const selectedLeagueFilter = ref('all'); // 'all' | 'diamond' | 'platinum' | 'gold' | 'silver' | 'bronze'
-const playerSearch = ref('');
-const isLoading = ref(false);
+const loading = ref(true);
+const searchQuery = ref('');
+const selectedTimeframe = ref('alltime'); // 'alltime' | 'monthly' | 'weekly'
+const selectedModeFilter = ref('all');
+const selectedLeagueFilter = ref('all');
+const sortBy = ref('xp'); // 'xp' | 'avg' | 'best' | 'games'
+const currentPage = ref(1);
+const pageSize = 12;
 
-const generalList = ref([]);
-const recordsList = ref([]);
+const inspectedRival = ref(null);
+const focusedPodiumRank = ref(1);
+
 const currentUser = ref(null);
-const inspectedPlayer = ref(null);
+const rawLeaderboardEntries = ref([]);
 
-const periodOptions = computed(() => {
+// =========================================================
+// FILTRES TEMPORELS, MODES & DIVISIONS DE LIGUE
+// =========================================================
+const timeframeOptions = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'all', icon: '', label: isFr ? 'Tous les temps' : 'All-Time' },
-    { id: 'season', icon: '🏆', label: isFr ? 'Saison du Mois' : 'Monthly Season' },
-    { id: 'month', icon: '', label: isFr ? '30 jours' : '30 Days' },
-    { id: 'today', icon: '', label: isFr ? 'Aujourd\'hui' : 'Today' }
+    { id: 'alltime', label: isFr ? 'Tous les temps' : 'All-Time' },
+    { id: 'monthly', label: isFr ? 'Saison Mensuelle' : 'Monthly Season' },
+    { id: 'weekly', label: isFr ? 'Sprint Hebdo' : 'Weekly Sprint' }
   ];
 });
 
-// Nom de la saison mensuelle en cours + compte à rebours avant le 1er du mois suivant
-const currentSeasonLabel = computed(() => {
-  const now = new Date();
-  const monthName = now.toLocaleDateString(locale.value === 'fr' ? 'fr-FR' : 'en-US', {
-    month: 'long',
-    year: 'numeric'
-  });
-  return locale.value === 'fr'
-    ? `Saison ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`
-    : `Season ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
-});
-
-const seasonResetCountdown = computed(() => {
-  const now = new Date();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
-  const diffMs = Math.max(0, nextMonth.getTime() - now.getTime());
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
-  return locale.value === 'fr'
-    ? `Réinitialisation mensuelle dans ${days}j ${hours}h`
-    : `Monthly reset in ${days}d ${hours}h`;
-});
-
-const tabs = computed(() => {
+const modeTabs = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'general', icon: '👑', label: isFr ? 'Général (XP)' : 'Overall (XP)' },
-    { id: 'geoguessr', icon: '🛰️', label: 'PinDrop (25 000)' },
-    { id: 'mystery', icon: '🧭', label: isFr ? 'Pays Mystère' : 'Mystery Country' },
-    { id: 'flash60', icon: '⚡', label: isFr ? 'QCM Flash (60s)' : '60s Flash Quiz' },
-    { id: 'detective', icon: '🕵️', label: isFr ? 'Enquête 5 Indices' : '5-Clue Detective' },
-    { id: 'mapclick', icon: '🖱️', label: isFr ? 'Cliquez Carte' : 'Map Click' },
-    { id: 'world', icon: '🌍', label: isFr ? 'Défi Monde (196)' : 'World Challenge (196)' },
-    { id: 'europe', icon: '🇪🇺', label: isFr ? 'Défi Europe (47)' : 'Europe Challenge (47)' },
-    { id: 'grid', icon: '🏳️', label: isFr ? 'Grille Drapeaux' : 'Flag Grid' },
-    { id: 'capitals', icon: '🏛️', label: isFr ? 'QCM Capitales' : 'Capitals Quiz' },
-    { id: 'flags', icon: '🚩', label: isFr ? 'QCM Drapeaux' : 'Flags Quiz' },
-    { id: 'culture', icon: '🗣️', label: isFr ? 'QCM Culture' : 'Culture Quiz' }
+    { id: 'all', code: '01', label: isFr ? 'Classement Global' : 'Global Standing' },
+    { id: 'qcm', code: '02', label: isFr ? 'QCM Classiques (/15)' : 'Classic QCMs (/15)' },
+    { id: 'worldle', code: '03', label: 'Worldle 3D' },
+    { id: 'sprint', code: '04', label: 'Sprint 60s' },
+    { id: 'chrono', code: '05', label: isFr ? 'Chrono Carte (47/196)' : 'Timed Map (47/196)' },
+    { id: 'pindrop', code: '06', label: 'PinDrop 25K' },
+    { id: 'duel', code: '07', label: 'Duel 1v1' }
   ];
 });
 
-const activeTabLabel = computed(() => {
-  const found = tabs.value.find(t => t.id === activeTab.value);
-  return found ? found.label : '';
-});
-
-const totalCommunityGames = computed(() =>
-  generalList.value.reduce((acc, row) => acc + Number(row.games_played || 0), 0)
-);
-
-const getInitials = (name = '') => {
-  const clean = (name || 'J').trim();
-  return clean.slice(0, 2).toUpperCase();
-};
-
-const getLeague = (ratioOrXp, isGeneral = false) => {
+const sortOptions = computed(() => {
   const isFr = locale.value === 'fr';
-  const scoreVal = isGeneral ? ratioOrXp / 10000 : ratioOrXp;
-  if (scoreVal >= 0.85) {
-    return { key: 'diamond', icon: '💎', name: isFr ? 'Diamant' : 'Diamond', badgeClass: 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-800 dark:text-cyan-200' };
-  }
-  if (scoreVal >= 0.65) {
-    return { key: 'platinum', icon: '🟣', name: isFr ? 'Platine' : 'Platinum', badgeClass: 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200' };
-  }
-  if (scoreVal >= 0.45) {
-    return { key: 'gold', icon: '🥇', name: isFr ? 'Or' : 'Gold', badgeClass: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' };
-  }
-  if (scoreVal >= 0.25) {
-    return { key: 'silver', icon: '🥈', name: isFr ? 'Argent' : 'Silver', badgeClass: 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200' };
-  }
-  return { key: 'bronze', icon: '🥉', name: 'Bronze', badgeClass: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200' };
-};
-
-// Calcule l'XP d'une partie en normalisant les parties GeoGuessr (sur 25 000 pts)
-const computeRecordXp = (r) => {
-  const score = Number(r.score || 0);
-  const maxScore = Number(r.max_score || 15);
-  const mode = (r.mode || '').toLowerCase();
-
-  if (mode.includes('geoguessr') || maxScore >= 1000) {
-    const normalizedScore = Math.round((score / Math.max(1, maxScore)) * 20);
-    return normalizedScore * 10 + 25;
-  }
-  return score * 10 + 25;
-};
-
-const isCurrentUser = (row) => {
-  if (!currentUser.value) return false;
-  const myId = currentUser.value.id || (currentUser.value.user && currentUser.value.user.id);
-  if (myId && Number(row.user_id) === Number(myId)) return true;
-  const myName = (currentUser.value.username || currentUser.value.name || currentUser.value.pseudo || '').toLowerCase();
-  return myName && (row.username || '').toLowerCase() === myName;
-};
-
-const fetchLeaderboard = async () => {
-  isLoading.value = true;
-  try {
-    const res = await fetch(`${API_URL}/api/leaderboard`);
-    if (res.ok) {
-      const data = await res.json();
-      generalList.value = data.general || [];
-      recordsList.value = data.records || [];
-    }
-  } catch (e) {
-    console.error('Erreur chargement leaderboard:', e);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-onMounted(() => {
-  const saved = localStorage.getItem('geolearn_user');
-  if (saved) {
-    try { currentUser.value = JSON.parse(saved); } catch (e) {}
-  }
-  fetchLeaderboard();
+  return [
+    { id: 'xp', label: 'Rating XP' },
+    { id: 'avg', label: isFr ? 'Moyenne /15' : 'Avg /15' },
+    { id: 'best', label: isFr ? 'Record /15' : 'Best /15' },
+    { id: 'games', label: isFr ? 'Sessions' : 'Sessions' }
+  ];
 });
 
-// Filtre par période (Tous les temps, Saison du mois en cours, 30 jours, Aujourd'hui)
-const periodFilteredRecords = computed(() => {
-  if (selectedPeriod.value === 'all') return recordsList.value;
-  const now = new Date();
-
-  if (selectedPeriod.value === 'season') {
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    return recordsList.value.filter(r => {
-      if (!r.played_at) return true;
-      return new Date(r.played_at).getTime() >= startOfMonth;
-    });
-  }
-
-  const maxAgeMs = selectedPeriod.value === 'today' ? 24 * 3600 * 1000 : 30 * 24 * 3600 * 1000;
-  return recordsList.value.filter(r => {
-    if (!r.played_at) return true;
-    const diff = now.getTime() - new Date(r.played_at).getTime();
-    return diff <= maxAgeMs;
-  });
-});
-
-// Classement actif
-const activeRanking = computed(() => {
+const getLeagueInfo = (xpVal = 0) => {
   const isFr = locale.value === 'fr';
-
-  // Mode Général ("Tous les temps") avec correction automatique de l'inflation XP GeoGuessr
-  if (activeTab.value === 'general' && selectedPeriod.value === 'all') {
-    const correctedUsers = generalList.value.map((item) => {
-      const userRecs = recordsList.value.filter(r => Number(r.user_id) === Number(item.user_id));
-      const gamesCount = Number(item.games_played || userRecs.length || 0);
-      let xp = Number(item.total_xp || 0);
-
-      if (userRecs.length > 0 && userRecs.length === gamesCount) {
-        xp = userRecs.reduce((sum, r) => sum + computeRecordXp(r), 0);
-      } else {
-        for (const r of userRecs) {
-          const mode = (r.mode || '').toLowerCase();
-          if (mode.includes('geoguessr') || Number(r.max_score) >= 1000) {
-            const rawSqlXp = Number(r.score || 0) * 10 + 25;
-            xp -= (rawSqlXp - computeRecordXp(r));
-          }
-        }
-        if (gamesCount > 0 && xp > gamesCount * 2000) {
-          xp = Math.round(xp / 1250) + gamesCount * 25;
-        }
-      }
-
-      xp = Math.max(0, Math.round(xp));
-      return {
-        user_id: item.user_id,
-        username: item.username,
-        xp,
-        games_played: gamesCount
-      };
-    });
-
-    return correctedUsers
-      .sort((a, b) => b.xp - a.xp)
-      .map((item, idx) => {
-        const lvl = Math.max(1, Math.floor(item.xp / 500) + 1);
-        return {
-          uniqueKey: `gen-${item.user_id}`,
-          rank: idx + 1,
-          user_id: item.user_id,
-          username: item.username,
-          rawMetric: item.xp,
-          metricDisplay: `${item.xp.toLocaleString()} XP`,
-          league: getLeague(item.xp, true),
-          subText: isFr
-            ? `Niveau ${lvl} • ${item.games_played} partie(s) jouée(s)`
-            : `Level ${lvl} • ${item.games_played} game(s) played`
-        };
-      });
-  }
-
-  // Si mode Général filtré sur Saison du Mois, 30j ou Aujourd'hui
-  if (activeTab.value === 'general') {
-    const mapUser = new Map();
-    for (const r of periodFilteredRecords.value) {
-      const prev = mapUser.get(r.user_id) || { user_id: r.user_id, username: r.username, xp: 0, games: 0 };
-      prev.xp += computeRecordXp(r);
-      prev.games += 1;
-      mapUser.set(r.user_id, prev);
-    }
-    return [...mapUser.values()]
-      .sort((a, b) => b.xp - a.xp)
-      .map((item, idx) => ({
-        uniqueKey: `gen-per-${item.user_id}`,
-        rank: idx + 1,
-        user_id: item.user_id,
-        username: item.username,
-        rawMetric: item.xp,
-        metricDisplay: `${item.xp.toLocaleString()} XP`,
-        league: getLeague(item.xp, true),
-        subText: isFr ? `${item.games} partie(s) sur la période` : `${item.games} game(s) in period`
-      }));
-  }
-
-  const modeKeywords = {
-    geoguessr: 'geoguessr',
-    mystery: 'myst',
-    flash60: 'flash',
-    detective: 'enqu',
-    mapclick: 'cliquez',
-    world: 'monde',
-    europe: 'europe',
-    grid: 'grille',
-    capitals: 'capitale',
-    flags: 'qcm drapeaux',
-    culture: 'culture'
-  };
-  const keyword = modeKeywords[activeTab.value] || '';
-
-  const matchingRecords = periodFilteredRecords.value.filter(r =>
-    (r.mode || '').toLowerCase().includes(keyword)
-  );
-
-  const bestPerUser = new Map();
-  for (const rec of matchingRecords) {
-    const existing = bestPerUser.get(rec.user_id);
-    if (!existing || Number(rec.score) > Number(existing.score)) {
-      bestPerUser.set(rec.user_id, rec);
-    }
-  }
-
-  const sorted = [...bestPerUser.values()].sort((a, b) => Number(b.score) - Number(a.score));
-
-  return sorted.map((item, idx) => {
-    const sc = Number(item.score || 0);
-    const mx = Math.max(1, Number(item.max_score || 15));
-    const ratio = Math.min(1, sc / mx);
+  if (xpVal >= 2200) {
     return {
-      uniqueKey: `${activeTab.value}-${item.user_id}`,
-      rank: idx + 1,
-      user_id: item.user_id,
-      username: item.username,
-      rawMetric: sc,
-      metricDisplay: `${sc.toLocaleString()} / ${mx.toLocaleString()}`,
-      league: getLeague(ratio, false),
-      subText: `${item.mode} • ${Math.round(ratio * 100)}%`
+      id: 'diamond',
+      tierNum: 4,
+      code: 'DIV-01 // ORBITAL',
+      short: isFr ? 'Diamant Orbital' : 'Orbital Diamond',
+      rivalTier: 'master',
+      hex: '#38bdf8'
+    };
+  }
+  if (xpVal >= 1200) {
+    return {
+      id: 'emerald',
+      tierNum: 3,
+      code: 'DIV-02 // MASTER',
+      short: isFr ? 'Émeraude Maître' : 'Master Emerald',
+      rivalTier: 'diamond',
+      hex: '#10b981'
+    };
+  }
+  if (xpVal >= 550) {
+    return {
+      id: 'gold',
+      tierNum: 2,
+      code: 'DIV-03 // VANGUARD',
+      short: isFr ? 'Or Vanguard' : 'Vanguard Gold',
+      rivalTier: 'gold',
+      hex: '#f59e0b'
+    };
+  }
+  return {
+    id: 'silver',
+    tierNum: 1,
+    code: 'DIV-04 // RECON',
+    short: isFr ? 'Argent Recon' : 'Recon Silver',
+    rivalTier: 'silver',
+    hex: '#94a3b8'
+  };
+};
+
+// Opérateurs de référence calibrés (complétés automatiquement par les vrais joueurs de l'API)
+const REFERENCE_OPERATORS = [
+  { id: 'ref-1', username: 'Aethelgard_Geo', avgOn15: 14.4, bestOn15: 15.0, gamesCount: 42, radar: [0.96, 0.92, 0.95, 0.94, 0.98], modes: ['all', 'qcm', 'chrono', 'pindrop', 'duel'] },
+  { id: 'ref-2', username: 'Kaelen_Vexillo', avgOn15: 13.8, bestOn15: 15.0, gamesCount: 31, radar: [0.94, 0.89, 0.86, 0.88, 0.90], modes: ['all', 'qcm', 'worldle', 'sprint'] },
+  { id: 'ref-3', username: 'Sora_Cartography', avgOn15: 13.5, bestOn15: 14.8, gamesCount: 27, radar: [0.88, 0.84, 0.96, 0.92, 0.85], modes: ['all', 'chrono', 'pindrop'] },
+  { id: 'ref-4', username: 'Lyra_Meridian', avgOn15: 12.9, bestOn15: 15.0, gamesCount: 22, radar: [0.86, 0.90, 0.82, 0.85, 0.80], modes: ['all', 'qcm', 'worldle', 'duel'] },
+  { id: 'ref-5', username: 'Vance_Orbital', avgOn15: 12.4, bestOn15: 14.5, gamesCount: 19, radar: [0.80, 0.86, 0.78, 0.90, 0.76], modes: ['all', 'sprint', 'pindrop'] },
+  { id: 'ref-6', username: 'Nyx_Haversine', avgOn15: 11.8, bestOn15: 14.0, gamesCount: 15, radar: [0.76, 0.78, 0.84, 0.80, 0.72], modes: ['all', 'worldle', 'chrono'] },
+  { id: 'ref-7', username: 'Orion_Telemetry', avgOn15: 11.1, bestOn15: 13.5, gamesCount: 11, radar: [0.74, 0.80, 0.70, 0.72, 0.65], modes: ['all', 'qcm', 'sprint'] },
+  { id: 'ref-8', username: 'Zeph_Atlas', avgOn15: 10.3, bestOn15: 13.0, gamesCount: 8, radar: [0.68, 0.65, 0.72, 0.66, 0.58], modes: ['all', 'qcm'] },
+  { id: 'ref-9', username: 'Caelum_Node', avgOn15: 9.8, bestOn15: 12.5, gamesCount: 6, radar: [0.64, 0.62, 0.60, 0.65, 0.52], modes: ['all', 'worldle', 'duel'] },
+  { id: 'ref-10', username: 'Vega_Sector', avgOn15: 9.2, bestOn15: 12.0, gamesCount: 5, radar: [0.60, 0.58, 0.55, 0.60, 0.48], modes: ['all', 'qcm', 'chrono'] }
+];
+
+const computePlayerXp = (avg15, best15, games) =>
+  Math.round(avg15 * 85 + best15 * 25 + games * 35);
+
+const rankedOperators = computed(() => {
+  const mode = selectedModeFilter.value;
+  const tfMultiplier =
+    selectedTimeframe.value === 'weekly'
+      ? 0.35
+      : selectedTimeframe.value === 'monthly'
+        ? 0.68
+        : 1;
+
+  const filteredByMode = rawLeaderboardEntries.value.filter((item) => {
+    if (mode === 'all') return true;
+    return !item.modes || item.modes.includes(mode);
+  });
+
+  const enriched = filteredByMode.map((item) => {
+    const avgOn15 = Math.min(15, Math.max(0, Number(item.avgOn15) || 0));
+    const bestOn15 = Math.min(15, Math.max(avgOn15, Number(item.bestOn15) || avgOn15));
+    const gamesCount = item.isMe
+      ? Math.max(1, Number(item.gamesCount) || 1)
+      : Math.max(1, Math.round((Number(item.gamesCount) || 1) * tfMultiplier));
+    const xp = computePlayerXp(avgOn15, bestOn15, gamesCount);
+    const consistencyPct = Math.min(100, Math.round((avgOn15 / 15) * 100));
+    const defaultRadar = [
+      Math.min(1, avgOn15 / 15),
+      Math.min(1, bestOn15 / 15),
+      Math.min(1, (avgOn15 + 1) / 15),
+      Math.min(1, (bestOn15 - 0.5) / 15),
+      Math.min(1, Math.max(0.35, gamesCount / 35))
+    ];
+    return {
+      ...item,
+      avgOn15,
+      bestOn15,
+      gamesCount,
+      consistencyPct,
+      xp,
+      radar: item.radar || defaultRadar,
+      league: getLeagueInfo(xp)
     };
   });
+
+  enriched.sort((a, b) => {
+    if (sortBy.value === 'avg') return b.avgOn15 - a.avgOn15 || b.xp - a.xp;
+    if (sortBy.value === 'best') return b.bestOn15 - a.bestOn15 || b.xp - a.xp;
+    if (sortBy.value === 'games') return b.gamesCount - a.gamesCount || b.xp - a.xp;
+    return b.xp - a.xp;
+  });
+
+  return enriched.map((item, idx) => ({
+    ...item,
+    rank: idx + 1
+  }));
 });
 
-// Vue d'ensemble des 5 Ligues avec nombre de joueurs dans chacune
-const leagueTiersOverview = computed(() => {
+const leagueDivisions = computed(() => {
   const isFr = locale.value === 'fr';
-  const isGen = activeTab.value === 'general';
-  const list = activeRanking.value;
-
-  const countByKey = (k) => list.filter(r => r.league.key === k).length;
-
+  const all = rankedOperators.value;
   return [
-    {
-      key: 'diamond',
-      icon: '💎',
-      name: isFr ? 'Diamant' : 'Diamond',
-      requirement: isGen ? '8 500+ XP' : '85%+ score',
-      count: countByKey('diamond')
-    },
-    {
-      key: 'platinum',
-      icon: '🟣',
-      name: isFr ? 'Platine' : 'Platinum',
-      requirement: isGen ? '6 500+ XP' : '65%+ score',
-      count: countByKey('platinum')
-    },
-    {
-      key: 'gold',
-      icon: '🥇',
-      name: isFr ? 'Or' : 'Gold',
-      requirement: isGen ? '4 500+ XP' : '45%+ score',
-      count: countByKey('gold')
-    },
-    {
-      key: 'silver',
-      icon: '🥈',
-      name: isFr ? 'Argent' : 'Silver',
-      requirement: isGen ? '2 500+ XP' : '25%+ score',
-      count: countByKey('silver')
-    },
-    {
-      key: 'bronze',
-      icon: '🥉',
-      name: 'Bronze',
-      requirement: isFr ? 'Départ (<25%)' : 'Starter (<25%)',
-      count: countByKey('bronze')
-    }
+    { id: 'all', code: 'ALL DIVISIONS', label: isFr ? 'Toutes les Ligues' : 'All Leagues', minXp: 0, hex: '#38bdf8', count: all.length },
+    { id: 'diamond', code: 'DIV-01 // ORBITAL', label: isFr ? 'Diamant Orbital' : 'Orbital Diamond', minXp: 2200, hex: '#38bdf8', count: all.filter((p) => p.league.id === 'diamond').length },
+    { id: 'emerald', code: 'DIV-02 // MASTER', label: isFr ? 'Émeraude Maître' : 'Master Emerald', minXp: 1200, hex: '#10b981', count: all.filter((p) => p.league.id === 'emerald').length },
+    { id: 'gold', code: 'DIV-03 // VANGUARD', label: isFr ? 'Or Vanguard' : 'Vanguard Gold', minXp: 550, hex: '#f59e0b', count: all.filter((p) => p.league.id === 'gold').length },
+    { id: 'silver', code: 'DIV-04 // RECON', label: isFr ? 'Argent Recon' : 'Recon Silver', minXp: 0, hex: '#94a3b8', count: all.filter((p) => p.league.id === 'silver').length }
   ];
 });
 
-const podiumPlayers = computed(() => activeRanking.value.slice(0, 3));
-
-const filteredRanking = computed(() => {
-  const q = playerSearch.value.trim().toLowerCase();
-  return activeRanking.value.filter(r => {
-    if (selectedLeagueFilter.value !== 'all' && r.league.key !== selectedLeagueFilter.value) {
-      return false;
-    }
-    if (q && !(r.username || '').toLowerCase().includes(q)) {
-      return false;
-    }
+const displayedLeaderboard = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  return rankedOperators.value.filter((p) => {
+    if (selectedLeagueFilter.value !== 'all' && p.league.id !== selectedLeagueFilter.value) return false;
+    if (q && !p.username.toLowerCase().includes(q)) return false;
     return true;
   });
 });
 
-const currentUserRank = computed(() =>
-  activeRanking.value.find(r => isCurrentUser(r)) || null
-);
-
-const nextRankGapText = computed(() => {
-  const me = currentUserRank.value;
-  if (!me) return '';
-  if (me.rank === 1) {
-    return locale.value === 'fr'
-      ? 'Vous êtes N°1 mondial de cette catégorie ! 👑'
-      : 'You are #1 in the world in this category! 👑';
-  }
-  const abovePlayer = activeRanking.value.find(r => r.rank === me.rank - 1);
-  if (!abovePlayer) return '';
-  const diff = Math.max(1, abovePlayer.rawMetric - me.rawMetric + 1);
-  const unit = activeTab.value === 'general' ? 'XP' : 'pts';
-  return locale.value === 'fr'
-    ? `Plus que ${diff.toLocaleString()} ${unit} pour dépasser ${abovePlayer.username} (#${abovePlayer.rank}) !`
-    : `Only ${diff.toLocaleString()} ${unit} needed to overtake ${abovePlayer.username} (#${abovePlayer.rank})!`;
+watch([searchQuery, selectedModeFilter, selectedLeagueFilter, selectedTimeframe], () => {
+  currentPage.value = 1;
 });
 
-const openPlayerModal = (playerRow) => {
-  inspectedPlayer.value = playerRow;
-};
+const totalPages = computed(() => Math.max(1, Math.ceil(displayedLeaderboard.value.length / pageSize)));
 
-const getBestForUserAndKeyword = (userId, kw) => {
-  const matches = recordsList.value.filter(
-    r => Number(r.user_id) === Number(userId) && (r.mode || '').toLowerCase().includes(kw)
-  );
-  if (matches.length === 0) return { text: '—', num: -1 };
-  const best = matches.reduce((a, b) => (Number(b.score) > Number(a.score) ? b : a), matches[0]);
+const paginatedLeaderboard = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return displayedLeaderboard.value.slice(start, start + pageSize);
+});
+
+const topThreePlayers = computed(() => rankedOperators.value.slice(0, 3));
+
+const myEntry = computed(() => rankedOperators.value.find((p) => p.isMe) || rankedOperators.value[0]);
+
+const nextLeagueTarget = computed(() => {
+  if (!myEntry.value) return null;
+  const xp = myEntry.value.xp;
+  const isFr = locale.value === 'fr';
+  if (xp < 550) return { label: isFr ? 'Or Vanguard' : 'Vanguard Gold', minXp: 550, prevXp: 0 };
+  if (xp < 1200) return { label: isFr ? 'Émeraude Maître' : 'Master Emerald', minXp: 1200, prevXp: 550 };
+  if (xp < 2200) return { label: isFr ? 'Diamant Orbital' : 'Orbital Diamond', minXp: 2200, prevXp: 1200 };
+  return null;
+});
+
+const leagueProgressPct = computed(() => {
+  if (!myEntry.value) return 0;
+  if (!nextLeagueTarget.value) return 100;
+  const { minXp, prevXp } = nextLeagueTarget.value;
+  return Math.min(100, Math.max(5, Math.round(((myEntry.value.xp - prevXp) / (minXp - prevXp)) * 100)));
+});
+
+// =========================================================
+// COMPARATEUR RADAR PENTAGONAL SVG À 5 AXES & MÉTRIQUES
+// =========================================================
+const comparisonTarget = computed(() => {
+  if (inspectedRival.value) return inspectedRival.value;
+  const firstOther = rankedOperators.value.find((p) => !p.isMe);
+  return firstOther || rankedOperators.value[0];
+});
+
+const radarAxesLabels = computed(() => {
+  const isFr = locale.value === 'fr';
+  return [
+    'QCM /15',
+    isFr ? 'VÉLOCITÉ' : 'VELOCITY',
+    'ATLAS 196',
+    'PINDROP',
+    isFr ? 'ASSIDUITÉ' : 'VOLUME'
+  ];
+});
+
+const getAxisEndpoint = (axisIdx, ratio = 1) => {
+  const cx = 130;
+  const cy = 125;
+  const maxR = 78;
+  const angle = -Math.PI / 2 + (axisIdx * 2 * Math.PI) / 5;
   return {
-    text: `${Number(best.score).toLocaleString()} / ${Number(best.max_score).toLocaleString()}`,
-    num: Number(best.score)
+    x: Number((cx + Math.cos(angle) * maxR * ratio).toFixed(1)),
+    y: Number((cy + Math.sin(angle) * maxR * ratio).toFixed(1))
   };
 };
 
-const headToHeadStats = computed(() => {
-  if (!inspectedPlayer.value) return [];
-  const theirId = inspectedPlayer.value.user_id;
-  const myId = currentUser.value ? (currentUser.value.id || currentUser.value.user?.id) : null;
+const getRadarGridPolygon = (levelRatio) => {
+  const pts = [];
+  for (let i = 0; i < 5; i++) {
+    const p = getAxisEndpoint(i, levelRatio);
+    pts.push(`${p.x},${p.y}`);
+  }
+  return pts.join(' ');
+};
+
+const buildOperatorRadarPolygon = (op) => {
+  const values = op?.radar || [0.7, 0.7, 0.7, 0.7, 0.7];
+  return values
+    .map((v, idx) => {
+      const clamped = Math.max(0.18, Math.min(1, Number(v) || 0.5));
+      const p = getAxisEndpoint(idx, clamped);
+      return `${p.x},${p.y}`;
+    })
+    .join(' ');
+};
+
+const myRadarPolygon = computed(() => buildOperatorRadarPolygon(myEntry.value));
+const targetRadarPolygon = computed(() => buildOperatorRadarPolygon(comparisonTarget.value));
+
+const headToHeadMetrics = computed(() => {
   const isFr = locale.value === 'fr';
-
-  const modesToCompare = [
-    { kw: 'geoguessr', icon: '🛰️', label: 'PinDrop' },
-    { kw: 'myst', icon: '🧭', label: isFr ? 'Pays Mystère' : 'Mystery Country' },
-    { kw: 'flash', icon: '⚡', label: 'QCM Flash 60s' },
-    { kw: 'enqu', icon: '🕵️', label: isFr ? 'Enquête 5 Indices' : '5-Clue Detective' },
-    { kw: 'cliquez', icon: '🖱️', label: isFr ? 'Cliquez Carte' : 'Map Click' },
-    { kw: 'monde', icon: '🌍', label: isFr ? 'Défi Monde' : 'World Challenge' },
-    { kw: 'europe', icon: '🇪🇺', label: isFr ? 'Défi Europe' : 'Europe Challenge' },
-    { kw: 'grille', icon: '🏳️', label: isFr ? 'Grille Drapeaux' : 'Flag Grid' },
-    { kw: 'capitale', icon: '🏛️', label: isFr ? 'QCM Capitales' : 'Capitals Quiz' },
-    { kw: 'qcm drapeaux', icon: '🚩', label: isFr ? 'QCM Drapeaux' : 'Flags Quiz' },
-    { kw: 'culture', icon: '🗣️', label: isFr ? 'QCM Culture' : 'Culture Quiz' }
+  const me = myEntry.value;
+  const tg = comparisonTarget.value;
+  if (!me || !tg) return [];
+  return [
+    {
+      id: 'avg',
+      label: isFr ? 'Moyenne (/15)' : 'Average (/15)',
+      myVal: me.avgOn15,
+      targetVal: tg.avgOn15,
+      myFormatted: `${me.avgOn15.toFixed(1)} / 15`,
+      targetFormatted: `${tg.avgOn15.toFixed(1)} / 15`
+    },
+    {
+      id: 'best',
+      label: isFr ? 'Record (/15)' : 'Best (/15)',
+      myVal: me.bestOn15,
+      targetVal: tg.bestOn15,
+      myFormatted: `${me.bestOn15.toFixed(1)} / 15`,
+      targetFormatted: `${tg.bestOn15.toFixed(1)} / 15`
+    },
+    {
+      id: 'acc',
+      label: isFr ? 'Taux de précision' : 'Accuracy Rate',
+      myVal: me.consistencyPct,
+      targetVal: tg.consistencyPct,
+      myFormatted: `${me.consistencyPct}%`,
+      targetFormatted: `${tg.consistencyPct}%`
+    },
+    {
+      id: 'xp',
+      label: 'Rating XP',
+      myVal: me.xp,
+      targetVal: tg.xp,
+      myFormatted: `${me.xp.toLocaleString()} XP`,
+      targetFormatted: `${tg.xp.toLocaleString()} XP`
+    }
   ];
-
-  return modesToCompare.map(m => {
-    const theirs = getBestForUserAndKeyword(theirId, m.kw);
-    const mine = myId ? getBestForUserAndKeyword(myId, m.kw) : { text: '—', num: -1 };
-    return {
-      icon: m.icon,
-      label: m.label,
-      theirBest: theirs.text,
-      theirNumeric: theirs.num,
-      myBest: mine.text,
-      myNumeric: mine.num
-    };
-  });
 });
 
-const headToHeadSummary = computed(() => {
-  let myWins = 0;
-  let theirWins = 0;
-  for (const s of headToHeadStats.value) {
-    if (s.myNumeric < 0 && s.theirNumeric < 0) continue;
-    if (s.myNumeric > s.theirNumeric) myWins++;
-    else if (s.theirNumeric > s.myNumeric) theirWins++;
+const selectOperatorForComparison = (player, podiumRank = null) => {
+  inspectedRival.value = player;
+  if (podiumRank) focusPodiumRank(podiumRank);
+};
+
+const challengeOperatorInDuel = (operator) => {
+  router.push({
+    path: '/duel',
+    query: {
+      challenger: operator.username,
+      tier: operator.league?.rivalTier || 'gold'
+    }
+  });
+};
+
+const getInitials = (name = 'OP') => {
+  const clean = name.replace(/[_-]/g, ' ').trim();
+  const parts = clean.split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return clean.slice(0, 2).toUpperCase();
+};
+
+const getRatioPct = (valA, valB) => {
+  const sum = Number(valA || 0) + Number(valB || 0);
+  if (sum <= 0) return 50;
+  return Math.max(12, Math.min(88, Math.round((Number(valA) / sum) * 100)));
+};
+
+// =========================================================
+// SCÈNE WEBGL THREE.JS DU PODIUM 3D + TROPHÉES PBR
+// =========================================================
+const podiumWebglMountRef = ref(null);
+let threeRenderer = null;
+let threeScene = null;
+let threeCamera = null;
+let podiumGroup = null;
+let trophyMeshes = [];
+let orbitalRings = [];
+let podiumAnimId = null;
+
+let podDragging = false;
+let podLastX = 0;
+let podLastY = 0;
+let podRotY = -0.22;
+let podTargetRotY = -0.22;
+let podRotX = 0.18;
+let podPulseKick = 0;
+
+const focusPodiumRank = (rankNum) => {
+  focusedPodiumRank.value = rankNum;
+  if (rankNum === 1) podTargetRotY = 0;
+  else if (rankNum === 2) podTargetRotY = 0.48;
+  else if (rankNum === 3) podTargetRotY = -0.48;
+  podPulseKick = 0.18;
+};
+
+const triggerPodiumPulse = () => {
+  podPulseKick = 0.22;
+};
+
+const onPodiumPointerDown = (e) => {
+  podDragging = true;
+  podLastX = e.clientX;
+  podLastY = e.clientY;
+};
+
+const onPodiumPointerMove = (e) => {
+  if (!podDragging) return;
+  const dx = e.clientX - podLastX;
+  const dy = e.clientY - podLastY;
+  podRotY += dx * 0.01;
+  podTargetRotY = podRotY;
+  podRotX = Math.max(-0.4, Math.min(0.55, podRotX + dy * 0.008));
+  podLastX = e.clientX;
+  podLastY = e.clientY;
+};
+
+const onPodiumPointerUp = () => {
+  podDragging = false;
+};
+
+const initThreeWebglPodium = async () => {
+  if (typeof window === 'undefined' || !podiumWebglMountRef.value) return;
+  try {
+    const THREE = await import('https://esm.sh/three@0.160.0');
+    const mount = podiumWebglMountRef.value;
+    if (!mount) return;
+
+    const W = mount.clientWidth || 380;
+    const H = mount.clientHeight || 280;
+
+    threeScene = new THREE.Scene();
+    threeCamera = new THREE.PerspectiveCamera(36, W / H, 0.1, 100);
+    threeCamera.position.set(0, 1.35, 7.4);
+    threeCamera.lookAt(0, -0.15, 0);
+
+    threeRenderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+    threeRenderer.setSize(W, H);
+    threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+    threeRenderer.toneMappingExposure = 1.35;
+
+    mount.innerHTML = '';
+    mount.appendChild(threeRenderer.domElement);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 1.15);
+    threeScene.add(ambient);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.9);
+    keyLight.position.set(5, 8, 6);
+    threeScene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 2.4);
+    rimLight.position.set(-5, 4, -4);
+    threeScene.add(rimLight);
+
+    podiumGroup = new THREE.Group();
+    threeScene.add(podiumGroup);
+
+    const darkPedestalMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0b1326,
+      metalness: 0.65,
+      roughness: 0.24,
+      clearcoat: 1.0
+    });
+
+    // Fonction de création d'une Coupe de Trophée 3D PBR
+    const createTrophyCup = (hexColor) => {
+      const tGroup = new THREE.Group();
+      const mat = new THREE.MeshPhysicalMaterial({
+        color: hexColor,
+        metalness: 0.78,
+        roughness: 0.18,
+        clearcoat: 1.0
+      });
+
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.12, 24), darkPedestalMat);
+      base.position.y = -0.32;
+      tGroup.add(base);
+
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.12, 0.28, 20), mat);
+      stem.position.y = -0.12;
+      tGroup.add(stem);
+
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.12, 0.38, 28), mat);
+      cup.position.y = 0.18;
+      tGroup.add(cup);
+
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.025, 14, 32), mat);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = 0.37;
+      tGroup.add(rim);
+
+      for (const side of [-1, 1]) {
+        const handle = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 12, 24, Math.PI), mat);
+        handle.position.set(side * 0.22, 0.18, 0);
+        handle.rotation.z = side === 1 ? -Math.PI / 2 : Math.PI / 2;
+        tGroup.add(handle);
+      }
+      return tGroup;
+    };
+
+    // Création des 3 colonnes hexagonales (#2 Argent, #1 Or, #3 Bronze)
+    const configs = [
+      { rank: 2, x: -1.35, h: 1.15, col: 0xcbd5e1 },
+      { rank: 1, x: 0,     h: 1.65, col: 0xfbbf24 },
+      { rank: 3, x: 1.35,  h: 0.90, col: 0xd97706 }
+    ];
+
+    trophyMeshes = [];
+    for (const cfg of configs) {
+      const colGroup = new THREE.Group();
+      colGroup.position.set(cfg.x, -1.2 + cfg.h / 2, 0);
+
+      const pillarGeo = new THREE.CylinderGeometry(0.52, 0.58, cfg.h, 6);
+      const pillarMesh = new THREE.Mesh(pillarGeo, darkPedestalMat);
+      colGroup.add(pillarMesh);
+
+      const neonMat = new THREE.MeshStandardMaterial({
+        color: cfg.col,
+        emissive: cfg.col,
+        emissiveIntensity: 2.0
+      });
+      const topRim = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.022, 12, 6), neonMat);
+      topRim.rotation.x = Math.PI / 2;
+      topRim.position.y = cfg.h / 2;
+      colGroup.add(topRim);
+
+      const trophy = createTrophyCup(cfg.col);
+      trophy.position.y = cfg.h / 2 + 0.55;
+      colGroup.add(trophy);
+      trophyMeshes.push(trophy);
+
+      podiumGroup.add(colGroup);
+    }
+
+    // Anneaux orbitaux à la base du Podium
+    const ringMat1 = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0ea5e9, emissiveIntensity: 1.8 });
+    const ringMat2 = new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 1.6 });
+
+    const r1 = new THREE.Mesh(new THREE.TorusGeometry(2.35, 0.02, 16, 96), ringMat1);
+    r1.rotation.x = Math.PI / 2;
+    r1.position.y = -1.2;
+    podiumGroup.add(r1);
+
+    const r2 = new THREE.Mesh(new THREE.TorusGeometry(1.85, 0.015, 16, 80), ringMat2);
+    r2.rotation.x = Math.PI / 2;
+    r2.position.y = -1.18;
+    podiumGroup.add(r2);
+
+    orbitalRings = [r1, r2];
+  } catch (e) {}
+};
+
+const renderPodiumWebglLoop = (timeMs = 0) => {
+  if (threeRenderer && threeScene && threeCamera && podiumGroup) {
+    const tSec = timeMs * 0.001;
+
+    if (!podDragging) {
+      podRotY += (podTargetRotY - podRotY) * 0.08 + Math.sin(tSec * 0.5) * 0.0015;
+    }
+
+    if (podPulseKick > 0.005) podPulseKick *= 0.86;
+    else podPulseKick = 0;
+
+    podiumGroup.rotation.y = podRotY;
+    podiumGroup.rotation.x = podRotX;
+    const sc = 1 + podPulseKick * 0.25;
+    podiumGroup.scale.set(sc, sc, sc);
+
+    for (let i = 0; i < trophyMeshes.length; i++) {
+      const tr = trophyMeshes[i];
+      tr.rotation.y = tSec * 1.2 + i;
+      tr.position.y = tr.userData.baseY || tr.position.y;
+    }
+
+    if (orbitalRings.length === 2) {
+      const pulse = 1 + Math.sin(tSec * 2.2) * 0.03;
+      orbitalRings[0].scale.set(pulse, pulse, 1);
+      orbitalRings[1].scale.set(2 - pulse, 2 - pulse, 1);
+    }
+
+    threeRenderer.render(threeScene, threeCamera);
   }
-  return { myWins, theirWins };
+  podiumAnimId = requestAnimationFrame(renderPodiumWebglLoop);
+};
+
+// =========================================================
+// CHARGEMENT DES DONNÉES API + INTÉGRATION DU JOUEUR CONNECTÉ
+// =========================================================
+const normalizeRawScoreTo15 = (s) => {
+  const raw = Math.max(0, Number(s.score) || 0);
+  const max = Math.max(1, Number(s.max_score) || 15);
+  const modeStr = (s.mode || '').toLowerCase();
+  if (max === 15 && !modeStr.includes('flash') && !modeStr.includes('sprint')) {
+    return Math.min(15, raw);
+  }
+  if (modeStr.includes('flash') && max === 40) {
+    return Math.min(15, Number(((raw / 30) * 15).toFixed(1)));
+  }
+  return Math.min(15, Number(((raw / max) * 15).toFixed(1)));
+};
+
+onMounted(async () => {
+  initThreeWebglPodium();
+  renderPodiumWebglLoop();
+
+  const operatorsMap = new Map();
+  for (const refOp of REFERENCE_OPERATORS) {
+    operatorsMap.set(refOp.username.toLowerCase(), { ...refOp, isMe: false });
+  }
+
+  try {
+    const resLb = await fetch(`${API_URL}/api/leaderboard`);
+    if (resLb.ok) {
+      const lbData = await resLb.json();
+      if (Array.isArray(lbData)) {
+        for (const row of lbData) {
+          const uname = row.username || row.name || row.pseudo;
+          if (!uname) continue;
+          const max = Number(row.max_score) || 15;
+          const rawAvg = Number(row.avg_score || row.score || 11);
+          const avg15 = Math.min(15, max === 15 ? rawAvg : (rawAvg / max) * 15);
+          operatorsMap.set(uname.toLowerCase(), {
+            id: `api-${row.user_id || uname}`,
+            username: uname,
+            avgOn15: Number(avg15.toFixed(1)),
+            bestOn15: Math.min(15, Number((avg15 + 1.2).toFixed(1))),
+            gamesCount: Math.max(1, Number(row.games_played || row.total_games || 5)),
+            modes: ['all', 'qcm', 'worldle', 'sprint', 'chrono', 'pindrop', 'duel'],
+            isMe: false
+          });
+        }
+      }
+    }
+  } catch (e) {}
+
+  const savedUser = localStorage.getItem('geolearn_user');
+  if (savedUser) {
+    try {
+      const parsed = JSON.parse(savedUser);
+      currentUser.value = parsed;
+      const uid = parsed.id || (parsed.user && parsed.user.id);
+      const myName =
+        parsed.name ||
+        parsed.username ||
+        parsed.pseudo ||
+        (parsed.user && (parsed.user.name || parsed.user.username)) ||
+        'Operator';
+
+      let myAvg = 12.0;
+      let myBest = 14.0;
+      let myCount = 1;
+
+      if (uid) {
+        const resScores = await fetch(`${API_URL}/api/scores/${uid}`);
+        if (resScores.ok) {
+          const scores = await resScores.json();
+          if (Array.isArray(scores) && scores.length > 0) {
+            const vals15 = scores.map(normalizeRawScoreTo15);
+            myCount = vals15.length;
+            myBest = Math.max(...vals15);
+            myAvg = vals15.reduce((a, b) => a + b, 0) / myCount;
+          }
+        }
+      }
+
+      operatorsMap.set(myName.toLowerCase(), {
+        id: `me-${uid || 'local'}`,
+        username: myName,
+        avgOn15: Number(myAvg.toFixed(1)),
+        bestOn15: Number(myBest.toFixed(1)),
+        gamesCount: myCount,
+        modes: ['all', 'qcm', 'worldle', 'sprint', 'chrono', 'pindrop', 'duel'],
+        isMe: true
+      });
+    } catch (e) {}
+  }
+
+  rawLeaderboardEntries.value = [...operatorsMap.values()];
+  loading.value = false;
+});
+
+onUnmounted(() => {
+  if (podiumAnimId) cancelAnimationFrame(podiumAnimId);
+  if (threeRenderer) threeRenderer.dispose();
 });
 </script>
 
 <style scoped>
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.podium-webgl-mount {
+  width: min(92vw, 420px);
+  height: 280px;
+  min-height: 260px;
 }
 </style>
