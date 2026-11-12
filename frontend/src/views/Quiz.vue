@@ -289,7 +289,7 @@
 
           </div>
 
-          <!-- BAS DE SCÈNE : CARROUSEL PLANÉTAIRE EN ARC 3D (INSPIRÉ DE LA ROUE COURBÉE) -->
+          <!-- BAS DE SCÈNE : CARROUSEL PLANÉTAIRE EN ARC 3D AVEC ILLUSTRATIONS COLORÉES -->
           <div
             class="relative z-30 w-full max-w-[1680px] mx-auto px-4 pb-6 pt-2"
             @wheel.prevent="onCarouselWheel"
@@ -298,12 +298,12 @@
             @pointerup="onArcDragEnd"
             @pointerleave="onArcDragEnd"
           >
-            <div class="arc-wheel-viewport relative h-[215px] sm:h-[230px] w-full flex items-center justify-center">
+            <div class="arc-wheel-viewport relative w-full flex items-center justify-center">
               <article
                 v-for="(card, idx) in filteredMenuCards"
                 :key="'arc-card-' + card.id"
                 @click="handleArcCardClick(idx, card)"
-                class="arc-wheel-card group absolute w-[265px] sm:w-[300px] h-[185px] rounded-3xl border p-4 flex flex-col justify-between cursor-pointer select-none"
+                class="arc-wheel-card group absolute w-[285px] sm:w-[325px] h-[195px] rounded-3xl border p-4.5 flex flex-col justify-between cursor-pointer select-none overflow-hidden"
                 :class="idx === activeCarouselIndex
                   ? 'bg-white/95 dark:bg-[#0D142B]/95 border-indigo-400/80 shadow-[0_24px_60px_-12px_rgba(99,102,241,0.55)]'
                   : 'bg-white/75 dark:bg-[#080D1D]/80 border-slate-200/70 dark:border-white/10 backdrop-blur-xl hover:border-indigo-400/50'"
@@ -311,13 +311,13 @@
               >
                 <!-- Halo lumineux interne -->
                 <div
-                  class="pointer-events-none absolute -right-8 -bottom-8 w-32 h-32 rounded-full blur-2xl opacity-35 group-hover:opacity-65 transition-opacity"
+                  class="pointer-events-none absolute -right-8 -bottom-8 w-32 h-32 rounded-full blur-2xl opacity-40 group-hover:opacity-75 transition-opacity"
                   :style="{ background: card.glowColor }"
                 ></div>
 
                 <div class="relative z-10 flex items-start justify-between gap-2">
                   <span
-                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border"
                     :class="card.badgeClass"
                   >
                     <span>{{ card.badgeIcon }}</span>
@@ -338,12 +338,59 @@
                     </p>
                   </div>
 
-                  <!-- Emblème 3D miniature -->
-                  <div
-                    class="w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center text-xl shadow-md border border-white/10 group-hover:scale-110 group-hover:rotate-6 transition-transform"
-                    :style="{ background: `linear-gradient(135deg, ${card.glowColor}38, rgba(15,23,42,0.6))` }"
-                  >
-                    {{ card.badgeIcon }}
+                  <!-- Illustration 3D colorée identique aux cartes détaillées du bas -->
+                  <div class="w-16 h-16 shrink-0 flex items-center justify-center group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
+                    <svg v-if="card.art === 'worldle'" viewBox="0 0 120 120" class="w-16 h-16 drop-shadow-[0_8px_14px_rgba(56,189,248,0.4)]">
+                      <circle cx="58" cy="58" r="36" fill="#1d4ed8" stroke="#7dd3fc" stroke-width="2" />
+                      <path d="M36 45 Q48 34 62 42 T82 55 Q72 72 52 68 Z" fill="#34d399" />
+                      <ellipse cx="58" cy="58" rx="46" ry="15" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-dasharray="5 3" transform="rotate(-22 58 58)" />
+                      <path d="M76 16 C68 16 62 22 62 30 C62 40 76 52 76 52 C76 52 90 40 90 30 C90 22 84 16 76 16 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="1.5" />
+                      <circle cx="76" cy="29" r="4.5" fill="#ffffff" />
+                    </svg>
+
+                    <svg v-else-if="card.art === 'chrono'" viewBox="0 0 120 120" class="w-16 h-16 drop-shadow-[0_8px_14px_rgba(16,185,129,0.4)]">
+                      <circle cx="60" cy="54" r="34" fill="#0284c7" stroke="#6ee7b7" stroke-width="2" />
+                      <path d="M42 38 Q58 32 72 44 T74 68 Q54 74 42 58 Z" fill="#fde047" />
+                      <path d="M84 24 A44 44 0 0 1 60 98" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" />
+                      <rect x="44" y="94" width="32" height="8" rx="4" fill="#38bdf8" />
+                    </svg>
+
+                    <svg v-else-if="card.art === 'sprint'" viewBox="0 0 120 120" class="w-16 h-16 drop-shadow-[0_8px_14px_rgba(245,158,11,0.4)]">
+                      <line x1="26" y1="22" x2="38" y2="96" stroke="#cbd5e1" stroke-width="3.5" stroke-linecap="round" />
+                      <path d="M27 24 Q46 18 64 28 L60 52 Q42 42 31 48 Z" fill="#f8fafc" />
+                      <rect x="68" y="26" width="12" height="6" rx="2" fill="#fbbf24" />
+                      <circle cx="74" cy="64" r="28" fill="#0f172a" stroke="#fbbf24" stroke-width="4.5" />
+                      <line x1="74" y1="64" x2="74" y2="47" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round" />
+                      <line x1="74" y1="64" x2="88" y2="64" stroke="#f43f5e" stroke-width="3" stroke-linecap="round" />
+                    </svg>
+
+                    <svg v-else-if="card.art === 'detective'" viewBox="0 0 120 120" class="w-16 h-16 drop-shadow-[0_8px_14px_rgba(168,85,247,0.4)]">
+                      <rect x="44" y="26" width="44" height="58" rx="8" transform="rotate(8 66 57)" fill="#1e1b4b" stroke="#a855f7" stroke-width="2.5" />
+                      <circle cx="48" cy="58" r="22" fill="rgba(56,189,248,0.22)" stroke="#38bdf8" stroke-width="4.5" />
+                      <line x1="33" y1="74" x2="18" y2="90" stroke="#c084fc" stroke-width="6.5" stroke-linecap="round" />
+                    </svg>
+
+                    <svg v-else-if="card.art === 'capitals'" viewBox="0 0 120 120" class="w-16 h-16 drop-shadow-[0_8px_14px_rgba(56,189,248,0.4)]">
+                      <polygon points="60,20 20,44 100,44" fill="#60a5fa" stroke="#bae6fd" stroke-width="2" />
+                      <rect x="26" y="44" width="68" height="6" rx="2" fill="#3b82f6" />
+                      <rect x="32" y="50" width="8" height="36" rx="2" fill="#e2e8f0" />
+                      <rect x="56" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
+                      <rect x="80" y="50" width="8" height="36" rx="2" fill="#94a3b8" />
+                      <rect x="20" y="86" width="80" height="10" rx="3" fill="#38bdf8" />
+                    </svg>
+
+                    <svg v-else-if="card.art === 'flags'" viewBox="0 0 120 120" class="w-16 h-16 drop-shadow-[0_8px_14px_rgba(99,102,241,0.4)]">
+                      <line x1="32" y1="18" x2="32" y2="98" stroke="#e2e8f0" stroke-width="4.5" stroke-linecap="round" />
+                      <circle cx="32" cy="16" r="5" fill="#fbbf24" />
+                      <path d="M34 24 Q58 16 78 26 T98 24 L98 66 Q78 74 58 64 T34 68 Z" fill="#3b82f6" stroke="#93c5fd" stroke-width="2" />
+                      <path d="M34 38 Q58 30 78 40 T98 38 L98 52 Q78 60 58 50 T34 54 Z" fill="#f8fafc" />
+                    </svg>
+
+                    <svg v-else viewBox="0 0 120 120" class="w-16 h-16 drop-shadow-[0_8px_14px_rgba(236,72,153,0.4)]">
+                      <circle cx="60" cy="58" r="34" fill="#1e1b4b" stroke="#f472b6" stroke-width="3" />
+                      <circle cx="60" cy="58" r="21" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="5 4" />
+                      <circle cx="60" cy="58" r="9" fill="#10b981" />
+                    </svg>
                   </div>
                 </div>
 
@@ -2002,14 +2049,13 @@ const initThreeWebglController = async () => {
     const mount = webglContainerRef.value;
     if (!mount) return;
 
-    const W = mount.clientWidth || 540;
-    const H = mount.clientHeight || 340;
+    const W = mount.clientWidth || 640;
+    const H = mount.clientHeight || 450;
 
     threeScene = new THREE.Scene();
-    // Caméra reculée à z = 6.8 et orientée vers y = 0.15 pour que le socle et les poignées ne soient jamais coupés en bas
-    threeCamera = new THREE.PerspectiveCamera(34, W / H, 0.1, 100);
-    threeCamera.position.set(0, 0.25, 6.8);
-    threeCamera.lookAt(0, 0.15, 0);
+    threeCamera = new THREE.PerspectiveCamera(36, W / H, 0.1, 100);
+    threeCamera.position.set(0, 0.22, 6.1);
+    threeCamera.lookAt(0, -0.12, 0);
 
     threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     threeRenderer.setSize(W, H);
@@ -2286,12 +2332,12 @@ const updateThreeWebglFrame = (timeMs) => {
   if (wglPulseKick > 0.005) wglPulseKick *= 0.86;
   else wglPulseKick = 0;
 
-  if (controllerGroup) {
+if (controllerGroup) {
     controllerGroup.rotation.y = wglRotY + stageParallaxX.value * 0.25;
     controllerGroup.rotation.x = wglRotX + stageParallaxY.value * 0.18;
     controllerGroup.rotation.z = -0.14 + Math.sin(tSec * 1.4) * 0.04;
-    controllerGroup.position.y = 0.22 + Math.sin(tSec * 2.1) * 0.1 + wglPulseKick;
-    const sc = 1 + wglPulseKick * 0.35;
+    controllerGroup.position.y = 0.12 + Math.sin(tSec * 2.1) * 0.1 + wglPulseKick;
+    const sc = 1.24 + wglPulseKick * 0.35;
     controllerGroup.scale.set(sc, sc, sc);
   }
 
@@ -3625,10 +3671,10 @@ const launchCustomBuiltQuiz = () => {
 const menuCategories = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'all', code: '01', label: isFr ? 'Tous les modes (11)' : 'All Modes (11)' },
-    { id: 'featured', code: '02', label: isFr ? 'Défis 3D Phares' : '3D Featured' },
-    { id: 'classics', code: '03', label: isFr ? 'QCM & Connaissances' : 'Quiz & Knowledge' },
-    { id: 'study', code: '04', label: isFr ? 'Étude & Sur-mesure' : 'Study & Learn' }
+    { id: 'all', icon: '⊞', label: isFr ? 'Tous les modes (11)' : 'All Modes (11)' },
+    { id: 'featured', icon: '★', label: isFr ? 'Défis 3D Phares' : '3D Featured' },
+    { id: 'classics', icon: '🏛️', label: isFr ? 'QCM & Connaissances' : 'Quiz & Knowledge' },
+    { id: 'study', icon: '🎓', label: isFr ? 'Étude & Sur-mesure' : 'Study & Learn' }
   ];
 });
 
@@ -3639,7 +3685,7 @@ const allMenuCards = computed(() => {
       id: 'mystery',
       cat: 'featured',
       art: 'worldle',
-      badgeIcon: '01',
+      badgeIcon: '★',
       tag: isFr ? 'Mystère 3D' : '3D Mystery',
       metric: isFr ? '6 ESSAIS' : '6 TRIES',
       shortTitle: 'Worldle 3D',
@@ -3659,9 +3705,9 @@ const allMenuCards = computed(() => {
       id: 'chrono',
       cat: 'featured',
       art: 'chrono',
-      badgeIcon: '02',
+      badgeIcon: '⚡',
       tag: isFr ? 'Globe 3D' : '3D Globe',
-      metric: '47 / 196',
+      metric: isFr ? '47 / 196 PAYS' : '47 / 196 STATES',
       shortTitle: isFr ? 'Chrono 3D' : '3D Timed',
       duration: '~3 min',
       durationMin: 3,
@@ -3679,7 +3725,7 @@ const allMenuCards = computed(() => {
       id: 'flash60',
       cat: 'featured',
       art: 'sprint',
-      badgeIcon: '03',
+      badgeIcon: '🏆',
       tag: 'Arcade',
       metric: 'COMBO X4',
       shortTitle: 'Sprint 60s',
@@ -3699,7 +3745,7 @@ const allMenuCards = computed(() => {
       id: 'detective',
       cat: 'featured',
       art: 'detective',
-      badgeIcon: '04',
+      badgeIcon: '🧩',
       tag: isFr ? 'Logique 3D' : '3D Logic',
       metric: '25 PTS MAX',
       shortTitle: isFr ? '5 Indices 3D' : '5 Clues 3D',
@@ -3719,9 +3765,9 @@ const allMenuCards = computed(() => {
       id: 'qcm-cap',
       cat: 'classics',
       art: 'capitals',
-      badgeIcon: '05',
+      badgeIcon: '🏛️',
       tag: isFr ? 'Capitales' : 'Capitals',
-      metric: '15 QCM',
+      metric: '15 QUESTIONS',
       shortTitle: isFr ? 'Capitales' : 'Capitals',
       duration: '~4 min',
       durationMin: 4,
@@ -3737,9 +3783,9 @@ const allMenuCards = computed(() => {
       id: 'qcm-flag',
       cat: 'classics',
       art: 'flags',
-      badgeIcon: '06',
+      badgeIcon: '🚩',
       tag: isFr ? 'Drapeaux' : 'Flags',
-      metric: '15 QCM',
+      metric: '15 QUESTIONS',
       shortTitle: isFr ? 'Drapeaux' : 'Flags',
       duration: '~4 min',
       durationMin: 4,
@@ -3755,9 +3801,9 @@ const allMenuCards = computed(() => {
       id: 'qcm-culture',
       cat: 'classics',
       art: 'radar',
-      badgeIcon: '07',
+      badgeIcon: '🌐',
       tag: 'Culture',
-      metric: '15 QCM',
+      metric: '15 QUESTIONS',
       shortTitle: 'Culture & Pop',
       duration: '~4 min',
       durationMin: 4,
@@ -3775,7 +3821,7 @@ const allMenuCards = computed(() => {
       id: 'map-click',
       cat: 'classics',
       art: 'radar',
-      badgeIcon: '08',
+      badgeIcon: '🎯',
       tag: 'Seterra',
       metric: isFr ? 'SANS CLAVIER' : 'NO TYPING',
       shortTitle: isFr ? 'Clic Carte' : 'Map Click',
@@ -3795,11 +3841,11 @@ const allMenuCards = computed(() => {
       id: 'flashcards',
       cat: 'study',
       art: 'detective',
-      badgeIcon: '09',
+      badgeIcon: '🎓',
       tag: isFr ? 'Étude 3D' : '3D Study',
       metric: isFr ? '196 FICHES' : '196 CARDS',
       shortTitle: 'Flashcards 3D',
-      duration: '∞ Libre',
+      duration: isFr ? '∞ Libre' : '∞ Untimed',
       durationMin: 10,
       popularity: 9,
       title: t('home.mode_flash_title'),
@@ -3815,8 +3861,8 @@ const allMenuCards = computed(() => {
       id: 'flag-grid',
       cat: 'study',
       art: 'flags',
-      badgeIcon: '10',
-      tag: '196 Flags',
+      badgeIcon: '🏳️',
+      tag: isFr ? '196 Drapeaux' : '196 Flags',
       metric: 'AUTO-FOCUS',
       shortTitle: isFr ? 'Grille 196' : 'Flag Grid',
       duration: '~8 min',
@@ -3835,7 +3881,7 @@ const allMenuCards = computed(() => {
       id: 'custom-builder',
       cat: 'study',
       art: 'worldle',
-      badgeIcon: '11',
+      badgeIcon: '🔗',
       tag: 'Custom',
       metric: isFr ? '5 À 15 PAYS' : '5 TO 15 STATES',
       shortTitle: isFr ? 'Sur-mesure' : 'Builder',
@@ -3986,14 +4032,16 @@ onUnmounted(() => {
 /* SCÈNE WEBGL 3D PLEIN ÉCRAN & ROUE ORBITALE EN ARC         */
 /* ========================================================= */
 .webgl-showcase-stage {
-  background: radial-gradient(circle at 50% 42%, rgba(79, 70, 229, 0.14) 0%, rgba(14, 165, 233, 0.05) 45%, transparent 75%);
+  min-height: 108vh;
+  padding-bottom: 2.5rem;
+  background: radial-gradient(circle at 50% 42%, rgba(79, 70, 229, 0.16) 0%, rgba(14, 165, 233, 0.06) 45%, transparent 75%);
   border-bottom: 1px solid var(--border-color);
 }
 
 .webgl-controller-mount {
-  width: min(92vw, 540px);
-  height: min(38vh, 330px);
-  min-height: 270px;
+  width: min(94vw, 680px);
+  height: 450px;
+  min-height: 410px;
 }
 
 .ambient-halo {
@@ -4026,7 +4074,8 @@ onUnmounted(() => {
 }
 
 .arc-wheel-viewport {
-  height: 190px;
+  height: 230px;
+  margin-top: 0.75rem;
   perspective: 1600px;
   transform-style: preserve-3d;
 }
