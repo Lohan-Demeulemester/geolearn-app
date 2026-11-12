@@ -85,7 +85,7 @@
           <!-- BARRE SUPÉRIEURE FLOTTANTE : FILTRES CATÉGORIES, RECHERCHE & VUE (ZÉRO EMOJI + LOUPE Z-10) -->
           <div class="relative z-30 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pt-3.5 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
             <!-- Pilules de catégories avec codes vectoriels -->
-            <div class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-full bg-white/85 dark:bg-[#0B1023]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl self-start">
+            <div class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-full bg-white/85 dark:bg-[#090E1A]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl self-start">
               <button
                 v-for="cat in menuCategories"
                 :key="cat.id"
@@ -93,7 +93,7 @@
                 @click="selectCategoryFilter(cat.id)"
                 class="px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
                 :class="selectedMenuCat === cat.id
-                  ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-sky-500 text-white shadow-lg shadow-indigo-500/25 scale-[1.02]'
+                  ? 'bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 text-white shadow-lg shadow-sky-500/25 scale-[1.02]'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
               >
                 <span class="font-mono text-[10px] opacity-75">{{ cat.code }}</span>
@@ -120,7 +120,7 @@
                   v-model="menuSearchQuery"
                   type="text"
                   :placeholder="locale === 'fr' ? 'Rechercher un jeu...' : 'Search for a game...'"
-                  class="relative z-0 w-48 sm:w-56 pl-10 pr-7 py-2 rounded-full bg-white/85 dark:bg-[#0B1023]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-400 shadow-lg"
+                  class="relative z-0 w-48 sm:w-56 pl-10 pr-7 py-2 rounded-full bg-white/85 dark:bg-[#090E1A]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400 shadow-lg"
                 />
                 <button
                   v-if="menuSearchQuery"
@@ -135,7 +135,7 @@
               <button
                 type="button"
                 @click="launchRandomGame"
-                class="px-4 py-2 rounded-full bg-indigo-500/15 hover:bg-indigo-500 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition cursor-pointer shadow-lg backdrop-blur-xl flex items-center gap-1.5"
+                class="px-4 py-2 rounded-full bg-sky-500/15 hover:bg-sky-500 text-indigo-600 dark:text-indigo-300 hover:text-white border border-sky-500/30 text-xs font-bold transition cursor-pointer shadow-lg backdrop-blur-xl flex items-center gap-1.5"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" />
@@ -148,7 +148,7 @@
               <button
                 type="button"
                 @click="toggleSound"
-                class="px-3.5 py-2 rounded-full bg-white/85 dark:bg-[#0B1023]/80 border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-lg backdrop-blur-xl flex items-center gap-1.5"
+                class="px-3.5 py-2 rounded-full bg-white/85 dark:bg-[#090E1A]/80 border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-lg backdrop-blur-xl flex items-center gap-1.5"
               >
                 <svg v-if="soundEnabled" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -232,17 +232,13 @@
                 @pointerleave="onWebglPointerUp"
                 @click="triggerWebglPulse"
               ></div>
-
-              <div class="relative z-30 pointer-events-none mt-2 px-3.5 py-1 rounded-full bg-slate-900/85 dark:bg-[#0B1023]/90 border border-white/15 font-mono text-[10px] text-indigo-300 backdrop-blur-md shadow-lg">
-                {{ locale === 'fr' ? '↻ GLISSER EN 3D (WEBGL) • CLIQUER POUR IMPULSION' : '↻ DRAG IN 3D (WEBGL) • CLICK FOR PULSE' }}
-              </div>
             </div>
 
             <!-- Droite (3 cols) : Fiche Télémétrique & Navigation Rapide -->
             <div class="lg:col-span-3 flex flex-col items-stretch lg:items-end justify-center order-3 z-20">
-              <div class="w-full max-w-xs rounded-3xl bg-white/85 dark:bg-[#0B1023]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/12 p-5 shadow-2xl space-y-4">
+              <div class="w-full max-w-xs rounded-3xl bg-white/85 dark:bg-[#090E1A]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/12 p-5 shadow-2xl space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-200/70 dark:border-white/10 pb-3">
-                  <span class="font-mono text-[11px] font-bold uppercase tracking-wider text-indigo-400">
+                  <span class="font-mono text-[11px] font-bold uppercase tracking-wider text-sky-400">
                     {{ locale === 'fr' ? 'PARAMÈTRES DU MODE' : 'MODE TELEMETRY' }}
                   </span>
                   <span class="w-2.5 h-2.5 rounded-full animate-pulse" :style="{ backgroundColor: activeShowcaseCard.glowColor }"></span>
@@ -272,14 +268,14 @@
                   <button
                     type="button"
                     @click="stepCarousel(-1)"
-                    class="flex-1 py-2.5 rounded-2xl bg-slate-100 dark:bg-white/[0.06] hover:bg-indigo-500 hover:text-white text-slate-800 dark:text-white font-black text-xs transition cursor-pointer"
+                    class="flex-1 py-2.5 rounded-2xl bg-slate-100 dark:bg-white/[0.06] hover:bg-sky-500 hover:text-white text-slate-800 dark:text-white font-black text-xs transition cursor-pointer"
                   >
                     ← {{ locale === 'fr' ? 'Précédent' : 'Prev' }}
                   </button>
                   <button
                     type="button"
                     @click="stepCarousel(1)"
-                    class="flex-1 py-2.5 rounded-2xl bg-slate-100 dark:bg-white/[0.06] hover:bg-indigo-500 hover:text-white text-slate-800 dark:text-white font-black text-xs transition cursor-pointer"
+                    class="flex-1 py-2.5 rounded-2xl bg-slate-100 dark:bg-white/[0.06] hover:bg-sky-500 hover:text-white text-slate-800 dark:text-white font-black text-xs transition cursor-pointer"
                   >
                     {{ locale === 'fr' ? 'Suivant' : 'Next' }} →
                   </button>
@@ -305,8 +301,8 @@
                 @click="handleArcCardClick(idx, card)"
                 class="arc-wheel-card group absolute w-[285px] sm:w-[325px] h-[195px] rounded-3xl border p-4.5 flex flex-col justify-between cursor-pointer select-none overflow-hidden"
                 :class="idx === activeCarouselIndex
-                  ? 'bg-white/95 dark:bg-[#0D142B]/95 border-indigo-400/80 shadow-[0_24px_60px_-12px_rgba(99,102,241,0.55)]'
-                  : 'bg-white/75 dark:bg-[#080D1D]/80 border-slate-200/70 dark:border-white/10 backdrop-blur-xl hover:border-indigo-400/50'"
+                  ? 'bg-white/95 dark:bg-[#090E1A]/95 border-sky-400/80 shadow-[0_24px_60px_-12px_rgba(99,102,241,0.55)]'
+                  : 'bg-white/75 dark:bg-[#080D1D]/80 border-slate-200/70 dark:border-white/10 backdrop-blur-xl hover:border-sky-400/50'"
                 :style="getArcWheelCardStyle(idx)"
               >
                 <!-- Halo lumineux interne -->
@@ -397,7 +393,7 @@
                 <div class="relative z-10 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[11px] font-extrabold">
                   <span
                     class="flex items-center gap-1"
-                    :class="idx === activeCarouselIndex ? 'text-indigo-500 dark:text-sky-400' : 'text-slate-400'"
+                    :class="idx === activeCarouselIndex ? 'text-sky-500 dark:text-sky-400' : 'text-slate-400'"
                   >
                     <span>▶</span>
                     <span>{{ idx === activeCarouselIndex ? (locale === 'fr' ? 'Cliquer pour lancer' : 'Click to launch') : card.shortTitle }}</span>
@@ -416,7 +412,7 @@
         <section ref="gamesGridRef" class="max-w-[1440px] mx-auto px-4 sm:px-8 pt-14 pb-24 space-y-8">
           <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-5">
             <div>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 block mb-1">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-sky-500 dark:text-sky-400 block mb-1">
                 {{ locale === 'fr' ? 'BIBLIOTHÈQUE COMPLÈTE // 11 EXPÉRIENCES' : 'COMPLETE LIBRARY // 11 EXPERIENCES' }}
               </span>
               <h2 class="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -427,7 +423,7 @@
             <div class="flex items-center gap-3">
               <select
                 v-model="menuSortBy"
-                class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-[#0B1022] text-xs font-bold text-slate-800 dark:text-white focus:outline-none cursor-pointer"
+                class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-[#090E1A] text-xs font-bold text-slate-800 dark:text-white focus:outline-none cursor-pointer"
               >
                 <option value="popular">{{ locale === 'fr' ? 'Trier : Popularité' : 'Sort by: Popularity' }}</option>
                 <option value="fast">{{ locale === 'fr' ? 'Trier : Plus rapide' : 'Sort by: Shortest' }}</option>
@@ -443,7 +439,7 @@
               @click="card.action()"
               @pointermove="onMatrixCardMove($event, card.id)"
               @pointerleave="onMatrixCardLeave(card.id)"
-              class="matrix-tilt-card group relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0B1022] p-6 flex items-stretch justify-between gap-4 cursor-pointer"
+              class="matrix-tilt-card group relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#090E1A] p-6 flex items-stretch justify-between gap-4 cursor-pointer"
               :style="getMatrixCardStyle(card.id)"
             >
               <div
@@ -471,7 +467,7 @@
                 </div>
 
                 <div class="pt-5 mt-3 flex items-center gap-3">
-                  <span class="px-4 py-2 rounded-full bg-slate-900 dark:bg-white/[0.08] group-hover:bg-indigo-500 text-white text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                  <span class="px-4 py-2 rounded-full bg-slate-900 dark:bg-white/[0.08] group-hover:bg-sky-500 text-white text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap">
                     <span class="text-[10px]">▶</span>
                     <span>{{ card.cta }}</span>
                   </span>
@@ -3863,7 +3859,7 @@ const allMenuCards = computed(() => {
       title: t('home.mode_flags_title'),
       desc: t('home.mode_flags_desc'),
       cta: isFr ? 'Lancer 15 Questions' : 'Start 15 Questions',
-      badgeClass: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/35',
+      badgeClass: 'bg-sky-500/15 text-indigo-300 border-sky-500/35',
       glowColor: '#6366f1',
       action: () => initQcm('flag')
     },
@@ -3943,7 +3939,7 @@ const allMenuCards = computed(() => {
         ? 'Identifiez simultanément tous les drapeaux d\'un continent avec passage automatique au suivant.'
         : 'Identify all flags from a continent simultaneously with auto-focus.',
       cta: isFr ? 'Ouvrir la Grille' : 'Open Matrix',
-      badgeClass: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/35',
+      badgeClass: 'bg-sky-500/15 text-indigo-300 border-sky-500/35',
       glowColor: '#6366f1',
       action: () => { currentMode.value = 'flag-grid'; }
     },

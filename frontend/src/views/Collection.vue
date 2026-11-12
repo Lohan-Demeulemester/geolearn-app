@@ -542,7 +542,7 @@ const getTierTheme = (tier, isFr) => {
         romanBadgeStyle: 'bg-purple-200 text-purple-950',
         rarityPillStyle: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300',
         activeStepStyle: 'bg-purple-500/15 border-purple-500 text-purple-700 dark:text-purple-300',
-        progressBarStyle: 'bg-gradient-to-r from-purple-500 to-indigo-500'
+        progressBarStyle: 'bg-gradient-to-r from-purple-500 to-sky-500'
       };
     case 3:
       return {

@@ -1182,7 +1182,7 @@ const allModules = computed(() => {
       title: t('home.mode_flags_title'),
       desc: t('home.mode_flags_desc'),
       footer: isFr ? 'Jouer aux drapeaux' : 'Play flags',
-      badgeClass: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+      badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
       to: { path: '/quiz', query: { mode: 'qcm', type: 'flag' } }
     },
     {
