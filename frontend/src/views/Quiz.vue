@@ -82,9 +82,9 @@
             </div>
           </div>
 
-          <!-- BARRE SUPÉRIEURE FLOTTANTE : FILTRES CATÉGORIES, RECHERCHE & VUE -->
-          <div class="relative z-30 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pt-4 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
-            <!-- Pilules de catégories -->
+          <!-- BARRE SUPÉRIEURE FLOTTANTE : FILTRES CATÉGORIES, RECHERCHE & VUE (ZÉRO EMOJI + LOUPE Z-10) -->
+          <div class="relative z-30 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pt-3.5 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
+            <!-- Pilules de catégories avec codes vectoriels -->
             <div class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-full bg-white/85 dark:bg-[#0B1023]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl self-start">
               <button
                 v-for="cat in menuCategories"
@@ -96,28 +96,37 @@
                   ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-sky-500 text-white shadow-lg shadow-indigo-500/25 scale-[1.02]'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
               >
-                <span>{{ cat.icon }}</span>
+                <span class="font-mono text-[10px] opacity-75">{{ cat.code }}</span>
                 <span>{{ cat.label }}</span>
               </button>
             </div>
 
-            <!-- Recherche + Aléatoire + Audio + Grille -->
+            <!-- Recherche (avec Loupe z-10 visible) + Aléatoire + Audio + Grille -->
             <div class="flex flex-wrap items-center gap-2 self-start xl:self-auto">
               <div class="relative">
-                <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="!currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                <svg
+                  class="w-4 h-4 text-slate-400 dark:text-slate-300 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
                 </svg>
                 <input
                   v-model="menuSearchQuery"
                   type="text"
                   :placeholder="locale === 'fr' ? 'Rechercher un jeu...' : 'Search for a game...'"
-                  class="w-48 sm:w-56 pl-9 pr-7 py-2 rounded-full bg-white/85 dark:bg-[#0B1023]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-400 shadow-lg"
+                  class="relative z-0 w-48 sm:w-56 pl-10 pr-7 py-2 rounded-full bg-white/85 dark:bg-[#0B1023]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-400 shadow-lg"
                 />
                 <button
                   v-if="menuSearchQuery"
                   type="button"
                   @click="menuSearchQuery = ''"
-                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 text-slate-400 hover:text-white text-xs cursor-pointer"
                 >
                   ×
                 </button>
@@ -126,17 +135,30 @@
               <button
                 type="button"
                 @click="launchRandomGame"
-                class="px-4 py-2 rounded-full bg-indigo-500/15 hover:bg-indigo-500 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition cursor-pointer shadow-lg backdrop-blur-xl"
+                class="px-4 py-2 rounded-full bg-indigo-500/15 hover:bg-indigo-500 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition cursor-pointer shadow-lg backdrop-blur-xl flex items-center gap-1.5"
               >
-                ⚂ {{ locale === 'fr' ? 'Aléatoire' : 'Random' }}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" />
+                  <polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" />
+                  <line x1="4" y1="4" x2="9" y2="9" />
+                </svg>
+                <span>{{ locale === 'fr' ? 'Aléatoire' : 'Random' }}</span>
               </button>
 
               <button
                 type="button"
                 @click="toggleSound"
-                class="px-3.5 py-2 rounded-full bg-white/85 dark:bg-[#0B1023]/80 border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-lg backdrop-blur-xl"
+                class="px-3.5 py-2 rounded-full bg-white/85 dark:bg-[#0B1023]/80 border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-lg backdrop-blur-xl flex items-center gap-1.5"
               >
-                {{ soundEnabled ? '🕪 ON' : '🔇︎ OFF' }}
+                <svg v-if="soundEnabled" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+                <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                </svg>
+                <span>{{ soundEnabled ? 'ON' : 'OFF' }}</span>
               </button>
 
               <button
@@ -241,7 +263,7 @@
                   </div>
                   <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.04]">
                     <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'Couverture' : 'Dataset' }}</span>
-                    <strong class="font-mono text-purple-400 mt-0.5 block">196 ÉTATS</strong>
+                    <strong class="font-mono text-purple-400 mt-0.5 block">{{ locale === 'fr' ? '196 ÉTATS' : '196 STATES' }}</strong>
                   </div>
                 </div>
 
@@ -1981,70 +2003,73 @@ const initThreeWebglController = async () => {
     if (!mount) return;
 
     const W = mount.clientWidth || 540;
-    const H = mount.clientHeight || 400;
+    const H = mount.clientHeight || 340;
 
     threeScene = new THREE.Scene();
-    threeCamera = new THREE.PerspectiveCamera(36, W / H, 0.1, 100);
-    threeCamera.position.set(0, 0.4, 7.6);
+    // Caméra reculée à z = 9.2 et orientée vers y = -0.15 pour que le socle et les poignées ne soient jamais coupés en bas
+    threeCamera = new THREE.PerspectiveCamera(34, W / H, 0.1, 100);
+    threeCamera.position.set(0, 0.25, 9.2);
+    threeCamera.lookAt(0, -0.15, 0);
 
     threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     threeRenderer.setSize(W, H);
     threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-    threeRenderer.toneMappingExposure = 1.25;
+    threeRenderer.toneMappingExposure = 1.45;
 
     mount.innerHTML = '';
     mount.appendChild(threeRenderer.domElement);
 
-    // Éclairage Studio 3D (Key Light, Rim Light Cyan, Neon Under-Glow)
-    const ambient = new THREE.AmbientLight(0xffffff, 0.75);
+    // Éclairage Studio renforcé pour faire ressortir les volumes de la manette sur fond sombre
+    const ambient = new THREE.AmbientLight(0xffffff, 1.15);
     threeScene.add(ambient);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.4);
-    keyLight.position.set(4, 6, 5);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.0);
+    keyLight.position.set(4, 7, 6);
     threeScene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 2.1);
-    rimLight.position.set(-5, 3, -4);
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 2.8);
+    rimLight.position.set(-6, 4, -3);
     threeScene.add(rimLight);
 
-    accentPointLight = new THREE.PointLight(0xa855f7, 3.8, 12);
-    accentPointLight.position.set(0, -1.2, 2.2);
+    accentPointLight = new THREE.PointLight(0xa855f7, 4.5, 14);
+    accentPointLight.position.set(0, -0.8, 2.8);
     threeScene.add(accentPointLight);
 
-    // Matériaux Physiques PBR Réalistes
+    // Matériau PBR métallisé indigo clair pour un contraste net sur le fond carbone
     const shellMat = new THREE.MeshPhysicalMaterial({
-      color: 0x1e1b4b,
-      metalness: 0.38,
-      roughness: 0.22,
+      color: 0x3b4284,
+      metalness: 0.42,
+      roughness: 0.18,
       clearcoat: 1.0,
-      clearcoatRoughness: 0.12
+      clearcoatRoughness: 0.1
     });
 
     const gripDarkMat = new THREE.MeshStandardMaterial({
-      color: 0x090d16,
-      metalness: 0.55,
-      roughness: 0.52
+      color: 0x111827,
+      metalness: 0.6,
+      roughness: 0.42
     });
 
     const chromeMat = new THREE.MeshPhysicalMaterial({
-      color: 0x0f172a,
-      metalness: 0.85,
-      roughness: 0.15,
+      color: 0x1e293b,
+      metalness: 0.9,
+      roughness: 0.12,
       clearcoat: 1.0
     });
 
     ledMaterial = new THREE.MeshStandardMaterial({
       color: 0xa855f7,
       emissive: 0xa855f7,
-      emissiveIntensity: 2.2,
+      emissiveIntensity: 2.5,
       roughness: 0.2
     });
 
     controllerGroup = new THREE.Group();
+    controllerGroup.position.y = 0.18;
     threeScene.add(controllerGroup);
 
-    // 1. Châssis central sculpté avec biseaux 3D arrondis (ExtrudeGeometry)
+    // 1. Châssis central sculpté avec biseaux 3D arrondis
     const bodyShape = new THREE.Shape();
     bodyShape.moveTo(-1.15, 0.68);
     bodyShape.quadraticCurveTo(0, 0.82, 1.15, 0.68);
@@ -2054,51 +2079,41 @@ const initThreeWebglController = async () => {
     bodyShape.quadraticCurveTo(-0.85, -0.68, -1.45, -0.18);
     bodyShape.closePath();
 
-    const extrudeSettings = {
+    const coreGeo = new THREE.ExtrudeGeometry(bodyShape, {
       depth: 0.42,
       bevelEnabled: true,
       bevelSegments: 16,
       steps: 2,
       bevelSize: 0.26,
       bevelThickness: 0.28
-    };
-    const coreGeo = new THREE.ExtrudeGeometry(bodyShape, extrudeSettings);
+    });
     coreGeo.center();
-    const coreMesh = new THREE.Mesh(coreGeo, shellMat);
-    controllerGroup.add(coreMesh);
+    controllerGroup.add(new THREE.Mesh(coreGeo, shellMat));
 
-    // 2. Poignées ergonomiques 3D Gauche & Droite (Cylindres coniques + Sphères de bout)
+    // 2. Poignées ergonomiques 3D Gauche & Droite
     for (const side of [-1, 1]) {
       const handleGroup = new THREE.Group();
-      handleGroup.position.set(side * 1.28, -0.58, -0.08);
+      handleGroup.position.set(side * 1.28, -0.52, -0.08);
       handleGroup.rotation.z = side * 0.34;
       handleGroup.rotation.x = 0.22;
 
-      const upperHandleGeo = new THREE.CylinderGeometry(0.46, 0.33, 1.85, 32);
-      const upperHandle = new THREE.Mesh(upperHandleGeo, shellMat);
-      handleGroup.add(upperHandle);
+      handleGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.32, 1.72, 32), shellMat));
 
-      // Coque inférieure texturée carbone sur chaque poignée
-      const lowerGripGeo = new THREE.CylinderGeometry(0.44, 0.34, 1.45, 32);
-      const lowerGrip = new THREE.Mesh(lowerGripGeo, gripDarkMat);
-      lowerGrip.position.set(side * 0.03, -0.22, -0.03);
+      const lowerGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.43, 0.33, 1.32, 32), gripDarkMat);
+      lowerGrip.position.set(side * 0.03, -0.2, -0.03);
       handleGroup.add(lowerGrip);
 
-      const bottomCapGeo = new THREE.SphereGeometry(0.335, 32, 24);
-      const bottomCap = new THREE.Mesh(bottomCapGeo, gripDarkMat);
-      bottomCap.position.y = -0.92;
+      const bottomCap = new THREE.Mesh(new THREE.SphereGeometry(0.325, 32, 24), gripDarkMat);
+      bottomCap.position.y = -0.86;
       handleGroup.add(bottomCap);
 
-      const topShoulderGeo = new THREE.SphereGeometry(0.46, 32, 24);
-      const topShoulder = new THREE.Mesh(topShoulderGeo, shellMat);
-      topShoulder.position.y = 0.92;
+      const topShoulder = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 24), shellMat);
+      topShoulder.position.y = 0.86;
       handleGroup.add(topShoulder);
 
-      // Anneau LED néon autour de la poignée
-      const gripLedGeo = new THREE.TorusGeometry(0.41, 0.022, 16, 48);
-      const gripLed = new THREE.Mesh(gripLedGeo, ledMaterial);
+      const gripLed = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.022, 16, 48), ledMaterial);
       gripLed.rotation.x = Math.PI / 2;
-      gripLed.position.y = 0.15;
+      gripLed.position.y = 0.14;
       handleGroup.add(gripLed);
 
       controllerGroup.add(handleGroup);
@@ -2134,17 +2149,15 @@ const initThreeWebglController = async () => {
     });
     ledStripGeo.center();
     const ledStripMesh = new THREE.Mesh(ledStripGeo, ledMaterial);
-    ledStripMesh.position.set(0, 0.34, 0.40);
+    ledStripMesh.position.set(0, 0.34, 0.4);
     ledStripMesh.rotation.x = -0.12;
     controllerGroup.add(ledStripMesh);
 
-    // 4. Joysticks Analogiques 3D (Inclinables en temps réel)
+    // 4. Joysticks Analogiques 3D
     const createStickAssembly = (posX) => {
       const baseGroup = new THREE.Group();
       baseGroup.position.set(posX, -0.22, 0.42);
-
-      const wellRing = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.045, 16, 36), chromeMat);
-      baseGroup.add(wellRing);
+      baseGroup.add(new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.045, 16, 36), chromeMat));
 
       const dome = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 16), gripDarkMat);
       dome.position.z = -0.04;
@@ -2158,7 +2171,7 @@ const initThreeWebglController = async () => {
 
       const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.19, 0.09, 32), gripDarkMat);
       cap.rotation.x = Math.PI / 2;
-      cap.position.z = 0.30;
+      cap.position.z = 0.3;
       pivot.add(cap);
 
       const capLed = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.02, 16, 36), ledMaterial);
@@ -2173,12 +2186,13 @@ const initThreeWebglController = async () => {
     leftStickPivot = createStickAssembly(-0.62);
     rightStickPivot = createStickAssembly(0.62);
 
-    // 5. Croix Directionnelle (D-Pad 3D à gauche)
+    // 5. Croix Directionnelle (D-Pad 3D)
     const dpadGroup = new THREE.Group();
     dpadGroup.position.set(-1.18, 0.18, 0.44);
-    const barH = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.15, 0.1), chromeMat);
-    const barV = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.46, 0.1), chromeMat);
-    dpadGroup.add(barH, barV);
+    dpadGroup.add(
+      new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.15, 0.1), chromeMat),
+      new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.46, 0.1), chromeMat)
+    );
     controllerGroup.add(dpadGroup);
 
     // 6. 4 Boutons Cristal Lumineux à droite
@@ -2192,7 +2206,7 @@ const initThreeWebglController = async () => {
       const bMat = new THREE.MeshPhysicalMaterial({
         color: b.col,
         emissive: b.col,
-        emissiveIntensity: 0.65,
+        emissiveIntensity: 0.75,
         clearcoat: 1.0,
         roughness: 0.1
       });
@@ -2202,7 +2216,7 @@ const initThreeWebglController = async () => {
       controllerGroup.add(bMesh);
     }
 
-    // 7. Gâchettes L1 / R1 / L2 / R2 à l'arrière
+    // 7. Gâchettes L1 / R1 / L2 / R2
     for (const side of [-1, 1]) {
       const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.14, 0.22), chromeMat);
       l1.position.set(side * 1.12, 0.82, 0.08);
@@ -2215,29 +2229,29 @@ const initThreeWebglController = async () => {
       controllerGroup.add(l2);
     }
 
-    // 8. Socle Holographique 3D sous la manette
-    pedestalRing1 = new THREE.Mesh(new THREE.TorusGeometry(2.15, 0.025, 16, 96), ledMaterial);
-    pedestalRing1.rotation.x = Math.PI / 2;
-    pedestalRing1.position.set(0, -1.75, 0);
+    // 8. Socle Holographique 3D calibré (y = -1.22, jamais coupé en bas)
+    pedestalRing1 = new THREE.Mesh(new THREE.TorusGeometry(1.75, 0.024, 16, 96), ledMaterial);
+    pedestalRing1.rotation.x = Math.PI / 2.25;
+    pedestalRing1.position.set(0, -1.22, 0);
     threeScene.add(pedestalRing1);
 
     const ringCyanMat = new THREE.MeshStandardMaterial({
       color: 0x38bdf8,
       emissive: 0x38bdf8,
-      emissiveIntensity: 1.8
+      emissiveIntensity: 1.9
     });
-    pedestalRing2 = new THREE.Mesh(new THREE.TorusGeometry(1.52, 0.018, 16, 80), ringCyanMat);
-    pedestalRing2.rotation.x = Math.PI / 2;
-    pedestalRing2.position.set(0, -1.75, 0);
+    pedestalRing2 = new THREE.Mesh(new THREE.TorusGeometry(1.22, 0.018, 16, 80), ringCyanMat);
+    pedestalRing2.rotation.x = Math.PI / 2.25;
+    pedestalRing2.position.set(0, -1.22, 0);
     threeScene.add(pedestalRing2);
 
     // 9. 4 Satellites 3D Géométriques en Orbite
     orbitSatellites = [];
     const satGeos = [
-      new THREE.OctahedronGeometry(0.26, 0),
-      new THREE.IcosahedronGeometry(0.25, 0),
-      new THREE.BoxGeometry(0.34, 0.34, 0.34),
-      new THREE.TorusGeometry(0.2, 0.06, 16, 32)
+      new THREE.OctahedronGeometry(0.24, 0),
+      new THREE.IcosahedronGeometry(0.23, 0),
+      new THREE.BoxGeometry(0.32, 0.32, 0.32),
+      new THREE.TorusGeometry(0.18, 0.055, 16, 32)
     ];
     for (let i = 0; i < satGeos.length; i++) {
       const satGroup = new THREE.Group();
@@ -2276,7 +2290,7 @@ const updateThreeWebglFrame = (timeMs) => {
     controllerGroup.rotation.y = wglRotY + stageParallaxX.value * 0.25;
     controllerGroup.rotation.x = wglRotX + stageParallaxY.value * 0.18;
     controllerGroup.rotation.z = -0.14 + Math.sin(tSec * 1.4) * 0.04;
-    controllerGroup.position.y = Math.sin(tSec * 2.1) * 0.12 + wglPulseKick;
+    controllerGroup.position.y = 0.22 + Math.sin(tSec * 2.1) * 0.1 + wglPulseKick;
     const sc = 1 + wglPulseKick * 0.35;
     controllerGroup.scale.set(sc, sc, sc);
   }
@@ -3611,10 +3625,10 @@ const launchCustomBuiltQuiz = () => {
 const menuCategories = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'all', icon: '⊞', label: isFr ? 'Tous les modes (11)' : 'All Modes (11)' },
-    { id: 'featured', icon: '🧊', label: isFr ? 'Défis 3D Phares' : '3D Featured' },
-    { id: 'classics', icon: '💡', label: isFr ? 'QCM & Connaissances' : 'Quiz & Knowledge' },
-    { id: 'study', icon: '🎓', label: isFr ? 'Étude & Sur-mesure' : 'Study & Learn' }
+    { id: 'all', code: '01', label: isFr ? 'Tous les modes (11)' : 'All Modes (11)' },
+    { id: 'featured', code: '02', label: isFr ? 'Défis 3D Phares' : '3D Featured' },
+    { id: 'classics', code: '03', label: isFr ? 'QCM & Connaissances' : 'Quiz & Knowledge' },
+    { id: 'study', code: '04', label: isFr ? 'Étude & Sur-mesure' : 'Study & Learn' }
   ];
 });
 
@@ -3625,9 +3639,9 @@ const allMenuCards = computed(() => {
       id: 'mystery',
       cat: 'featured',
       art: 'worldle',
-      badgeIcon: '★',
+      badgeIcon: '01',
       tag: isFr ? 'Mystère 3D' : '3D Mystery',
-      metric: '6 ESSAIS',
+      metric: isFr ? '6 ESSAIS' : '6 TRIES',
       shortTitle: 'Worldle 3D',
       duration: '~2 min',
       durationMin: 2,
@@ -3645,7 +3659,7 @@ const allMenuCards = computed(() => {
       id: 'chrono',
       cat: 'featured',
       art: 'chrono',
-      badgeIcon: '⚡',
+      badgeIcon: '02',
       tag: isFr ? 'Globe 3D' : '3D Globe',
       metric: '47 / 196',
       shortTitle: isFr ? 'Chrono 3D' : '3D Timed',
@@ -3665,7 +3679,7 @@ const allMenuCards = computed(() => {
       id: 'flash60',
       cat: 'featured',
       art: 'sprint',
-      badgeIcon: '🏆',
+      badgeIcon: '03',
       tag: 'Arcade',
       metric: 'COMBO X4',
       shortTitle: 'Sprint 60s',
@@ -3685,7 +3699,7 @@ const allMenuCards = computed(() => {
       id: 'detective',
       cat: 'featured',
       art: 'detective',
-      badgeIcon: '🧩',
+      badgeIcon: '04',
       tag: isFr ? 'Logique 3D' : '3D Logic',
       metric: '25 PTS MAX',
       shortTitle: isFr ? '5 Indices 3D' : '5 Clues 3D',
@@ -3705,7 +3719,7 @@ const allMenuCards = computed(() => {
       id: 'qcm-cap',
       cat: 'classics',
       art: 'capitals',
-      badgeIcon: '🏛️',
+      badgeIcon: '05',
       tag: isFr ? 'Capitales' : 'Capitals',
       metric: '15 QCM',
       shortTitle: isFr ? 'Capitales' : 'Capitals',
@@ -3723,7 +3737,7 @@ const allMenuCards = computed(() => {
       id: 'qcm-flag',
       cat: 'classics',
       art: 'flags',
-      badgeIcon: '🚩',
+      badgeIcon: '06',
       tag: isFr ? 'Drapeaux' : 'Flags',
       metric: '15 QCM',
       shortTitle: isFr ? 'Drapeaux' : 'Flags',
@@ -3741,7 +3755,7 @@ const allMenuCards = computed(() => {
       id: 'qcm-culture',
       cat: 'classics',
       art: 'radar',
-      badgeIcon: '🌐',
+      badgeIcon: '07',
       tag: 'Culture',
       metric: '15 QCM',
       shortTitle: 'Culture & Pop',
@@ -3761,9 +3775,9 @@ const allMenuCards = computed(() => {
       id: 'map-click',
       cat: 'classics',
       art: 'radar',
-      badgeIcon: '🎯',
+      badgeIcon: '08',
       tag: 'Seterra',
-      metric: 'SANS CLAVIER',
+      metric: isFr ? 'SANS CLAVIER' : 'NO TYPING',
       shortTitle: isFr ? 'Clic Carte' : 'Map Click',
       duration: '~3 min',
       durationMin: 3,
@@ -3781,9 +3795,9 @@ const allMenuCards = computed(() => {
       id: 'flashcards',
       cat: 'study',
       art: 'detective',
-      badgeIcon: '🎓',
+      badgeIcon: '09',
       tag: isFr ? 'Étude 3D' : '3D Study',
-      metric: '196 FICHES',
+      metric: isFr ? '196 FICHES' : '196 CARDS',
       shortTitle: 'Flashcards 3D',
       duration: '∞ Libre',
       durationMin: 10,
@@ -3801,7 +3815,7 @@ const allMenuCards = computed(() => {
       id: 'flag-grid',
       cat: 'study',
       art: 'flags',
-      badgeIcon: '🏳️',
+      badgeIcon: '10',
       tag: '196 Flags',
       metric: 'AUTO-FOCUS',
       shortTitle: isFr ? 'Grille 196' : 'Flag Grid',
@@ -3821,9 +3835,9 @@ const allMenuCards = computed(() => {
       id: 'custom-builder',
       cat: 'study',
       art: 'worldle',
-      badgeIcon: '🔗',
+      badgeIcon: '11',
       tag: 'Custom',
-      metric: '5 À 15 PAYS',
+      metric: isFr ? '5 À 15 PAYS' : '5 TO 15 STATES',
       shortTitle: isFr ? 'Sur-mesure' : 'Builder',
       duration: '~2 min',
       durationMin: 2,
@@ -3977,9 +3991,9 @@ onUnmounted(() => {
 }
 
 .webgl-controller-mount {
-  width: min(92vw, 560px);
-  height: min(44vh, 390px);
-  min-height: 310px;
+  width: min(92vw, 540px);
+  height: min(38vh, 330px);
+  min-height: 270px;
 }
 
 .ambient-halo {
@@ -4012,6 +4026,7 @@ onUnmounted(() => {
 }
 
 .arc-wheel-viewport {
+  height: 190px;
   perspective: 1600px;
   transform-style: preserve-3d;
 }

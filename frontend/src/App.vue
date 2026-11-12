@@ -258,7 +258,7 @@ const mobileMenuOpen = ref(false);
 const currentUser = ref(null);
 const isDarkMode = ref(true);
 
-const isHomePage = computed(() => ['/', '/explorer', '/quiz'].includes(route.path));
+const isHomePage = computed(() => ['/', '/explorer', '/quiz', '/geoguessr', '/duel'].includes(route.path));
 
 // Ferme automatiquement le menu mobile dès qu'on change de page
 watch(
