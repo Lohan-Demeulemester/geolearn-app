@@ -251,7 +251,7 @@ const mobileMenuOpen = ref(false);
 const currentUser = ref(null);
 const isDarkMode = ref(true);
 
-const isHomePage = computed(() => route.path === '/' || route.path === '/explorer');
+const isHomePage = computed(() => route.path === '/' || route.path === '/explorer' || route.path === '/quiz');
 
 const ADMIN_EMAILS = [
   'lohan.dtr@gmail.com',

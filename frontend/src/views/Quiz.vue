@@ -1,380 +1,511 @@
 <template>
-  <div class="quiz-experience max-w-[1400px] mx-auto px-2 sm:px-6 pb-24 space-y-8">
+  <div class="quiz-experience w-full">
 
     <!-- ========================================================= -->
-    <!-- 1. BARRE SUPÉRIEURE COMPACTE (AFFICHE EN COURS DE PARTIE) -->
+    <!-- 1. BARRE SUPÉRIEURE D'EN-JEU (VISIBLE PENDANT UNE PARTIE) -->
     <!-- ========================================================= -->
-    <header
-      v-if="currentMode !== 'menu'"
-      class="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-[#090E1A]/85 backdrop-blur-2xl p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-    >
-      <div class="space-y-1">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-600 dark:text-sky-400 font-mono text-[11px] font-bold uppercase tracking-wider">
-          <span class="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
-          <span>{{ activeModeBadge }}</span>
+    <div v-if="currentMode !== 'menu'" class="max-w-[1400px] mx-auto px-3 sm:px-8 pt-6">
+      <header class="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-[#090E1A]/85 backdrop-blur-2xl p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-600 dark:text-sky-400 font-mono text-[11px] font-bold uppercase tracking-wider">
+            <span class="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
+            <span>{{ activeModeBadge }}</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            {{ activeModeTitle }}
+          </h1>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-          {{ activeModeTitle }}
-        </h1>
-      </div>
 
-      <div class="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto justify-between sm:justify-end shrink-0">
-        <button
-          type="button"
-          @click="toggleSound"
-          class="px-4 py-2.5 rounded-full text-xs font-bold border transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
-          :class="soundEnabled
-            ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300 border-sky-500/30'
-            : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10'"
-        >
-          <svg v-if="soundEnabled" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-          </svg>
-          <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-            <line x1="23" y1="9" x2="17" y2="15" />
-            <line x1="17" y1="9" x2="23" y2="15" />
-          </svg>
-          <span>{{ soundEnabled ? (locale === 'fr' ? 'Sons activés' : 'Sound ON') : (locale === 'fr' ? 'Muet' : 'Muted') }}</span>
-        </button>
+        <div class="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto justify-between sm:justify-end shrink-0">
+          <button
+            type="button"
+            @click="toggleSound"
+            class="px-4 py-2.5 rounded-full text-xs font-bold border transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+            :class="soundEnabled
+              ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300 border-sky-500/30'
+              : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10'"
+          >
+            <svg v-if="soundEnabled" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+            </svg>
+            <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <line x1="23" y1="9" x2="17" y2="15" />
+              <line x1="17" y1="9" x2="23" y2="15" />
+            </svg>
+            <span>{{ soundEnabled ? (locale === 'fr' ? 'Sons activés' : 'Sound ON') : (locale === 'fr' ? 'Muet' : 'Muted') }}</span>
+          </button>
 
-        <button
-          type="button"
-          @click="retourMenu"
-          class="px-4 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:opacity-90 text-xs font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-md"
-        >
-          <span>←</span>
-          <span>{{ t('quiz.back') }}</span>
-        </button>
-      </div>
-    </header>
+          <button
+            type="button"
+            @click="retourMenu"
+            class="px-4 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:opacity-90 text-xs font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-md"
+          >
+            <span>←</span>
+            <span>{{ t('quiz.back') }}</span>
+          </button>
+        </div>
+      </header>
+    </div>
 
     <!-- ========================================================= -->
-    <!-- TRANSITION SPATIALE ENTRE LE HUB 3D ET LES MODES DE JEU   -->
+    <!-- TRANSITION SPATIALE ENTRE LA SCÈNE 3D ET LES JEUX         -->
     <!-- ========================================================= -->
     <transition name="stage-morph" mode="out-in">
 
       <!-- ======================================================= -->
-      <!-- MENU PRINCIPAL : HUB 3D AVEC MANETTE INTERACTIVE        -->
+      <!-- MENU PRINCIPAL : SCÈNE PLEIN ÉCRAN + CARROUSEL 3D       -->
       <!-- ======================================================= -->
-      <div v-if="currentMode === 'menu'" key="quiz-menu" class="space-y-8">
+      <div v-if="currentMode === 'menu'" key="quiz-menu" class="w-full">
 
-        <!-- 1. HERO INTERACTIF : ACCROCHE + MANETTE 3D ROTATIVE À 360° -->
-        <section class="quiz-hero-stage relative overflow-hidden rounded-[2rem] border border-slate-200/80 dark:border-indigo-500/20 bg-white dark:bg-[#070A17] px-6 sm:px-10 lg:px-14 py-8 sm:py-10 shadow-2xl">
-          <!-- Halos néon violets / cyan d'arrière-plan -->
-          <div class="pointer-events-none absolute -top-24 right-1/4 w-96 h-96 rounded-full bg-indigo-600/20 blur-[110px]"></div>
-          <div class="pointer-events-none absolute -bottom-24 right-10 w-80 h-80 rounded-full bg-sky-500/15 blur-[100px]"></div>
+        <!-- 1. SCÈNE PLEIN ÉCRAN (100VW x 100VH COMME L'ACCUEIL) -->
+        <section
+          class="quiz-orbital-stage relative w-full min-h-[calc(100vh-58px)] flex flex-col justify-between overflow-hidden select-none"
+          @pointermove="onStagePointerMove"
+        >
+          <!-- Halos dynamiques synchronisés avec la couleur du mode actif -->
+          <div class="pointer-events-none absolute inset-0 overflow-hidden">
+            <div
+              class="stage-glow stage-glow-primary"
+              :style="{
+                background: `radial-gradient(circle, ${activeShowcaseCard.glowColor}38 0%, transparent 70%)`,
+                transform: `translate3d(${stageParallaxX * -30}px, ${stageParallaxY * -30}px, 0)`
+              }"
+            ></div>
+            <div
+              class="stage-glow stage-glow-secondary"
+              :style="{
+                transform: `translate3d(${stageParallaxX * 25}px, ${stageParallaxY * 25}px, 0)`
+              }"
+            ></div>
+            <div
+              class="stage-watermark"
+              :style="{ transform: `translate3d(calc(-50% + ${stageParallaxX * -18}px), calc(-50% + ${stageParallaxY * -10}px), 0)` }"
+            >
+              <span>ARCADE 3D</span>
+              <span class="stage-watermark-sub">{{ activeShowcaseCard.tag.toUpperCase() }} // 196 STATES</span>
+            </div>
+          </div>
 
-          <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <!-- Colonne Gauche : Typographie & Actions -->
-            <div class="lg:col-span-7 space-y-5 text-left">
-              <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 dark:text-amber-300 text-xs font-bold">
-                <span>★</span>
-                <span>{{ locale === 'fr' ? 'Découvrir • Apprendre • Jouer' : 'Discover • Learn • Play' }}</span>
+          <!-- BARRE SUPÉRIEURE FLOTTANTE : CATÉGORIES, RECHERCHE & AUDIO -->
+          <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pt-5 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
+            <!-- Filtres de catégories -->
+            <div class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-full bg-white/80 dark:bg-slate-900/75 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-xl self-start">
+              <button
+                v-for="cat in menuCategories"
+                :key="cat.id"
+                type="button"
+                @click="selectCategoryFilter(cat.id)"
+                class="px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
+                :class="selectedMenuCat === cat.id
+                  ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-sky-500 text-white shadow-md scale-[1.02]'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
+              >
+                <span>{{ cat.icon }}</span>
+                <span>{{ cat.label }}</span>
+              </button>
+            </div>
+
+            <!-- Recherche + Liens Rapides PinDrop / Duel + Audio -->
+            <div class="flex flex-wrap items-center gap-2 self-start xl:self-auto">
+              <div class="relative">
+                <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                </svg>
+                <input
+                  v-model="menuSearchQuery"
+                  type="text"
+                  :placeholder="locale === 'fr' ? 'Chercher un mode de jeu...' : 'Search a game mode...'"
+                  class="w-48 sm:w-56 pl-9 pr-7 py-2 rounded-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-400 shadow-lg"
+                />
+                <button
+                  v-if="menuSearchQuery"
+                  type="button"
+                  @click="menuSearchQuery = ''"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
+                >
+                  ×
+                </button>
               </div>
 
-              <h1 class="text-3xl sm:text-5xl lg:text-[3.25rem] font-black tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-                {{ locale === 'fr' ? 'Boostez vos connaissances avec nos' : 'Boost your knowledge with interactive' }}
-                <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-sky-400 bg-clip-text text-transparent pb-1">
-                  {{ locale === 'fr' ? 'quiz interactifs' : 'quizzes' }}
-                </span>
-              </h1>
+              <button
+                type="button"
+                @click="launchRandomGame"
+                class="px-4 py-2 rounded-full bg-indigo-500/15 hover:bg-indigo-500 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition cursor-pointer shadow-lg backdrop-blur-xl"
+              >
+                🎲 {{ locale === 'fr' ? 'Mode Aléatoire' : 'Random Game' }}
+              </button>
 
-              <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300/85 max-w-xl leading-relaxed">
-                {{ locale === 'fr'
-                  ? 'Relevez des défis géographiques immersifs en 3D, testez votre rapidité et explorez les 196 États du monde à travers 11 modes de jeu.'
-                  : 'Challenge yourself with engaging 3D geography games and explore all 196 sovereign states across 11 interactive modes.' }}
-              </p>
+              <button
+                type="button"
+                @click="toggleSound"
+                class="px-3.5 py-2 rounded-full bg-white/80 dark:bg-slate-900/75 border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-lg backdrop-blur-xl"
+              >
+                {{ soundEnabled ? '🔊 ON' : '🔇 OFF' }}
+              </button>
+            </div>
+          </div>
 
-              <div class="flex flex-wrap items-center gap-3 pt-1">
-                <button
-                  type="button"
-                  @click="scrollToGamesGrid"
-                  class="px-6 py-3.5 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-sky-500 hover:opacity-95 text-white font-black text-xs sm:text-sm shadow-xl shadow-indigo-500/25 hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
+          <!-- COEUR DE LA SCÈNE : CARROUSEL SPATIAL 3D (GAUCHE) + MANETTE 3D GÉANTE RÉALISTE (DROITE) -->
+          <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 my-auto py-4 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+
+            <!-- COLONNE GAUCHE (6 COLS) : TITRE + DECK SPATIAL 3D ROTATIF DES MODES -->
+            <div class="lg:col-span-6 space-y-6">
+              <div class="space-y-3">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 text-xs font-bold">
+                  <span>★</span>
+                  <span>{{ locale === 'fr' ? 'DECK D\'ENTRAÎNEMENT INTERACTIF 3D' : 'INTERACTIVE 3D TRAINING DECK' }}</span>
+                </div>
+
+                <h1 class="text-3xl sm:text-5xl xl:text-[3.3rem] font-black tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+                  <span class="block">{{ locale === 'fr' ? 'Boostez vos connaissances' : 'Boost your knowledge' }}</span>
+                  <span class="block pb-1.5 bg-gradient-to-r from-indigo-400 via-purple-400 to-sky-400 bg-clip-text text-transparent">
+                    {{ locale === 'fr' ? 'avec nos quiz interactifs.' : 'with interactive quizzes.' }}
+                  </span>
+                </h1>
+              </div>
+
+              <!-- CARROUSEL SPATIAL 3D (COVERFLOW DES MODES DE JEU) -->
+              <div class="spatial-deck-wrapper relative pt-2">
+                <!-- Contrôles du Deck 3D -->
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono text-xs font-black text-indigo-500 dark:text-indigo-400">
+                      MODE {{ String(activeCarouselIndex + 1).padStart(2, '0') }} / {{ String(filteredMenuCards.length).padStart(2, '0') }}
+                    </span>
+                    <span class="text-xs text-slate-400">•</span>
+                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      {{ locale === 'fr' ? 'Utilisez ← → ou cliquez pour faire tourner le deck' : 'Use ← → or click to spin the deck' }}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      @click="stepCarousel(-1)"
+                      class="w-9 h-9 rounded-full bg-white/90 dark:bg-white/10 hover:bg-indigo-500 hover:text-white text-slate-800 dark:text-white border border-slate-200 dark:border-white/15 font-black text-sm flex items-center justify-center transition cursor-pointer shadow"
+                    >
+                      ←
+                    </button>
+                    <button
+                      type="button"
+                      @click="stepCarousel(1)"
+                      class="w-9 h-9 rounded-full bg-white/90 dark:bg-white/10 hover:bg-indigo-500 hover:text-white text-slate-800 dark:text-white border border-slate-200 dark:border-white/15 font-black text-sm flex items-center justify-center transition cursor-pointer shadow"
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Scène 3D Coverflow -->
+                <div
+                  class="spatial-coverflow-stage relative h-[285px] sm:h-[300px] w-full flex items-center justify-center"
+                  @wheel.prevent="onCarouselWheel"
                 >
-                  <span>{{ locale === 'fr' ? 'Explorer les jeux' : 'Browse Games' }}</span>
-                  <span>→</span>
-                </button>
+                  <div
+                    v-for="(card, idx) in filteredMenuCards"
+                    :key="'deck-' + card.id"
+                    class="spatial-deck-card absolute w-full max-w-[490px] rounded-[2rem] border p-6 transition-all duration-500 cursor-pointer"
+                    :class="idx === activeCarouselIndex
+                      ? 'bg-white/95 dark:bg-[#0B1124]/95 border-indigo-400/60 shadow-[0_25px_70px_-15px_rgba(79,70,229,0.45)] z-30'
+                      : 'bg-white/60 dark:bg-[#080C1A]/75 border-slate-200/50 dark:border-white/[0.06] backdrop-blur-md z-10 hover:border-indigo-400/35'"
+                    :style="getCarouselCardStyle(idx)"
+                    @click="handleDeckCardClick(idx, card)"
+                  >
+                    <!-- Halo interne de la carte active -->
+                    <div
+                      class="pointer-events-none absolute -right-12 -bottom-12 w-48 h-48 rounded-full blur-3xl opacity-35 transition-opacity"
+                      :style="{ background: card.glowColor }"
+                    ></div>
 
-                <button
-                  type="button"
-                  @click="launchRandomGame"
-                  class="px-5 py-3.5 rounded-full bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.12] border border-slate-200 dark:border-white/15 text-slate-800 dark:text-white font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2"
-                >
-                  <span class="text-indigo-400">▶</span>
-                  <span>{{ locale === 'fr' ? 'Partie aléatoire' : 'Random Game' }}</span>
-                </button>
+                    <div class="relative z-10 flex items-stretch justify-between gap-4 h-full">
+                      <div class="flex flex-col justify-between flex-1 min-w-0">
+                        <div class="space-y-2.5">
+                          <div class="flex items-center gap-2">
+                            <span
+                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border"
+                              :class="card.badgeClass"
+                            >
+                              <span>{{ card.badgeIcon }}</span>
+                              <span>{{ card.tag }}</span>
+                            </span>
+                            <span class="font-mono text-[11px] text-slate-400">
+                              {{ card.metric }}
+                            </span>
+                          </div>
 
-                <button
-                  type="button"
-                  @click="toggleSound"
-                  class="px-4 py-3.5 rounded-full bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-xs font-bold transition cursor-pointer"
-                >
-                  {{ soundEnabled ? (locale === 'fr' ? '🔊 Audio ON' : '🔊 Sound ON') : (locale === 'fr' ? '🔇 Muet' : '🔇 Muted') }}
-                </button>
+                          <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
+                            {{ card.title }}
+                          </h2>
+
+                          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300/90 leading-relaxed line-clamp-3">
+                            {{ card.desc }}
+                          </p>
+                        </div>
+
+                        <div class="pt-4 mt-2 flex items-center gap-3">
+                          <button
+                            type="button"
+                            @click.stop="card.action()"
+                            class="px-5 py-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-500/25 flex items-center gap-2 transition cursor-pointer whitespace-nowrap"
+                          >
+                            <span>▶</span>
+                            <span>{{ card.cta }}</span>
+                          </button>
+
+                          <span class="font-mono text-xs text-slate-400 flex items-center gap-1 whitespace-nowrap">
+                            <span>🕒</span>
+                            <span>{{ card.duration }}</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Emblème 3D animé à droite de la carte -->
+                      <div class="w-28 sm:w-32 shrink-0 flex items-center justify-center">
+                        <div class="animate-float-slow">
+                          <svg v-if="card.art === 'worldle'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(168,85,247,0.4)]">
+                            <defs>
+                              <radialGradient id="dkWorldle" cx="35%" cy="30%" r="70%">
+                                <stop offset="0%" stop-color="#38bdf8" />
+                                <stop offset="55%" stop-color="#1d4ed8" />
+                                <stop offset="100%" stop-color="#0f172a" />
+                              </radialGradient>
+                            </defs>
+                            <ellipse cx="60" cy="104" rx="38" ry="8" fill="rgba(56,189,248,0.25)" />
+                            <circle cx="58" cy="58" r="38" fill="url(#dkWorldle)" stroke="#7dd3fc" stroke-width="1.5" />
+                            <path d="M36 45 Q48 34 62 42 T82 55 Q72 72 52 68 Z" fill="#34d399" opacity="0.88" />
+                            <ellipse cx="58" cy="58" rx="48" ry="16" fill="none" stroke="#c084fc" stroke-width="2.2" stroke-dasharray="5 3" transform="rotate(-22 58 58)" />
+                            <path d="M76 16 C68 16 62 22 62 30 C62 40 76 52 76 52 C76 52 90 40 90 30 C90 22 84 16 76 16 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="1.5" />
+                            <circle cx="76" cy="29" r="4.5" fill="#ffffff" />
+                          </svg>
+
+                          <svg v-else-if="card.art === 'chrono'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(16,185,129,0.4)]">
+                            <defs>
+                              <radialGradient id="dkChrono" cx="35%" cy="30%" r="70%">
+                                <stop offset="0%" stop-color="#34d399" />
+                                <stop offset="60%" stop-color="#0284c7" />
+                                <stop offset="100%" stop-color="#090d16" />
+                              </radialGradient>
+                            </defs>
+                            <ellipse cx="60" cy="105" rx="34" ry="7" fill="rgba(16,185,129,0.28)" />
+                            <circle cx="60" cy="54" r="35" fill="url(#dkChrono)" stroke="#6ee7b7" stroke-width="1.5" />
+                            <path d="M42 38 Q58 32 72 44 T74 68 Q54 74 42 58 Z" fill="#fde047" opacity="0.85" />
+                            <path d="M84 24 A44 44 0 0 1 60 98" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" />
+                            <rect x="46" y="96" width="28" height="7" rx="3.5" fill="#38bdf8" />
+                          </svg>
+
+                          <svg v-else-if="card.art === 'sprint'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(245,158,11,0.4)]">
+                            <ellipse cx="62" cy="104" rx="36" ry="7" fill="rgba(245,158,11,0.25)" />
+                            <line x1="26" y1="22" x2="38" y2="96" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
+                            <path d="M27 24 Q46 18 64 28 L60 52 Q42 42 31 48 Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" />
+                            <path d="M27 24 L45 22 L43 35 L29 36 Z" fill="#0f172a" />
+                            <path d="M45 35 L62 40 L60 52 L43 47 Z" fill="#0f172a" />
+                            <rect x="68" y="26" width="12" height="6" rx="2" fill="#fbbf24" />
+                            <circle cx="74" cy="64" r="30" fill="#0f172a" stroke="#fbbf24" stroke-width="4" />
+                            <circle cx="74" cy="64" r="23" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 4" />
+                            <line x1="74" y1="64" x2="74" y2="47" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" />
+                            <line x1="74" y1="64" x2="88" y2="64" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round" />
+                          </svg>
+
+                          <svg v-else-if="card.art === 'detective'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(20,184,166,0.4)]">
+                            <ellipse cx="60" cy="104" rx="36" ry="7" fill="rgba(20,184,166,0.25)" />
+                            <rect x="44" y="28" width="44" height="58" rx="8" transform="rotate(8 66 57)" fill="#1e1b4b" stroke="#a855f7" stroke-width="2" />
+                            <circle cx="48" cy="58" r="22" fill="rgba(56,189,248,0.2)" stroke="#38bdf8" stroke-width="4" />
+                            <line x1="33" y1="74" x2="18" y2="90" stroke="#c084fc" stroke-width="6" stroke-linecap="round" />
+                            <circle cx="42" cy="52" r="5" fill="rgba(255,255,255,0.45)" />
+                          </svg>
+
+                          <svg v-else-if="card.art === 'capitals'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(56,189,248,0.4)]">
+                            <ellipse cx="60" cy="104" rx="38" ry="7" fill="rgba(56,189,248,0.22)" />
+                            <polygon points="60,22 22,44 98,44" fill="#60a5fa" stroke="#bae6fd" stroke-width="1.5" />
+                            <rect x="26" y="44" width="68" height="6" rx="2" fill="#3b82f6" />
+                            <rect x="32" y="50" width="8" height="36" rx="2" fill="#e2e8f0" />
+                            <rect x="48" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
+                            <rect x="64" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
+                            <rect x="80" y="50" width="8" height="36" rx="2" fill="#94a3b8" />
+                            <rect x="20" y="86" width="80" height="10" rx="3" fill="#38bdf8" />
+                          </svg>
+
+                          <svg v-else-if="card.art === 'flags'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(99,102,241,0.4)]">
+                            <ellipse cx="56" cy="104" rx="34" ry="7" fill="rgba(99,102,241,0.28)" />
+                            <line x1="34" y1="20" x2="34" y2="98" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" />
+                            <circle cx="34" cy="18" r="4.5" fill="#fbbf24" />
+                            <path d="M36 24 Q58 16 78 26 T98 24 L98 66 Q78 74 58 64 T36 68 Z" fill="#3b82f6" stroke="#93c5fd" stroke-width="1.5" />
+                            <path d="M36 38 Q58 30 78 40 T98 38 L98 52 Q78 60 58 50 T36 54 Z" fill="#f8fafc" />
+                          </svg>
+
+                          <svg v-else viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(236,72,153,0.4)]">
+                            <ellipse cx="60" cy="104" rx="34" ry="7" fill="rgba(236,72,153,0.22)" />
+                            <circle cx="60" cy="56" r="34" fill="#1e1b4b" stroke="#f472b6" stroke-width="2.5" />
+                            <circle cx="60" cy="56" r="22" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 4" />
+                            <circle cx="60" cy="56" r="9" fill="#10b981" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Colonne Droite : Manette 3D Interactive & Cubes Flottants (Glisser pour tourner en 3D) -->
-            <div class="lg:col-span-5 flex flex-col items-center justify-center relative">
-              <div class="relative flex items-center justify-center select-none">
+            <!-- COLONNE DROITE (6 COLS) : MANETTE 3D NEXT-GEN GÉANTE & HOLOGRAMME -->
+            <div class="lg:col-span-6 flex flex-col items-center justify-center relative">
+              <div class="relative w-full flex flex-col items-center justify-center">
+                <!-- Badge flottant du projecteur holographique -->
+                <div class="mb-1 px-4 py-1.5 rounded-full bg-slate-900/80 dark:bg-white/[0.06] border border-slate-200/20 dark:border-white/10 backdrop-blur-xl flex items-center gap-2.5 text-xs font-mono">
+                  <span class="w-2 h-2 rounded-full animate-ping" :style="{ backgroundColor: activeShowcaseCard.glowColor }"></span>
+                  <span class="text-slate-200 font-bold">HOLO-CONTROLLER // {{ activeShowcaseCard.title.toUpperCase() }}</span>
+                </div>
+
+                <!-- Grand Canvas 3D Haute Définition -->
                 <canvas
                   ref="gamepadCanvasRef"
-                  class="w-[300px] h-[250px] sm:w-[380px] sm:h-[300px] cursor-grab active:cursor-grabbing"
+                  class="gamepad-hero-canvas cursor-grab active:cursor-grabbing"
                   @pointerdown="onGamepadPointerDown"
                   @pointermove="onGamepadPointerMove"
                   @pointerup="onGamepadPointerUp"
                   @pointerleave="onGamepadPointerUp"
+                  @click="triggerControllerPulse"
                 ></canvas>
 
-                <span class="pointer-events-none absolute bottom-1 px-3 py-1 rounded-full bg-slate-900/80 dark:bg-white/[0.06] border border-white/10 font-mono text-[10px] text-indigo-300 backdrop-blur-md">
-                  {{ locale === 'fr' ? '↻ GLISSER POUR TOURNER LA MANETTE 3D' : '↻ DRAG TO ROTATE 3D CONTROLLER' }}
-                </span>
+                <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
+                  <span class="px-3.5 py-1 rounded-full bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 font-mono text-[11px] text-slate-600 dark:text-indigo-300 backdrop-blur-md">
+                    {{ locale === 'fr' ? '↻ GLISSER EN 3D • CLIQUER POUR IMPULSION HOLOGRAPHIQUE' : '↻ DRAG IN 3D • CLICK FOR HOLOGRAPHIC PULSE' }}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
 
-        <!-- 2. BARRE DE FILTRES, RECHERCHE & TRI (COMME SUR L'IMAGE DE RÉFÉRENCE) -->
-        <div ref="gamesGridRef" class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pt-2">
-          <!-- Pilules de catégories avec icônes -->
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              v-for="cat in menuCategories"
-              :key="cat.id"
-              type="button"
-              @click="selectedMenuCat = cat.id"
-              class="px-4 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border"
-              :class="selectedMenuCat === cat.id
-                ? 'bg-gradient-to-r from-indigo-600 to-sky-500 text-white border-indigo-400/50 shadow-lg shadow-indigo-500/25 scale-[1.02]'
-                : 'bg-white/80 dark:bg-[#0D1326] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-indigo-400/50'"
-            >
-              <span>{{ cat.icon }}</span>
-              <span>{{ cat.label }}</span>
-            </button>
           </div>
 
-          <!-- Recherche d'un jeu + Sélecteur de Tri -->
-          <div class="flex flex-wrap items-center gap-2.5">
-            <div class="relative flex-1 sm:flex-initial">
-              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-              </svg>
-              <input
-                v-model="menuSearchQuery"
-                type="text"
-                :placeholder="locale === 'fr' ? 'Rechercher un mode de jeu...' : 'Search for a game...'"
-                class="w-full sm:w-56 pl-9 pr-8 py-2.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0D1326] text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-400"
-              />
+          <!-- DOCK ORBITAL INFÉRIEUR : SÉLECTEUR DIRECT DES 11 MODES + BOUTON MATRICE COMPLÈTE -->
+          <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pb-5 flex flex-col lg:flex-row items-center justify-between gap-3">
+            <!-- Ruban de sélection rapide qui pilote le Carrousel 3D et la Manette 3D -->
+            <div class="flex items-center gap-1.5 p-2 rounded-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl overflow-x-auto max-w-full">
               <button
-                v-if="menuSearchQuery"
+                v-for="(card, idx) in filteredMenuCards"
+                :key="'dock-pill-' + card.id"
                 type="button"
-                @click="menuSearchQuery = ''"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
+                @click="activeCarouselIndex = idx; triggerControllerPulse()"
+                @dblclick="card.action()"
+                class="px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5"
+                :class="idx === activeCarouselIndex
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-md scale-105'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'"
               >
-                ×
+                <span>{{ card.badgeIcon }}</span>
+                <span>{{ card.shortTitle }}</span>
               </button>
             </div>
 
-            <select
-              v-model="menuSortBy"
-              class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0D1326] text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+            <button
+              type="button"
+              @click="scrollToGamesGrid"
+              class="px-5 py-3 rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 text-white font-black text-xs shadow-xl hover:scale-105 transition cursor-pointer flex items-center gap-2 shrink-0"
             >
-              <option value="popular">{{ locale === 'fr' ? 'Trier : Popularité' : 'Sort by: Popularity' }}</option>
-              <option value="fast">{{ locale === 'fr' ? 'Trier : Plus rapide' : 'Sort by: Shortest' }}</option>
-              <option value="name">{{ locale === 'fr' ? 'Trier : Nom (A-Z)' : 'Sort by: Name (A-Z)' }}</option>
-            </select>
+              <span>{{ locale === 'fr' ? `Vue Matrice 3D (${filteredMenuCards.length} jeux)` : `3D Matrix View (${filteredMenuCards.length} games)` }}</span>
+              <span>↓</span>
+            </button>
           </div>
-        </div>
+        </section>
 
-        <!-- 3. TITRE DE SECTION -->
-        <div class="flex items-center justify-between">
-          <div class="space-y-1">
-            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {{ locale === 'fr' ? 'Modes de Jeu & Défis Interactifs' : 'Featured Games' }}
-            </h2>
-            <div class="h-1 w-14 rounded-full bg-gradient-to-r from-indigo-500 to-sky-400"></div>
+        <!-- ===================================================== -->
+        <!-- 2. MATRICE COMPLÈTE DES 11 MODES AVEC EFFET 3D TILT   -->
+        <!-- ===================================================== -->
+        <section ref="gamesGridRef" class="max-w-[1440px] mx-auto px-4 sm:px-8 pt-14 pb-24 space-y-8">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-5">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 block mb-1">
+                {{ locale === 'fr' ? 'CATALOGUE INTERACTIF COMPLET' : 'COMPLETE INTERACTIVE CATALOG' }}
+              </span>
+              <h2 class="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                {{ locale === 'fr' ? 'Tous les modes de jeu en accès direct' : 'All Game Modes at a Glance' }}
+              </h2>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <select
+                v-model="menuSortBy"
+                class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-[#0B1022] text-xs font-bold text-slate-800 dark:text-white focus:outline-none cursor-pointer"
+              >
+                <option value="popular">{{ locale === 'fr' ? 'Trier : Popularité' : 'Sort by: Popularity' }}</option>
+                <option value="fast">{{ locale === 'fr' ? 'Trier : Plus rapide' : 'Sort by: Shortest' }}</option>
+                <option value="name">{{ locale === 'fr' ? 'Trier : Nom (A-Z)' : 'Sort by: Name (A-Z)' }}</option>
+              </select>
+            </div>
           </div>
 
-          <div class="flex items-center gap-3 text-xs font-bold">
-            <router-link to="/geoguessr" class="text-sky-500 hover:underline">
-              PinDrop 25K →
-            </router-link>
-            <router-link to="/duel" class="text-rose-500 hover:underline">
-              {{ locale === 'fr' ? 'Duel 1v1 →' : '1v1 Duel →' }}
-            </router-link>
-          </div>
-        </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <article
+              v-for="(card, idx) in filteredMenuCards"
+              :key="'matrix-' + card.id"
+              @click="card.action()"
+              @pointermove="onMatrixCardMove($event, card.id)"
+              @pointerleave="onMatrixCardLeave(card.id)"
+              class="matrix-tilt-card group relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0B1022] p-6 flex items-stretch justify-between gap-4 cursor-pointer"
+              :style="getMatrixCardStyle(card.id)"
+            >
+              <div
+                class="pointer-events-none absolute -right-10 -bottom-10 w-44 h-44 rounded-full blur-3xl opacity-30 group-hover:opacity-65 transition-opacity"
+                :style="{ background: card.glowColor }"
+              ></div>
 
-        <!-- 4. GRILLE DES CARTES DE JEUX ILLUSTRÉES (STYLE IMAGE DE RÉFÉRENCE) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          <article
-            v-for="card in filteredMenuCards"
-            :key="card.id"
-            @click="card.action()"
-            class="game-showcase-card group relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0B1022] p-6 flex items-stretch justify-between gap-4 cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:border-indigo-400/50 hover:shadow-[0_22px_50px_-12px_rgba(79,70,229,0.28)]"
-          >
-            <!-- Halo radial propre à chaque carte -->
-            <div
-              class="pointer-events-none absolute -right-10 -bottom-10 w-44 h-44 rounded-full blur-3xl opacity-30 group-hover:opacity-60 transition-opacity"
-              :style="{ background: card.glowColor }"
-            ></div>
+              <div class="relative z-10 flex flex-col justify-between flex-1 min-w-0">
+                <div class="space-y-2.5">
+                  <span
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border"
+                    :class="card.badgeClass"
+                  >
+                    <span>{{ card.badgeIcon }}</span>
+                    <span>{{ card.tag }}</span>
+                  </span>
 
-            <!-- Partie Gauche : Pilule, Titre, Description, Bouton ▶ Play + Durée -->
-            <div class="relative z-10 flex flex-col justify-between flex-1 min-w-0">
-              <div class="space-y-2.5">
-                <span
-                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border"
-                  :class="card.badgeClass"
+                  <h3 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white group-hover:text-sky-400 transition-colors leading-snug">
+                    {{ card.title }}
+                  </h3>
+
+                  <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
+                    {{ card.desc }}
+                  </p>
+                </div>
+
+                <div class="pt-5 mt-3 flex items-center gap-3">
+                  <span class="px-4 py-2 rounded-full bg-slate-900 dark:bg-white/[0.08] group-hover:bg-indigo-500 text-white text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                    <span class="text-[10px]">▶</span>
+                    <span>{{ card.cta }}</span>
+                  </span>
+                  <span class="font-mono text-[11px] text-slate-400 flex items-center gap-1 whitespace-nowrap">
+                    <span>🕒</span>
+                    <span>{{ card.duration }}</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Numéro & Mini-aperçu 3D -->
+              <div class="relative z-10 flex flex-col items-end justify-between shrink-0">
+                <span class="font-mono text-xs font-black text-slate-300 dark:text-white/15 group-hover:text-indigo-400 transition-colors">
+                  #{{ String(idx + 1).padStart(2, '0') }}
+                </span>
+                <div
+                  class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-white/10 group-hover:scale-110 group-hover:rotate-6 transition-transform"
+                  :style="{ background: `${card.glowColor}1f` }"
                 >
-                  <span>{{ card.badgeIcon }}</span>
-                  <span>{{ card.tag }}</span>
-                </span>
-
-                <h3 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white group-hover:text-sky-400 transition-colors leading-snug">
-                  {{ card.title }}
-                </h3>
-
-                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
-                  {{ card.desc }}
-                </p>
+                  {{ card.badgeIcon }}
+                </div>
               </div>
-
-              <div class="pt-5 mt-3 flex items-center gap-3">
-                <span class="px-4 py-2 rounded-full bg-slate-900 dark:bg-white/[0.08] group-hover:bg-indigo-500 text-white text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap">
-                  <span class="text-[10px]">▶</span>
-                  <span>{{ card.cta }}</span>
-                </span>
-                <span class="font-mono text-[11px] text-slate-400 flex items-center gap-1 whitespace-nowrap">
-                  <span>🕒</span>
-                  <span>{{ card.duration }}</span>
-                </span>
-              </div>
-            </div>
-
-            <!-- Partie Droite : Emblème Visuel 3D Animé -->
-            <div class="relative z-10 w-28 sm:w-32 shrink-0 flex items-center justify-center">
-              <!-- Illustration 1 : Globe 3D + Pin (Worldle) -->
-              <div v-if="card.art === 'worldle'" class="art-emblem group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
-                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(56,189,248,0.35)]">
-                  <defs>
-                    <radialGradient id="gWorldle" cx="35%" cy="30%" r="70%">
-                      <stop offset="0%" stop-color="#38bdf8" />
-                      <stop offset="55%" stop-color="#1d4ed8" />
-                      <stop offset="100%" stop-color="#0f172a" />
-                    </radialGradient>
-                  </defs>
-                  <ellipse cx="60" cy="104" rx="38" ry="8" fill="rgba(56,189,248,0.22)" />
-                  <circle cx="58" cy="58" r="38" fill="url(#gWorldle)" stroke="#7dd3fc" stroke-width="1.5" />
-                  <path d="M36 45 Q48 34 62 42 T82 55 Q72 72 52 68 Z" fill="#34d399" opacity="0.85" />
-                  <ellipse cx="58" cy="58" rx="48" ry="16" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="5 3" transform="rotate(-22 58 58)" />
-                  <!-- Pin 3D Rouge -->
-                  <path d="M76 18 C68 18 62 24 62 32 C62 42 76 54 76 54 C76 54 90 42 90 32 C90 24 84 18 76 18 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="1.5" />
-                  <circle cx="76" cy="31" r="4.5" fill="#ffffff" />
-                </svg>
-              </div>
-
-              <!-- Illustration 2 : Globe Orbital sur Socle (Chrono 3D) -->
-              <div v-else-if="card.art === 'chrono'" class="art-emblem group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
-                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(16,185,129,0.35)]">
-                  <defs>
-                    <radialGradient id="gChrono" cx="35%" cy="30%" r="70%">
-                      <stop offset="0%" stop-color="#34d399" />
-                      <stop offset="60%" stop-color="#0284c7" />
-                      <stop offset="100%" stop-color="#090d16" />
-                    </radialGradient>
-                  </defs>
-                  <ellipse cx="60" cy="105" rx="34" ry="7" fill="rgba(16,185,129,0.25)" />
-                  <circle cx="60" cy="54" r="35" fill="url(#gChrono)" stroke="#6ee7b7" stroke-width="1.5" />
-                  <path d="M42 38 Q58 32 72 44 T74 68 Q54 74 42 58 Z" fill="#fde047" opacity="0.8" />
-                  <path d="M84 24 A44 44 0 0 1 60 98" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" />
-                  <rect x="46" y="96" width="28" height="7" rx="3.5" fill="#38bdf8" />
-                </svg>
-              </div>
-
-              <!-- Illustration 3 : Chronomètre + Drapeau à damier (Sprint 60s) -->
-              <div v-else-if="card.art === 'sprint'" class="art-emblem group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
-                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(245,158,11,0.35)]">
-                  <ellipse cx="62" cy="104" rx="36" ry="7" fill="rgba(245,158,11,0.25)" />
-                  <!-- Drapeau damier -->
-                  <line x1="26" y1="22" x2="38" y2="96" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
-                  <path d="M27 24 Q46 18 64 28 L60 52 Q42 42 31 48 Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" />
-                  <path d="M27 24 L45 22 L43 35 L29 36 Z" fill="#0f172a" />
-                  <path d="M45 35 L62 40 L60 52 L43 47 Z" fill="#0f172a" />
-                  <!-- Chronomètre 3D -->
-                  <rect x="68" y="26" width="12" height="6" rx="2" fill="#fbbf24" />
-                  <circle cx="74" cy="64" r="30" fill="#0f172a" stroke="#fbbf24" stroke-width="4" />
-                  <circle cx="74" cy="64" r="23" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 4" />
-                  <line x1="74" y1="64" x2="74" y2="47" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" />
-                  <line x1="74" y1="64" x2="88" y2="64" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round" />
-                </svg>
-              </div>
-
-              <!-- Illustration 4 : Loupe Néon & Dossier (Detective 5 Indices) -->
-              <div v-else-if="card.art === 'detective'" class="art-emblem group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
-                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(168,85,247,0.38)]">
-                  <ellipse cx="60" cy="104" rx="36" ry="7" fill="rgba(168,85,247,0.25)" />
-                  <!-- Cartes indices 3D -->
-                  <rect x="44" y="28" width="44" height="58" rx="8" transform="rotate(8 66 57)" fill="#1e1b4b" stroke="#a855f7" stroke-width="2" />
-                  <!-- Loupe lumineuse -->
-                  <circle cx="48" cy="58" r="22" fill="rgba(56,189,248,0.18)" stroke="#38bdf8" stroke-width="4" />
-                  <line x1="33" y1="74" x2="18" y2="90" stroke="#c084fc" stroke-width="6" stroke-linecap="round" />
-                  <circle cx="42" cy="52" r="5" fill="rgba(255,255,255,0.45)" />
-                </svg>
-              </div>
-
-              <!-- Illustration 5 : Monument Panthéon 3D (Capitales) -->
-              <div v-else-if="card.art === 'capitals'" class="art-emblem group-hover:scale-110 transition-transform duration-500">
-                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(56,189,248,0.32)]">
-                  <ellipse cx="60" cy="104" rx="38" ry="7" fill="rgba(56,189,248,0.22)" />
-                  <polygon points="60,22 22,44 98,44" fill="#60a5fa" stroke="#bae6fd" stroke-width="1.5" />
-                  <rect x="26" y="44" width="68" height="6" rx="2" fill="#3b82f6" />
-                  <rect x="32" y="50" width="8" height="36" rx="2" fill="#e2e8f0" />
-                  <rect x="48" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
-                  <rect x="64" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
-                  <rect x="80" y="50" width="8" height="36" rx="2" fill="#94a3b8" />
-                  <rect x="20" y="86" width="80" height="10" rx="3" fill="#38bdf8" />
-                </svg>
-              </div>
-
-              <!-- Illustration 6 : Drapeau 3D Flottant sur Socle (Drapeaux) -->
-              <div v-else-if="card.art === 'flags'" class="art-emblem group-hover:scale-110 group-hover:-rotate-2 transition-transform duration-500">
-                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(99,102,241,0.38)]">
-                  <ellipse cx="56" cy="104" rx="34" ry="7" fill="rgba(99,102,241,0.28)" />
-                  <line x1="34" y1="20" x2="34" y2="98" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" />
-                  <circle cx="34" cy="18" r="4.5" fill="#fbbf24" />
-                  <path d="M36 24 Q58 16 78 26 T98 24 L98 66 Q78 74 58 64 T36 68 Z" fill="#3b82f6" stroke="#93c5fd" stroke-width="1.5" />
-                  <path d="M36 38 Q58 30 78 40 T98 38 L98 52 Q78 60 58 50 T36 54 Z" fill="#f8fafc" />
-                </svg>
-              </div>
-
-              <!-- Illustration 7 : Cible Radar 3D (Map-Click / Culture / Autres) -->
-              <div v-else class="art-emblem group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
-                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(236,72,153,0.32)]">
-                  <ellipse cx="60" cy="104" rx="34" ry="7" fill="rgba(236,72,153,0.22)" />
-                  <circle cx="60" cy="56" r="34" fill="#1e1b4b" stroke="#f472b6" stroke-width="2.5" />
-                  <circle cx="60" cy="56" r="22" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 4" />
-                  <circle cx="60" cy="56" r="9" fill="#10b981" />
-                  <line x1="60" y1="14" x2="60" y2="30" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round" />
-                  <line x1="60" y1="82" x2="60" y2="98" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round" />
-                  <line x1="18" y1="56" x2="34" y2="56" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round" />
-                  <line x1="86" y1="56" x2="102" y2="56" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round" />
-                </svg>
-              </div>
-            </div>
-          </article>
-        </div>
+            </article>
+          </div>
+        </section>
 
       </div>
 
       <!-- ======================================================= -->
       <!-- MODE 1 : QCM CLASSIQUES (15 QUESTIONS + BILAN DÉTAILLÉ) -->
       <!-- ======================================================= -->
-      <div v-else-if="currentMode === 'qcm'" key="quiz-qcm" class="max-w-3xl mx-auto">
+      <div v-else-if="currentMode === 'qcm'" key="quiz-qcm" class="max-w-3xl mx-auto px-3 sm:px-6 pb-20">
         <transition name="card-flip-fade" mode="out-in">
-          <!-- QUESTION ACTIVE -->
           <div
             v-if="!qcmFini && currentQcmQuestion"
             :key="'qcm-q-' + qcmIndex"
@@ -501,7 +632,6 @@
             </transition>
           </div>
 
-          <!-- ÉCRAN DE FIN DE QCM + BILAN DES 15 QUESTIONS -->
           <div
             v-else
             key="qcm-result"
@@ -585,7 +715,7 @@
       <!-- ======================================================= -->
       <!-- MODE 2 : SPRINT 60 SECONDES (JAUGE CIRCULAIRE & COMBO)  -->
       <!-- ======================================================= -->
-      <div v-else-if="currentMode === 'flash60'" key="quiz-flash60" class="max-w-3xl mx-auto">
+      <div v-else-if="currentMode === 'flash60'" key="quiz-flash60" class="max-w-3xl mx-auto px-3 sm:px-6 pb-20">
         <div
           v-if="!flashFinished && currentFlashQuestion"
           class="rounded-3xl border border-amber-500/30 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-6 sm:p-10 shadow-2xl space-y-6"
@@ -696,10 +826,9 @@
       <!-- ======================================================= -->
       <!-- MODE 3 : LE PAYS MYSTÈRE (WORLDLE + GLOBE RADAR 3D)     -->
       <!-- ======================================================= -->
-      <div v-else-if="currentMode === 'mystery'" key="quiz-mystery" class="max-w-5xl mx-auto">
+      <div v-else-if="currentMode === 'mystery'" key="quiz-mystery" class="max-w-5xl mx-auto px-3 sm:px-6 pb-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-          <!-- Colonne Principale (7 cols) : Saisie Mobile/PC & Grille des 6 essais -->
           <div class="lg:col-span-7 rounded-3xl border border-slate-200/90 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-4 sm:p-7 shadow-2xl space-y-5 overflow-hidden">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-white/10">
               <div>
@@ -720,7 +849,6 @@
               </button>
             </div>
 
-            <!-- Saisie : Bouton Valider centré en dessous sur mobile (<640px), en ligne sur PC (sm:flex-row) -->
             <div v-if="!mysteryFinished" class="space-y-3">
               <div class="flex flex-col sm:flex-row items-center sm:items-stretch gap-2.5 sm:gap-2">
                 <input
@@ -753,7 +881,6 @@
               </div>
             </div>
 
-            <!-- Grille des 6 tentatives (Nom complet toujours visible) -->
             <div class="space-y-2.5">
               <div
                 v-for="slot in 6"
@@ -835,7 +962,6 @@
             </div>
           </div>
 
-          <!-- Colonne Droite (5 cols) : Globe Radar 3D de Triangulation -->
           <div class="lg:col-span-5 rounded-3xl border border-slate-200/90 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 shadow-2xl flex flex-col items-center space-y-4">
             <div class="w-full flex items-center justify-between text-xs font-mono text-slate-400 border-b border-slate-200 dark:border-white/10 pb-3">
               <span class="text-sky-400 font-bold">
@@ -866,7 +992,7 @@
       <!-- ======================================================= -->
       <!-- MODE 4 : ENQUÊTE AUX 5 INDICES (CARTES 3D RECTO-VERSO)  -->
       <!-- ======================================================= -->
-      <div v-else-if="currentMode === 'detective'" key="quiz-detective" class="max-w-4xl mx-auto">
+      <div v-else-if="currentMode === 'detective'" key="quiz-detective" class="max-w-4xl mx-auto px-3 sm:px-6 pb-20">
         <div
           v-if="!detectiveFinished && detectiveTarget"
           class="rounded-3xl border border-slate-200 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl space-y-6"
@@ -1017,7 +1143,7 @@
       <!-- ======================================================= -->
       <!-- MODE 5 : DÉFIS CHRONO (GLOBE 3D + CARTE 2D 100% MUETTE) -->
       <!-- ======================================================= -->
-      <div v-else-if="currentMode === 'chrono'" key="quiz-chrono" class="space-y-6">
+      <div v-else-if="currentMode === 'chrono'" key="quiz-chrono" class="max-w-[1400px] mx-auto px-3 sm:px-6 pb-20 space-y-6">
         <div class="rounded-3xl border border-slate-200 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-2xl space-y-5">
 
           <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
@@ -1138,7 +1264,6 @@
             </div>
           </div>
 
-          <!-- VUE 1 : GLOBE 3D INTERACTIF -->
           <div
             v-if="chronoViewMode === 'globe3d'"
             class="relative rounded-3xl border border-slate-200 dark:border-white/10 bg-[#050811] py-6 px-4 flex flex-col items-center justify-center overflow-hidden min-h-[430px]"
@@ -1166,7 +1291,6 @@
             </div>
           </div>
 
-          <!-- VUE 2 : PLANISPHÈRE 2D 100 % MUET (ZÉRO NOM DE PAYS + FRONTIÈRES VECTORIELLES) -->
           <div
             v-else
             class="quiz-mute-map h-[390px] sm:h-[450px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative z-0"
@@ -1200,7 +1324,6 @@
             >
               <l-tile-layer :key="blankMapStyle" :url="blankTileUrl" :no-wrap="false"></l-tile-layer>
 
-              <!-- Frontières vectorielles muettes (sans aucun texte) -->
               <l-polyline
                 v-for="(ring, rIdx) in leafletWorldRings"
                 :key="'chr-border-' + rIdx"
@@ -1226,7 +1349,6 @@
             </l-map>
           </div>
 
-          <!-- Grille alphabétique par continent style JetPunk -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
             <div
               v-for="group in chronoContinentGroups"
@@ -1266,7 +1388,7 @@
       <!-- ======================================================= -->
       <!-- MODE 6 : CLIQUEZ SUR LA CARTE MUETTE (STYLE SETERRA)    -->
       <!-- ======================================================= -->
-      <div v-else-if="currentMode === 'map-click'" key="quiz-mapclick" class="space-y-5">
+      <div v-else-if="currentMode === 'map-click'" key="quiz-mapclick" class="max-w-[1400px] mx-auto px-3 sm:px-6 pb-20 space-y-5">
         <div class="rounded-3xl border border-slate-200 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-2xl space-y-5">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2">
@@ -1339,7 +1461,6 @@
             >
               <l-tile-layer :key="blankMapStyle" :url="blankTileUrl" :no-wrap="false"></l-tile-layer>
 
-              <!-- Frontières vectorielles muettes -->
               <l-polyline
                 v-for="(ring, rIdx) in leafletWorldRings"
                 :key="'mc-border-' + rIdx"
@@ -1367,7 +1488,7 @@
       <!-- ======================================================= -->
       <!-- MODE 7 : FLASHCARDS 3D INTERACTIVES (ACQUIS / À REVOIR) -->
       <!-- ======================================================= -->
-      <div v-else-if="currentMode === 'flashcards'" key="quiz-flashcards" class="max-w-2xl mx-auto space-y-6">
+      <div v-else-if="currentMode === 'flashcards'" key="quiz-flashcards" class="max-w-2xl mx-auto px-3 sm:px-6 pb-20 space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex flex-wrap items-center gap-2">
             <select
@@ -1501,7 +1622,7 @@
       <!-- ======================================================= -->
       <!-- MODE 8 : GRILLE MONDIALE DES 196 DRAPEAUX (AUTO-FOCUS)  -->
       <!-- ======================================================= -->
-      <div v-else-if="currentMode === 'flag-grid'" key="quiz-flaggrid" class="space-y-6">
+      <div v-else-if="currentMode === 'flag-grid'" key="quiz-flaggrid" class="max-w-[1400px] mx-auto px-3 sm:px-6 pb-20 space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 p-5">
           <div class="flex flex-wrap items-center gap-2">
             <button
@@ -1549,7 +1670,7 @@
       <!-- ======================================================= -->
       <!-- MODE 9 : CRÉATEUR DE DÉFIS SUR-MESURE (5 À 15 PAYS)     -->
       <!-- ======================================================= -->
-      <div v-else-if="currentMode === 'custom-builder'" key="quiz-builder" class="max-w-4xl mx-auto">
+      <div v-else-if="currentMode === 'custom-builder'" key="quiz-builder" class="max-w-4xl mx-auto px-3 sm:px-6 pb-20">
         <div class="rounded-3xl border border-slate-200 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl space-y-6">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
             <div>
@@ -1651,6 +1772,43 @@ const router = useRouter();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 // =========================================================
+// PARALLAXE DE LA SCÈNE PLEIN ÉCRAN & TILT 3D DES CARTES
+// =========================================================
+const stageParallaxX = ref(0);
+const stageParallaxY = ref(0);
+const matrixTilts = ref({});
+
+const onStagePointerMove = (e) => {
+  if (typeof window === 'undefined') return;
+  stageParallaxX.value = Number(((e.clientX / window.innerWidth - 0.5) * 2).toFixed(3));
+  stageParallaxY.value = Number(((e.clientY / window.innerHeight - 0.5) * 2).toFixed(3));
+};
+
+const onMatrixCardMove = (e, id) => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const nx = (e.clientX - rect.left) / rect.width - 0.5;
+  const ny = (e.clientY - rect.top) / rect.height - 0.5;
+  matrixTilts.value[id] = {
+    rx: Number((-ny * 10).toFixed(2)),
+    ry: Number((nx * 12).toFixed(2))
+  };
+};
+
+const onMatrixCardLeave = (id) => {
+  matrixTilts.value[id] = { rx: 0, ry: 0 };
+};
+
+const getMatrixCardStyle = (id) => {
+  const tObj = matrixTilts.value[id];
+  if (!tObj || (tObj.rx === 0 && tObj.ry === 0)) {
+    return { transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg)' };
+  }
+  return {
+    transform: `perspective(1000px) rotateX(${tObj.rx}deg) rotateY(${tObj.ry}deg) translateY(-4px)`
+  };
+};
+
+// =========================================================
 // DICTIONNAIRE D'ALIAS POUR SAISIE NATURELLE
 // =========================================================
 const COUNTRY_ALIASES = {
@@ -1729,7 +1887,7 @@ const playSound = (type) => {
 };
 
 // =========================================================
-// BASE DES 196 PAYS AVEC IDENTIFIANT UNIQUE GARANTI (FIX 15 QCM)
+// BASE DES 196 PAYS AVEC IDENTIFIANT UNIQUE GARANTI
 // =========================================================
 const countriesData = ref(ALL_COUNTRIES);
 
@@ -1769,10 +1927,7 @@ const normalizeString = (str = '') =>
     .replace(/\s+/g, ' ')
     .trim();
 
-// =========================================================
-// FONDS DE CARTE 2D 100 % MUETS (ZÉRO NOM DE PAYS)
-// =========================================================
-const blankMapStyle = ref('physical'); // 'physical' | 'satellite'
+const blankMapStyle = ref('physical');
 const leafletWorldRings = ref([]);
 
 const blankTileUrl = computed(() => {
@@ -1783,17 +1938,24 @@ const blankTileUrl = computed(() => {
 });
 
 // =========================================================
-// MOTEUR 3D INTERACTIF DE LA MANETTE DANS LE HERO (360° DRAG)
+// MOTEUR 3D HAUTE DÉFINITION DE LA MANETTE NEXT-GEN + HOLO
 // =========================================================
 const gamepadCanvasRef = ref(null);
-let gpYaw = -0.38;
-let gpPitch = 0.28;
+let gpYaw = -0.36;
+let gpPitch = 0.32;
 let gpVelYaw = 0;
 let gpVelPitch = 0;
 let gpDragging = false;
 let gpLastX = 0;
 let gpLastY = 0;
 let gpFloatPhase = 0;
+let gpRecoil = 0;
+let gpPulseRing = 0;
+
+const triggerControllerPulse = () => {
+  gpRecoil = 14;
+  gpPulseRing = 0.01;
+};
 
 const onGamepadPointerDown = (e) => {
   gpDragging = true;
@@ -1807,12 +1969,12 @@ const onGamepadPointerMove = (e) => {
   if (!gpDragging) return;
   const dx = e.clientX - gpLastX;
   const dy = e.clientY - gpLastY;
-  const dY = dx * 0.012;
+  const dY = dx * 0.011;
   const dP = Math.max(-0.85, Math.min(0.85, gpPitch + dy * 0.01)) - gpPitch;
   gpYaw += dY;
   gpPitch += dP;
-  gpVelYaw = dY * 0.85;
-  gpVelPitch = dP * 0.85;
+  gpVelYaw = dY * 0.88;
+  gpVelPitch = dP * 0.88;
   gpLastX = e.clientX;
   gpLastY = e.clientY;
 };
@@ -1821,14 +1983,14 @@ const onGamepadPointerUp = () => {
   gpDragging = false;
 };
 
-const renderInteractive3DGamepad = () => {
+const renderRealistic3DController = () => {
   const canvas = gamepadCanvasRef.value;
   if (!canvas || currentMode.value !== 'menu') return;
 
   const rect = canvas.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const W = rect.width || 360;
-  const H = rect.height || 280;
+  const W = rect.width || 560;
+  const H = rect.height || 440;
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
@@ -1839,63 +2001,89 @@ const renderInteractive3DGamepad = () => {
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
 
-  gpFloatPhase += 0.03;
+  gpFloatPhase += 0.028;
+  if (gpRecoil > 0.1) gpRecoil *= 0.84;
+  else gpRecoil = 0;
+
+  if (gpPulseRing > 0) {
+    gpPulseRing += 0.035;
+    if (gpPulseRing > 1) gpPulseRing = 0;
+  }
 
   if (!gpDragging) {
-    if (Math.abs(gpVelYaw) > 0.0005 || Math.abs(gpVelPitch) > 0.0005) {
+    if (Math.abs(gpVelYaw) > 0.0004 || Math.abs(gpVelPitch) > 0.0004) {
       gpYaw += gpVelYaw;
       gpPitch = Math.max(-0.85, Math.min(0.85, gpPitch + gpVelPitch));
-      gpVelYaw *= 0.93;
-      gpVelPitch *= 0.93;
+      gpVelYaw *= 0.94;
+      gpVelPitch *= 0.94;
     } else {
-      gpYaw += 0.008;
+      gpYaw += 0.0065;
     }
   }
 
+  const themeHex = activeShowcaseCard.value?.glowColor || '#6366f1';
+  const S = Math.min(W, H) / 310;
   const cx = W / 2;
-  const cy = H / 2 - 6 + Math.sin(gpFloatPhase) * 5;
+  const cy = H * 0.52 + Math.sin(gpFloatPhase) * 6 * S + gpRecoil * 0.6;
 
-  // 1. Socle holographique lumineux sous la manette (Style image_891a3f.jpg)
-  const pedY = H - 34;
-  const pedGrad = ctx.createRadialGradient(cx, pedY, 6, cx, pedY, 115);
-  pedGrad.addColorStop(0, 'rgba(99, 102, 241, 0.55)');
-  pedGrad.addColorStop(0.55, 'rgba(56, 189, 248, 0.22)');
-  pedGrad.addColorStop(1, 'rgba(99, 102, 241, 0)');
+  // 1. SOCLE HOLOGRAPHIQUE ÉNERGÉTIQUE MULTICOUCHE
+  const pedY = H * 0.87;
+  const pedR = 128 * S;
+  const pedGrad = ctx.createRadialGradient(cx, pedY, 5, cx, pedY, pedR * 1.25);
+  pedGrad.addColorStop(0, `${themeHex}88`);
+  pedGrad.addColorStop(0.5, 'rgba(56, 189, 248, 0.25)');
+  pedGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
   ctx.beginPath();
-  ctx.ellipse(cx, pedY, 110, 22, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, pedY, pedR * 1.22, 26 * S, 0, 0, Math.PI * 2);
   ctx.fillStyle = pedGrad;
   ctx.fill();
 
-  ctx.beginPath();
-  ctx.ellipse(cx, pedY, 76, 13, 0, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(129, 140, 248, 0.65)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  // Anneaux néon concentriques du socle
+  const ringRadii = [0.92, 0.68, 0.44];
+  for (let rIdx = 0; rIdx < ringRadii.length; rIdx++) {
+    const ratio = ringRadii[rIdx];
+    ctx.beginPath();
+    ctx.ellipse(cx, pedY, pedR * ratio, 20 * S * ratio, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = rIdx === 0 ? themeHex : 'rgba(56, 189, 248, 0.65)';
+    ctx.lineWidth = (2.2 - rIdx * 0.5) * S;
+    ctx.stroke();
+  }
 
-  ctx.beginPath();
-  ctx.ellipse(cx, pedY, 52, 8, 0, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(56, 189, 248, 0.8)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+  // Onde de choc quand on change de mode ou clique sur la manette
+  if (gpPulseRing > 0) {
+    ctx.beginPath();
+    ctx.ellipse(
+      cx,
+      pedY,
+      pedR * (0.4 + gpPulseRing * 0.95),
+      22 * S * (0.4 + gpPulseRing * 0.95),
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.strokeStyle = `rgba(56, 189, 248, ${1 - gpPulseRing})`;
+    ctx.lineWidth = 3 * S;
+    ctx.stroke();
+  }
 
-  // Projection 3D (Rotation Yaw + Pitch + Roll léger)
+  // Matrice de projection 3D avec perspective réelle
   const cosY = Math.cos(gpYaw), sinY = Math.sin(gpYaw);
   const cosP = Math.cos(gpPitch), sinP = Math.sin(gpPitch);
-  const roll = -0.18;
+  const roll = -0.16 + stageParallaxX.value * 0.08;
   const cosR = Math.cos(roll), sinR = Math.sin(roll);
 
-  const project3D = (x, y, z) => {
-    // Roll
+  const project3D = (lx, ly, lz) => {
+    const x = lx * S;
+    const y = ly * S;
+    const z = lz * S;
     const xr = x * cosR - y * sinR;
     const yr = x * sinR + y * cosR;
-    // Yaw
     const x1 = xr * cosY + z * sinY;
     const z1 = -xr * sinY + z * cosY;
-    // Pitch
     const y2 = yr * cosP - z1 * sinP;
     const z2 = yr * sinP + z1 * cosP;
-    const fov = 360;
-    const scale = fov / (fov + z2 + 120);
+    const fov = 520 * S;
+    const scale = fov / Math.max(80, fov + z2 + 135 * S);
     return {
       x: cx + x1 * scale,
       y: cy + y2 * scale,
@@ -1904,177 +2092,302 @@ const renderInteractive3DGamepad = () => {
     };
   };
 
-  // 2. Cubes 3D flottants en orbite autour de la manette
-  const orbitCubes = [
-    { ox: -115, oy: -48, oz: -25, label: '🌍', color: '#38bdf8' },
-    { ox: -98, oy: 36, oz: 20, label: '📖', color: '#818cf8' },
-    { ox: 112, oy: -42, oz: 15, label: '🏆', color: '#c084fc' },
-    { ox: 102, oy: 38, oz: -20, label: '🧭', color: '#34d399' }
-  ];
+  // Fonction utilitaire pour dessiner un vrai Cube 3D à 6 faces en perspective
+  const drawTrue3DCube = (ox, oy, oz, size, rotAngle, icon, strokeColor) => {
+    const half = size;
+    const cA = Math.cos(rotAngle), sA = Math.sin(rotAngle);
+    const localVerts = [
+      [-half, -half, -half], [half, -half, -half], [half, half, -half], [-half, half, -half],
+      [-half, -half, half], [half, -half, half], [half, half, half], [-half, half, half]
+    ].map(([vx, vy, vz]) => {
+      const rx = vx * cA - vz * sA;
+      const rz = vx * sA + vz * cA;
+      return project3D(ox + rx, oy + vy, oz + rz);
+    });
 
-  for (let i = 0; i < orbitCubes.length; i++) {
-    const c = orbitCubes[i];
-    const bob = Math.sin(gpFloatPhase + i * 1.4) * 6;
-    const p = project3D(c.ox, c.oy + bob, c.oz);
-    const sz = 16 * p.s;
+    const faces = [
+      [0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4],
+      [2, 3, 7, 6], [0, 3, 7, 4], [1, 2, 6, 5]
+    ].map((f) => ({
+      indices: f,
+      avgZ: (localVerts[f[0]].z + localVerts[f[1]].z + localVerts[f[2]].z + localVerts[f[3]].z) / 4
+    })).sort((a, b) => b.avgZ - a.avgZ);
 
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(Math.sin(gpFloatPhase * 0.7 + i) * 0.18);
-    ctx.fillStyle = 'rgba(30, 27, 75, 0.78)';
-    ctx.strokeStyle = c.color;
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.roundRect(-sz, -sz, sz * 2, sz * 2, 7);
-    ctx.fill();
-    ctx.stroke();
+    for (const f of faces.slice(2)) {
+      const pts = f.indices.map((idx) => localVerts[idx]);
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      ctx.lineTo(pts[1].x, pts[1].y);
+      ctx.lineTo(pts[2].x, pts[2].y);
+      ctx.lineTo(pts[3].x, pts[3].y);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(20, 24, 58, 0.78)';
+      ctx.fill();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 1.5 * S;
+      ctx.stroke();
+    }
 
-    ctx.font = `${Math.round(13 * p.s)}px sans-serif`;
+    const centerPt = project3D(ox, oy, oz);
+    ctx.font = `${Math.round(14 * S * centerPt.s)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(c.label, 0, 1);
-    ctx.restore();
+    ctx.fillText(icon, centerPt.x, centerPt.y);
+  };
+
+  // Configuration des 4 Cubes 3D en orbite (Tri Z : arrière-plan puis premier plan)
+  const rawCubes = [
+    { angle: gpFloatPhase * 0.55, radius: 132, y: -46, icon: '🌍', color: '#38bdf8' },
+    { angle: gpFloatPhase * 0.55 + Math.PI * 0.5, radius: 126, y: 34, icon: '⚡', color: '#f59e0b' },
+    { angle: gpFloatPhase * 0.55 + Math.PI, radius: 132, y: -38, icon: '🏆', color: '#c084fc' },
+    { angle: gpFloatPhase * 0.55 + Math.PI * 1.5, radius: 126, y: 38, icon: '🧭', color: '#34d399' }
+  ].map((c, i) => {
+    const ox = Math.cos(c.angle) * c.radius;
+    const oz = Math.sin(c.angle) * (c.radius * 0.55);
+    const oy = c.y + Math.sin(gpFloatPhase * 1.3 + i) * 7;
+    const center = project3D(ox, oy, oz);
+    return { ...c, ox, oy, oz, zDepth: center.z, rot: gpFloatPhase + i };
+  });
+
+  // Dessine d'abord les cubes qui passent DERRIÈRE la manette (zDepth > 0)
+  for (const c of rawCubes.filter((item) => item.zDepth > 0)) {
+    drawTrue3DCube(c.ox, c.oy, c.oz, 13, c.rot, c.icon, c.color);
   }
 
-  // 3. Rendu 3D Volumétrique de la Manette (Multi-couches Z pour donner une vraie épaisseur 3D)
-  const layers = [-14, -10, -6, -2, 2, 6, 10, 14];
-  for (let lIdx = 0; lIdx < layers.length; lIdx++) {
-    const zSlice = layers[lIdx];
-    const isTop = lIdx === layers.length - 1;
+  // 2. GÂCHETTES ARRIÈRE L1 / R1 / L2 / R2 EN 3D
+  for (const side of [-1, 1]) {
+    const b1 = project3D(side * 46, -34, -8);
+    const b2 = project3D(side * 66, -24, -8);
+    const b3 = project3D(side * 62, -14, 4);
+    const b4 = project3D(side * 42, -24, 4);
+    ctx.beginPath();
+    ctx.moveTo(b1.x, b1.y);
+    ctx.lineTo(b2.x, b2.y);
+    ctx.lineTo(b3.x, b3.y);
+    ctx.lineTo(b4.x, b4.y);
+    ctx.closePath();
+    ctx.fillStyle = '#0f172a';
+    ctx.fill();
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 1.4 * S;
+    ctx.stroke();
+  }
 
-    const pCenter = project3D(0, -6, zSlice);
-    const pLeftShoulder = project3D(-46, -24, zSlice);
-    const pLeftGripBottom = project3D(-62, 42, zSlice - 6);
-    const pLeftGripInner = project3D(-24, 16, zSlice);
-    const pRightGripInner = project3D(24, 16, zSlice);
-    const pRightGripBottom = project3D(62, 42, zSlice - 6);
-    const pRightShoulder = project3D(46, -24, zSlice);
+  // 3. CORPS SCULPTÉ VOLUMÉTRIQUE DE LA MANETTE NEXT-GEN (22 TRANCHES 3D HAUTE DENSITÉ)
+  const totalSlices = 22;
+  for (let i = 0; i < totalSlices; i++) {
+    const tNorm = i / (totalSlices - 1); // 0 (arrière) -> 1 (face avant)
+    const zSlice = -18 + tNorm * 36;
+    const bevel = Math.sin(tNorm * Math.PI);
+    const wScale = 0.86 + bevel * 0.14;
+    const isFrontShell = i >= totalSlices - 2;
+
+    const pTopMid = project3D(0, -28 * wScale, zSlice);
+    const pLShoulder = project3D(-56 * wScale, -28 * wScale, zSlice);
+    const pLOuter = project3D(-88 * wScale, 6 * wScale, zSlice - 4);
+    const pLGripTip = project3D(-72 * wScale, 56 * wScale, zSlice - 10);
+    const pLGripIn = project3D(-32 * wScale, 22 * wScale, zSlice);
+    const pBridgeMid = project3D(0, 18 * wScale, zSlice + 2);
+    const pRGripIn = project3D(32 * wScale, 22 * wScale, zSlice);
+    const pRGripTip = project3D(72 * wScale, 56 * wScale, zSlice - 10);
+    const pROuter = project3D(88 * wScale, 6 * wScale, zSlice - 4);
+    const pRShoulder = project3D(56 * wScale, -28 * wScale, zSlice);
 
     ctx.beginPath();
-    ctx.moveTo(pLeftShoulder.x, pLeftShoulder.y);
+    ctx.moveTo(pLShoulder.x, pLShoulder.y);
+    ctx.quadraticCurveTo(pLOuter.x, pLOuter.y, pLGripTip.x, pLGripTip.y);
     ctx.quadraticCurveTo(
-      project3D(-76, 4, zSlice).x,
-      project3D(-76, 4, zSlice).y,
-      pLeftGripBottom.x,
-      pLeftGripBottom.y
+      project3D(-48 * wScale, 62 * wScale, zSlice - 8).x,
+      project3D(-48 * wScale, 62 * wScale, zSlice - 8).y,
+      pLGripIn.x,
+      pLGripIn.y
     );
+    ctx.quadraticCurveTo(pBridgeMid.x, pBridgeMid.y, pRGripIn.x, pRGripIn.y);
     ctx.quadraticCurveTo(
-      project3D(-42, 48, zSlice).x,
-      project3D(-42, 48, zSlice).y,
-      pLeftGripInner.x,
-      pLeftGripInner.y
+      project3D(48 * wScale, 62 * wScale, zSlice - 8).x,
+      project3D(48 * wScale, 62 * wScale, zSlice - 8).y,
+      pRGripTip.x,
+      pRGripTip.y
     );
-    ctx.lineTo(pRightGripInner.x, pRightGripInner.y);
-    ctx.quadraticCurveTo(
-      project3D(42, 48, zSlice).x,
-      project3D(42, 48, zSlice).y,
-      pRightGripBottom.x,
-      pRightGripBottom.y
-    );
-    ctx.quadraticCurveTo(
-      project3D(76, 4, zSlice).x,
-      project3D(76, 4, zSlice).y,
-      pRightShoulder.x,
-      pRightShoulder.y
-    );
-    ctx.quadraticCurveTo(pCenter.x, pCenter.y - 22 * pCenter.s, pLeftShoulder.x, pLeftShoulder.y);
+    ctx.quadraticCurveTo(pROuter.x, pROuter.y, pRShoulder.x, pRShoulder.y);
+    ctx.quadraticCurveTo(pTopMid.x, pTopMid.y - 8 * S, pLShoulder.x, pLShoulder.y);
     ctx.closePath();
 
-    if (isTop) {
-      const bodyGrad = ctx.createLinearGradient(
-        pLeftShoulder.x,
-        pLeftShoulder.y,
-        pRightGripBottom.x,
-        pRightGripBottom.y
+    if (isFrontShell) {
+      // Éclairage spéculaire métallisé réaliste sur la coque supérieure
+      const shellGrad = ctx.createLinearGradient(
+        pLShoulder.x,
+        pLShoulder.y - 20 * S,
+        pRGripTip.x,
+        pRGripTip.y + 20 * S
       );
-      bodyGrad.addColorStop(0, '#312e81');
-      bodyGrad.addColorStop(0.5, '#1e1b4b');
-      bodyGrad.addColorStop(1, '#0f172a');
-      ctx.fillStyle = bodyGrad;
+      shellGrad.addColorStop(0, '#4338ca');
+      shellGrad.addColorStop(0.32, '#1e1b4b');
+      shellGrad.addColorStop(0.7, '#0f172a');
+      shellGrad.addColorStop(1, '#090d16');
+      ctx.fillStyle = shellGrad;
       ctx.fill();
-      ctx.strokeStyle = '#818cf8';
-      ctx.lineWidth = 2.2;
+
+      ctx.strokeStyle = 'rgba(165, 180, 252, 0.65)';
+      ctx.lineWidth = 2 * S;
       ctx.stroke();
     } else {
-      ctx.fillStyle = '#0f1329';
+      // Tranches latérales sombres donnant l'épaisseur 3D
+      const shade = Math.round(8 + tNorm * 14);
+      ctx.fillStyle = `rgb(${shade}, ${shade + 4}, ${shade + 18})`;
       ctx.fill();
-      ctx.strokeStyle = 'rgba(99, 102, 241, 0.22)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
     }
   }
 
-  // 4. Éléments en relief sur la face avant de la manette (Pavé tactile, D-Pad, Joysticks 3D, Boutons Néon)
-  const zFront = 16;
+  // 4. POIGNÉES ERGONOMIQUES BICOLORES (GRIPS TEXTURÉS CARBONE)
+  const zFront = 18.5;
+  for (const side of [-1, 1]) {
+    const g1 = project3D(side * 42, 14, zFront);
+    const g2 = project3D(side * 76, 8, zFront - 3);
+    const g3 = project3D(side * 69, 53, zFront - 9);
+    const g4 = project3D(side * 34, 22, zFront);
+    ctx.beginPath();
+    ctx.moveTo(g1.x, g1.y);
+    ctx.quadraticCurveTo(g2.x, g2.y, g3.x, g3.y);
+    ctx.quadraticCurveTo(g4.x, g4.y + 18 * S, g4.x, g4.y);
+    ctx.closePath();
+    ctx.fillStyle = '#070a14';
+    ctx.fill();
+    ctx.strokeStyle = themeHex;
+    ctx.lineWidth = 1.4 * S;
+    ctx.stroke();
+  }
 
-  // Pavé central lumineux
-  const tpTL = project3D(-20, -22, zFront);
-  const tpTR = project3D(20, -22, zFront);
-  const tpBR = project3D(18, -2, zFront);
-  const tpBL = project3D(-18, -2, zFront);
+  // 5. PAVÉ TACTILE CENTRAL + BARRE LED DYNAMIQUE + HOLOGRAMME PROJETÉ EN 3D
+  const tpTL = project3D(-25, -27, zFront + 1);
+  const tpTR = project3D(25, -27, zFront + 1);
+  const tpBR = project3D(21, -2, zFront + 1);
+  const tpBL = project3D(-21, -2, zFront + 1);
+
   ctx.beginPath();
   ctx.moveTo(tpTL.x, tpTL.y);
   ctx.lineTo(tpTR.x, tpTR.y);
   ctx.lineTo(tpBR.x, tpBR.y);
   ctx.lineTo(tpBL.x, tpBL.y);
   ctx.closePath();
-  ctx.fillStyle = '#090d1a';
+  ctx.fillStyle = '#060913';
   ctx.fill();
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = themeHex;
+  ctx.lineWidth = 2.4 * S;
   ctx.stroke();
 
-  // Croix directionnelle (D-Pad à gauche)
-  const dpadCenter = project3D(-42, -6, zFront + 2);
-  const dSz = 7 * dpadCenter.s;
-  ctx.fillStyle = '#38bdf8';
+  // Hologramme 3D projeté au-dessus du pavé tactile
+  const holoBase = project3D(0, -14, zFront + 2);
+  const holoTop = project3D(0, -54, zFront + 24);
+  const beamGrad = ctx.createLinearGradient(holoBase.x, holoBase.y, holoTop.x, holoTop.y);
+  beamGrad.addColorStop(0, `${themeHex}55`);
+  beamGrad.addColorStop(1, `${themeHex}00`);
   ctx.beginPath();
-  ctx.roundRect(dpadCenter.x - dSz * 0.45, dpadCenter.y - dSz * 1.35, dSz * 0.9, dSz * 2.7, 2);
-  ctx.roundRect(dpadCenter.x - dSz * 1.35, dpadCenter.y - dSz * 0.45, dSz * 2.7, dSz * 0.9, 2);
+  ctx.moveTo(tpBL.x, tpBL.y);
+  ctx.lineTo(holoTop.x - 28 * S, holoTop.y);
+  ctx.lineTo(holoTop.x + 28 * S, holoTop.y);
+  ctx.lineTo(tpBR.x, tpBR.y);
+  ctx.closePath();
+  ctx.fillStyle = beamGrad;
   ctx.fill();
 
-  // Joysticks 3D Gauche et Droit (avec tige + chapeau en relief Z=24)
-  const sticks = [
-    { x: -22, y: 10 },
-    { x: 22, y: 10 }
-  ];
-  for (const st of sticks) {
-    const base = project3D(st.x, st.y, zFront);
-    const cap = project3D(st.x, st.y, zFront + 9);
+  // Sphère holographique filaire en lévitation au-dessus de la manette
+  ctx.beginPath();
+  ctx.arc(holoTop.x, holoTop.y, 16 * S, 0, Math.PI * 2);
+  ctx.strokeStyle = themeHex;
+  ctx.lineWidth = 1.6 * S;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(
+    holoTop.x,
+    holoTop.y,
+    16 * S,
+    6 * S,
+    gpFloatPhase * 0.8,
+    0,
+    Math.PI * 2
+  );
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 1.2 * S;
+  ctx.stroke();
+
+  // 6. CROIX DIRECTIONNELLE (D-PAD EN VERRE FUMÉ) À GAUCHE
+  const dpad = project3D(-48, -6, zFront + 2);
+  const dUnit = 8.5 * S * dpad.s;
+  ctx.fillStyle = '#1e293b';
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 1.4 * S;
+  ctx.beginPath();
+  ctx.roundRect(dpad.x - dUnit * 0.45, dpad.y - dUnit * 1.4, dUnit * 0.9, dUnit * 2.8, 3 * S);
+  ctx.roundRect(dpad.x - dUnit * 1.4, dpad.y - dUnit * 0.45, dUnit * 2.8, dUnit * 0.9, 3 * S);
+  ctx.fill();
+  ctx.stroke();
+
+  // 7. JOYSTICKS ANALOGIQUES 3D AVEC TIGE ET CHAPEAU CONCAVE QUI S'INCLINENT
+  const stickTiltX = stageParallaxX.value * 4;
+  const stickTiltY = stageParallaxY.value * 4;
+  for (const sx of [-24, 24]) {
+    const well = project3D(sx, 11, zFront);
+    const stem = project3D(sx + stickTiltX * 0.5, 11 + stickTiltY * 0.5, zFront + 6);
+    const cap = project3D(sx + stickTiltX, 11 + stickTiltY, zFront + 12);
+
+    // Puits du joystick
     ctx.beginPath();
-    ctx.arc(base.x, base.y, 11 * base.s, 0, Math.PI * 2);
-    ctx.fillStyle = '#090d16';
+    ctx.arc(well.x, well.y, 13.5 * S * well.s, 0, Math.PI * 2);
+    ctx.fillStyle = '#040711';
     ctx.fill();
-    ctx.strokeStyle = '#6366f1';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.5)';
+    ctx.lineWidth = 1.5 * S;
+    ctx.stroke();
+
+    // Tige cylindrique 3D
+    ctx.beginPath();
+    ctx.moveTo(well.x, well.y);
+    ctx.lineTo(cap.x, cap.y);
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 7 * S * stem.s;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Chapeau texturé du stick
+    ctx.beginPath();
+    ctx.arc(cap.x, cap.y, 10.5 * S * cap.s, 0, Math.PI * 2);
+    ctx.fillStyle = '#0f172a';
+    ctx.fill();
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2 * S;
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(cap.x, cap.y, 8.5 * cap.s, 0, Math.PI * 2);
-    ctx.fillStyle = '#1e293b';
-    ctx.fill();
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 1.8;
+    ctx.arc(cap.x, cap.y, 6.5 * S * cap.s, 0, Math.PI * 2);
+    ctx.strokeStyle = themeHex;
+    ctx.lineWidth = 1.2 * S;
     ctx.stroke();
   }
 
-  // 4 Boutons d'action lumineux à droite
-  const actionBtns = [
-    { x: 42, y: -15, color: '#fbbf24' },
-    { x: 51, y: -6, color: '#f43f5e' },
-    { x: 42, y: 3, color: '#10b981' },
-    { x: 33, y: -6, color: '#38bdf8' }
+  // 8. 4 BOUTONS D'ACTION CRISTAL NÉON À DROITE
+  const actionButtons = [
+    { x: 48, y: -17, color: '#fbbf24', sym: '▲' },
+    { x: 59, y: -6, color: '#f43f5e', sym: '●' },
+    { x: 48, y: 5, color: '#10b981', sym: '✕' },
+    { x: 37, y: -6, color: '#38bdf8', sym: '■' }
   ];
-  for (const btn of actionBtns) {
-    const bp = project3D(btn.x, btn.y, zFront + 2);
+  for (const btn of actionButtons) {
+    const bp = project3D(btn.x, btn.y, zFront + 2.5);
+    const r = 5.4 * S * bp.s;
     ctx.beginPath();
-    ctx.arc(bp.x, bp.y, 4.2 * bp.s, 0, Math.PI * 2);
-    ctx.fillStyle = btn.color;
+    ctx.arc(bp.x, bp.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#0f172a';
     ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = btn.color;
+    ctx.lineWidth = 2 * S;
     ctx.stroke();
+  }
+
+  // 9. Dessine les Cubes 3D qui passent DEVANT la manette (zDepth <= 0)
+  for (const c of rawCubes.filter((item) => item.zDepth <= 0)) {
+    drawTrue3DCube(c.ox, c.oy, c.oz, 13, c.rot, c.icon, c.color);
   }
 
   ctx.restore();
@@ -2183,7 +2496,7 @@ const onQuizGlobePointerUp = () => {
 
 const renderMainLoop = () => {
   if (currentMode.value === 'menu') {
-    renderInteractive3DGamepad();
+    renderRealistic3DController();
   }
 
   const canvas =
@@ -2359,13 +2672,82 @@ const renderMainLoop = () => {
 };
 
 // =========================================================
-// NAVIGATION INTERNE & ENREGISTREMENT DES SCORES
+// CARROUSEL SPATIAL 3D (COVERFLOW DES 11 MODES)
 // =========================================================
 const currentMode = ref('menu');
 const selectedMenuCat = ref('all');
 const menuSearchQuery = ref('');
 const menuSortBy = ref('popular');
+const activeCarouselIndex = ref(0);
 const gamesGridRef = ref(null);
+
+const selectCategoryFilter = (catId) => {
+  selectedMenuCat.value = catId;
+  activeCarouselIndex.value = 0;
+  triggerControllerPulse();
+};
+
+const stepCarousel = (delta) => {
+  const len = filteredMenuCards.value.length;
+  if (!len) return;
+  activeCarouselIndex.value = (activeCarouselIndex.value + delta + len) % len;
+  triggerControllerPulse();
+};
+
+let lastWheelTime = 0;
+const onCarouselWheel = (e) => {
+  const now = Date.now();
+  if (now - lastWheelTime < 220) return;
+  lastWheelTime = now;
+  const delta = e.deltaY > 0 || e.deltaX > 0 ? 1 : -1;
+  stepCarousel(delta);
+};
+
+const handleDeckCardClick = (idx, card) => {
+  if (idx === activeCarouselIndex.value) {
+    card.action();
+  } else {
+    activeCarouselIndex.value = idx;
+    triggerControllerPulse();
+  }
+};
+
+const getCarouselCardStyle = (idx) => {
+  const total = filteredMenuCards.value.length;
+  if (!total) return {};
+  let diff = idx - activeCarouselIndex.value;
+  if (diff > total / 2) diff -= total;
+  if (diff < -total / 2) diff += total;
+
+  if (diff === 0) {
+    return {
+      transform: 'perspective(1200px) translate3d(0px, 0px, 0px) rotateY(0deg) scale(1)',
+      opacity: '1',
+      pointerEvents: 'auto'
+    };
+  }
+  if (Math.abs(diff) === 1) {
+    const dir = diff > 0 ? 1 : -1;
+    return {
+      transform: `perspective(1200px) translate3d(${dir * 72}px, 14px, -95px) rotateY(${dir * -16}deg) scale(0.9)`,
+      opacity: '0.45',
+      pointerEvents: 'auto'
+    };
+  }
+  if (Math.abs(diff) === 2) {
+    const dir = diff > 0 ? 1 : -1;
+    return {
+      transform: `perspective(1200px) translate3d(${dir * 125}px, 26px, -180px) rotateY(${dir * -24}deg) scale(0.8)`,
+      opacity: '0.16',
+      pointerEvents: 'none'
+    };
+  }
+  return {
+    transform: 'perspective(1200px) translate3d(0px, 40px, -260px) scale(0.7)',
+    opacity: '0',
+    pointerEvents: 'none'
+  };
+};
 
 const scrollToGamesGrid = () => {
   if (gamesGridRef.value) {
@@ -3274,12 +3656,12 @@ const launchCustomBuiltQuiz = () => {
 };
 
 // =========================================================
-// CATALOGUE DU HUB 3D (INSPIRÉ DE IMAGE_891A3F.JPG)
+// CATALOGUE DES 11 MODES (PILOTE LE CARROUSEL 3D & LA MANETTE)
 // =========================================================
 const menuCategories = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'all', icon: '⊞', label: isFr ? 'Tous les modes' : 'All Modes' },
+    { id: 'all', icon: '⊞', label: isFr ? 'Tous les modes (11)' : 'All Modes (11)' },
     { id: 'featured', icon: '🧊', label: isFr ? 'Défis 3D Phares' : '3D Featured' },
     { id: 'classics', icon: '💡', label: isFr ? 'QCM & Connaissances' : 'Quiz & Knowledge' },
     { id: 'study', icon: '🎓', label: isFr ? 'Étude & Sur-mesure' : 'Study & Learn' }
@@ -3294,14 +3676,16 @@ const allMenuCards = computed(() => {
       cat: 'featured',
       art: 'worldle',
       badgeIcon: '★',
-      tag: isFr ? 'Mystère' : 'Mystery',
+      tag: isFr ? 'Mystère 3D' : '3D Mystery',
+      metric: '6 ESSAIS',
+      shortTitle: 'Worldle 3D',
       duration: '~2 min',
       durationMin: 2,
       popularity: 1,
       title: isFr ? 'Le Pays Mystère (Worldle)' : 'Mystery Country (Worldle)',
       desc: isFr
-        ? 'Devinez le pays secret en 6 essais grâce à la distance en kilomètres et au radar Globe 3D.'
-        : 'Guess the secret country in 6 tries using distance in km and the 3D Globe radar.',
+        ? 'Devinez le pays secret en 6 essais grâce à la distance en kilomètres et au radar Globe 3D de triangulation.'
+        : 'Guess the secret country in 6 tries using distance in km and the 3D Globe triangulation radar.',
       cta: isFr ? 'Jouer' : 'Play Game',
       badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/35',
       glowColor: '#a855f7',
@@ -3312,14 +3696,16 @@ const allMenuCards = computed(() => {
       cat: 'featured',
       art: 'chrono',
       badgeIcon: '⚡',
-      tag: isFr ? 'Défi 3D' : 'Challenge',
+      tag: isFr ? 'Globe 3D' : '3D Globe',
+      metric: '47 / 196',
+      shortTitle: isFr ? 'Chrono 3D' : '3D Timed',
       duration: '~3 min',
       durationMin: 3,
       popularity: 2,
       title: isFr ? 'Défi Chrono (Globe 3D & Carte)' : 'Timed Challenge (3D Globe & Map)',
       desc: isFr
-        ? 'Saisissez les 47 pays d\'Europe ou les 196 pays du Monde sur le Globe 3D interactif.'
-        : 'Type all 47 European countries or all 196 World countries on the 3D Globe.',
+        ? 'Saisissez les 47 pays d\'Europe ou les 196 pays du Monde et voyez le Globe 3D tourner et s\'illuminer en direct.'
+        : 'Type all 47 European countries or all 196 World countries as the 3D Globe spins and lights up live.',
       cta: isFr ? 'Démarrer' : 'Start Challenge',
       badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35',
       glowColor: '#10b981',
@@ -3331,13 +3717,15 @@ const allMenuCards = computed(() => {
       art: 'sprint',
       badgeIcon: '🏆',
       tag: 'Arcade',
+      metric: 'COMBO X4',
+      shortTitle: 'Sprint 60s',
       duration: '~1 min',
       durationMin: 1,
       popularity: 3,
       title: isFr ? 'Sprint Flash 60 Secondes' : '60-Second Flash Sprint',
       desc: isFr
-        ? 'Enchaînez un maximum de capitales et de drapeaux en 60 secondes avec combo x4.'
-        : 'Chain as many capitals and flags as possible in 60 seconds with x4 combo.',
+        ? 'Enchaînez un maximum de capitales et de drapeaux en 60 secondes avec multiplicateur x4 et bonus +2s.'
+        : 'Chain as many capitals and flags as possible in 60 seconds with x4 multiplier and +2s bonuses.',
       cta: isFr ? 'Lancer Sprint' : 'Start Sprint',
       badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/35',
       glowColor: '#f59e0b',
@@ -3348,14 +3736,16 @@ const allMenuCards = computed(() => {
       cat: 'featured',
       art: 'detective',
       badgeIcon: '🧩',
-      tag: isFr ? 'Logique' : 'Logic',
+      tag: isFr ? 'Logique 3D' : '3D Logic',
+      metric: '25 PTS MAX',
+      shortTitle: isFr ? '5 Indices 3D' : '5 Clues 3D',
       duration: '~3 min',
       durationMin: 3,
       popularity: 4,
       title: isFr ? 'Enquête aux 5 Indices 3D' : '5-Clue 3D Detective',
       desc: isFr
-        ? 'Retournez les cartes d\'indices en 3D une par une pour démasquer le pays cible.'
-        : 'Flip 3D clue cards one by one to unmask the target sovereign state.',
+        ? 'Retournez les cartes d\'indices en 3D une par une pour démasquer le pays cible avec un maximum de points.'
+        : 'Flip 3D clue cards one by one to unmask the target sovereign state with maximum points.',
       cta: isFr ? 'Enquêter' : 'Start Investigation',
       badgeClass: 'bg-teal-500/15 text-teal-300 border-teal-500/35',
       glowColor: '#14b8a6',
@@ -3366,7 +3756,9 @@ const allMenuCards = computed(() => {
       cat: 'classics',
       art: 'capitals',
       badgeIcon: '🏛️',
-      tag: isFr ? 'Connaissances' : 'Knowledge',
+      tag: isFr ? 'Capitales' : 'Capitals',
+      metric: '15 QCM',
+      shortTitle: isFr ? 'Capitales' : 'Capitals',
       duration: '~4 min',
       durationMin: 4,
       popularity: 5,
@@ -3382,7 +3774,9 @@ const allMenuCards = computed(() => {
       cat: 'classics',
       art: 'flags',
       badgeIcon: '🚩',
-      tag: isFr ? 'Drapeaux' : 'Flag',
+      tag: isFr ? 'Drapeaux' : 'Flags',
+      metric: '15 QCM',
+      shortTitle: isFr ? 'Drapeaux' : 'Flags',
       duration: '~4 min',
       durationMin: 4,
       popularity: 6,
@@ -3399,12 +3793,14 @@ const allMenuCards = computed(() => {
       art: 'radar',
       badgeIcon: '🌐',
       tag: 'Culture',
+      metric: '15 QCM',
+      shortTitle: 'Culture & Pop',
       duration: '~4 min',
       durationMin: 4,
       popularity: 7,
       title: isFr ? 'Population, Langues & Devises' : 'Population, Languages & Currencies',
       desc: isFr
-        ? 'Comparez les populations et identifiez les langues officielles et les monnaies.'
+        ? 'Comparez les populations et identifiez les langues officielles et les monnaies nationales.'
         : 'Compare populations and identify official languages and national currencies.',
       cta: isFr ? '15 Questions' : 'Start 15 Questions',
       badgeClass: 'bg-pink-500/15 text-pink-300 border-pink-500/35',
@@ -3417,12 +3813,14 @@ const allMenuCards = computed(() => {
       art: 'radar',
       badgeIcon: '🎯',
       tag: 'Seterra',
+      metric: 'SANS CLAVIER',
+      shortTitle: isFr ? 'Clic Carte' : 'Map Click',
       duration: '~3 min',
       durationMin: 3,
       popularity: 8,
       title: isFr ? 'Cliquez sur la Carte Muette' : 'Click on the Blank Map',
       desc: isFr
-        ? 'Pointez directement chaque État demandé sur la carte muette sans saisie clavier.'
+        ? 'Pointez directement chaque État demandé sur la carte muette sans aucune saisie clavier.'
         : 'Click directly on each requested country on the blank map with zero typing.',
       cta: isFr ? 'Jouer' : 'Play Map Click',
       badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35',
@@ -3435,12 +3833,14 @@ const allMenuCards = computed(() => {
       art: 'detective',
       badgeIcon: '🎓',
       tag: isFr ? 'Étude 3D' : '3D Study',
+      metric: '196 FICHES',
+      shortTitle: 'Flashcards 3D',
       duration: '∞ Libre',
       durationMin: 10,
       popularity: 9,
       title: t('home.mode_flash_title'),
       desc: isFr
-        ? 'Révisez à votre rythme avec les 196 cartes mémoire 3D recto-verso.'
+        ? 'Révisez à votre rythme avec les 196 cartes mémoire 3D recto-verso filtrables par continent.'
         : 'Study at your own pace with all 196 double-sided 3D memory cards.',
       cta: isFr ? 'Réviser' : 'Open Flashcards',
       badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/35',
@@ -3453,12 +3853,14 @@ const allMenuCards = computed(() => {
       art: 'flags',
       badgeIcon: '🏳️',
       tag: '196 Flags',
+      metric: 'AUTO-FOCUS',
+      shortTitle: isFr ? 'Grille 196' : 'Flag Grid',
       duration: '~8 min',
       durationMin: 8,
       popularity: 10,
       title: isFr ? 'Grille Mondiale des Drapeaux' : 'World Flag Matrix',
       desc: isFr
-        ? 'Identifiez simultanément tous les drapeaux d\'un continent avec auto-focus.'
+        ? 'Identifiez simultanément tous les drapeaux d\'un continent avec passage automatique au suivant.'
         : 'Identify all flags from a continent simultaneously with auto-focus.',
       cta: isFr ? 'Ouvrir Grille' : 'Open Matrix',
       badgeClass: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/35',
@@ -3471,12 +3873,14 @@ const allMenuCards = computed(() => {
       art: 'worldle',
       badgeIcon: '🔗',
       tag: 'Custom',
+      metric: '5 À 15 PAYS',
+      shortTitle: isFr ? 'Sur-mesure' : 'Builder',
       duration: '~2 min',
       durationMin: 2,
       popularity: 11,
       title: isFr ? 'Créateur de Défis sur-mesure' : 'Custom Challenge Builder',
       desc: isFr
-        ? 'Sélectionnez de 5 à 15 pays précis pour générer un lien de défi partageable.'
+        ? 'Sélectionnez de 5 à 15 pays précis pour générer un lien de défi partageable avec vos amis.'
         : 'Select 5 to 15 specific countries to generate a shareable challenge link.',
       cta: isFr ? 'Créer Défi' : 'Build Challenge',
       badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/35',
@@ -3508,6 +3912,13 @@ const filteredMenuCards = computed(() => {
     list = [...list].sort((a, b) => a.popularity - b.popularity);
   }
   return list;
+});
+
+const activeShowcaseCard = computed(() => {
+  const list = filteredMenuCards.value;
+  if (!list.length) return allMenuCards.value[0];
+  const safeIdx = Math.min(activeCarouselIndex.value, list.length - 1);
+  return list[safeIdx] || allMenuCards.value[0];
 });
 
 const retourMenu = () => {
@@ -3548,7 +3959,13 @@ const applyRouteQuery = (q) => {
 const handleKeydown = (e) => {
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
 
-  if (currentMode.value === 'flashcards') {
+  if (currentMode.value === 'menu') {
+    if (e.key === 'ArrowRight') stepCarousel(1);
+    else if (e.key === 'ArrowLeft') stepCarousel(-1);
+    else if (e.key === 'Enter' && activeShowcaseCard.value) {
+      activeShowcaseCard.value.action();
+    }
+  } else if (currentMode.value === 'flashcards') {
     if (e.key === 'ArrowRight') carteSuivante();
     else if (e.key === 'ArrowLeft') cartePrecedente();
     else if (e.key === ' ') {
@@ -3591,6 +4008,89 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ========================================================= */
+/* SCÈNE PLEIN ÉCRAN & MANETTE 3D GÉANTE                     */
+/* ========================================================= */
+.quiz-orbital-stage {
+  background: radial-gradient(circle at 65% 46%, rgba(79, 70, 229, 0.14) 0%, rgba(14, 165, 233, 0.05) 42%, transparent 74%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.gamepad-hero-canvas {
+  width: min(92vw, 620px);
+  height: min(56vh, 450px);
+  max-width: 620px;
+  max-height: 450px;
+}
+
+.stage-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(100px);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), background 0.45s ease;
+}
+
+.stage-glow-primary {
+  width: 42vw;
+  height: 42vw;
+  top: 6%;
+  right: 12%;
+}
+
+.stage-glow-secondary {
+  width: 34vw;
+  height: 34vw;
+  bottom: 8%;
+  left: 14%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.14), transparent 70%);
+}
+
+.stage-watermark {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-weight: 900;
+  font-size: clamp(4rem, 14vw, 13rem);
+  letter-spacing: -0.05em;
+  line-height: 0.85;
+  color: rgba(148, 163, 184, 0.04);
+  pointer-events: none;
+  user-select: none;
+  transition: transform 0.2s ease-out;
+}
+
+.stage-watermark-sub {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.85rem, 2vw, 1.8rem);
+  letter-spacing: 0.35em;
+  margin-top: 1rem;
+  opacity: 0.7;
+}
+
+.spatial-coverflow-stage {
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+.matrix-tilt-card {
+  transition: transform 0.18s ease-out, border-color 0.25s ease, box-shadow 0.25s ease;
+  will-change: transform;
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
+}
+
+.animate-float-slow {
+  animation: floatSlow 4.2s ease-in-out infinite;
+}
+
 .grid-cols-15 {
   grid-template-columns: repeat(15, minmax(0, 1fr));
 }
@@ -3679,5 +4179,12 @@ onUnmounted(() => {
 .flash-3d-back,
 .clue-3d-back {
   transform: rotateY(180deg);
+}
+
+@media (max-width: 1023px) {
+  .gamepad-hero-canvas {
+    width: min(92vw, 420px);
+    height: 320px;
+  }
 }
 </style>
