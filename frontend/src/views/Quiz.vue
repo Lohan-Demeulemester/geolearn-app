@@ -51,48 +51,41 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- TRANSITION SPATIALE ENTRE LA SCÈNE 3D ET LES JEUX         -->
+    <!-- TRANSITION SPATIALE ENTRE LE SHOWCASE 3D ET LES JEUX      -->
     <!-- ========================================================= -->
     <transition name="stage-morph" mode="out-in">
 
       <!-- ======================================================= -->
-      <!-- MENU PRINCIPAL : SCÈNE PLEIN ÉCRAN + CARROUSEL 3D       -->
+      <!-- MENU PRINCIPAL : SHOWCASE WEBGL 3D + ROUE ORBITALE 3D   -->
       <!-- ======================================================= -->
       <div v-if="currentMode === 'menu'" key="quiz-menu" class="w-full">
 
-        <!-- 1. SCÈNE PLEIN ÉCRAN (100VW x 100VH COMME L'ACCUEIL) -->
+        <!-- 1. SCÈNE IMMERSIVE PLEIN ÉCRAN (WEBGL THREE.JS + CARROUSEL EN ARC) -->
         <section
-          class="quiz-orbital-stage relative w-full min-h-[calc(100vh-58px)] flex flex-col justify-between overflow-hidden select-none"
+          class="webgl-showcase-stage relative w-full min-h-[calc(100vh-58px)] flex flex-col justify-between overflow-hidden select-none"
           @pointermove="onStagePointerMove"
         >
-          <!-- Halos dynamiques synchronisés avec la couleur du mode actif -->
+          <!-- Halos atmosphériques réactifs au mode sélectionné -->
           <div class="pointer-events-none absolute inset-0 overflow-hidden">
             <div
-              class="stage-glow stage-glow-primary"
+              class="ambient-halo ambient-halo-center"
               :style="{
-                background: `radial-gradient(circle, ${activeShowcaseCard.glowColor}38 0%, transparent 70%)`,
-                transform: `translate3d(${stageParallaxX * -30}px, ${stageParallaxY * -30}px, 0)`
+                background: `radial-gradient(circle, ${activeShowcaseCard.glowColor}42 0%, rgba(14,165,233,0.08) 45%, transparent 72%)`,
+                transform: `translate3d(calc(-50% + ${stageParallaxX * -24}px), calc(-50% + ${stageParallaxY * -24}px), 0)`
               }"
             ></div>
             <div
-              class="stage-glow stage-glow-secondary"
-              :style="{
-                transform: `translate3d(${stageParallaxX * 25}px, ${stageParallaxY * 25}px, 0)`
-              }"
-            ></div>
-            <div
-              class="stage-watermark"
-              :style="{ transform: `translate3d(calc(-50% + ${stageParallaxX * -18}px), calc(-50% + ${stageParallaxY * -10}px), 0)` }"
+              class="giant-kinetic-bg"
+              :style="{ transform: `translate3d(calc(-50% + ${stageParallaxX * -22}px), calc(-50% + ${stageParallaxY * -12}px), 0)` }"
             >
-              <span>ARCADE 3D</span>
-              <span class="stage-watermark-sub">{{ activeShowcaseCard.tag.toUpperCase() }} // 196 STATES</span>
+              <span>{{ activeShowcaseCard.shortTitle.toUpperCase() }}</span>
             </div>
           </div>
 
-          <!-- BARRE SUPÉRIEURE FLOTTANTE : CATÉGORIES, RECHERCHE & AUDIO -->
-          <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pt-5 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
-            <!-- Filtres de catégories -->
-            <div class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-full bg-white/80 dark:bg-slate-900/75 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-xl self-start">
+          <!-- BARRE SUPÉRIEURE FLOTTANTE : FILTRES CATÉGORIES, RECHERCHE & VUE -->
+          <div class="relative z-30 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pt-4 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
+            <!-- Pilules de catégories -->
+            <div class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-full bg-white/85 dark:bg-[#0B1023]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl self-start">
               <button
                 v-for="cat in menuCategories"
                 :key="cat.id"
@@ -100,7 +93,7 @@
                 @click="selectCategoryFilter(cat.id)"
                 class="px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
                 :class="selectedMenuCat === cat.id
-                  ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-sky-500 text-white shadow-md scale-[1.02]'
+                  ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-sky-500 text-white shadow-lg shadow-indigo-500/25 scale-[1.02]'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
               >
                 <span>{{ cat.icon }}</span>
@@ -108,7 +101,7 @@
               </button>
             </div>
 
-            <!-- Recherche + Liens Rapides PinDrop / Duel + Audio -->
+            <!-- Recherche + Aléatoire + Audio + Grille -->
             <div class="flex flex-wrap items-center gap-2 self-start xl:self-auto">
               <div class="relative">
                 <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -117,8 +110,8 @@
                 <input
                   v-model="menuSearchQuery"
                   type="text"
-                  :placeholder="locale === 'fr' ? 'Chercher un mode de jeu...' : 'Search a game mode...'"
-                  class="w-48 sm:w-56 pl-9 pr-7 py-2 rounded-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-400 shadow-lg"
+                  :placeholder="locale === 'fr' ? 'Rechercher un jeu...' : 'Search for a game...'"
+                  class="w-48 sm:w-56 pl-9 pr-7 py-2 rounded-full bg-white/85 dark:bg-[#0B1023]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-400 shadow-lg"
                 />
                 <button
                   v-if="menuSearchQuery"
@@ -135,293 +128,230 @@
                 @click="launchRandomGame"
                 class="px-4 py-2 rounded-full bg-indigo-500/15 hover:bg-indigo-500 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition cursor-pointer shadow-lg backdrop-blur-xl"
               >
-                🎲 {{ locale === 'fr' ? 'Mode Aléatoire' : 'Random Game' }}
+                🎲 {{ locale === 'fr' ? 'Aléatoire' : 'Random' }}
               </button>
 
               <button
                 type="button"
                 @click="toggleSound"
-                class="px-3.5 py-2 rounded-full bg-white/80 dark:bg-slate-900/75 border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-lg backdrop-blur-xl"
+                class="px-3.5 py-2 rounded-full bg-white/85 dark:bg-[#0B1023]/80 border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-lg backdrop-blur-xl"
               >
                 {{ soundEnabled ? '🔊 ON' : '🔇 OFF' }}
               </button>
+
+              <button
+                type="button"
+                @click="scrollToGamesGrid"
+                class="px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-xs font-black cursor-pointer shadow-lg hover:scale-105 transition"
+              >
+                {{ locale === 'fr' ? 'Catalogue (11) ↓' : 'All Games (11) ↓' }}
+              </button>
             </div>
           </div>
 
-          <!-- COEUR DE LA SCÈNE : CARROUSEL SPATIAL 3D (GAUCHE) + MANETTE 3D GÉANTE RÉALISTE (DROITE) -->
-          <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 my-auto py-4 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <!-- ZONE CENTRALE : FOCUS ÉDITORIAL (GAUCHE) + MANETTE 3D WEBGL GÉANTE (CENTRE) + TÉLÉMÉTRIE DU MODE (DROITE) -->
+          <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 my-auto grid grid-cols-1 lg:grid-cols-12 items-center gap-4">
 
-            <!-- COLONNE GAUCHE (6 COLS) : TITRE + DECK SPATIAL 3D ROTATIF DES MODES -->
-            <div class="lg:col-span-6 space-y-6">
-              <div class="space-y-3">
-                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 text-xs font-bold">
-                  <span>★</span>
-                  <span>{{ locale === 'fr' ? 'DECK D\'ENTRAÎNEMENT INTERACTIF 3D' : 'INTERACTIVE 3D TRAINING DECK' }}</span>
-                </div>
-
-                <h1 class="text-3xl sm:text-5xl xl:text-[3.3rem] font-black tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-                  <span class="block">{{ locale === 'fr' ? 'Boostez vos connaissances' : 'Boost your knowledge' }}</span>
-                  <span class="block pb-1.5 bg-gradient-to-r from-indigo-400 via-purple-400 to-sky-400 bg-clip-text text-transparent">
-                    {{ locale === 'fr' ? 'avec nos quiz interactifs.' : 'with interactive quizzes.' }}
-                  </span>
-                </h1>
-              </div>
-
-              <!-- CARROUSEL SPATIAL 3D (COVERFLOW DES MODES DE JEU) -->
-              <div class="spatial-deck-wrapper relative pt-2">
-                <!-- Contrôles du Deck 3D -->
-                <div class="flex items-center justify-between mb-3">
-                  <div class="flex items-center gap-2">
-                    <span class="font-mono text-xs font-black text-indigo-500 dark:text-indigo-400">
-                      MODE {{ String(activeCarouselIndex + 1).padStart(2, '0') }} / {{ String(filteredMenuCards.length).padStart(2, '0') }}
+            <!-- Gauche (4 cols) : Présentation dynamique du mode pointé dans le carrousel -->
+            <div class="lg:col-span-4 space-y-4 text-left order-2 lg:order-1 z-20">
+              <transition name="slide-up-fade" mode="out-in">
+                <div :key="activeShowcaseCard.id" class="space-y-4">
+                  <div class="flex items-center gap-2.5">
+                    <span
+                      class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-extrabold border shadow-sm"
+                      :class="activeShowcaseCard.badgeClass"
+                    >
+                      <span>{{ activeShowcaseCard.badgeIcon }}</span>
+                      <span>{{ activeShowcaseCard.tag }}</span>
                     </span>
-                    <span class="text-xs text-slate-400">•</span>
-                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      {{ locale === 'fr' ? 'Utilisez ← → ou cliquez pour faire tourner le deck' : 'Use ← → or click to spin the deck' }}
+                    <span class="font-mono text-xs font-bold text-slate-400">
+                      #{{ String(activeCarouselIndex + 1).padStart(2, '0') }} / {{ String(filteredMenuCards.length).padStart(2, '0') }}
                     </span>
                   </div>
 
-                  <div class="flex items-center gap-1.5">
+                  <h1 class="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.08]">
+                    {{ activeShowcaseCard.title }}
+                  </h1>
+
+                  <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300/90 leading-relaxed max-w-md">
+                    {{ activeShowcaseCard.desc }}
+                  </p>
+
+                  <div class="flex flex-wrap items-center gap-3 pt-1">
                     <button
                       type="button"
-                      @click="stepCarousel(-1)"
-                      class="w-9 h-9 rounded-full bg-white/90 dark:bg-white/10 hover:bg-indigo-500 hover:text-white text-slate-800 dark:text-white border border-slate-200 dark:border-white/15 font-black text-sm flex items-center justify-center transition cursor-pointer shadow"
+                      @click="activeShowcaseCard.action()"
+                      class="px-7 py-3.5 rounded-full text-white font-black text-sm shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2.5"
+                      :style="{
+                        background: `linear-gradient(135deg, ${activeShowcaseCard.glowColor}, #0ea5e9)`,
+                        boxShadow: `0 16px 36px -8px ${activeShowcaseCard.glowColor}75`
+                      }"
                     >
-                      ←
+                      <span>▶</span>
+                      <span>{{ activeShowcaseCard.cta }}</span>
                     </button>
-                    <button
-                      type="button"
-                      @click="stepCarousel(1)"
-                      class="w-9 h-9 rounded-full bg-white/90 dark:bg-white/10 hover:bg-indigo-500 hover:text-white text-slate-800 dark:text-white border border-slate-200 dark:border-white/15 font-black text-sm flex items-center justify-center transition cursor-pointer shadow"
-                    >
-                      →
-                    </button>
-                  </div>
-                </div>
 
-                <!-- Scène 3D Coverflow -->
-                <div
-                  class="spatial-coverflow-stage relative h-[285px] sm:h-[300px] w-full flex items-center justify-center"
-                  @wheel.prevent="onCarouselWheel"
-                >
-                  <div
-                    v-for="(card, idx) in filteredMenuCards"
-                    :key="'deck-' + card.id"
-                    class="spatial-deck-card absolute w-full max-w-[490px] rounded-[2rem] border p-6 transition-all duration-500 cursor-pointer"
-                    :class="idx === activeCarouselIndex
-                      ? 'bg-white/95 dark:bg-[#0B1124]/95 border-indigo-400/60 shadow-[0_25px_70px_-15px_rgba(79,70,229,0.45)] z-30'
-                      : 'bg-white/60 dark:bg-[#080C1A]/75 border-slate-200/50 dark:border-white/[0.06] backdrop-blur-md z-10 hover:border-indigo-400/35'"
-                    :style="getCarouselCardStyle(idx)"
-                    @click="handleDeckCardClick(idx, card)"
-                  >
-                    <!-- Halo interne de la carte active -->
-                    <div
-                      class="pointer-events-none absolute -right-12 -bottom-12 w-48 h-48 rounded-full blur-3xl opacity-35 transition-opacity"
-                      :style="{ background: card.glowColor }"
-                    ></div>
-
-                    <div class="relative z-10 flex items-stretch justify-between gap-4 h-full">
-                      <div class="flex flex-col justify-between flex-1 min-w-0">
-                        <div class="space-y-2.5">
-                          <div class="flex items-center gap-2">
-                            <span
-                              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border"
-                              :class="card.badgeClass"
-                            >
-                              <span>{{ card.badgeIcon }}</span>
-                              <span>{{ card.tag }}</span>
-                            </span>
-                            <span class="font-mono text-[11px] text-slate-400">
-                              {{ card.metric }}
-                            </span>
-                          </div>
-
-                          <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
-                            {{ card.title }}
-                          </h2>
-
-                          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300/90 leading-relaxed line-clamp-3">
-                            {{ card.desc }}
-                          </p>
-                        </div>
-
-                        <div class="pt-4 mt-2 flex items-center gap-3">
-                          <button
-                            type="button"
-                            @click.stop="card.action()"
-                            class="px-5 py-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 hover:from-indigo-400 hover:to-sky-400 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-500/25 flex items-center gap-2 transition cursor-pointer whitespace-nowrap"
-                          >
-                            <span>▶</span>
-                            <span>{{ card.cta }}</span>
-                          </button>
-
-                          <span class="font-mono text-xs text-slate-400 flex items-center gap-1 whitespace-nowrap">
-                            <span>🕒</span>
-                            <span>{{ card.duration }}</span>
-                          </span>
-                        </div>
-                      </div>
-
-                      <!-- Emblème 3D animé à droite de la carte -->
-                      <div class="w-28 sm:w-32 shrink-0 flex items-center justify-center">
-                        <div class="animate-float-slow">
-                          <svg v-if="card.art === 'worldle'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(168,85,247,0.4)]">
-                            <defs>
-                              <radialGradient id="dkWorldle" cx="35%" cy="30%" r="70%">
-                                <stop offset="0%" stop-color="#38bdf8" />
-                                <stop offset="55%" stop-color="#1d4ed8" />
-                                <stop offset="100%" stop-color="#0f172a" />
-                              </radialGradient>
-                            </defs>
-                            <ellipse cx="60" cy="104" rx="38" ry="8" fill="rgba(56,189,248,0.25)" />
-                            <circle cx="58" cy="58" r="38" fill="url(#dkWorldle)" stroke="#7dd3fc" stroke-width="1.5" />
-                            <path d="M36 45 Q48 34 62 42 T82 55 Q72 72 52 68 Z" fill="#34d399" opacity="0.88" />
-                            <ellipse cx="58" cy="58" rx="48" ry="16" fill="none" stroke="#c084fc" stroke-width="2.2" stroke-dasharray="5 3" transform="rotate(-22 58 58)" />
-                            <path d="M76 16 C68 16 62 22 62 30 C62 40 76 52 76 52 C76 52 90 40 90 30 C90 22 84 16 76 16 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="1.5" />
-                            <circle cx="76" cy="29" r="4.5" fill="#ffffff" />
-                          </svg>
-
-                          <svg v-else-if="card.art === 'chrono'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(16,185,129,0.4)]">
-                            <defs>
-                              <radialGradient id="dkChrono" cx="35%" cy="30%" r="70%">
-                                <stop offset="0%" stop-color="#34d399" />
-                                <stop offset="60%" stop-color="#0284c7" />
-                                <stop offset="100%" stop-color="#090d16" />
-                              </radialGradient>
-                            </defs>
-                            <ellipse cx="60" cy="105" rx="34" ry="7" fill="rgba(16,185,129,0.28)" />
-                            <circle cx="60" cy="54" r="35" fill="url(#dkChrono)" stroke="#6ee7b7" stroke-width="1.5" />
-                            <path d="M42 38 Q58 32 72 44 T74 68 Q54 74 42 58 Z" fill="#fde047" opacity="0.85" />
-                            <path d="M84 24 A44 44 0 0 1 60 98" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" />
-                            <rect x="46" y="96" width="28" height="7" rx="3.5" fill="#38bdf8" />
-                          </svg>
-
-                          <svg v-else-if="card.art === 'sprint'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(245,158,11,0.4)]">
-                            <ellipse cx="62" cy="104" rx="36" ry="7" fill="rgba(245,158,11,0.25)" />
-                            <line x1="26" y1="22" x2="38" y2="96" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
-                            <path d="M27 24 Q46 18 64 28 L60 52 Q42 42 31 48 Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" />
-                            <path d="M27 24 L45 22 L43 35 L29 36 Z" fill="#0f172a" />
-                            <path d="M45 35 L62 40 L60 52 L43 47 Z" fill="#0f172a" />
-                            <rect x="68" y="26" width="12" height="6" rx="2" fill="#fbbf24" />
-                            <circle cx="74" cy="64" r="30" fill="#0f172a" stroke="#fbbf24" stroke-width="4" />
-                            <circle cx="74" cy="64" r="23" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 4" />
-                            <line x1="74" y1="64" x2="74" y2="47" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" />
-                            <line x1="74" y1="64" x2="88" y2="64" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round" />
-                          </svg>
-
-                          <svg v-else-if="card.art === 'detective'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(20,184,166,0.4)]">
-                            <ellipse cx="60" cy="104" rx="36" ry="7" fill="rgba(20,184,166,0.25)" />
-                            <rect x="44" y="28" width="44" height="58" rx="8" transform="rotate(8 66 57)" fill="#1e1b4b" stroke="#a855f7" stroke-width="2" />
-                            <circle cx="48" cy="58" r="22" fill="rgba(56,189,248,0.2)" stroke="#38bdf8" stroke-width="4" />
-                            <line x1="33" y1="74" x2="18" y2="90" stroke="#c084fc" stroke-width="6" stroke-linecap="round" />
-                            <circle cx="42" cy="52" r="5" fill="rgba(255,255,255,0.45)" />
-                          </svg>
-
-                          <svg v-else-if="card.art === 'capitals'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(56,189,248,0.4)]">
-                            <ellipse cx="60" cy="104" rx="38" ry="7" fill="rgba(56,189,248,0.22)" />
-                            <polygon points="60,22 22,44 98,44" fill="#60a5fa" stroke="#bae6fd" stroke-width="1.5" />
-                            <rect x="26" y="44" width="68" height="6" rx="2" fill="#3b82f6" />
-                            <rect x="32" y="50" width="8" height="36" rx="2" fill="#e2e8f0" />
-                            <rect x="48" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
-                            <rect x="64" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
-                            <rect x="80" y="50" width="8" height="36" rx="2" fill="#94a3b8" />
-                            <rect x="20" y="86" width="80" height="10" rx="3" fill="#38bdf8" />
-                          </svg>
-
-                          <svg v-else-if="card.art === 'flags'" viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(99,102,241,0.4)]">
-                            <ellipse cx="56" cy="104" rx="34" ry="7" fill="rgba(99,102,241,0.28)" />
-                            <line x1="34" y1="20" x2="34" y2="98" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" />
-                            <circle cx="34" cy="18" r="4.5" fill="#fbbf24" />
-                            <path d="M36 24 Q58 16 78 26 T98 24 L98 66 Q78 74 58 64 T36 68 Z" fill="#3b82f6" stroke="#93c5fd" stroke-width="1.5" />
-                            <path d="M36 38 Q58 30 78 40 T98 38 L98 52 Q78 60 58 50 T36 54 Z" fill="#f8fafc" />
-                          </svg>
-
-                          <svg v-else viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_14px_24px_rgba(236,72,153,0.4)]">
-                            <ellipse cx="60" cy="104" rx="34" ry="7" fill="rgba(236,72,153,0.22)" />
-                            <circle cx="60" cy="56" r="34" fill="#1e1b4b" stroke="#f472b6" stroke-width="2.5" />
-                            <circle cx="60" cy="56" r="22" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 4" />
-                            <circle cx="60" cy="56" r="9" fill="#10b981" />
-                          </svg>
-                        </div>
-                      </div>
+                    <div class="px-4 py-3 rounded-full bg-white/80 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 font-mono text-xs font-bold text-slate-700 dark:text-slate-200 backdrop-blur-xl">
+                      🕒 {{ activeShowcaseCard.duration }} • {{ activeShowcaseCard.metric }}
                     </div>
                   </div>
                 </div>
+              </transition>
+            </div>
+
+            <!-- Centre (5 cols) : SCÈNE WEBGL THREE.JS DE LA MANETTE 3D NEXT-GEN -->
+            <div class="lg:col-span-5 flex flex-col items-center justify-center relative order-1 lg:order-2">
+              <div
+                ref="webglContainerRef"
+                class="webgl-controller-mount relative flex items-center justify-center cursor-grab active:cursor-grabbing"
+                @pointerdown="onWebglPointerDown"
+                @pointermove="onWebglPointerMove"
+                @pointerup="onWebglPointerUp"
+                @pointerleave="onWebglPointerUp"
+                @click="triggerWebglPulse"
+              ></div>
+
+              <div class="pointer-events-none -mt-3 px-3.5 py-1 rounded-full bg-slate-900/75 dark:bg-white/[0.05] border border-white/10 font-mono text-[10px] text-indigo-300 backdrop-blur-md">
+                {{ locale === 'fr' ? '↻ GLISSER EN 3D (WEBGL) • CLIQUER POUR IMPULSION' : '↻ DRAG IN 3D (WEBGL) • CLICK FOR PULSE' }}
               </div>
             </div>
 
-            <!-- COLONNE DROITE (6 COLS) : MANETTE 3D NEXT-GEN GÉANTE & HOLOGRAMME -->
-            <div class="lg:col-span-6 flex flex-col items-center justify-center relative">
-              <div class="relative w-full flex flex-col items-center justify-center">
-                <!-- Badge flottant du projecteur holographique -->
-                <div class="mb-1 px-4 py-1.5 rounded-full bg-slate-900/80 dark:bg-white/[0.06] border border-slate-200/20 dark:border-white/10 backdrop-blur-xl flex items-center gap-2.5 text-xs font-mono">
-                  <span class="w-2 h-2 rounded-full animate-ping" :style="{ backgroundColor: activeShowcaseCard.glowColor }"></span>
-                  <span class="text-slate-200 font-bold">HOLO-CONTROLLER // {{ activeShowcaseCard.title.toUpperCase() }}</span>
+            <!-- Droite (3 cols) : Fiche Télémétrique & Navigation Rapide -->
+            <div class="lg:col-span-3 flex flex-col items-stretch lg:items-end justify-center order-3 z-20">
+              <div class="w-full max-w-xs rounded-3xl bg-white/85 dark:bg-[#0B1023]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/12 p-5 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-200/70 dark:border-white/10 pb-3">
+                  <span class="font-mono text-[11px] font-bold uppercase tracking-wider text-indigo-400">
+                    {{ locale === 'fr' ? 'PARAMÈTRES DU MODE' : 'MODE TELEMETRY' }}
+                  </span>
+                  <span class="w-2.5 h-2.5 rounded-full animate-pulse" :style="{ backgroundColor: activeShowcaseCard.glowColor }"></span>
                 </div>
 
-                <!-- Grand Canvas 3D Haute Définition -->
-                <canvas
-                  ref="gamepadCanvasRef"
-                  class="gamepad-hero-canvas cursor-grab active:cursor-grabbing"
-                  @pointerdown="onGamepadPointerDown"
-                  @pointermove="onGamepadPointerMove"
-                  @pointerup="onGamepadPointerUp"
-                  @pointerleave="onGamepadPointerUp"
-                  @click="triggerControllerPulse"
-                ></canvas>
+                <div class="grid grid-cols-2 gap-2.5 text-xs">
+                  <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.04]">
+                    <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'Format' : 'Format' }}</span>
+                    <strong class="font-mono text-slate-900 dark:text-white mt-0.5 block">{{ activeShowcaseCard.metric }}</strong>
+                  </div>
+                  <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.04]">
+                    <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'Durée moy.' : 'Avg. Time' }}</span>
+                    <strong class="font-mono text-sky-500 mt-0.5 block">{{ activeShowcaseCard.duration }}</strong>
+                  </div>
+                  <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.04]">
+                    <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'Barème Stats' : 'Score Scale' }}</span>
+                    <strong class="font-mono text-emerald-500 mt-0.5 block">/ 15 PTS</strong>
+                  </div>
+                  <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.04]">
+                    <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'Couverture' : 'Dataset' }}</span>
+                    <strong class="font-mono text-purple-400 mt-0.5 block">196 ÉTATS</strong>
+                  </div>
+                </div>
 
-                <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
-                  <span class="px-3.5 py-1 rounded-full bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 font-mono text-[11px] text-slate-600 dark:text-indigo-300 backdrop-blur-md">
-                    {{ locale === 'fr' ? '↻ GLISSER EN 3D • CLIQUER POUR IMPULSION HOLOGRAPHIQUE' : '↻ DRAG IN 3D • CLICK FOR HOLOGRAPHIC PULSE' }}
+                <!-- Contrôles du Carrousel Orbital -->
+                <div class="pt-1 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    @click="stepCarousel(-1)"
+                    class="flex-1 py-2.5 rounded-2xl bg-slate-100 dark:bg-white/[0.06] hover:bg-indigo-500 hover:text-white text-slate-800 dark:text-white font-black text-xs transition cursor-pointer"
+                  >
+                    ← {{ locale === 'fr' ? 'Précédent' : 'Prev' }}
+                  </button>
+                  <button
+                    type="button"
+                    @click="stepCarousel(1)"
+                    class="flex-1 py-2.5 rounded-2xl bg-slate-100 dark:bg-white/[0.06] hover:bg-indigo-500 hover:text-white text-slate-800 dark:text-white font-black text-xs transition cursor-pointer"
+                  >
+                    {{ locale === 'fr' ? 'Suivant' : 'Next' }} →
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- BAS DE SCÈNE : CARROUSEL PLANÉTAIRE EN ARC 3D (INSPIRÉ DE LA ROUE COURBÉE) -->
+          <div
+            class="relative z-30 w-full max-w-[1680px] mx-auto px-4 pb-6 pt-2"
+            @wheel.prevent="onCarouselWheel"
+            @pointerdown="onArcDragStart"
+            @pointermove="onArcDragMove"
+            @pointerup="onArcDragEnd"
+            @pointerleave="onArcDragEnd"
+          >
+            <div class="arc-wheel-viewport relative h-[215px] sm:h-[230px] w-full flex items-center justify-center">
+              <article
+                v-for="(card, idx) in filteredMenuCards"
+                :key="'arc-card-' + card.id"
+                @click="handleArcCardClick(idx, card)"
+                class="arc-wheel-card group absolute w-[265px] sm:w-[300px] h-[185px] rounded-3xl border p-4 flex flex-col justify-between cursor-pointer select-none"
+                :class="idx === activeCarouselIndex
+                  ? 'bg-white/95 dark:bg-[#0D142B]/95 border-indigo-400/80 shadow-[0_24px_60px_-12px_rgba(99,102,241,0.55)]'
+                  : 'bg-white/75 dark:bg-[#080D1D]/80 border-slate-200/70 dark:border-white/10 backdrop-blur-xl hover:border-indigo-400/50'"
+                :style="getArcWheelCardStyle(idx)"
+              >
+                <!-- Halo lumineux interne -->
+                <div
+                  class="pointer-events-none absolute -right-8 -bottom-8 w-32 h-32 rounded-full blur-2xl opacity-35 group-hover:opacity-65 transition-opacity"
+                  :style="{ background: card.glowColor }"
+                ></div>
+
+                <div class="relative z-10 flex items-start justify-between gap-2">
+                  <span
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border"
+                    :class="card.badgeClass"
+                  >
+                    <span>{{ card.badgeIcon }}</span>
+                    <span>{{ card.tag }}</span>
+                  </span>
+                  <span class="font-mono text-[10px] font-bold text-slate-400">
+                    {{ card.duration }}
                   </span>
                 </div>
-              </div>
-            </div>
 
+                <div class="relative z-10 flex items-center justify-between gap-3 my-auto">
+                  <div class="min-w-0 flex-1">
+                    <h3 class="text-base font-black text-slate-900 dark:text-white truncate group-hover:text-sky-400 transition-colors">
+                      {{ card.title }}
+                    </h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-snug">
+                      {{ card.desc }}
+                    </p>
+                  </div>
+
+                  <!-- Emblème 3D miniature -->
+                  <div
+                    class="w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center text-xl shadow-md border border-white/10 group-hover:scale-110 group-hover:rotate-6 transition-transform"
+                    :style="{ background: `linear-gradient(135deg, ${card.glowColor}38, rgba(15,23,42,0.6))` }"
+                  >
+                    {{ card.badgeIcon }}
+                  </div>
+                </div>
+
+                <div class="relative z-10 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/[0.06] text-[11px] font-extrabold">
+                  <span
+                    class="flex items-center gap-1"
+                    :class="idx === activeCarouselIndex ? 'text-indigo-500 dark:text-sky-400' : 'text-slate-400'"
+                  >
+                    <span>▶</span>
+                    <span>{{ idx === activeCarouselIndex ? (locale === 'fr' ? 'Cliquer pour lancer' : 'Click to launch') : card.shortTitle }}</span>
+                  </span>
+                  <span class="font-mono text-[10px] text-slate-400">{{ card.metric }}</span>
+                </div>
+              </article>
+            </div>
           </div>
 
-          <!-- DOCK ORBITAL INFÉRIEUR : SÉLECTEUR DIRECT DES 11 MODES + BOUTON MATRICE COMPLÈTE -->
-          <div class="relative z-20 w-full max-w-[1680px] mx-auto px-4 sm:px-8 pb-5 flex flex-col lg:flex-row items-center justify-between gap-3">
-            <!-- Ruban de sélection rapide qui pilote le Carrousel 3D et la Manette 3D -->
-            <div class="flex items-center gap-1.5 p-2 rounded-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl overflow-x-auto max-w-full">
-              <button
-                v-for="(card, idx) in filteredMenuCards"
-                :key="'dock-pill-' + card.id"
-                type="button"
-                @click="activeCarouselIndex = idx; triggerControllerPulse()"
-                @dblclick="card.action()"
-                class="px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5"
-                :class="idx === activeCarouselIndex
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-md scale-105'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'"
-              >
-                <span>{{ card.badgeIcon }}</span>
-                <span>{{ card.shortTitle }}</span>
-              </button>
-            </div>
-
-            <button
-              type="button"
-              @click="scrollToGamesGrid"
-              class="px-5 py-3 rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 text-white font-black text-xs shadow-xl hover:scale-105 transition cursor-pointer flex items-center gap-2 shrink-0"
-            >
-              <span>{{ locale === 'fr' ? `Vue Matrice 3D (${filteredMenuCards.length} jeux)` : `3D Matrix View (${filteredMenuCards.length} games)` }}</span>
-              <span>↓</span>
-            </button>
-          </div>
         </section>
 
         <!-- ===================================================== -->
-        <!-- 2. MATRICE COMPLÈTE DES 11 MODES AVEC EFFET 3D TILT   -->
+        <!-- 2. CATALOGUE BENTO 3D COMPLET (CARTES ILLUSTRÉES)     -->
         <!-- ===================================================== -->
         <section ref="gamesGridRef" class="max-w-[1440px] mx-auto px-4 sm:px-8 pt-14 pb-24 space-y-8">
           <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-5">
             <div>
               <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 block mb-1">
-                {{ locale === 'fr' ? 'CATALOGUE INTERACTIF COMPLET' : 'COMPLETE INTERACTIVE CATALOG' }}
+                {{ locale === 'fr' ? 'BIBLIOTHÈQUE COMPLÈTE // 11 EXPÉRIENCES' : 'COMPLETE LIBRARY // 11 EXPERIENCES' }}
               </span>
               <h2 class="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-                {{ locale === 'fr' ? 'Tous les modes de jeu en accès direct' : 'All Game Modes at a Glance' }}
+                {{ locale === 'fr' ? 'Tous les modes en vue détaillée' : 'All Modes in Detailed View' }}
               </h2>
             </div>
 
@@ -439,8 +369,8 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <article
-              v-for="(card, idx) in filteredMenuCards"
-              :key="'matrix-' + card.id"
+              v-for="card in filteredMenuCards"
+              :key="'bento-' + card.id"
               @click="card.action()"
               @pointermove="onMatrixCardMove($event, card.id)"
               @pointerleave="onMatrixCardLeave(card.id)"
@@ -483,17 +413,67 @@
                 </div>
               </div>
 
-              <!-- Numéro & Mini-aperçu 3D -->
-              <div class="relative z-10 flex flex-col items-end justify-between shrink-0">
-                <span class="font-mono text-xs font-black text-slate-300 dark:text-white/15 group-hover:text-indigo-400 transition-colors">
-                  #{{ String(idx + 1).padStart(2, '0') }}
-                </span>
-                <div
-                  class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-white/10 group-hover:scale-110 group-hover:rotate-6 transition-transform"
-                  :style="{ background: `${card.glowColor}1f` }"
-                >
-                  {{ card.badgeIcon }}
-                </div>
+              <!-- Emblème Visuel 3D à droite -->
+              <div class="relative z-10 w-24 sm:w-28 shrink-0 flex items-center justify-center">
+                <svg v-if="card.art === 'worldle'" viewBox="0 0 120 120" class="w-24 h-24 group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_12px_20px_rgba(56,189,248,0.35)]">
+                  <ellipse cx="60" cy="104" rx="38" ry="8" fill="rgba(56,189,248,0.22)" />
+                  <circle cx="58" cy="58" r="38" fill="#1d4ed8" stroke="#7dd3fc" stroke-width="1.5" />
+                  <path d="M36 45 Q48 34 62 42 T82 55 Q72 72 52 68 Z" fill="#34d399" opacity="0.85" />
+                  <ellipse cx="58" cy="58" rx="48" ry="16" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="5 3" transform="rotate(-22 58 58)" />
+                  <path d="M76 18 C68 18 62 24 62 32 C62 42 76 54 76 54 C76 54 90 42 90 32 C90 24 84 18 76 18 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="1.5" />
+                  <circle cx="76" cy="31" r="4.5" fill="#ffffff" />
+                </svg>
+
+                <svg v-else-if="card.art === 'chrono'" viewBox="0 0 120 120" class="w-24 h-24 group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_12px_20px_rgba(16,185,129,0.35)]">
+                  <ellipse cx="60" cy="105" rx="34" ry="7" fill="rgba(16,185,129,0.25)" />
+                  <circle cx="60" cy="54" r="35" fill="#0284c7" stroke="#6ee7b7" stroke-width="1.5" />
+                  <path d="M42 38 Q58 32 72 44 T74 68 Q54 74 42 58 Z" fill="#fde047" opacity="0.8" />
+                  <path d="M84 24 A44 44 0 0 1 60 98" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" />
+                  <rect x="46" y="96" width="28" height="7" rx="3.5" fill="#38bdf8" />
+                </svg>
+
+                <svg v-else-if="card.art === 'sprint'" viewBox="0 0 120 120" class="w-24 h-24 group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_12px_20px_rgba(245,158,11,0.35)]">
+                  <ellipse cx="62" cy="104" rx="36" ry="7" fill="rgba(245,158,11,0.25)" />
+                  <line x1="26" y1="22" x2="38" y2="96" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
+                  <path d="M27 24 Q46 18 64 28 L60 52 Q42 42 31 48 Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" />
+                  <rect x="68" y="26" width="12" height="6" rx="2" fill="#fbbf24" />
+                  <circle cx="74" cy="64" r="30" fill="#0f172a" stroke="#fbbf24" stroke-width="4" />
+                  <line x1="74" y1="64" x2="74" y2="47" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" />
+                  <line x1="74" y1="64" x2="88" y2="64" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+
+                <svg v-else-if="card.art === 'detective'" viewBox="0 0 120 120" class="w-24 h-24 group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_12px_20px_rgba(168,85,247,0.38)]">
+                  <ellipse cx="60" cy="104" rx="36" ry="7" fill="rgba(168,85,247,0.25)" />
+                  <rect x="44" y="28" width="44" height="58" rx="8" transform="rotate(8 66 57)" fill="#1e1b4b" stroke="#a855f7" stroke-width="2" />
+                  <circle cx="48" cy="58" r="22" fill="rgba(56,189,248,0.18)" stroke="#38bdf8" stroke-width="4" />
+                  <line x1="33" y1="74" x2="18" y2="90" stroke="#c084fc" stroke-width="6" stroke-linecap="round" />
+                </svg>
+
+                <svg v-else-if="card.art === 'capitals'" viewBox="0 0 120 120" class="w-24 h-24 group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_12px_20px_rgba(56,189,248,0.32)]">
+                  <ellipse cx="60" cy="104" rx="38" ry="7" fill="rgba(56,189,248,0.22)" />
+                  <polygon points="60,22 22,44 98,44" fill="#60a5fa" stroke="#bae6fd" stroke-width="1.5" />
+                  <rect x="26" y="44" width="68" height="6" rx="2" fill="#3b82f6" />
+                  <rect x="32" y="50" width="8" height="36" rx="2" fill="#e2e8f0" />
+                  <rect x="48" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
+                  <rect x="64" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
+                  <rect x="80" y="50" width="8" height="36" rx="2" fill="#94a3b8" />
+                  <rect x="20" y="86" width="80" height="10" rx="3" fill="#38bdf8" />
+                </svg>
+
+                <svg v-else-if="card.art === 'flags'" viewBox="0 0 120 120" class="w-24 h-24 group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_12px_20px_rgba(99,102,241,0.38)]">
+                  <ellipse cx="56" cy="104" rx="34" ry="7" fill="rgba(99,102,241,0.28)" />
+                  <line x1="34" y1="20" x2="34" y2="98" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" />
+                  <circle cx="34" cy="18" r="4.5" fill="#fbbf24" />
+                  <path d="M36 24 Q58 16 78 26 T98 24 L98 66 Q78 74 58 64 T36 68 Z" fill="#3b82f6" stroke="#93c5fd" stroke-width="1.5" />
+                  <path d="M36 38 Q58 30 78 40 T98 38 L98 52 Q78 60 58 50 T36 54 Z" fill="#f8fafc" />
+                </svg>
+
+                <svg v-else viewBox="0 0 120 120" class="w-24 h-24 group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_12px_20px_rgba(236,72,153,0.32)]">
+                  <ellipse cx="60" cy="104" rx="34" ry="7" fill="rgba(236,72,153,0.22)" />
+                  <circle cx="60" cy="56" r="34" fill="#1e1b4b" stroke="#f472b6" stroke-width="2.5" />
+                  <circle cx="60" cy="56" r="22" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 4" />
+                  <circle cx="60" cy="56" r="9" fill="#10b981" />
+                </svg>
               </div>
             </article>
           </div>
@@ -1938,459 +1918,413 @@ const blankTileUrl = computed(() => {
 });
 
 // =========================================================
-// MOTEUR 3D HAUTE DÉFINITION DE LA MANETTE NEXT-GEN + HOLO
+// VRAI MOTEUR 3D WEBGL THREE.JS (MANETTE SCULPTÉE PBR)
 // =========================================================
-const gamepadCanvasRef = ref(null);
-let gpYaw = -0.36;
-let gpPitch = 0.32;
-let gpVelYaw = 0;
-let gpVelPitch = 0;
-let gpDragging = false;
-let gpLastX = 0;
-let gpLastY = 0;
-let gpFloatPhase = 0;
-let gpRecoil = 0;
-let gpPulseRing = 0;
+const webglContainerRef = ref(null);
+let threeRenderer = null;
+let threeScene = null;
+let threeCamera = null;
+let controllerGroup = null;
+let leftStickPivot = null;
+let rightStickPivot = null;
+let ledMaterial = null;
+let accentPointLight = null;
+let pedestalRing1 = null;
+let pedestalRing2 = null;
+let orbitSatellites = [];
 
-const triggerControllerPulse = () => {
-  gpRecoil = 14;
-  gpPulseRing = 0.01;
+let wglDragging = false;
+let wglLastX = 0;
+let wglLastY = 0;
+let wglRotY = -0.32;
+let wglRotX = 0.36;
+let wglVelY = 0;
+let wglVelX = 0;
+let wglPulseKick = 0;
+
+const onWebglPointerDown = (e) => {
+  wglDragging = true;
+  wglVelY = 0;
+  wglVelX = 0;
+  wglLastX = e.clientX;
+  wglLastY = e.clientY;
 };
 
-const onGamepadPointerDown = (e) => {
-  gpDragging = true;
-  gpVelYaw = 0;
-  gpVelPitch = 0;
-  gpLastX = e.clientX;
-  gpLastY = e.clientY;
-};
-
-const onGamepadPointerMove = (e) => {
-  if (!gpDragging) return;
-  const dx = e.clientX - gpLastX;
-  const dy = e.clientY - gpLastY;
+const onWebglPointerMove = (e) => {
+  if (!wglDragging) return;
+  const dx = e.clientX - wglLastX;
+  const dy = e.clientY - wglLastY;
   const dY = dx * 0.011;
-  const dP = Math.max(-0.85, Math.min(0.85, gpPitch + dy * 0.01)) - gpPitch;
-  gpYaw += dY;
-  gpPitch += dP;
-  gpVelYaw = dY * 0.88;
-  gpVelPitch = dP * 0.88;
-  gpLastX = e.clientX;
-  gpLastY = e.clientY;
+  const dX = dy * 0.01;
+  wglRotY += dY;
+  wglRotX = Math.max(-0.85, Math.min(0.85, wglRotX + dX));
+  wglVelY = dY * 0.88;
+  wglVelX = dX * 0.88;
+  wglLastX = e.clientX;
+  wglLastY = e.clientY;
 };
 
-const onGamepadPointerUp = () => {
-  gpDragging = false;
+const onWebglPointerUp = () => {
+  wglDragging = false;
 };
 
-const renderRealistic3DController = () => {
-  const canvas = gamepadCanvasRef.value;
-  if (!canvas || currentMode.value !== 'menu') return;
+const triggerWebglPulse = () => {
+  wglPulseKick = 0.24;
+  wglVelY += 0.045;
+};
 
-  const rect = canvas.getBoundingClientRect();
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const W = rect.width || 560;
-  const H = rect.height || 440;
-  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
-    canvas.width = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
-  }
+const initThreeWebglController = async () => {
+  if (typeof window === 'undefined' || !webglContainerRef.value) return;
+  try {
+    const THREE = await import('https://esm.sh/three@0.160.0');
+    const mount = webglContainerRef.value;
+    if (!mount) return;
 
-  const ctx = canvas.getContext('2d');
-  ctx.save();
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, W, H);
+    const W = mount.clientWidth || 540;
+    const H = mount.clientHeight || 400;
 
-  gpFloatPhase += 0.028;
-  if (gpRecoil > 0.1) gpRecoil *= 0.84;
-  else gpRecoil = 0;
+    threeScene = new THREE.Scene();
+    threeCamera = new THREE.PerspectiveCamera(36, W / H, 0.1, 100);
+    threeCamera.position.set(0, 0.4, 7.6);
 
-  if (gpPulseRing > 0) {
-    gpPulseRing += 0.035;
-    if (gpPulseRing > 1) gpPulseRing = 0;
-  }
+    threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    threeRenderer.setSize(W, H);
+    threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+    threeRenderer.toneMappingExposure = 1.25;
 
-  if (!gpDragging) {
-    if (Math.abs(gpVelYaw) > 0.0004 || Math.abs(gpVelPitch) > 0.0004) {
-      gpYaw += gpVelYaw;
-      gpPitch = Math.max(-0.85, Math.min(0.85, gpPitch + gpVelPitch));
-      gpVelYaw *= 0.94;
-      gpVelPitch *= 0.94;
-    } else {
-      gpYaw += 0.0065;
-    }
-  }
+    mount.innerHTML = '';
+    mount.appendChild(threeRenderer.domElement);
 
-  const themeHex = activeShowcaseCard.value?.glowColor || '#6366f1';
-  const S = Math.min(W, H) / 310;
-  const cx = W / 2;
-  const cy = H * 0.52 + Math.sin(gpFloatPhase) * 6 * S + gpRecoil * 0.6;
+    // Éclairage Studio 3D (Key Light, Rim Light Cyan, Neon Under-Glow)
+    const ambient = new THREE.AmbientLight(0xffffff, 0.75);
+    threeScene.add(ambient);
 
-  // 1. SOCLE HOLOGRAPHIQUE ÉNERGÉTIQUE MULTICOUCHE
-  const pedY = H * 0.87;
-  const pedR = 128 * S;
-  const pedGrad = ctx.createRadialGradient(cx, pedY, 5, cx, pedY, pedR * 1.25);
-  pedGrad.addColorStop(0, `${themeHex}88`);
-  pedGrad.addColorStop(0.5, 'rgba(56, 189, 248, 0.25)');
-  pedGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
-  ctx.beginPath();
-  ctx.ellipse(cx, pedY, pedR * 1.22, 26 * S, 0, 0, Math.PI * 2);
-  ctx.fillStyle = pedGrad;
-  ctx.fill();
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.4);
+    keyLight.position.set(4, 6, 5);
+    threeScene.add(keyLight);
 
-  // Anneaux néon concentriques du socle
-  const ringRadii = [0.92, 0.68, 0.44];
-  for (let rIdx = 0; rIdx < ringRadii.length; rIdx++) {
-    const ratio = ringRadii[rIdx];
-    ctx.beginPath();
-    ctx.ellipse(cx, pedY, pedR * ratio, 20 * S * ratio, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = rIdx === 0 ? themeHex : 'rgba(56, 189, 248, 0.65)';
-    ctx.lineWidth = (2.2 - rIdx * 0.5) * S;
-    ctx.stroke();
-  }
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 2.1);
+    rimLight.position.set(-5, 3, -4);
+    threeScene.add(rimLight);
 
-  // Onde de choc quand on change de mode ou clique sur la manette
-  if (gpPulseRing > 0) {
-    ctx.beginPath();
-    ctx.ellipse(
-      cx,
-      pedY,
-      pedR * (0.4 + gpPulseRing * 0.95),
-      22 * S * (0.4 + gpPulseRing * 0.95),
-      0,
-      0,
-      Math.PI * 2
-    );
-    ctx.strokeStyle = `rgba(56, 189, 248, ${1 - gpPulseRing})`;
-    ctx.lineWidth = 3 * S;
-    ctx.stroke();
-  }
+    accentPointLight = new THREE.PointLight(0xa855f7, 3.8, 12);
+    accentPointLight.position.set(0, -1.2, 2.2);
+    threeScene.add(accentPointLight);
 
-  // Matrice de projection 3D avec perspective réelle
-  const cosY = Math.cos(gpYaw), sinY = Math.sin(gpYaw);
-  const cosP = Math.cos(gpPitch), sinP = Math.sin(gpPitch);
-  const roll = -0.16 + stageParallaxX.value * 0.08;
-  const cosR = Math.cos(roll), sinR = Math.sin(roll);
-
-  const project3D = (lx, ly, lz) => {
-    const x = lx * S;
-    const y = ly * S;
-    const z = lz * S;
-    const xr = x * cosR - y * sinR;
-    const yr = x * sinR + y * cosR;
-    const x1 = xr * cosY + z * sinY;
-    const z1 = -xr * sinY + z * cosY;
-    const y2 = yr * cosP - z1 * sinP;
-    const z2 = yr * sinP + z1 * cosP;
-    const fov = 520 * S;
-    const scale = fov / Math.max(80, fov + z2 + 135 * S);
-    return {
-      x: cx + x1 * scale,
-      y: cy + y2 * scale,
-      z: z2,
-      s: scale
-    };
-  };
-
-  // Fonction utilitaire pour dessiner un vrai Cube 3D à 6 faces en perspective
-  const drawTrue3DCube = (ox, oy, oz, size, rotAngle, icon, strokeColor) => {
-    const half = size;
-    const cA = Math.cos(rotAngle), sA = Math.sin(rotAngle);
-    const localVerts = [
-      [-half, -half, -half], [half, -half, -half], [half, half, -half], [-half, half, -half],
-      [-half, -half, half], [half, -half, half], [half, half, half], [-half, half, half]
-    ].map(([vx, vy, vz]) => {
-      const rx = vx * cA - vz * sA;
-      const rz = vx * sA + vz * cA;
-      return project3D(ox + rx, oy + vy, oz + rz);
+    // Matériaux Physiques PBR Réalistes
+    const shellMat = new THREE.MeshPhysicalMaterial({
+      color: 0x1e1b4b,
+      metalness: 0.38,
+      roughness: 0.22,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.12
     });
 
-    const faces = [
-      [0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4],
-      [2, 3, 7, 6], [0, 3, 7, 4], [1, 2, 6, 5]
-    ].map((f) => ({
-      indices: f,
-      avgZ: (localVerts[f[0]].z + localVerts[f[1]].z + localVerts[f[2]].z + localVerts[f[3]].z) / 4
-    })).sort((a, b) => b.avgZ - a.avgZ);
+    const gripDarkMat = new THREE.MeshStandardMaterial({
+      color: 0x090d16,
+      metalness: 0.55,
+      roughness: 0.52
+    });
 
-    for (const f of faces.slice(2)) {
-      const pts = f.indices.map((idx) => localVerts[idx]);
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      ctx.lineTo(pts[1].x, pts[1].y);
-      ctx.lineTo(pts[2].x, pts[2].y);
-      ctx.lineTo(pts[3].x, pts[3].y);
-      ctx.closePath();
-      ctx.fillStyle = 'rgba(20, 24, 58, 0.78)';
-      ctx.fill();
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = 1.5 * S;
-      ctx.stroke();
+    const chromeMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0f172a,
+      metalness: 0.85,
+      roughness: 0.15,
+      clearcoat: 1.0
+    });
+
+    ledMaterial = new THREE.MeshStandardMaterial({
+      color: 0xa855f7,
+      emissive: 0xa855f7,
+      emissiveIntensity: 2.2,
+      roughness: 0.2
+    });
+
+    controllerGroup = new THREE.Group();
+    threeScene.add(controllerGroup);
+
+    // 1. Châssis central sculpté avec biseaux 3D arrondis (ExtrudeGeometry)
+    const bodyShape = new THREE.Shape();
+    bodyShape.moveTo(-1.15, 0.68);
+    bodyShape.quadraticCurveTo(0, 0.82, 1.15, 0.68);
+    bodyShape.lineTo(1.45, -0.18);
+    bodyShape.quadraticCurveTo(0.85, -0.68, 0.52, -0.46);
+    bodyShape.quadraticCurveTo(0, -0.38, -0.52, -0.46);
+    bodyShape.quadraticCurveTo(-0.85, -0.68, -1.45, -0.18);
+    bodyShape.closePath();
+
+    const extrudeSettings = {
+      depth: 0.42,
+      bevelEnabled: true,
+      bevelSegments: 16,
+      steps: 2,
+      bevelSize: 0.26,
+      bevelThickness: 0.28
+    };
+    const coreGeo = new THREE.ExtrudeGeometry(bodyShape, extrudeSettings);
+    coreGeo.center();
+    const coreMesh = new THREE.Mesh(coreGeo, shellMat);
+    controllerGroup.add(coreMesh);
+
+    // 2. Poignées ergonomiques 3D Gauche & Droite (Cylindres coniques + Sphères de bout)
+    for (const side of [-1, 1]) {
+      const handleGroup = new THREE.Group();
+      handleGroup.position.set(side * 1.28, -0.58, -0.08);
+      handleGroup.rotation.z = side * 0.34;
+      handleGroup.rotation.x = 0.22;
+
+      const upperHandleGeo = new THREE.CylinderGeometry(0.46, 0.33, 1.85, 32);
+      const upperHandle = new THREE.Mesh(upperHandleGeo, shellMat);
+      handleGroup.add(upperHandle);
+
+      // Coque inférieure texturée carbone sur chaque poignée
+      const lowerGripGeo = new THREE.CylinderGeometry(0.44, 0.34, 1.45, 32);
+      const lowerGrip = new THREE.Mesh(lowerGripGeo, gripDarkMat);
+      lowerGrip.position.set(side * 0.03, -0.22, -0.03);
+      handleGroup.add(lowerGrip);
+
+      const bottomCapGeo = new THREE.SphereGeometry(0.335, 32, 24);
+      const bottomCap = new THREE.Mesh(bottomCapGeo, gripDarkMat);
+      bottomCap.position.y = -0.92;
+      handleGroup.add(bottomCap);
+
+      const topShoulderGeo = new THREE.SphereGeometry(0.46, 32, 24);
+      const topShoulder = new THREE.Mesh(topShoulderGeo, shellMat);
+      topShoulder.position.y = 0.92;
+      handleGroup.add(topShoulder);
+
+      // Anneau LED néon autour de la poignée
+      const gripLedGeo = new THREE.TorusGeometry(0.41, 0.022, 16, 48);
+      const gripLed = new THREE.Mesh(gripLedGeo, ledMaterial);
+      gripLed.rotation.x = Math.PI / 2;
+      gripLed.position.y = 0.15;
+      handleGroup.add(gripLed);
+
+      controllerGroup.add(handleGroup);
     }
 
-    const centerPt = project3D(ox, oy, oz);
-    ctx.font = `${Math.round(14 * S * centerPt.s)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(icon, centerPt.x, centerPt.y);
-  };
+    // 3. Pavé Tactile Central + Liseré LED Néon
+    const padShape = new THREE.Shape();
+    padShape.moveTo(-0.62, 0.36);
+    padShape.lineTo(0.62, 0.36);
+    padShape.lineTo(0.52, -0.18);
+    padShape.lineTo(-0.52, -0.18);
+    padShape.closePath();
 
-  // Configuration des 4 Cubes 3D en orbite (Tri Z : arrière-plan puis premier plan)
-  const rawCubes = [
-    { angle: gpFloatPhase * 0.55, radius: 132, y: -46, icon: '🌍', color: '#38bdf8' },
-    { angle: gpFloatPhase * 0.55 + Math.PI * 0.5, radius: 126, y: 34, icon: '⚡', color: '#f59e0b' },
-    { angle: gpFloatPhase * 0.55 + Math.PI, radius: 132, y: -38, icon: '🏆', color: '#c084fc' },
-    { angle: gpFloatPhase * 0.55 + Math.PI * 1.5, radius: 126, y: 38, icon: '🧭', color: '#34d399' }
-  ].map((c, i) => {
-    const ox = Math.cos(c.angle) * c.radius;
-    const oz = Math.sin(c.angle) * (c.radius * 0.55);
-    const oy = c.y + Math.sin(gpFloatPhase * 1.3 + i) * 7;
-    const center = project3D(ox, oy, oz);
-    return { ...c, ox, oy, oz, zDepth: center.z, rot: gpFloatPhase + i };
-  });
+    const padGeo = new THREE.ExtrudeGeometry(padShape, {
+      depth: 0.08,
+      bevelEnabled: true,
+      bevelSegments: 8,
+      bevelSize: 0.04,
+      bevelThickness: 0.04
+    });
+    padGeo.center();
+    const padMesh = new THREE.Mesh(padGeo, gripDarkMat);
+    padMesh.position.set(0, 0.34, 0.44);
+    padMesh.rotation.x = -0.12;
+    controllerGroup.add(padMesh);
 
-  // Dessine d'abord les cubes qui passent DERRIÈRE la manette (zDepth > 0)
-  for (const c of rawCubes.filter((item) => item.zDepth > 0)) {
-    drawTrue3DCube(c.ox, c.oy, c.oz, 13, c.rot, c.icon, c.color);
-  }
+    const ledStripGeo = new THREE.ExtrudeGeometry(padShape, {
+      depth: 0.04,
+      bevelEnabled: true,
+      bevelSegments: 4,
+      bevelSize: 0.07,
+      bevelThickness: 0.02
+    });
+    ledStripGeo.center();
+    const ledStripMesh = new THREE.Mesh(ledStripGeo, ledMaterial);
+    ledStripMesh.position.set(0, 0.34, 0.40);
+    ledStripMesh.rotation.x = -0.12;
+    controllerGroup.add(ledStripMesh);
 
-  // 2. GÂCHETTES ARRIÈRE L1 / R1 / L2 / R2 EN 3D
-  for (const side of [-1, 1]) {
-    const b1 = project3D(side * 46, -34, -8);
-    const b2 = project3D(side * 66, -24, -8);
-    const b3 = project3D(side * 62, -14, 4);
-    const b4 = project3D(side * 42, -24, 4);
-    ctx.beginPath();
-    ctx.moveTo(b1.x, b1.y);
-    ctx.lineTo(b2.x, b2.y);
-    ctx.lineTo(b3.x, b3.y);
-    ctx.lineTo(b4.x, b4.y);
-    ctx.closePath();
-    ctx.fillStyle = '#0f172a';
-    ctx.fill();
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 1.4 * S;
-    ctx.stroke();
-  }
+    // 4. Joysticks Analogiques 3D (Inclinables en temps réel)
+    const createStickAssembly = (posX) => {
+      const baseGroup = new THREE.Group();
+      baseGroup.position.set(posX, -0.22, 0.42);
 
-  // 3. CORPS SCULPTÉ VOLUMÉTRIQUE DE LA MANETTE NEXT-GEN (22 TRANCHES 3D HAUTE DENSITÉ)
-  const totalSlices = 22;
-  for (let i = 0; i < totalSlices; i++) {
-    const tNorm = i / (totalSlices - 1); // 0 (arrière) -> 1 (face avant)
-    const zSlice = -18 + tNorm * 36;
-    const bevel = Math.sin(tNorm * Math.PI);
-    const wScale = 0.86 + bevel * 0.14;
-    const isFrontShell = i >= totalSlices - 2;
+      const wellRing = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.045, 16, 36), chromeMat);
+      baseGroup.add(wellRing);
 
-    const pTopMid = project3D(0, -28 * wScale, zSlice);
-    const pLShoulder = project3D(-56 * wScale, -28 * wScale, zSlice);
-    const pLOuter = project3D(-88 * wScale, 6 * wScale, zSlice - 4);
-    const pLGripTip = project3D(-72 * wScale, 56 * wScale, zSlice - 10);
-    const pLGripIn = project3D(-32 * wScale, 22 * wScale, zSlice);
-    const pBridgeMid = project3D(0, 18 * wScale, zSlice + 2);
-    const pRGripIn = project3D(32 * wScale, 22 * wScale, zSlice);
-    const pRGripTip = project3D(72 * wScale, 56 * wScale, zSlice - 10);
-    const pROuter = project3D(88 * wScale, 6 * wScale, zSlice - 4);
-    const pRShoulder = project3D(56 * wScale, -28 * wScale, zSlice);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 16), gripDarkMat);
+      dome.position.z = -0.04;
+      baseGroup.add(dome);
 
-    ctx.beginPath();
-    ctx.moveTo(pLShoulder.x, pLShoulder.y);
-    ctx.quadraticCurveTo(pLOuter.x, pLOuter.y, pLGripTip.x, pLGripTip.y);
-    ctx.quadraticCurveTo(
-      project3D(-48 * wScale, 62 * wScale, zSlice - 8).x,
-      project3D(-48 * wScale, 62 * wScale, zSlice - 8).y,
-      pLGripIn.x,
-      pLGripIn.y
-    );
-    ctx.quadraticCurveTo(pBridgeMid.x, pBridgeMid.y, pRGripIn.x, pRGripIn.y);
-    ctx.quadraticCurveTo(
-      project3D(48 * wScale, 62 * wScale, zSlice - 8).x,
-      project3D(48 * wScale, 62 * wScale, zSlice - 8).y,
-      pRGripTip.x,
-      pRGripTip.y
-    );
-    ctx.quadraticCurveTo(pROuter.x, pROuter.y, pRShoulder.x, pRShoulder.y);
-    ctx.quadraticCurveTo(pTopMid.x, pTopMid.y - 8 * S, pLShoulder.x, pLShoulder.y);
-    ctx.closePath();
+      const pivot = new THREE.Group();
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.32, 20), chromeMat);
+      stem.rotation.x = Math.PI / 2;
+      stem.position.z = 0.14;
+      pivot.add(stem);
 
-    if (isFrontShell) {
-      // Éclairage spéculaire métallisé réaliste sur la coque supérieure
-      const shellGrad = ctx.createLinearGradient(
-        pLShoulder.x,
-        pLShoulder.y - 20 * S,
-        pRGripTip.x,
-        pRGripTip.y + 20 * S
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.19, 0.09, 32), gripDarkMat);
+      cap.rotation.x = Math.PI / 2;
+      cap.position.z = 0.30;
+      pivot.add(cap);
+
+      const capLed = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.02, 16, 36), ledMaterial);
+      capLed.position.z = 0.34;
+      pivot.add(capLed);
+
+      baseGroup.add(pivot);
+      controllerGroup.add(baseGroup);
+      return pivot;
+    };
+
+    leftStickPivot = createStickAssembly(-0.62);
+    rightStickPivot = createStickAssembly(0.62);
+
+    // 5. Croix Directionnelle (D-Pad 3D à gauche)
+    const dpadGroup = new THREE.Group();
+    dpadGroup.position.set(-1.18, 0.18, 0.44);
+    const barH = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.15, 0.1), chromeMat);
+    const barV = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.46, 0.1), chromeMat);
+    dpadGroup.add(barH, barV);
+    controllerGroup.add(dpadGroup);
+
+    // 6. 4 Boutons Cristal Lumineux à droite
+    const btnColors = [
+      { dx: 0, dy: 0.21, col: 0xfbbf24 },
+      { dx: 0.21, dy: 0, col: 0xf43f5e },
+      { dx: 0, dy: -0.21, col: 0x10b981 },
+      { dx: -0.21, dy: 0, col: 0x38bdf8 }
+    ];
+    for (const b of btnColors) {
+      const bMat = new THREE.MeshPhysicalMaterial({
+        color: b.col,
+        emissive: b.col,
+        emissiveIntensity: 0.65,
+        clearcoat: 1.0,
+        roughness: 0.1
+      });
+      const bMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.1, 24), bMat);
+      bMesh.rotation.x = Math.PI / 2;
+      bMesh.position.set(1.18 + b.dx, 0.18 + b.dy, 0.45);
+      controllerGroup.add(bMesh);
+    }
+
+    // 7. Gâchettes L1 / R1 / L2 / R2 à l'arrière
+    for (const side of [-1, 1]) {
+      const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.14, 0.22), chromeMat);
+      l1.position.set(side * 1.12, 0.82, 0.08);
+      l1.rotation.z = side * -0.18;
+      controllerGroup.add(l1);
+
+      const l2 = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.22, 0.28), gripDarkMat);
+      l2.position.set(side * 1.12, 0.76, -0.24);
+      l2.rotation.x = -0.35;
+      controllerGroup.add(l2);
+    }
+
+    // 8. Socle Holographique 3D sous la manette
+    pedestalRing1 = new THREE.Mesh(new THREE.TorusGeometry(2.15, 0.025, 16, 96), ledMaterial);
+    pedestalRing1.rotation.x = Math.PI / 2;
+    pedestalRing1.position.set(0, -1.75, 0);
+    threeScene.add(pedestalRing1);
+
+    const ringCyanMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 1.8
+    });
+    pedestalRing2 = new THREE.Mesh(new THREE.TorusGeometry(1.52, 0.018, 16, 80), ringCyanMat);
+    pedestalRing2.rotation.x = Math.PI / 2;
+    pedestalRing2.position.set(0, -1.75, 0);
+    threeScene.add(pedestalRing2);
+
+    // 9. 4 Satellites 3D Géométriques en Orbite
+    orbitSatellites = [];
+    const satGeos = [
+      new THREE.OctahedronGeometry(0.26, 0),
+      new THREE.IcosahedronGeometry(0.25, 0),
+      new THREE.BoxGeometry(0.34, 0.34, 0.34),
+      new THREE.TorusGeometry(0.2, 0.06, 16, 32)
+    ];
+    for (let i = 0; i < satGeos.length; i++) {
+      const satGroup = new THREE.Group();
+      const solidMesh = new THREE.Mesh(satGeos[i], shellMat);
+      const wireMesh = new THREE.Mesh(
+        satGeos[i],
+        new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0x38bdf8 : 0xc084fc, wireframe: true })
       );
-      shellGrad.addColorStop(0, '#4338ca');
-      shellGrad.addColorStop(0.32, '#1e1b4b');
-      shellGrad.addColorStop(0.7, '#0f172a');
-      shellGrad.addColorStop(1, '#090d16');
-      ctx.fillStyle = shellGrad;
-      ctx.fill();
+      wireMesh.scale.setScalar(1.06);
+      satGroup.add(solidMesh, wireMesh);
+      threeScene.add(satGroup);
+      orbitSatellites.push({ mesh: satGroup, phase: (i * Math.PI) / 2 });
+    }
+  } catch (e) {}
+};
 
-      ctx.strokeStyle = 'rgba(165, 180, 252, 0.65)';
-      ctx.lineWidth = 2 * S;
-      ctx.stroke();
+const updateThreeWebglFrame = (timeMs) => {
+  if (!threeRenderer || !threeScene || !threeCamera || currentMode.value !== 'menu') return;
+  const tSec = timeMs * 0.001;
+
+  if (!wglDragging) {
+    if (Math.abs(wglVelY) > 0.0003 || Math.abs(wglVelX) > 0.0003) {
+      wglRotY += wglVelY;
+      wglRotX = Math.max(-0.85, Math.min(0.85, wglRotX + wglVelX));
+      wglVelY *= 0.94;
+      wglVelX *= 0.94;
     } else {
-      // Tranches latérales sombres donnant l'épaisseur 3D
-      const shade = Math.round(8 + tNorm * 14);
-      ctx.fillStyle = `rgb(${shade}, ${shade + 4}, ${shade + 18})`;
-      ctx.fill();
+      wglRotY += 0.0055;
     }
   }
 
-  // 4. POIGNÉES ERGONOMIQUES BICOLORES (GRIPS TEXTURÉS CARBONE)
-  const zFront = 18.5;
-  for (const side of [-1, 1]) {
-    const g1 = project3D(side * 42, 14, zFront);
-    const g2 = project3D(side * 76, 8, zFront - 3);
-    const g3 = project3D(side * 69, 53, zFront - 9);
-    const g4 = project3D(side * 34, 22, zFront);
-    ctx.beginPath();
-    ctx.moveTo(g1.x, g1.y);
-    ctx.quadraticCurveTo(g2.x, g2.y, g3.x, g3.y);
-    ctx.quadraticCurveTo(g4.x, g4.y + 18 * S, g4.x, g4.y);
-    ctx.closePath();
-    ctx.fillStyle = '#070a14';
-    ctx.fill();
-    ctx.strokeStyle = themeHex;
-    ctx.lineWidth = 1.4 * S;
-    ctx.stroke();
+  if (wglPulseKick > 0.005) wglPulseKick *= 0.86;
+  else wglPulseKick = 0;
+
+  if (controllerGroup) {
+    controllerGroup.rotation.y = wglRotY + stageParallaxX.value * 0.25;
+    controllerGroup.rotation.x = wglRotX + stageParallaxY.value * 0.18;
+    controllerGroup.rotation.z = -0.14 + Math.sin(tSec * 1.4) * 0.04;
+    controllerGroup.position.y = Math.sin(tSec * 2.1) * 0.12 + wglPulseKick;
+    const sc = 1 + wglPulseKick * 0.35;
+    controllerGroup.scale.set(sc, sc, sc);
   }
 
-  // 5. PAVÉ TACTILE CENTRAL + BARRE LED DYNAMIQUE + HOLOGRAMME PROJETÉ EN 3D
-  const tpTL = project3D(-25, -27, zFront + 1);
-  const tpTR = project3D(25, -27, zFront + 1);
-  const tpBR = project3D(21, -2, zFront + 1);
-  const tpBL = project3D(-21, -2, zFront + 1);
-
-  ctx.beginPath();
-  ctx.moveTo(tpTL.x, tpTL.y);
-  ctx.lineTo(tpTR.x, tpTR.y);
-  ctx.lineTo(tpBR.x, tpBR.y);
-  ctx.lineTo(tpBL.x, tpBL.y);
-  ctx.closePath();
-  ctx.fillStyle = '#060913';
-  ctx.fill();
-  ctx.strokeStyle = themeHex;
-  ctx.lineWidth = 2.4 * S;
-  ctx.stroke();
-
-  // Hologramme 3D projeté au-dessus du pavé tactile
-  const holoBase = project3D(0, -14, zFront + 2);
-  const holoTop = project3D(0, -54, zFront + 24);
-  const beamGrad = ctx.createLinearGradient(holoBase.x, holoBase.y, holoTop.x, holoTop.y);
-  beamGrad.addColorStop(0, `${themeHex}55`);
-  beamGrad.addColorStop(1, `${themeHex}00`);
-  ctx.beginPath();
-  ctx.moveTo(tpBL.x, tpBL.y);
-  ctx.lineTo(holoTop.x - 28 * S, holoTop.y);
-  ctx.lineTo(holoTop.x + 28 * S, holoTop.y);
-  ctx.lineTo(tpBR.x, tpBR.y);
-  ctx.closePath();
-  ctx.fillStyle = beamGrad;
-  ctx.fill();
-
-  // Sphère holographique filaire en lévitation au-dessus de la manette
-  ctx.beginPath();
-  ctx.arc(holoTop.x, holoTop.y, 16 * S, 0, Math.PI * 2);
-  ctx.strokeStyle = themeHex;
-  ctx.lineWidth = 1.6 * S;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.ellipse(
-    holoTop.x,
-    holoTop.y,
-    16 * S,
-    6 * S,
-    gpFloatPhase * 0.8,
-    0,
-    Math.PI * 2
-  );
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 1.2 * S;
-  ctx.stroke();
-
-  // 6. CROIX DIRECTIONNELLE (D-PAD EN VERRE FUMÉ) À GAUCHE
-  const dpad = project3D(-48, -6, zFront + 2);
-  const dUnit = 8.5 * S * dpad.s;
-  ctx.fillStyle = '#1e293b';
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 1.4 * S;
-  ctx.beginPath();
-  ctx.roundRect(dpad.x - dUnit * 0.45, dpad.y - dUnit * 1.4, dUnit * 0.9, dUnit * 2.8, 3 * S);
-  ctx.roundRect(dpad.x - dUnit * 1.4, dpad.y - dUnit * 0.45, dUnit * 2.8, dUnit * 0.9, 3 * S);
-  ctx.fill();
-  ctx.stroke();
-
-  // 7. JOYSTICKS ANALOGIQUES 3D AVEC TIGE ET CHAPEAU CONCAVE QUI S'INCLINENT
-  const stickTiltX = stageParallaxX.value * 4;
-  const stickTiltY = stageParallaxY.value * 4;
-  for (const sx of [-24, 24]) {
-    const well = project3D(sx, 11, zFront);
-    const stem = project3D(sx + stickTiltX * 0.5, 11 + stickTiltY * 0.5, zFront + 6);
-    const cap = project3D(sx + stickTiltX, 11 + stickTiltY, zFront + 12);
-
-    // Puits du joystick
-    ctx.beginPath();
-    ctx.arc(well.x, well.y, 13.5 * S * well.s, 0, Math.PI * 2);
-    ctx.fillStyle = '#040711';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(99, 102, 241, 0.5)';
-    ctx.lineWidth = 1.5 * S;
-    ctx.stroke();
-
-    // Tige cylindrique 3D
-    ctx.beginPath();
-    ctx.moveTo(well.x, well.y);
-    ctx.lineTo(cap.x, cap.y);
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = 7 * S * stem.s;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    // Chapeau texturé du stick
-    ctx.beginPath();
-    ctx.arc(cap.x, cap.y, 10.5 * S * cap.s, 0, Math.PI * 2);
-    ctx.fillStyle = '#0f172a';
-    ctx.fill();
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 2 * S;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(cap.x, cap.y, 6.5 * S * cap.s, 0, Math.PI * 2);
-    ctx.strokeStyle = themeHex;
-    ctx.lineWidth = 1.2 * S;
-    ctx.stroke();
+  // Inclinaison réactive des deux joysticks 3D vers le curseur
+  if (leftStickPivot && rightStickPivot) {
+    leftStickPivot.rotation.y = stageParallaxX.value * 0.45;
+    leftStickPivot.rotation.x = stageParallaxY.value * 0.45;
+    rightStickPivot.rotation.y = -stageParallaxX.value * 0.45;
+    rightStickPivot.rotation.x = stageParallaxY.value * 0.45;
   }
 
-  // 8. 4 BOUTONS D'ACTION CRISTAL NÉON À DROITE
-  const actionButtons = [
-    { x: 48, y: -17, color: '#fbbf24', sym: '▲' },
-    { x: 59, y: -6, color: '#f43f5e', sym: '●' },
-    { x: 48, y: 5, color: '#10b981', sym: '✕' },
-    { x: 37, y: -6, color: '#38bdf8', sym: '■' }
-  ];
-  for (const btn of actionButtons) {
-    const bp = project3D(btn.x, btn.y, zFront + 2.5);
-    const r = 5.4 * S * bp.s;
-    ctx.beginPath();
-    ctx.arc(bp.x, bp.y, r, 0, Math.PI * 2);
-    ctx.fillStyle = '#0f172a';
-    ctx.fill();
-    ctx.strokeStyle = btn.color;
-    ctx.lineWidth = 2 * S;
-    ctx.stroke();
+  // Synchronisation de la couleur LED 3D avec le mode actif du carrousel
+  if (ledMaterial && accentPointLight && activeShowcaseCard.value?.glowColor) {
+    ledMaterial.color.set(activeShowcaseCard.value.glowColor);
+    ledMaterial.emissive.set(activeShowcaseCard.value.glowColor);
+    accentPointLight.color.set(activeShowcaseCard.value.glowColor);
   }
 
-  // 9. Dessine les Cubes 3D qui passent DEVANT la manette (zDepth <= 0)
-  for (const c of rawCubes.filter((item) => item.zDepth <= 0)) {
-    drawTrue3DCube(c.ox, c.oy, c.oz, 13, c.rot, c.icon, c.color);
+  if (pedestalRing1 && pedestalRing2) {
+    const pScale = 1 + Math.sin(tSec * 2.5) * 0.04 + wglPulseKick * 0.6;
+    pedestalRing1.scale.set(pScale, pScale, 1);
+    pedestalRing2.scale.set(2 - pScale, 2 - pScale, 1);
   }
 
-  ctx.restore();
+  // Orbite 3D des satellites autour de la manette
+  for (let i = 0; i < orbitSatellites.length; i++) {
+    const sat = orbitSatellites[i];
+    const ang = tSec * 0.65 + sat.phase;
+    sat.mesh.position.set(
+      Math.cos(ang) * 2.75,
+      Math.sin(tSec * 1.8 + i) * 0.55 + (i % 2 === 0 ? 0.45 : -0.35),
+      Math.sin(ang) * 1.35
+    );
+    sat.mesh.rotation.x += 0.015;
+    sat.mesh.rotation.y += 0.02;
+  }
+
+  threeRenderer.render(threeScene, threeCamera);
+};
+
+const handleWindowResize = () => {
+  if (!threeRenderer || !threeCamera || !webglContainerRef.value) return;
+  const W = webglContainerRef.value.clientWidth || 540;
+  const H = webglContainerRef.value.clientHeight || 400;
+  threeCamera.aspect = W / H;
+  threeCamera.updateProjectionMatrix();
+  threeRenderer.setSize(W, H);
 };
 
 // =========================================================
@@ -2494,9 +2428,9 @@ const onQuizGlobePointerUp = () => {
   qIsDragging = false;
 };
 
-const renderMainLoop = () => {
+const renderMainLoop = (timeMs = 0) => {
   if (currentMode.value === 'menu') {
-    renderRealistic3DController();
+    updateThreeWebglFrame(timeMs);
   }
 
   const canvas =
@@ -2672,7 +2606,7 @@ const renderMainLoop = () => {
 };
 
 // =========================================================
-// CARROUSEL SPATIAL 3D (COVERFLOW DES 11 MODES)
+// CARROUSEL PLANÉTAIRE EN ARC 3D (ROUE COURBÉE INTERACTIVE)
 // =========================================================
 const currentMode = ref('menu');
 const selectedMenuCat = ref('all');
@@ -2684,68 +2618,84 @@ const gamesGridRef = ref(null);
 const selectCategoryFilter = (catId) => {
   selectedMenuCat.value = catId;
   activeCarouselIndex.value = 0;
-  triggerControllerPulse();
+  triggerWebglPulse();
 };
 
 const stepCarousel = (delta) => {
   const len = filteredMenuCards.value.length;
   if (!len) return;
   activeCarouselIndex.value = (activeCarouselIndex.value + delta + len) % len;
-  triggerControllerPulse();
+  triggerWebglPulse();
 };
 
 let lastWheelTime = 0;
 const onCarouselWheel = (e) => {
   const now = Date.now();
-  if (now - lastWheelTime < 220) return;
+  if (now - lastWheelTime < 180) return;
   lastWheelTime = now;
   const delta = e.deltaY > 0 || e.deltaX > 0 ? 1 : -1;
   stepCarousel(delta);
 };
 
-const handleDeckCardClick = (idx, card) => {
+// Glissement horizontal de la roue en arc 3D
+let arcDragStartX = 0;
+let arcDragging = false;
+const onArcDragStart = (e) => {
+  arcDragging = true;
+  arcDragStartX = e.clientX;
+};
+const onArcDragMove = (e) => {
+  if (!arcDragging) return;
+  const dx = e.clientX - arcDragStartX;
+  if (Math.abs(dx) > 55) {
+    stepCarousel(dx < 0 ? 1 : -1);
+    arcDragStartX = e.clientX;
+  }
+};
+const onArcDragEnd = () => {
+  arcDragging = false;
+};
+
+const handleArcCardClick = (idx, card) => {
   if (idx === activeCarouselIndex.value) {
     card.action();
   } else {
     activeCarouselIndex.value = idx;
-    triggerControllerPulse();
+    triggerWebglPulse();
   }
 };
 
-const getCarouselCardStyle = (idx) => {
+// Calcule la position sur un arc de cercle 3D (style vitrine incurvée)
+const getArcWheelCardStyle = (idx) => {
   const total = filteredMenuCards.value.length;
   if (!total) return {};
   let diff = idx - activeCarouselIndex.value;
   if (diff > total / 2) diff -= total;
   if (diff < -total / 2) diff += total;
 
-  if (diff === 0) {
+  const absDiff = Math.abs(diff);
+  if (absDiff > 2) {
     return {
-      transform: 'perspective(1200px) translate3d(0px, 0px, 0px) rotateY(0deg) scale(1)',
-      opacity: '1',
-      pointerEvents: 'auto'
+      transform: `perspective(1400px) translate3d(${diff * 260}px, 90px, -320px) rotateZ(${diff * 10}deg) scale(0.65)`,
+      opacity: '0',
+      pointerEvents: 'none',
+      zIndex: 1
     };
   }
-  if (Math.abs(diff) === 1) {
-    const dir = diff > 0 ? 1 : -1;
-    return {
-      transform: `perspective(1200px) translate3d(${dir * 72}px, 14px, -95px) rotateY(${dir * -16}deg) scale(0.9)`,
-      opacity: '0.45',
-      pointerEvents: 'auto'
-    };
-  }
-  if (Math.abs(diff) === 2) {
-    const dir = diff > 0 ? 1 : -1;
-    return {
-      transform: `perspective(1200px) translate3d(${dir * 125}px, 26px, -180px) rotateY(${dir * -24}deg) scale(0.8)`,
-      opacity: '0.16',
-      pointerEvents: 'none'
-    };
-  }
+
+  const xOffset = diff * 285;
+  const yArcDrop = absDiff * absDiff * 18 - (diff === 0 ? 10 : 0);
+  const zDepth = -absDiff * 95;
+  const rotZ = diff * 5.5;
+  const rotY = diff * -14;
+  const scale = diff === 0 ? 1.06 : absDiff === 1 ? 0.91 : 0.78;
+  const opacity = diff === 0 ? 1 : absDiff === 1 ? 0.78 : 0.42;
+
   return {
-    transform: 'perspective(1200px) translate3d(0px, 40px, -260px) scale(0.7)',
-    opacity: '0',
-    pointerEvents: 'none'
+    transform: `perspective(1400px) translate3d(${xOffset}px, ${yArcDrop}px, ${zDepth}px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(${scale})`,
+    opacity: String(opacity),
+    zIndex: 30 - absDiff * 5,
+    pointerEvents: 'auto'
   };
 };
 
@@ -3656,7 +3606,7 @@ const launchCustomBuiltQuiz = () => {
 };
 
 // =========================================================
-// CATALOGUE DES 11 MODES (PILOTE LE CARROUSEL 3D & LA MANETTE)
+// CATALOGUE DES 11 MODES
 // =========================================================
 const menuCategories = computed(() => {
   const isFr = locale.value === 'fr';
@@ -3686,7 +3636,7 @@ const allMenuCards = computed(() => {
       desc: isFr
         ? 'Devinez le pays secret en 6 essais grâce à la distance en kilomètres et au radar Globe 3D de triangulation.'
         : 'Guess the secret country in 6 tries using distance in km and the 3D Globe triangulation radar.',
-      cta: isFr ? 'Jouer' : 'Play Game',
+      cta: isFr ? 'Lancer Worldle 3D' : 'Play Worldle 3D',
       badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/35',
       glowColor: '#a855f7',
       action: () => initDailyMystery()
@@ -3706,7 +3656,7 @@ const allMenuCards = computed(() => {
       desc: isFr
         ? 'Saisissez les 47 pays d\'Europe ou les 196 pays du Monde et voyez le Globe 3D tourner et s\'illuminer en direct.'
         : 'Type all 47 European countries or all 196 World countries as the 3D Globe spins and lights up live.',
-      cta: isFr ? 'Démarrer' : 'Start Challenge',
+      cta: isFr ? 'Démarrer le Chrono' : 'Start Timed Challenge',
       badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35',
       glowColor: '#10b981',
       action: () => demarrerChrono()
@@ -3726,7 +3676,7 @@ const allMenuCards = computed(() => {
       desc: isFr
         ? 'Enchaînez un maximum de capitales et de drapeaux en 60 secondes avec multiplicateur x4 et bonus +2s.'
         : 'Chain as many capitals and flags as possible in 60 seconds with x4 multiplier and +2s bonuses.',
-      cta: isFr ? 'Lancer Sprint' : 'Start Sprint',
+      cta: isFr ? 'Lancer le Sprint' : 'Start Sprint',
       badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/35',
       glowColor: '#f59e0b',
       action: () => startFlash60()
@@ -3746,7 +3696,7 @@ const allMenuCards = computed(() => {
       desc: isFr
         ? 'Retournez les cartes d\'indices en 3D une par une pour démasquer le pays cible avec un maximum de points.'
         : 'Flip 3D clue cards one by one to unmask the target sovereign state with maximum points.',
-      cta: isFr ? 'Enquêter' : 'Start Investigation',
+      cta: isFr ? 'Ouvrir l\'Enquête' : 'Start Investigation',
       badgeClass: 'bg-teal-500/15 text-teal-300 border-teal-500/35',
       glowColor: '#14b8a6',
       action: () => initDetective()
@@ -3764,7 +3714,7 @@ const allMenuCards = computed(() => {
       popularity: 5,
       title: t('home.mode_caps_title'),
       desc: t('home.mode_caps_desc'),
-      cta: isFr ? '15 Questions' : 'Start 15 Questions',
+      cta: isFr ? 'Lancer 15 Questions' : 'Start 15 Questions',
       badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/35',
       glowColor: '#38bdf8',
       action: () => initQcm('capital')
@@ -3782,7 +3732,7 @@ const allMenuCards = computed(() => {
       popularity: 6,
       title: t('home.mode_flags_title'),
       desc: t('home.mode_flags_desc'),
-      cta: isFr ? '15 Questions' : 'Start 15 Questions',
+      cta: isFr ? 'Lancer 15 Questions' : 'Start 15 Questions',
       badgeClass: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/35',
       glowColor: '#6366f1',
       action: () => initQcm('flag')
@@ -3802,7 +3752,7 @@ const allMenuCards = computed(() => {
       desc: isFr
         ? 'Comparez les populations et identifiez les langues officielles et les monnaies nationales.'
         : 'Compare populations and identify official languages and national currencies.',
-      cta: isFr ? '15 Questions' : 'Start 15 Questions',
+      cta: isFr ? 'Lancer 15 Questions' : 'Start 15 Questions',
       badgeClass: 'bg-pink-500/15 text-pink-300 border-pink-500/35',
       glowColor: '#ec4899',
       action: () => initQcm('culture')
@@ -3822,7 +3772,7 @@ const allMenuCards = computed(() => {
       desc: isFr
         ? 'Pointez directement chaque État demandé sur la carte muette sans aucune saisie clavier.'
         : 'Click directly on each requested country on the blank map with zero typing.',
-      cta: isFr ? 'Jouer' : 'Play Map Click',
+      cta: isFr ? 'Tester ma précision' : 'Play Map Click',
       badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35',
       glowColor: '#10b981',
       action: () => initMapClick('europe')
@@ -3842,7 +3792,7 @@ const allMenuCards = computed(() => {
       desc: isFr
         ? 'Révisez à votre rythme avec les 196 cartes mémoire 3D recto-verso filtrables par continent.'
         : 'Study at your own pace with all 196 double-sided 3D memory cards.',
-      cta: isFr ? 'Réviser' : 'Open Flashcards',
+      cta: isFr ? 'Ouvrir les Flashcards' : 'Open Flashcards',
       badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/35',
       glowColor: '#38bdf8',
       action: () => { currentMode.value = 'flashcards'; }
@@ -3862,7 +3812,7 @@ const allMenuCards = computed(() => {
       desc: isFr
         ? 'Identifiez simultanément tous les drapeaux d\'un continent avec passage automatique au suivant.'
         : 'Identify all flags from a continent simultaneously with auto-focus.',
-      cta: isFr ? 'Ouvrir Grille' : 'Open Matrix',
+      cta: isFr ? 'Ouvrir la Grille' : 'Open Matrix',
       badgeClass: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/35',
       glowColor: '#6366f1',
       action: () => { currentMode.value = 'flag-grid'; }
@@ -3882,7 +3832,7 @@ const allMenuCards = computed(() => {
       desc: isFr
         ? 'Sélectionnez de 5 à 15 pays précis pour générer un lien de défi partageable avec vos amis.'
         : 'Select 5 to 15 specific countries to generate a shareable challenge link.',
-      cta: isFr ? 'Créer Défi' : 'Build Challenge',
+      cta: isFr ? 'Créer un Défi' : 'Build Challenge',
       badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/35',
       glowColor: '#a855f7',
       action: () => { currentMode.value = 'custom-builder'; }
@@ -3926,12 +3876,18 @@ const retourMenu = () => {
   if (chronoTimer) clearInterval(chronoTimer);
   currentMode.value = 'menu';
   router.replace({ path: '/quiz', query: {} });
+  nextTick(() => {
+    initThreeWebglController();
+  });
 };
 
 const applyRouteQuery = (q) => {
   const m = q?.mode;
   if (!m) {
     currentMode.value = 'menu';
+    nextTick(() => {
+      initThreeWebglController();
+    });
     return;
   }
   if (m === 'qcm') {
@@ -3994,87 +3950,79 @@ watch(
 
 onMounted(() => {
   loadQuizVectorBorders();
+  initThreeWebglController();
   renderMainLoop();
   applyRouteQuery(route.query);
   window.addEventListener('keydown', handleKeydown);
+  window.addEventListener('resize', handleWindowResize);
 });
 
 onUnmounted(() => {
   if (globeAnimId) cancelAnimationFrame(globeAnimId);
+  if (threeRenderer) threeRenderer.dispose();
   if (flashTimer) clearInterval(flashTimer);
   if (chronoTimer) clearInterval(chronoTimer);
   window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('resize', handleWindowResize);
 });
 </script>
 
 <style scoped>
 /* ========================================================= */
-/* SCÈNE PLEIN ÉCRAN & MANETTE 3D GÉANTE                     */
+/* SCÈNE WEBGL 3D PLEIN ÉCRAN & ROUE ORBITALE EN ARC         */
 /* ========================================================= */
-.quiz-orbital-stage {
-  background: radial-gradient(circle at 65% 46%, rgba(79, 70, 229, 0.14) 0%, rgba(14, 165, 233, 0.05) 42%, transparent 74%);
+.webgl-showcase-stage {
+  background: radial-gradient(circle at 50% 42%, rgba(79, 70, 229, 0.14) 0%, rgba(14, 165, 233, 0.05) 45%, transparent 75%);
   border-bottom: 1px solid var(--border-color);
 }
 
-.gamepad-hero-canvas {
-  width: min(92vw, 620px);
-  height: min(56vh, 450px);
-  max-width: 620px;
-  max-height: 450px;
+.webgl-controller-mount {
+  width: min(92vw, 560px);
+  height: min(44vh, 390px);
+  min-height: 310px;
 }
 
-.stage-glow {
+.ambient-halo {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(100px);
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), background 0.45s ease;
+  filter: blur(110px);
+  transition: transform 0.25s ease-out, background 0.5s ease;
 }
 
-.stage-glow-primary {
-  width: 42vw;
-  height: 42vw;
-  top: 6%;
-  right: 12%;
-}
-
-.stage-glow-secondary {
-  width: 34vw;
-  height: 34vw;
-  bottom: 8%;
-  left: 14%;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.14), transparent 70%);
-}
-
-.stage-watermark {
-  position: absolute;
-  top: 48%;
+.ambient-halo-center {
+  width: 52vw;
+  height: 52vw;
+  top: 44%;
   left: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+}
+
+.giant-kinetic-bg {
+  position: absolute;
+  top: 42%;
+  left: 50%;
   white-space: nowrap;
   font-weight: 900;
-  font-size: clamp(4rem, 14vw, 13rem);
+  font-size: clamp(4.5rem, 15vw, 14.5rem);
   letter-spacing: -0.05em;
   line-height: 0.85;
   color: rgba(148, 163, 184, 0.04);
   pointer-events: none;
   user-select: none;
-  transition: transform 0.2s ease-out;
+  transition: transform 0.22s ease-out;
 }
 
-.stage-watermark-sub {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: clamp(0.85rem, 2vw, 1.8rem);
-  letter-spacing: 0.35em;
-  margin-top: 1rem;
-  opacity: 0.7;
-}
-
-.spatial-coverflow-stage {
-  perspective: 1400px;
+.arc-wheel-viewport {
+  perspective: 1600px;
   transform-style: preserve-3d;
+}
+
+.arc-wheel-card {
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.45s ease,
+    border-color 0.25s ease,
+    box-shadow 0.35s ease;
+  will-change: transform, opacity;
 }
 
 .matrix-tilt-card {
@@ -4082,13 +4030,17 @@ onUnmounted(() => {
   will-change: transform;
 }
 
-@keyframes floatSlow {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-6px) rotate(2deg); }
+.slide-up-fade-enter-active,
+.slide-up-fade-leave-active {
+  transition: opacity 0.24s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
 }
-
-.animate-float-slow {
-  animation: floatSlow 4.2s ease-in-out infinite;
+.slide-up-fade-enter-from {
+  opacity: 0;
+  transform: translateY(14px);
+}
+.slide-up-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .grid-cols-15 {
@@ -4182,9 +4134,10 @@ onUnmounted(() => {
 }
 
 @media (max-width: 1023px) {
-  .gamepad-hero-canvas {
+  .webgl-controller-mount {
     width: min(92vw, 420px);
-    height: 320px;
+    height: 290px;
+    min-height: 260px;
   }
 }
 </style>
