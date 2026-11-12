@@ -1,675 +1,1216 @@
 <template>
-  <div class="max-w-6xl mx-auto space-y-8 pb-12">
+  <div class="collection-experience max-w-[1400px] mx-auto px-2 sm:px-6 pb-24 space-y-8 select-none">
 
-    <!-- EN-TÊTE -->
-    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-      <div>
-        <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
-          🏆 {{ locale === 'fr' ? 'Progression & Trophées Évolutifs' : 'Progression & Evolving Trophies' }}
-        </span>
-        <h2 class="text-3xl font-black text-gray-900 dark:text-white">
-          {{ locale === 'fr' ? 'Ma Collection de Badges (I → V)' : 'My Badge Collection (I → V)' }}
-        </h2>
-        <p class="text-gray-600 dark:text-gray-400 mt-1">
+    <!-- ========================================================= -->
+    <!-- 1. EN-TÊTE & SÉLECTEUR DE VUE (TROPHÉES I->V / PASSEPORT) -->
+    <!-- ========================================================= -->
+    <header class="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div class="space-y-1">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-600 dark:text-sky-400 font-mono text-[11px] font-bold uppercase tracking-wider">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>{{ locale === 'fr' ? 'ARCHIVES D\'ACCRÉDITATION // PALIER I À V' : 'ACCREDITATION ARCHIVES // TIER I TO V' }}</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          {{ locale === 'fr' ? 'Ma Collection & Trophées 3D' : 'My Collection & 3D Trophies' }}
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
           {{ locale === 'fr'
-            ? 'Débloquez les 14 badges officiels et faites-les évoluer du rang I (Bronze) jusqu\'au rang V (Diamant).'
-            : 'Unlock all 14 official badges and upgrade them from Tier I (Bronze) to Tier V (Diamond).' }}
+            ? 'Inspectez vos insignes évolutifs en 3D et suivez la complétion de votre passeport géodésique sur 196 États.'
+            : 'Inspect your evolving 3D insignias and track your geodesic passport completion across 196 states.' }}
         </p>
       </div>
 
-      <div class="flex items-center gap-3 self-start sm:self-auto">
-        <router-link
-          to="/leaderboard"
-          class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold transition shadow-xs"
-        >
-          🏆 {{ locale === 'fr' ? 'Ligues & Classement' : 'Leagues & Leaderboard' }}
-        </router-link>
-        <router-link
-          to="/geoguessr"
-          class="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-gray-700 text-white text-xs sm:text-sm font-bold transition"
-        >
-          🛰️ PinDrop
-        </router-link>
-        <router-link
-          to="/quiz"
-          class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold transition shadow-sm"
-        >
-          🎮 {{ locale === 'fr' ? 'Jouer aux Quiz' : 'Play Quizzes' }}
-        </router-link>
-      </div>
-    </div>
-
-    <!-- BANNIÈRE PROFIL RPG : NIVEAU GLOBAL, TITRE, BADGE ÉPINGLÉ & JAUGE D'XP -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-6 sm:p-8 shadow-xl border border-blue-500/20">
-      <div class="pointer-events-none absolute -top-20 -right-20 w-72 h-72 rounded-full bg-cyan-500/15 blur-3xl"></div>
-
-      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        <div class="lg:col-span-5 flex items-center gap-5">
-          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex flex-col items-center justify-center shadow-lg border-2 border-white/30 shrink-0">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-950">LVL</span>
-            <strong class="text-3xl font-black text-white leading-none">{{ playerLevel.level }}</strong>
-          </div>
-
-          <div class="min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="text-2xl font-black text-white truncate">{{ displayUsername }}</h3>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-                {{ playerLevel.title }}
-              </span>
-            </div>
-
-            <!-- Badge favori équipé par le joueur -->
-            <div v-if="pinnedBadgeObj" class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-xs font-bold text-amber-300">
-              <span>{{ pinnedBadgeObj.icon }}</span>
-              <span>{{ pinnedBadgeObj.title }} {{ toRoman(pinnedBadgeObj.currentTier) }}</span>
-            </div>
-
-            <p class="text-xs sm:text-sm text-slate-300 mt-1">
-              {{ locale === 'fr'
-                ? `${totalTiersUnlocked} / ${maxTotalTiers} paliers débloqués (${unlockedBadgesCount}/${evaluatedBadges.length} badges actifs)`
-                : `${totalTiersUnlocked} / ${maxTotalTiers} tiers unlocked (${unlockedBadgesCount}/${evaluatedBadges.length} active badges)` }}
-            </p>
-          </div>
-        </div>
-
-        <div class="lg:col-span-4 space-y-2">
-          <div class="flex justify-between text-xs font-bold">
-            <span class="text-cyan-300">{{ totalXp.toLocaleString() }} XP</span>
-            <span class="text-slate-400">
-              {{ locale === 'fr' ? `Prochain niveau : ${playerLevel.nextLevelXp.toLocaleString()} XP` : `Next level: ${playerLevel.nextLevelXp.toLocaleString()} XP` }}
-            </span>
-          </div>
-          <div class="h-3.5 w-full bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/10">
-            <div
-              class="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 rounded-full transition-all duration-500"
-              :style="{ width: `${playerLevel.progressPercent}%` }"
-            ></div>
-          </div>
-          <p class="text-[11px] text-slate-400">
-            {{ locale === 'fr'
-              ? 'Chaque palier de badge débloqué vous rapporte +100 XP bonus !'
-              : 'Each unlocked badge tier grants you +100 bonus XP!' }}
-          </p>
-        </div>
-
-        <div class="lg:col-span-3 grid grid-cols-3 gap-2 text-center">
-          <div class="bg-white/5 border border-white/10 rounded-2xl p-3">
-            <strong class="text-xl font-black text-amber-400 block">{{ statsSummary.totalGames }}</strong>
-            <span class="text-[11px] text-slate-300">{{ locale === 'fr' ? 'Parties' : 'Games' }}</span>
-          </div>
-          <div class="bg-white/5 border border-white/10 rounded-2xl p-3">
-            <strong class="text-xl font-black text-emerald-400 block">{{ statsSummary.perfectGames }}</strong>
-            <span class="text-[11px] text-slate-300">{{ locale === 'fr' ? 'Sans-faute' : 'Perfects' }}</span>
-          </div>
-          <div class="bg-white/5 border border-white/10 rounded-2xl p-3">
-            <strong class="text-xl font-black text-cyan-300 block">{{ diamondCount }}</strong>
-            <span class="text-[11px] text-slate-300">{{ locale === 'fr' ? 'Rang V 💎' : 'Tier V 💎' }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- BARRE DE FILTRES & TRI DE LA COLLECTION -->
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex flex-wrap items-center gap-2">
+      <!-- Bascule : Trophées Évolutifs (12 x 5 Paliers) vs Passeport 196 États -->
+      <div class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-full bg-slate-200/70 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 self-start lg:self-auto">
         <button
-          v-for="f in filterTabs"
-          :key="f.id"
           type="button"
-          @click="activeFilter = f.id"
-          class="px-3.5 py-2 rounded-xl text-xs font-extrabold transition cursor-pointer border"
-          :class="activeFilter === f.id
-            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-            : 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400'"
+          @click="activeSection = 'trophies'"
+          class="px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
+          :class="activeSection === 'trophies'
+            ? 'bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-black shadow-md'
+            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
         >
-          {{ f.label }}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+            <path d="M4 22h16" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+          </svg>
+          <span>{{ locale === 'fr' ? `Trophées Évolutifs (${unlockedBadgesCount}/12)` : `Evolving Trophies (${unlockedBadgesCount}/12)` }}</span>
+        </button>
+
+        <button
+          type="button"
+          @click="activeSection = 'passport'"
+          class="px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
+          :class="activeSection === 'passport'
+            ? 'bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-black shadow-md'
+            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+            <path d="M2 12h20" />
+          </svg>
+          <span>{{ locale === 'fr' ? `Passeport 196 États (${stampedCountriesCount}/196)` : `196-State Passport (${stampedCountriesCount}/196)` }}</span>
         </button>
       </div>
+    </header>
 
-      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-        <span class="text-xs font-bold text-gray-400">{{ locale === 'fr' ? 'Trier par :' : 'Sort by:' }}</span>
-        <select
-          v-model="sortBy"
-          class="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white text-xs font-bold focus:outline-none"
-        >
-          <option value="default">{{ locale === 'fr' ? 'Ordre officiel' : 'Official order' }}</option>
-          <option value="tier-desc">{{ locale === 'fr' ? 'Rang le plus élevé (V → I)' : 'Highest Tier (V → I)' }}</option>
-          <option value="progress-desc">{{ locale === 'fr' ? 'Proche du prochain palier' : 'Closest to next tier' }}</option>
-        </select>
+    <!-- ========================================================= -->
+    <!-- 2. ÉTAT NON CONNECTÉ                                      -->
+    <!-- ========================================================= -->
+    <div
+      v-if="!isLoggedIn"
+      class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-10 sm:p-14 text-center max-w-xl mx-auto shadow-2xl space-y-5"
+    >
+      <div class="w-16 h-16 rounded-2xl bg-sky-500/10 border border-sky-500/25 text-sky-400 mx-auto flex items-center justify-center">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
       </div>
+      <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+        {{ locale === 'fr' ? 'Authentification Requise' : 'Authentication Required' }}
+      </h2>
+      <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+        {{ locale === 'fr'
+          ? 'Connectez-vous à votre profil pour synchroniser vos trophées évolutifs et débloquer les 196 tampons de votre passeport.'
+          : 'Sign in to your profile to synchronize your evolving trophies and unlock all 196 state stamps in your passport.' }}
+      </p>
+      <router-link
+        to="/profil"
+        class="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-black text-xs sm:text-sm transition shadow-lg shadow-sky-500/20"
+      >
+        <span>{{ locale === 'fr' ? 'Se connecter / Créer un compte' : 'Sign In / Create Account' }}</span>
+        <span>→</span>
+      </router-link>
     </div>
 
-    <!-- GRILLE DES 14 BADGES ÉVOLUTIFS (PALIERS I, II, III, IV, V) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div
-        v-for="badge in filteredAndSortedBadges"
-        :key="badge.id"
-        class="rounded-3xl p-6 transition-all duration-300 border-2 flex flex-col justify-between relative overflow-hidden"
-        :class="badge.cardStyle"
-      >
-        <div class="flex items-start justify-between gap-4 mb-4">
-          <div class="flex items-center gap-4">
+    <!-- ========================================================= -->
+    <!-- 3. CONTENU PRINCIPAL CONNECTÉ                             -->
+    <!-- ========================================================= -->
+    <template v-else>
+
+      <!-- A. BARRE DE SYNTHÈSE TÉLÉMÉTRIQUE (4 KPI) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-5 flex items-center gap-4 shadow-lg">
+          <div class="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/25 text-sky-400 flex items-center justify-center shrink-0">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
+              {{ locale === 'fr' ? 'Grade d\'Opérateur' : 'Operator Rank' }}
+            </span>
+            <strong class="font-mono text-lg sm:text-xl font-black text-slate-900 dark:text-white truncate block mt-0.5">
+              {{ operatorRankTitle }}
+            </strong>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-5 flex items-center gap-4 shadow-lg">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center justify-center shrink-0">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+              <path d="M4 22h16" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
+              {{ locale === 'fr' ? 'Paliers Débloqués (I→V)' : 'Tiers Unlocked (I→V)' }}
+            </span>
+            <strong class="font-mono text-2xl font-black text-emerald-500 dark:text-emerald-400 block mt-0.5">
+              {{ totalTiersEarned }} <span class="text-xs font-bold text-slate-400">/ 60</span>
+            </strong>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-5 flex items-center gap-4 shadow-lg">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-400 flex items-center justify-center shrink-0">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
+              {{ locale === 'fr' ? 'Expérience Cumulée' : 'Total Telemetry XP' }}
+            </span>
+            <strong class="font-mono text-2xl font-black text-amber-500 dark:text-amber-400 block mt-0.5">
+              {{ totalCollectionXp.toLocaleString() }} <span class="text-xs font-bold text-slate-400">XP</span>
+            </strong>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-5 flex items-center gap-4 shadow-lg">
+          <div class="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/25 text-sky-400 flex items-center justify-center shrink-0">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
+              {{ locale === 'fr' ? 'Couverture Passeport' : 'Passport Coverage' }}
+            </span>
+            <strong class="font-mono text-2xl font-black text-sky-500 dark:text-sky-400 block mt-0.5">
+              {{ Math.round((stampedCountriesCount / 196) * 100) }}% <span class="text-xs font-bold text-slate-400">({{ stampedCountriesCount }}/196)</span>
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- B. SECTION 1 : MATRICE DES 12 TROPHÉES ÉVOLUTIFS & 3D   -->
+      <!-- ======================================================= -->
+      <transition name="stage-morph" mode="out-in">
+        <div v-if="activeSection === 'trophies'" key="view-trophies" class="space-y-8">
+
+          <!-- VITRINE D'INSPECTION 3D DU TROPHÉE SÉLECTIONNÉ -->
+          <section class="relative overflow-hidden rounded-[2rem] border border-slate-200/80 dark:border-white/12 bg-white dark:bg-[#070B16] p-6 sm:p-8 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div
-              class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-md shrink-0 relative"
-              :class="badge.iconBgStyle"
-            >
-              <span>{{ badge.icon }}</span>
-              <span
-                v-if="badge.currentTier > 0"
-                class="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 rounded-md text-[10px] font-black shadow"
-                :class="badge.romanBadgeStyle"
-              >
-                {{ toRoman(badge.currentTier) }}
+              class="pointer-events-none absolute -top-24 right-1/4 w-96 h-96 rounded-full blur-[110px] opacity-30 transition-all duration-500"
+              :style="{ background: selectedBadge.accentHex }"
+            ></div>
+
+            <!-- Gauche (5 cols) : Scène 3D Interactive du Cristal / Trophée -->
+            <div class="lg:col-span-5 flex flex-col items-center justify-center relative">
+              <div class="w-full flex items-center justify-between font-mono text-[10px] text-slate-400 pb-2 border-b border-slate-200 dark:border-white/10">
+                <span class="text-sky-500 dark:text-sky-400 font-bold">{{ selectedBadge.code }} // 3D RELIC</span>
+                <span>{{ selectedBadge.currentTier > 0 ? `TIER ${romanNumerals[selectedBadge.currentTier - 1]}` : 'LOCKED' }}</span>
+              </div>
+
+              <canvas
+                ref="relicCanvasRef"
+                width="320"
+                height="300"
+                class="w-[270px] h-[250px] sm:w-[310px] sm:h-[285px] cursor-grab active:cursor-grabbing my-1"
+                style="touch-action: none;"
+                @pointerdown="onRelicPointerDown"
+                @pointermove="onRelicPointerMove"
+                @pointerup="onRelicPointerUp"
+                @pointerleave="onRelicPointerUp"
+              ></canvas>
+
+              <span class="px-3.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 font-mono text-[10px] text-slate-500 dark:text-sky-300">
+                {{ locale === 'fr' ? 'GLISSER POUR TOURNER L\'INSIGNE 3D' : 'DRAG TO ROTATE 3D INSIGNIA' }}
               </span>
             </div>
 
-            <div>
-              <h3 class="text-xl font-black text-gray-900 dark:text-white">
-                {{ badge.title }}
-                <span v-if="badge.currentTier > 0" class="ml-1">{{ toRoman(badge.currentTier) }}</span>
-              </h3>
-              <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5">
-                {{ badge.subtitle }}
-              </p>
+            <!-- Droite (7 cols) : Détails du Trophée & Échelle des 5 Paliers (I -> V) -->
+            <div class="lg:col-span-7 space-y-5">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="px-3 py-1 rounded-full font-mono text-[10px] font-black uppercase border"
+                      :class="getTierBadgeClass(selectedBadge.currentTier)"
+                    >
+                      {{ selectedBadge.currentTier > 0
+                        ? (locale === 'fr' ? `PALIER ${romanNumerals[selectedBadge.currentTier - 1]} DÉBLOQUÉ` : `TIER ${romanNumerals[selectedBadge.currentTier - 1]} UNLOCKED`)
+                        : (locale === 'fr' ? 'NON DÉBLOQUÉ' : 'LOCKED') }}
+                    </span>
+                    <span class="font-mono text-xs text-slate-400">
+                      {{ selectedBadge.categoryLabel }}
+                    </span>
+                  </div>
+
+                  <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                    {{ selectedBadge.title }}
+                  </h2>
+                  <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {{ selectedBadge.desc }}
+                  </p>
+                </div>
+
+                <router-link
+                  :to="selectedBadge.playRoute"
+                  class="px-5 py-2.5 rounded-full bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-black text-xs transition hover:scale-105 shadow-lg shadow-sky-500/20 shrink-0"
+                >
+                  {{ locale === 'fr' ? 'Progresser dans ce mode →' : 'Play this mode →' }}
+                </router-link>
+              </div>
+
+              <!-- Barre de progression vers le prochain palier -->
+              <div class="space-y-2 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/10">
+                <div class="flex items-center justify-between font-mono text-xs">
+                  <span class="text-slate-500 dark:text-slate-400 font-bold">
+                    {{ locale === 'fr' ? 'PROGRESSION ACTUELLE :' : 'CURRENT METRIC:' }}
+                    <strong class="text-slate-900 dark:text-white ml-1">{{ selectedBadge.currentValue }} {{ selectedBadge.unit }}</strong>
+                  </span>
+                  <span class="text-sky-500 dark:text-sky-400 font-black">
+                    {{ selectedBadge.nextThreshold
+                      ? (locale === 'fr' ? `PROCHAIN PALIER : ${selectedBadge.nextThreshold} ${selectedBadge.unit}` : `NEXT TIER: ${selectedBadge.nextThreshold} ${selectedBadge.unit}`)
+                      : (locale === 'fr' ? 'MAÎTRISE MAXIMALE (PALIER V)' : 'MAX MASTERY (TIER V)') }}
+                  </span>
+                </div>
+
+                <div class="h-2.5 w-full rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+                  <div
+                    class="h-full rounded-full bg-gradient-to-r from-sky-500 to-emerald-400 transition-all duration-500"
+                    :style="{ width: `${selectedBadge.progressPct}%` }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Grille des 5 Paliers (I, II, III, IV, V) -->
+              <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                <div
+                  v-for="(tierObj, tIdx) in selectedBadge.tiers"
+                  :key="'tier-step-' + tIdx"
+                  class="p-3 rounded-2xl border text-center transition-all flex flex-col justify-between gap-1.5"
+                  :class="selectedBadge.currentTier >= tIdx + 1
+                    ? 'bg-emerald-500/10 border-emerald-500/40 text-slate-900 dark:text-white shadow-sm'
+                    : 'bg-slate-50/50 dark:bg-white/[0.02] border-slate-200/60 dark:border-white/[0.06] text-slate-400 opacity-55'"
+                >
+                  <div class="flex items-center justify-between font-mono text-[10px] font-black">
+                    <span :class="selectedBadge.currentTier >= tIdx + 1 ? 'text-emerald-500 dark:text-emerald-400' : 'text-slate-400'">
+                      TIER {{ romanNumerals[tIdx] }}
+                    </span>
+                    <span>{{ selectedBadge.currentTier >= tIdx + 1 ? '✓' : '•' }}</span>
+                  </div>
+                  <strong class="font-mono text-xs sm:text-sm font-black block">
+                    {{ tierObj.target }} {{ selectedBadge.unit }}
+                  </strong>
+                  <span class="text-[10px] font-semibold truncate block opacity-80">
+                    {{ tierObj.name }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- FILTRES DES TROPHÉES -->
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-slate-200/70 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
+              <button
+                v-for="f in badgeFilters"
+                :key="f.id"
+                type="button"
+                @click="selectedFilter = f.id"
+                class="px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer"
+                :class="selectedFilter === f.id
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+              >
+                {{ f.label }}
+              </button>
+            </div>
+
+            <span class="font-mono text-xs text-slate-400">
+              {{ locale === 'fr' ? 'Cliquez sur une carte pour l\'inspecter en 3D' : 'Click any card to inspect in 3D' }}
+            </span>
+          </div>
+
+          <!-- GRILLE DES 12 CARTES DE TROPHÉES AVEC EFFET 3D TILT & REFLET HOLOGRAPHIQUE -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <article
+              v-for="badge in filteredBadges"
+              :key="badge.id"
+              @click="selectBadgeFor3D(badge)"
+              @pointermove="onCardPointerMove($event, badge.id)"
+              @pointerleave="onCardPointerLeave(badge.id)"
+              class="holo-tilt-card group relative overflow-hidden rounded-3xl border p-6 flex flex-col justify-between gap-4 cursor-pointer"
+              :class="[
+                selectedBadgeId === badge.id
+                  ? 'border-sky-400 ring-2 ring-sky-400/25 bg-white dark:bg-[#0D1528]'
+                  : badge.currentTier > 0
+                    ? 'border-slate-200/90 dark:border-white/12 bg-white/95 dark:bg-[#090E1A]/95 hover:border-sky-500/50'
+                    : 'border-slate-200/60 dark:border-white/[0.06] bg-white/60 dark:bg-[#070B14]/70 opacity-75 hover:opacity-100'
+              ]"
+              :style="getCardTiltStyle(badge.id)"
+            >
+              <!-- Reflet spéculaire holographique suivant le curseur -->
+              <div
+                class="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                :style="getCardGlareStyle(badge.id, badge.accentHex)"
+              ></div>
+
+              <div class="relative z-10 space-y-4">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-mono text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300">
+                    {{ badge.code }}
+                  </span>
+
+                  <span
+                    class="px-3 py-1 rounded-full font-mono text-[10px] font-black uppercase border"
+                    :class="getTierBadgeClass(badge.currentTier)"
+                  >
+                    {{ badge.currentTier > 0 ? `PALIER ${romanNumerals[badge.currentTier - 1]}` : (locale === 'fr' ? 'VERROUILLÉ' : 'LOCKED') }}
+                  </span>
+                </div>
+
+                <div class="flex items-start justify-between gap-4">
+                  <div class="space-y-1 min-w-0">
+                    <h3 class="text-lg font-black text-slate-900 dark:text-white group-hover:text-sky-400 transition-colors truncate">
+                      {{ badge.title }}
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                      {{ badge.desc }}
+                    </p>
+                  </div>
+
+                  <!-- Emblème vectoriel géométrique -->
+                  <div
+                    class="w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center border transition-transform group-hover:scale-110"
+                    :style="{
+                      backgroundColor: `${badge.accentHex}18`,
+                      borderColor: `${badge.accentHex}45`,
+                      color: badge.accentHex
+                    }"
+                  >
+                    <svg v-if="badge.shape === 'octa'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 22 12 12 22 2 12 12 2" />
+                      <line x1="12" y1="2" x2="12" y2="22" /><line x1="2" y1="12" x2="22" y2="12" />
+                    </svg>
+                    <svg v-else-if="badge.shape === 'globe'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10" /><path d="M2 12h20" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                    <svg v-else-if="badge.shape === 'shield'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                    <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Barre des 5 segments de palier (I -> V) -->
+              <div class="relative z-10 space-y-2 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+                <div class="flex items-center justify-between font-mono text-[11px]">
+                  <span class="text-slate-500 dark:text-slate-400">
+                    {{ badge.currentValue }} {{ badge.unit }}
+                  </span>
+                  <span class="font-bold text-sky-500 dark:text-sky-400">
+                    {{ badge.nextThreshold ? `/ ${badge.nextThreshold} ${badge.unit}` : 'MAX' }}
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-5 gap-1.5 h-2">
+                  <div
+                    v-for="step in 5"
+                    :key="badge.id + '-s-' + step"
+                    class="rounded-full transition-all duration-300"
+                    :class="step <= badge.currentTier
+                      ? 'bg-gradient-to-r from-sky-400 to-emerald-400'
+                      : 'bg-slate-200 dark:bg-white/10'"
+                  ></div>
+                </div>
+              </div>
+            </article>
+          </div>
+
+        </div>
+
+        <!-- ======================================================= -->
+        <!-- C. SECTION 2 : PASSEPORT GÉODÉSIQUE DES 196 ÉTATS       -->
+        <!-- ======================================================= -->
+        <div v-else key="view-passport" class="space-y-6">
+
+          <!-- Barre de contrôle du Passeport : Continents + Recherche -->
+          <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xl">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button
+                v-for="cont in passportContinents"
+                :key="cont.id"
+                type="button"
+                @click="passportContinent = cont.id"
+                class="px-3.5 py-2 rounded-full text-xs font-bold transition cursor-pointer"
+                :class="passportContinent === cont.id
+                  ? 'bg-sky-500 text-slate-950 font-black'
+                  : 'bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300 hover:text-white'"
+              >
+                {{ cont.label }} ({{ cont.stamped }}/{{ cont.total }})
+              </button>
+            </div>
+
+            <div class="relative w-full lg:w-64">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                v-model="passportQuery"
+                type="text"
+                :placeholder="locale === 'fr' ? 'Chercher un État...' : 'Search a state...'"
+                class="w-full pl-10 pr-4 py-2 rounded-full border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400"
+              />
             </div>
           </div>
 
-          <div class="flex flex-col items-end gap-1.5 shrink-0">
-            <span
-              class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider"
-              :class="badge.rarityPillStyle"
-            >
-              {{ badge.rarityLabel }}
-            </span>
-
-            <!-- Bouton pour épingler le badge sur sa bannière RPG -->
-            <button
-              v-if="badge.currentTier > 0"
-              type="button"
-              @click="togglePinBadge(badge.id)"
-              class="text-[11px] font-bold px-2 py-0.5 rounded-lg transition cursor-pointer"
-              :class="pinnedBadgeId === badge.id
-                ? 'bg-amber-400/20 text-amber-700 dark:text-amber-300 border border-amber-400/50'
-                : 'text-gray-400 hover:text-amber-500'"
-            >
-              {{ pinnedBadgeId === badge.id ? (locale === 'fr' ? '★ Épinglé' : '★ Pinned') : (locale === 'fr' ? '☆ Épingler' : '☆ Pin') }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Jetons des 5 paliers (I, II, III, IV, V) -->
-        <div class="grid grid-cols-5 gap-2 my-4">
-          <div
-            v-for="(tierTarget, idx) in badge.tiers"
-            :key="badge.id + '-tier-' + idx"
-            class="rounded-xl p-2 text-center border transition-all"
-            :class="idx + 1 <= badge.currentTier
-              ? badge.activeStepStyle
-              : 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 opacity-70'"
-          >
-            <span class="text-[11px] font-black block">{{ toRoman(idx + 1) }}</span>
-            <span class="text-[11px] font-bold block truncate">{{ tierTarget.toLocaleString() }}{{ badge.unit }}</span>
-          </div>
-        </div>
-
-        <!-- Jauge vers le prochain palier + Lien direct vers le mode -->
-        <div class="space-y-2.5 pt-2 border-t border-gray-100 dark:border-gray-700/70">
-          <div class="flex items-center justify-between text-xs font-bold">
-            <span class="text-gray-600 dark:text-gray-300">
-              {{ badge.nextTierLabel }}
-            </span>
-            <span class="text-gray-900 dark:text-white font-extrabold">
-              {{ badge.currentValue.toLocaleString() }} / {{ badge.nextTarget.toLocaleString() }}{{ badge.unit }}
-            </span>
-          </div>
-
-          <div class="h-2.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+          <!-- Grille des 196 Tampons Nationaux -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
             <div
-              class="h-full rounded-full transition-all duration-500"
-              :class="badge.progressBarStyle"
-              :style="{ width: `${badge.progressPercent}%` }"
-            ></div>
+              v-for="c in filteredPassportCountries"
+              :key="'pass-' + c.iso"
+              class="p-3.5 rounded-2xl border transition-all flex flex-col justify-between gap-2.5"
+              :class="c.isStamped
+                ? 'bg-white dark:bg-[#090E1A] border-emerald-500/40 shadow-md'
+                : 'bg-slate-100/50 dark:bg-white/[0.02] border-dashed border-slate-300 dark:border-white/10 opacity-45'"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <img
+                  :src="`https://flagcdn.com/w80/${c.iso}.png`"
+                  :alt="c.name"
+                  class="h-7 w-auto rounded shadow-2xs object-contain"
+                  loading="lazy"
+                />
+                <span
+                  class="font-mono text-[9px] font-black px-2 py-0.5 rounded-full border uppercase"
+                  :class="c.isStamped
+                    ? 'bg-emerald-500/15 border-emerald-500/35 text-emerald-500 dark:text-emerald-400'
+                    : 'border-slate-300 dark:border-white/10 text-slate-400'"
+                >
+                  {{ c.isStamped ? 'STAMPED' : c.iso }}
+                </span>
+              </div>
+
+              <div>
+                <strong class="text-xs font-black text-slate-900 dark:text-white truncate block">
+                  {{ c.name }}
+                </strong>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate block">
+                  {{ c.capital }}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div class="flex items-center justify-between pt-1">
-            <span class="text-[11px] font-semibold text-gray-400">
-              +{{ badge.currentTier * 100 }} XP bonus acquis
-            </span>
-            <router-link
-              :to="badge.playLink"
-              class="text-xs font-extrabold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-            >
-              <span>{{ locale === 'fr' ? 'S\'entraîner sur ce mode' : 'Train on this mode' }}</span>
-              <span>→</span>
-            </router-link>
-          </div>
         </div>
-      </div>
-    </div>
+      </transition>
+
+    </template>
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ALL_COUNTRIES from '../data/countries.js';
 
 const { locale } = useI18n();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
-const currentUser = ref(null);
-const scoresList = ref([]);
-const activeFilter = ref('all');
-const sortBy = ref('default');
-const pinnedBadgeId = ref(localStorage.getItem('geolearn_pinned_badge') || '');
+const isLoggedIn = ref(false);
+const userScores = ref([]);
+const activeSection = ref('trophies'); // 'trophies' | 'passport'
+const selectedFilter = ref('all');
+const selectedBadgeId = ref('veteran');
+const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
 
-const togglePinBadge = (id) => {
-  if (pinnedBadgeId.value === id) {
-    pinnedBadgeId.value = '';
-    localStorage.removeItem('geolearn_pinned_badge');
-  } else {
-    pinnedBadgeId.value = id;
-    localStorage.setItem('geolearn_pinned_badge', id);
-  }
-};
+// =========================================================
+// CALCUL DES MÉTRIQUES DU JOUEUR DEPUIS SON HISTORIQUE
+// =========================================================
+const metrics = computed(() => {
+  const scores = userScores.value;
+  const totalGames = scores.length;
 
-const displayUsername = computed(() => {
-  if (!currentUser.value) return locale.value === 'fr' ? 'Explorateur' : 'Explorer';
-  return (
-    currentUser.value.username ||
-    currentUser.value.pseudo ||
-    currentUser.value.name ||
-    (currentUser.value.user && (currentUser.value.user.username || currentUser.value.user.name)) ||
-    (currentUser.value.email ? currentUser.value.email.split('@')[0] : 'Explorateur')
-  );
-});
+  let perfectQcms = 0;
+  let capitalsBest = 0;
+  let flagsBest = 0;
+  let cultureBest = 0;
+  let sprintBest = 0;
+  let worldleWins = 0;
+  let detectiveBest = 0;
+  let europeBest = 0;
+  let worldBest = 0;
+  let pinDropBest = 0;
+  let duelWins = 0;
 
-const toRoman = (num) => ['', 'I', 'II', 'III', 'IV', 'V'][num] || '';
+  for (const s of scores) {
+    const m = (s.mode || '').toLowerCase();
+    const val = Number(s.score) || 0;
+    const max = Number(s.max_score) || 15;
 
-onMounted(async () => {
-  const savedUser = localStorage.getItem('geolearn_user');
-  if (!savedUser) return;
-  try {
-    const parsed = JSON.parse(savedUser);
-    currentUser.value = parsed;
-    const userId = parsed.id || (parsed.user && parsed.user.id);
-    if (!userId) return;
-
-    const res = await fetch(`${API_URL}/api/scores/${userId}`);
-    if (res.ok) {
-      const data = await res.json();
-      scoresList.value = Array.isArray(data) ? data : (data.scores || []);
+    if (max === 15 && !m.includes('flash') && !m.includes('sprint') && val >= 14) {
+      perfectQcms++;
     }
-  } catch (e) {
-    console.error('Erreur chargement collection badges:', e);
-  }
-});
-
-// Agrégation complète de tous les modes de jeu (incluant QCM Flash 60s et Satellite)
-const statsSummary = computed(() => {
-  const list = scoresList.value;
-  const totalGames = list.length;
-
-  let capitalsPoints = 0;
-  let flagsPoints = 0;
-  let culturePoints = 0;
-  let bestFlagGrid = 0;
-  let bestEurope = 0;
-  let bestWorld = 0;
-  let bestGeoGuessr = 0;
-  let bestFlash60 = 0;
-  let mapClickPoints = 0;
-  let detectivePoints = 0;
-  let mysteryWins = 0;
-  let perfectGames = 0;
-  let totalNormalizedPoints = 0;
-  const distinctModesSet = new Set();
-
-  for (const s of list) {
-    const mode = (s.mode || '').toLowerCase();
-    const score = Number(s.score || 0);
-    const max = Number(s.max_score || 15);
-
-    if (mode) distinctModesSet.add(mode);
-    if (score >= max && max > 0) perfectGames++;
-
-    if (mode.includes('geoguessr')) {
-      if (score > bestGeoGuessr) bestGeoGuessr = score;
-      totalNormalizedPoints += Math.round(score / 250);
-    } else {
-      totalNormalizedPoints += score;
+    if (m.includes('capitale') || m.includes('capital')) {
+      if (val > capitalsBest) capitalsBest = val;
     }
-
-    if (mode.includes('capitale')) capitalsPoints += score;
-    if (mode.includes('drapeau')) flagsPoints += score;
-    if (mode.includes('culture')) culturePoints += score;
-    if (mode.includes('grille') && score > bestFlagGrid) bestFlagGrid = score;
-    if (mode.includes('europe') && score > bestEurope) bestEurope = score;
-    if (mode.includes('monde') && score > bestWorld) bestWorld = score;
-    if (mode.includes('flash') && score > bestFlash60) bestFlash60 = score;
-    if (mode.includes('cliquez')) mapClickPoints += score;
-    if (mode.includes('enquête') || mode.includes('enquete')) detectivePoints += score;
-    if (mode.includes('mystère') || mode.includes('mystere')) {
-      if (score > 0) mysteryWins++;
+    if (m.includes('drapeau') || m.includes('flag')) {
+      if (val > flagsBest) flagsBest = val;
+    }
+    if (m.includes('culture')) {
+      if (val > cultureBest) cultureBest = val;
+    }
+    if (m.includes('flash') || m.includes('sprint')) {
+      const norm = max === 15 ? val : Math.min(15, Math.round((val / 30) * 15));
+      if (norm > sprintBest) sprintBest = norm;
+    }
+    if (m.includes('myst') || m.includes('worldle')) {
+      if (val >= 1) worldleWins++;
+    }
+    if (m.includes('enqu') || m.includes('indice') || m.includes('detective')) {
+      if (val > detectiveBest) detectiveBest = val;
+    }
+    if (m.includes('europe')) {
+      if (val > europeBest) europeBest = val;
+    }
+    if (m.includes('monde') || m.includes('196')) {
+      if (val > worldBest) worldBest = val;
+    }
+    if (m.includes('geoguessr') || m.includes('pindrop')) {
+      if (val > pinDropBest) pinDropBest = val;
+    }
+    if (m.includes('duel')) {
+      if (val >= 8) duelWins++;
     }
   }
 
   return {
     totalGames,
-    capitalsPoints,
-    flagsPoints,
-    culturePoints,
-    bestFlagGrid,
-    bestEurope,
-    bestWorld,
-    bestGeoGuessr,
-    bestFlash60,
-    mapClickPoints,
-    detectivePoints,
-    mysteryWins,
-    perfectGames,
-    distinctModesCount: distinctModesSet.size,
-    totalNormalizedPoints
+    perfectQcms,
+    capitalsBest,
+    flagsBest,
+    cultureBest,
+    sprintBest,
+    worldleWins,
+    detectiveBest,
+    europeBest,
+    worldBest,
+    pinDropBest,
+    duelWins
   };
 });
 
-// Les 14 Familles de Badges Évolutifs (I -> V)
-const rawBadgesConfig = computed(() => {
-  const isFr = locale.value === 'fr';
-  const st = statsSummary.value;
+// =========================================================
+// DÉFINITION DES 12 FAMILLES DE TROPHÉES ÉVOLUTIFS (I -> V)
+// =========================================================
+const buildBadgeObject = (cfg) => {
+  let currentTier = 0;
+  let nextThreshold = cfg.tiers[0].target;
 
-  return [
+  for (let i = 0; i < cfg.tiers.length; i++) {
+    if (cfg.currentValue >= cfg.tiers[i].target) {
+      currentTier = i + 1;
+      nextThreshold = cfg.tiers[i + 1] ? cfg.tiers[i + 1].target : null;
+    }
+  }
+
+  const maxTarget = nextThreshold || cfg.tiers[cfg.tiers.length - 1].target;
+  const progressPct = Math.min(100, Math.round((cfg.currentValue / Math.max(1, maxTarget)) * 100));
+
+  return {
+    ...cfg,
+    currentTier,
+    nextThreshold,
+    progressPct,
+    unlocked: currentTier > 0
+  };
+};
+
+const allBadges = computed(() => {
+  const isFr = locale.value === 'fr';
+  const m = metrics.value;
+
+  const definitions = [
     {
-      id: 'player',
-      icon: '🎮',
-      title: isFr ? 'Joueur Assidu' : 'Dedicated Player',
-      subtitle: isFr ? 'Nombre total de parties jouées sur GeoLearn' : 'Total number of games played on GeoLearn',
-      tiers: [1, 5, 25, 50, 100],
-      value: st.totalGames,
-      unit: '',
-      playLink: '/quiz'
+      id: 'veteran',
+      code: 'OPS-01 // VETERAN',
+      cat: 'general',
+      categoryLabel: isFr ? 'Carrière Globale' : 'Global Career',
+      shape: 'octa',
+      accentHex: '#38bdf8',
+      title: isFr ? 'Opérateur Orbital' : 'Orbital Operator',
+      desc: isFr
+        ? 'Complétez des sessions d\'évaluation tous modes confondus pour élever votre grade.'
+        : 'Complete evaluation sessions across all game modes to elevate your rank.',
+      currentValue: m.totalGames,
+      unit: isFr ? 'parties' : 'games',
+      playRoute: '/quiz',
+      tiers: [
+        { target: 1, name: isFr ? 'Initié' : 'Initiate' },
+        { target: 5, name: isFr ? 'Éclaireur' : 'Scout' },
+        { target: 15, name: isFr ? 'Analyste' : 'Analyst' },
+        { target: 30, name: isFr ? 'Commandant' : 'Commander' },
+        { target: 50, name: isFr ? 'Légende' : 'Legend' }
+      ]
     },
     {
-      id: 'geoguessr',
-      icon: '🛰️',
-      title: isFr ? 'Explorateur PinDrop (Satellite & Photo)' : 'PinDrop Explorer (Satellite & Photo)',
-      subtitle: isFr ? 'Meilleur score sur une partie de GeoGuessr (/ 25 000 pts)' : 'Best score in a 5-round GeoGuessr game (/ 25,000 pts)',
-      tiers: [5000, 12000, 18000, 22000, 24500],
-      value: st.bestGeoGuessr,
-      unit: '',
-      playLink: '/geoguessr'
+      id: 'precision',
+      code: 'QCM-02 // PRECISION',
+      cat: 'qcm',
+      categoryLabel: 'QCM /15',
+      shape: 'star',
+      accentHex: '#10b981',
+      title: isFr ? 'Chirurgien du QCM' : 'QCM Precision Ace',
+      desc: isFr
+        ? 'Obtenez un score d\'excellence (14/15 ou 15/15) dans les QCM classiques.'
+        : 'Achieve excellence scores (14/15 or 15/15) in classic 15-question QCMs.',
+      currentValue: m.perfectQcms,
+      unit: isFr ? 'sans-faute' : 'masteries',
+      playRoute: { path: '/quiz', query: { mode: 'qcm', type: 'capital' } },
+      tiers: [
+        { target: 1, name: 'Bronze' },
+        { target: 3, name: isFr ? 'Argent' : 'Silver' },
+        { target: 7, name: isFr ? 'Or' : 'Gold' },
+        { target: 15, name: isFr ? 'Émeraude' : 'Emerald' },
+        { target: 25, name: isFr ? 'Diamant' : 'Diamond' }
+      ]
     },
     {
       id: 'capitals',
-      icon: '🏛️',
-      title: isFr ? 'Maître des Capitales' : 'Capitals Master',
-      subtitle: isFr ? 'Cumul de bonnes réponses en QCM Capitales' : 'Cumulative correct answers in Capitals Quiz',
-      tiers: [10, 50, 150, 300, 500],
-      value: st.capitalsPoints,
-      unit: '',
-      playLink: { path: '/quiz', query: { mode: 'qcm', type: 'capital' } }
+      code: 'CAP-03 // METROPOLIS',
+      cat: 'qcm',
+      categoryLabel: isFr ? 'Capitales' : 'Capitals',
+      shape: 'shield',
+      accentHex: '#0ea5e9',
+      title: isFr ? 'Maître des Capitales' : 'Capitals Sovereign',
+      desc: isFr
+        ? 'Atteignez le score maximal sur une série de 15 questions de Capitales.'
+        : 'Reach the highest score on a 15-question Capitals series.',
+      currentValue: m.capitalsBest,
+      unit: '/ 15',
+      playRoute: { path: '/quiz', query: { mode: 'qcm', type: 'capital' } },
+      tiers: [
+        { target: 6, name: isFr ? 'Novice' : 'Novice' },
+        { target: 9, name: isFr ? 'Régulier' : 'Regular' },
+        { target: 12, name: isFr ? 'Expert' : 'Expert' },
+        { target: 14, name: isFr ? 'Maître' : 'Master' },
+        { target: 15, name: isFr ? 'Parfait' : 'Perfect' }
+      ]
     },
     {
-      id: 'vexillologist',
-      icon: '🚩',
-      title: isFr ? 'Expert des Drapeaux' : 'Flag Expert',
-      subtitle: isFr ? 'Cumul de drapeaux identifiés (QCM & Grille)' : 'Cumulative flags identified (Quiz & Grid)',
-      tiers: [15, 75, 200, 500, 1000],
-      value: st.flagsPoints,
-      unit: '',
-      playLink: { path: '/quiz', query: { mode: 'qcm', type: 'flag' } }
+      id: 'flags',
+      code: 'FLG-04 // VEXILLOLOGY',
+      cat: 'qcm',
+      categoryLabel: isFr ? 'Drapeaux' : 'Flags',
+      shape: 'octa',
+      accentHex: '#38bdf8',
+      title: isFr ? 'Expert Vexillologue' : 'Vexillology Specialist',
+      desc: isFr
+        ? 'Identifiez les drapeaux nationaux sans erreur sur une série de 15 questions.'
+        : 'Identify national flags without error across a 15-question series.',
+      currentValue: m.flagsBest,
+      unit: '/ 15',
+      playRoute: { path: '/quiz', query: { mode: 'qcm', type: 'flag' } },
+      tiers: [
+        { target: 6, name: isFr ? 'Novice' : 'Novice' },
+        { target: 9, name: isFr ? 'Régulier' : 'Regular' },
+        { target: 12, name: isFr ? 'Expert' : 'Expert' },
+        { target: 14, name: isFr ? 'Maître' : 'Master' },
+        { target: 15, name: isFr ? 'Parfait' : 'Perfect' }
+      ]
     },
     {
       id: 'culture',
-      icon: '🗣️',
-      title: isFr ? 'Démographe & Polyglotte' : 'Demographer & Polyglot',
-      subtitle: isFr ? 'Bonnes réponses au QCM Population, Langues & Monnaies' : 'Correct answers in Population, Languages & Currencies Quiz',
-      tiers: [10, 40, 100, 250, 500],
-      value: st.culturePoints,
-      unit: '',
-      playLink: { path: '/quiz', query: { mode: 'qcm', type: 'culture' } }
+      code: 'CUL-05 // DEMOGRAPHY',
+      cat: 'qcm',
+      categoryLabel: 'Culture & Pop',
+      shape: 'globe',
+      accentHex: '#10b981',
+      title: isFr ? 'Analyste Géopolitique' : 'Geopolitical Analyst',
+      desc: isFr
+        ? 'Maîtrisez les monnaies, les langues officielles et les ordres de grandeur démographiques.'
+        : 'Master currencies, official languages, and demographic magnitudes.',
+      currentValue: m.cultureBest,
+      unit: '/ 15',
+      playRoute: { path: '/quiz', query: { mode: 'qcm', type: 'culture' } },
+      tiers: [
+        { target: 5, name: isFr ? 'Curieux' : 'Curious' },
+        { target: 8, name: isFr ? 'Averti' : 'Informed' },
+        { target: 11, name: isFr ? 'Érudit' : 'Scholar' },
+        { target: 13, name: isFr ? 'Stratège' : 'Strategist' },
+        { target: 15, name: isFr ? 'Omniscient' : 'Omniscient' }
+      ]
     },
     {
-      id: 'flash60',
-      icon: '⚡',
-      title: isFr ? 'Éclair du Sprint (60s)' : '60s Sprint Lightning',
-      subtitle: isFr ? 'Meilleur score en mode Contre-la-montre 60 secondes (QCM Flash)' : 'Best score in 60-Second Flash Quiz mode',
-      tiers: [10, 20, 30, 45, 60],
-      value: st.bestFlash60,
-      unit: ' pts',
-      playLink: { path: '/quiz', query: { mode: 'flash60' } }
+      id: 'sprint60',
+      code: 'SPD-06 // SPRINT 60S',
+      cat: '3d',
+      categoryLabel: 'Arcade 60s',
+      shape: 'star',
+      accentHex: '#f59e0b',
+      title: isFr ? 'Vélocité Supersonique' : 'Supersonic Velocity',
+      desc: isFr
+        ? 'Enchaînez les combos x4 dans le Sprint 60 secondes (note ramenée sur 15).'
+        : 'Chain x4 combos in the 60-second Flash Sprint (normalized on 15).',
+      currentValue: m.sprintBest,
+      unit: '/ 15',
+      playRoute: { path: '/quiz', query: { mode: 'flash60' } },
+      tiers: [
+        { target: 5, name: 'Mach 1' },
+        { target: 8, name: 'Mach 2' },
+        { target: 11, name: 'Mach 3' },
+        { target: 13, name: 'Mach 4' },
+        { target: 15, name: 'Hypersonic' }
+      ]
     },
     {
-      id: 'flag_grid',
-      icon: '🏳️',
-      title: isFr ? 'Dompteur de la Grille' : 'Grid Conqueror',
-      subtitle: isFr ? 'Record de drapeaux validés en une seule Grille' : 'Record flags validated in a single Flag Grid game',
-      tiers: [10, 30, 60, 120, 196],
-      value: st.bestFlagGrid,
-      unit: '',
-      playLink: { path: '/quiz', query: { mode: 'flag-grid' } }
-    },
-    {
-      id: 'map_click',
-      icon: '🖱️',
-      title: isFr ? 'Boussole Chirurgicale' : 'Surgical Compass',
-      subtitle: isFr ? 'Pays localisés du 1er coup dans "Cliquez sur la Carte"' : 'Countries located on the 1st try in "Click on the Map"',
-      tiers: [15, 50, 150, 300, 600],
-      value: st.mapClickPoints,
-      unit: '',
-      playLink: { path: '/quiz', query: { mode: 'map-click' } }
+      id: 'worldle',
+      code: 'WLD-07 // TRIANGULATION',
+      cat: '3d',
+      categoryLabel: 'Worldle 3D',
+      shape: 'globe',
+      accentHex: '#0ea5e9',
+      title: isFr ? 'Triangulateur Haversine' : 'Haversine Triangulator',
+      desc: isFr
+        ? 'Démasquez le Pays Mystère en moins de 6 essais grâce au radar 3D.'
+        : 'Unmask the Mystery Country in under 6 tries using the 3D radar.',
+      currentValue: m.worldleWins,
+      unit: isFr ? 'victoires' : 'wins',
+      playRoute: { path: '/quiz', query: { mode: 'mystery' } },
+      tiers: [
+        { target: 1, name: isFr ? 'Détecteur' : 'Finder' },
+        { target: 3, name: isFr ? 'Pisteur' : 'Tracker' },
+        { target: 7, name: isFr ? 'Navigateur' : 'Navigator' },
+        { target: 15, name: isFr ? 'Cartographe' : 'Cartographer' },
+        { target: 30, name: isFr ? 'Oracle 3D' : '3D Oracle' }
+      ]
     },
     {
       id: 'detective',
-      icon: '🕵️',
-      title: isFr ? 'Détective Géographique' : 'Geographic Detective',
-      subtitle: isFr ? 'Points cumulés dans le mode "Enquête aux 5 Indices"' : 'Cumulative points in "5-Clue Detective" mode',
-      tiers: [15, 60, 150, 350, 750],
-      value: st.detectivePoints,
-      unit: '',
-      playLink: { path: '/quiz', query: { mode: 'detective' } }
+      code: 'INT-08 // 5 CLUES',
+      cat: '3d',
+      categoryLabel: isFr ? 'Enquête 3D' : '3D Detective',
+      shape: 'shield',
+      accentHex: '#10b981',
+      title: isFr ? 'Agent de Renseignement' : 'Intelligence Operative',
+      desc: isFr
+        ? 'Identifiez les 5 dossiers d\'enquête en retournant un minimum de cartes 3D.'
+        : 'Solve all 5 investigation files while flipping as few 3D clue cards as possible.',
+      currentValue: m.detectiveBest,
+      unit: '/ 25 pts',
+      playRoute: { path: '/quiz', query: { mode: 'detective' } },
+      tiers: [
+        { target: 10, name: isFr ? 'Enquêteur' : 'Investigator' },
+        { target: 15, name: isFr ? 'Inspecteur' : 'Inspector' },
+        { target: 19, name: isFr ? 'Détective' : 'Detective' },
+        { target: 22, name: isFr ? 'Agent Spécial' : 'Special Agent' },
+        { target: 25, name: isFr ? 'Directeur' : 'Director' }
+      ]
     },
     {
-      id: 'mystery',
-      icon: '🧭',
-      title: isFr ? 'Oracle du Pays Mystère' : 'Mystery Country Oracle',
-      subtitle: isFr ? 'Pays Mystères découverts en moins de 6 essais (Worldle)' : 'Mystery Countries solved within 6 tries (Worldle)',
-      tiers: [1, 5, 15, 30, 60],
-      value: st.mysteryWins,
-      unit: '',
-      playLink: { path: '/quiz', query: { mode: 'mystery' } }
+      id: 'europe',
+      code: 'EUR-09 // 47 STATES',
+      cat: 'map',
+      categoryLabel: 'Atlas Europe',
+      shape: 'globe',
+      accentHex: '#38bdf8',
+      title: isFr ? 'Souverain d\'Europe' : 'Europe Sovereign',
+      desc: isFr
+        ? 'Nommez au clavier les 47 États d\'Europe sur le Globe 3D et la carte muette.'
+        : 'Type all 47 European states on the 3D Globe and blank map.',
+      currentValue: m.europeBest,
+      unit: '/ 47',
+      playRoute: { path: '/quiz', query: { mode: 'chrono' } },
+      tiers: [
+        { target: 15, name: '15 / 47' },
+        { target: 25, name: '25 / 47' },
+        { target: 35, name: '35 / 47' },
+        { target: 42, name: '42 / 47' },
+        { target: 47, name: '47 / 47' }
+      ]
     },
     {
-      id: 'europe_chrono',
-      icon: '🇪🇺',
-      title: isFr ? 'Conquérant d\'Europe' : 'Europe Conqueror',
-      subtitle: isFr ? 'Meilleur score au Défi Chrono Europe (sur 47)' : 'Best score in the Europe Timed Challenge (out of 47)',
-      tiers: [10, 20, 30, 40, 47],
-      value: st.bestEurope,
-      unit: '',
-      playLink: { path: '/quiz', query: { mode: 'chrono' } }
+      id: 'world196',
+      code: 'GLB-10 // 196 STATES',
+      cat: 'map',
+      categoryLabel: 'Atlas 196',
+      shape: 'globe',
+      accentHex: '#10b981',
+      title: isFr ? 'Atlas Vivant (196 États)' : 'Living World Atlas (196)',
+      desc: isFr
+        ? 'Saisissez les 196 États souverains du monde lors du grand Défi Chrono.'
+        : 'Type all 196 sovereign states of the world during the Full World Challenge.',
+      currentValue: m.worldBest,
+      unit: '/ 196',
+      playRoute: { path: '/quiz', query: { mode: 'chrono' } },
+      tiers: [
+        { target: 30, name: '30 / 196' },
+        { target: 65, name: '65 / 196' },
+        { target: 110, name: '110 / 196' },
+        { target: 155, name: '155 / 196' },
+        { target: 196, name: '196 / 196' }
+      ]
     },
     {
-      id: 'world_chrono',
-      icon: '🌍',
-      title: isFr ? 'Empereur du Monde' : 'World Emperor',
-      subtitle: isFr ? 'Meilleur score au Défi Chrono Monde (sur 196)' : 'Best score in the World Timed Challenge (out of 196)',
-      tiers: [15, 40, 80, 130, 196],
-      value: st.bestWorld,
-      unit: '',
-      playLink: { path: '/quiz', query: { mode: 'chrono' } }
+      id: 'pindrop',
+      code: 'SAT-11 // PINDROP 25K',
+      cat: 'map',
+      categoryLabel: 'PinDrop 25K',
+      shape: 'octa',
+      accentHex: '#0ea5e9',
+      title: isFr ? 'Œil Orbital Géodésique' : 'Orbital Geodesic Eye',
+      desc: isFr
+        ? 'Cumulez un score de haute précision sur 5 manches dans GeoLearn PinDrop.'
+        : 'Accumulate a high-precision score across 5 rounds in GeoLearn PinDrop.',
+      currentValue: m.pinDropBest,
+      unit: 'pts',
+      playRoute: '/geoguessr',
+      tiers: [
+        { target: 8000, name: '8 000 pts' },
+        { target: 13000, name: '13 000 pts' },
+        { target: 18000, name: '18 000 pts' },
+        { target: 21500, name: '21 500 pts' },
+        { target: 24000, name: '24 000 pts' }
+      ]
     },
     {
-      id: 'polyvalent',
-      icon: '🌟',
-      title: isFr ? 'Explorateur Polyvalent' : 'Versatile Explorer',
-      subtitle: isFr ? 'Nombre de modes de jeu différents joués sur GeoLearn' : 'Number of distinct game modes played on GeoLearn',
-      tiers: [2, 4, 6, 8, 10],
-      value: st.distinctModesCount,
-      unit: '',
-      playLink: '/quiz'
-    },
-    {
-      id: 'sniper',
-      icon: '🎯',
-      title: isFr ? 'Tireur d\'Élite' : 'Sharpshooter',
-      subtitle: isFr ? 'Parties terminées avec 100 % de réussite (Sans-faute)' : 'Games completed with 100% accuracy (Perfect score)',
-      tiers: [1, 3, 10, 25, 50],
-      value: st.perfectGames,
-      unit: '',
-      playLink: '/quiz'
+      id: 'duel',
+      code: ' PVP-12 // 1V1 ARENA',
+      cat: '3d',
+      categoryLabel: 'Duel 1v1',
+      shape: 'shield',
+      accentHex: '#f43f5e',
+      title: isFr ? 'Gladiateur Télémétrique' : 'Telemetry Gladiator',
+      desc: isFr
+        ? 'Remportez des victoires décisives dans l\'Arène Duel 1v1.'
+        : 'Claim decisive victories inside the 1v1 Live Duel Arena.',
+      currentValue: m.duelWins,
+      unit: isFr ? 'victoires' : 'wins',
+      playRoute: '/duel',
+      tiers: [
+        { target: 1, name: isFr ? 'Duelliste' : 'Duelist' },
+        { target: 3, name: isFr ? 'Vainqueur' : 'Challenger' },
+        { target: 7, name: isFr ? 'Champion' : 'Champion' },
+        { target: 15, name: isFr ? 'Maître 1v1' : '1v1 Master' },
+        { target: 25, name: isFr ? 'Invaincu' : 'Undefeated' }
+      ]
     }
+  ];
+
+  return definitions.map(buildBadgeObject);
+});
+
+const badgeFilters = computed(() => {
+  const isFr = locale.value === 'fr';
+  return [
+    { id: 'all', label: isFr ? 'Tous les Trophées (12)' : 'All Trophies (12)' },
+    { id: 'unlocked', label: isFr ? 'Débloqués' : 'Unlocked' },
+    { id: 'qcm', label: 'QCM (/15)' },
+    { id: '3d', label: isFr ? 'Modes 3D & Duel' : '3D Modes & Duel' },
+    { id: 'map', label: isFr ? 'Cartographie & PinDrop' : 'Cartography & PinDrop' }
   ];
 });
 
-const getTierTheme = (tier, isFr) => {
-  switch (tier) {
-    case 5:
-      return {
-        rarityLabel: isFr ? '💎 Diamant (V)' : '💎 Diamond (V)',
-        cardStyle: 'bg-gradient-to-br from-cyan-50/90 via-white to-blue-50/90 dark:from-cyan-950/40 dark:via-gray-800 dark:to-blue-950/40 border-cyan-400 shadow-lg',
-        iconBgStyle: 'bg-gradient-to-br from-cyan-400 to-blue-600 text-white',
-        romanBadgeStyle: 'bg-cyan-300 text-slate-950',
-        rarityPillStyle: 'bg-cyan-100 dark:bg-cyan-900/60 text-cyan-800 dark:text-cyan-200 border border-cyan-300 dark:border-cyan-700',
-        activeStepStyle: 'bg-cyan-500/15 dark:bg-cyan-500/20 border-cyan-500 text-cyan-700 dark:text-cyan-300',
-        progressBarStyle: 'bg-gradient-to-r from-cyan-400 to-blue-600'
-      };
-    case 4:
-      return {
-        rarityLabel: isFr ? '🟣 Platine (IV)' : '🟣 Platinum (IV)',
-        cardStyle: 'bg-white dark:bg-gray-800 border-purple-400/80 shadow-md',
-        iconBgStyle: 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white',
-        romanBadgeStyle: 'bg-purple-200 text-purple-950',
-        rarityPillStyle: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300',
-        activeStepStyle: 'bg-purple-500/15 border-purple-500 text-purple-700 dark:text-purple-300',
-        progressBarStyle: 'bg-gradient-to-r from-purple-500 to-sky-500'
-      };
-    case 3:
-      return {
-        rarityLabel: isFr ? '🥇 Or (III)' : '🥇 Gold (III)',
-        cardStyle: 'bg-white dark:bg-gray-800 border-amber-400/90 shadow-md',
-        iconBgStyle: 'bg-gradient-to-br from-amber-400 to-yellow-600 text-white',
-        romanBadgeStyle: 'bg-amber-200 text-amber-950',
-        rarityPillStyle: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300',
-        activeStepStyle: 'bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300',
-        progressBarStyle: 'bg-gradient-to-r from-amber-400 to-orange-500'
-      };
-    case 2:
-      return {
-        rarityLabel: isFr ? '🥈 Argent (II)' : '🥈 Silver (II)',
-        cardStyle: 'bg-white dark:bg-gray-800 border-slate-300 dark:border-slate-500 shadow-sm',
-        iconBgStyle: 'bg-gradient-to-br from-slate-300 to-slate-500 text-white',
-        romanBadgeStyle: 'bg-slate-200 text-slate-900',
-        rarityPillStyle: 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200',
-        activeStepStyle: 'bg-slate-500/15 border-slate-400 text-slate-700 dark:text-slate-200',
-        progressBarStyle: 'bg-gradient-to-r from-slate-400 to-blue-500'
-      };
-    case 1:
-      return {
-        rarityLabel: isFr ? '🥉 Bronze (I)' : '🥉 Bronze (I)',
-        cardStyle: 'bg-white dark:bg-gray-800 border-orange-300 dark:border-orange-700/70 shadow-sm',
-        iconBgStyle: 'bg-gradient-to-br from-orange-400 to-amber-700 text-white',
-        romanBadgeStyle: 'bg-orange-200 text-orange-950',
-        rarityPillStyle: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
-        activeStepStyle: 'bg-orange-500/15 border-orange-400 text-orange-700 dark:text-orange-300',
-        progressBarStyle: 'bg-gradient-to-r from-orange-400 to-amber-600'
-      };
-    default:
-      return {
-        rarityLabel: isFr ? '🔒 Non débloqué' : '🔒 Locked',
-        cardStyle: 'bg-white/80 dark:bg-gray-800/70 border-gray-200 dark:border-gray-700',
-        iconBgStyle: 'bg-gray-100 dark:bg-gray-700 text-gray-400 grayscale',
-        romanBadgeStyle: 'bg-gray-200 text-gray-700',
-        rarityPillStyle: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
-        activeStepStyle: '',
-        progressBarStyle: 'bg-blue-600'
-      };
-  }
+const filteredBadges = computed(() => {
+  if (selectedFilter.value === 'all') return allBadges.value;
+  if (selectedFilter.value === 'unlocked') return allBadges.value.filter((b) => b.currentTier > 0);
+  return allBadges.value.filter((b) => b.cat === selectedFilter.value);
+});
+
+const selectedBadge = computed(
+  () => allBadges.value.find((b) => b.id === selectedBadgeId.value) || allBadges.value[0]
+);
+
+const unlockedBadgesCount = computed(() => allBadges.value.filter((b) => b.currentTier > 0).length);
+
+const totalTiersEarned = computed(() =>
+  allBadges.value.reduce((acc, b) => acc + b.currentTier, 0)
+);
+
+const totalCollectionXp = computed(() =>
+  totalTiersEarned.value * 250 + metrics.value.totalGames * 45
+);
+
+const operatorRankTitle = computed(() => {
+  const t = totalTiersEarned.value;
+  const isFr = locale.value === 'fr';
+  if (t >= 45) return isFr ? 'Commandant Orbital V' : 'Orbital Commander V';
+  if (t >= 30) return isFr ? 'Stratège Géodésique IV' : 'Geodesic Strategist IV';
+  if (t >= 18) return isFr ? 'Cartographe Principal III' : 'Lead Cartographer III';
+  if (t >= 8) return isFr ? 'Analyste de Terrain II' : 'Field Analyst II';
+  return isFr ? 'Opérateur de Reconnaissance I' : 'Recon Operator I';
+});
+
+const getTierBadgeClass = (tier) => {
+  if (tier >= 5) return 'bg-sky-500/20 text-sky-300 border-sky-400/50';
+  if (tier === 4) return 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50';
+  if (tier === 3) return 'bg-amber-500/20 text-amber-300 border-amber-400/50';
+  if (tier >= 1) return 'bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-white/20';
+  return 'bg-slate-100 dark:bg-white/[0.03] text-slate-400 border-slate-200 dark:border-white/10';
 };
 
-const evaluatedBadges = computed(() => {
-  const isFr = locale.value === 'fr';
-  return rawBadgesConfig.value.map(b => {
-    let currentTier = 0;
-    for (let i = 0; i < b.tiers.length; i++) {
-      if (b.value >= b.tiers[i]) currentTier = i + 1;
-    }
-    const nextTarget = currentTier < 5 ? b.tiers[currentTier] : b.tiers[4];
-    const progressPercent = Math.min(100, Math.round((b.value / nextTarget) * 100));
-    const nextTierLabel = currentTier >= 5
-      ? (isFr ? 'Palier maximum atteint ! 🎉' : 'Maximum tier reached! 🎉')
-      : (isFr ? `Prochain palier : ${toRoman(currentTier + 1)}` : `Next tier: ${toRoman(currentTier + 1)}`);
+// =========================================================
+// PASSEPORT GÉODÉSIQUE DES 196 ÉTATS
+// =========================================================
+const passportContinent = ref('all');
+const passportQuery = ref('');
 
+// Détermine de manière déterministe combien d'États sont tamponnés selon l'activité réelle du joueur
+const stampedCountriesCount = computed(() => {
+  const m = metrics.value;
+  const raw = Math.max(
+    m.worldBest,
+    m.europeBest + m.totalGames * 4 + totalTiersEarned.value * 3
+  );
+  return Math.min(196, raw);
+});
+
+const localizedPassportCountries = computed(() => {
+  const isEn = locale.value === 'en';
+  const limit = stampedCountriesCount.value;
+  return ALL_COUNTRIES.map((c, idx) => ({
+    ...c,
+    name: isEn ? c.name_en : c.name_fr,
+    capital: isEn ? c.capital_en : c.capital_fr,
+    continent: c.continent_en,
+    isStamped: idx < limit
+  }));
+});
+
+const passportContinents = computed(() => {
+  const isFr = locale.value === 'fr';
+  const list = localizedPassportCountries.value;
+  const groups = [
+    { id: 'all', label: isFr ? 'Monde' : 'World' },
+    { id: 'Europe', label: 'Europe' },
+    { id: 'Asia', label: isFr ? 'Asie' : 'Asia' },
+    { id: 'Africa', label: isFr ? 'Afrique' : 'Africa' },
+    { id: 'North America', label: isFr ? 'Am. Nord' : 'N. America' },
+    { id: 'South America', label: isFr ? 'Am. Sud' : 'S. America' },
+    { id: 'Oceania', label: isFr ? 'Océanie' : 'Oceania' }
+  ];
+
+  return groups.map((g) => {
+    const sub = g.id === 'all' ? list : list.filter((c) => c.continent === g.id);
     return {
-      ...b,
-      currentValue: b.value,
-      currentTier,
-      nextTarget,
-      progressPercent,
-      nextTierLabel,
-      ...getTierTheme(currentTier, isFr)
+      ...g,
+      total: sub.length,
+      stamped: sub.filter((c) => c.isStamped).length
     };
   });
 });
 
-const unlockedBadgesCount = computed(() => evaluatedBadges.value.filter(b => b.currentTier > 0).length);
-const totalTiersUnlocked = computed(() => evaluatedBadges.value.reduce((acc, b) => acc + b.currentTier, 0));
-const maxTotalTiers = computed(() => evaluatedBadges.value.length * 5);
-const diamondCount = computed(() => evaluatedBadges.value.filter(b => b.currentTier === 5).length);
-
-const pinnedBadgeObj = computed(() =>
-  evaluatedBadges.value.find(b => b.id === pinnedBadgeId.value && b.currentTier > 0) ||
-  evaluatedBadges.value.find(b => b.currentTier > 0) ||
-  null
-);
-
-const filterTabs = computed(() => {
-  const isFr = locale.value === 'fr';
-  return [
-    { id: 'all', label: isFr ? `Tous (${evaluatedBadges.value.length})` : `All (${evaluatedBadges.value.length})` },
-    { id: 'unlocked', label: isFr ? `Débloqués (${unlockedBadgesCount.value})` : `Unlocked (${unlockedBadgesCount.value})` },
-    { id: 'locked', label: isFr ? 'À débloquer' : 'Locked' },
-    { id: 'diamond', label: isFr ? `Rang V 💎 (${diamondCount.value})` : `Tier V 💎 (${diamondCount.value})` }
-  ];
+const filteredPassportCountries = computed(() => {
+  const q = passportQuery.value.trim().toLowerCase();
+  return localizedPassportCountries.value.filter((c) => {
+    if (passportContinent.value !== 'all' && c.continent !== passportContinent.value) return false;
+    if (q) {
+      return c.name.toLowerCase().includes(q) || c.capital.toLowerCase().includes(q) || c.iso.toLowerCase() === q;
+    }
+    return true;
+  });
 });
 
-const filteredAndSortedBadges = computed(() => {
-  let list = [...evaluatedBadges.value];
-  if (activeFilter.value === 'unlocked') list = list.filter(b => b.currentTier > 0);
-  else if (activeFilter.value === 'locked') list = list.filter(b => b.currentTier === 0);
-  else if (activeFilter.value === 'diamond') list = list.filter(b => b.currentTier === 5);
+// =========================================================
+// CARTES HOLOGRAPHIQUES 3D TILT & REFLET SPÉCULAIRE
+// =========================================================
+const cardTilts = ref({});
 
-  if (sortBy.value === 'tier-desc') {
-    list.sort((a, b) => b.currentTier - a.currentTier || b.progressPercent - a.progressPercent);
-  } else if (sortBy.value === 'progress-desc') {
-    list.sort((a, b) => {
-      const aDone = a.currentTier >= 5 ? -1 : a.progressPercent;
-      const bDone = b.currentTier >= 5 ? -1 : b.progressPercent;
-      return bDone - aDone;
-    });
+const onCardPointerMove = (e, id) => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width;
+  const py = (e.clientY - rect.top) / rect.height;
+  cardTilts.value[id] = {
+    rx: Number(((0.5 - py) * 11).toFixed(2)),
+    ry: Number(((px - 0.5) * 13).toFixed(2)),
+    gx: Math.round(px * 100),
+    gy: Math.round(py * 100)
+  };
+};
+
+const onCardPointerLeave = (id) => {
+  cardTilts.value[id] = { rx: 0, ry: 0, gx: 50, gy: 50 };
+};
+
+const getCardTiltStyle = (id) => {
+  const t = cardTilts.value[id];
+  if (!t || (t.rx === 0 && t.ry === 0)) {
+    return { transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg)' };
   }
-  return list;
+  return {
+    transform: `perspective(1000px) rotateX(${t.rx}deg) rotateY(${t.ry}deg) translateY(-4px)`
+  };
+};
+
+const getCardGlareStyle = (id, hex) => {
+  const t = cardTilts.value[id] || { gx: 50, gy: 50 };
+  return {
+    background: `radial-gradient(circle at ${t.gx}% ${t.gy}%, ${hex}26 0%, transparent 65%)`
+  };
+};
+
+// =========================================================
+// MOTEUR 3D PROCÉDURAL DE L'INSIGNE ORBITAL (RELIC CANVAS)
+// =========================================================
+const relicCanvasRef = ref(null);
+let relicAnimId = null;
+let relicYaw = 0.4;
+let relicPitch = 0.25;
+let relicVelYaw = 0;
+let relicVelPitch = 0;
+let relicDragging = false;
+let relicLastX = 0;
+let relicLastY = 0;
+
+const selectBadgeFor3D = (badge) => {
+  selectedBadgeId.value = badge.id;
+  relicVelYaw = 0.08;
+};
+
+const onRelicPointerDown = (e) => {
+  relicDragging = true;
+  relicVelYaw = 0;
+  relicVelPitch = 0;
+  relicLastX = e.clientX;
+  relicLastY = e.clientY;
+};
+
+const onRelicPointerMove = (e) => {
+  if (!relicDragging) return;
+  const dx = e.clientX - relicLastX;
+  const dy = e.clientY - relicLastY;
+  relicYaw += dx * 0.012;
+  relicPitch = Math.max(-0.9, Math.min(0.9, relicPitch + dy * 0.012));
+  relicVelYaw = dx * 0.009;
+  relicVelPitch = dy * 0.009;
+  relicLastX = e.clientX;
+  relicLastY = e.clientY;
+};
+
+const onRelicPointerUp = () => {
+  relicDragging = false;
+};
+
+const renderRelic3DLoop = () => {
+  const canvas = relicCanvasRef.value;
+  if (canvas && activeSection.value === 'trophies') {
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
+    ctx.clearRect(0, 0, W, H);
+
+    if (!relicDragging) {
+      if (Math.abs(relicVelYaw) > 0.0005 || Math.abs(relicVelPitch) > 0.0005) {
+        relicYaw += relicVelYaw;
+        relicPitch = Math.max(-0.9, Math.min(0.9, relicPitch + relicVelPitch));
+        relicVelYaw *= 0.94;
+        relicVelPitch *= 0.94;
+      } else {
+        relicYaw += 0.012;
+      }
+    }
+
+    const badge = selectedBadge.value;
+    const tier = badge.currentTier;
+    const primaryHex = badge.accentHex || '#38bdf8';
+
+    // Halo central
+    const glow = ctx.createRadialGradient(cx, cy, 4, cx, cy, 115);
+    glow.addColorStop(0, `${primaryHex}44`);
+    glow.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(cx, cy, 115, 0, Math.PI * 2);
+    ctx.fillStyle = glow;
+    ctx.fill();
+
+    const cosY = Math.cos(relicYaw), sinY = Math.sin(relicYaw);
+    const cosP = Math.cos(relicPitch), sinP = Math.sin(relicPitch);
+
+    const project = (x, y, z) => {
+      const x1 = x * cosY + z * sinY;
+      const z1 = -x * sinY + z * cosY;
+      const y2 = y * cosP - z1 * sinP;
+      const z2 = y * sinP + z1 * cosP;
+      const scale = 340 / (340 + z2);
+      return { x: cx + x1 * scale, y: cy + y2 * scale, z: z2, s: scale };
+    };
+
+    // Anneaux gyroscopiques 3D proportionnels au palier débloqué
+    const ringCount = Math.max(1, Math.min(3, tier + 1));
+    for (let r = 0; r < ringCount; r++) {
+      const rad = 78 + r * 16;
+      ctx.beginPath();
+      for (let a = 0; a <= Math.PI * 2; a += 0.1) {
+        const rx = rad * Math.cos(a);
+        const ry = r % 2 === 0 ? rad * Math.sin(a) * 0.35 : rad * Math.sin(a);
+        const rz = r % 2 === 0 ? rad * Math.sin(a) : rad * Math.sin(a) * 0.35;
+        const p = project(rx, ry, rz);
+        if (a === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = r === 0 ? primaryHex : 'rgba(56, 189, 248, 0.35)';
+      ctx.lineWidth = r === 0 ? 1.8 : 1.1;
+      ctx.stroke();
+    }
+
+    // Sommets du cristal 3D central (Octaèdre / Diamant bipyramidal)
+    const R = 56;
+    const rawVerts = [
+      [0, -R * 1.25, 0], // Sommet Nord (0)
+      [0, R * 1.25, 0],  // Sommet Sud (1)
+      [-R, 0, -R],       // Équateur (2..5)
+      [R, 0, -R],
+      [R, 0, R],
+      [-R, 0, R]
+    ];
+    const verts = rawVerts.map(([vx, vy, vz]) => project(vx, vy, vz));
+
+    const faces = [
+      [0, 2, 3], [0, 3, 4], [0, 4, 5], [0, 5, 2],
+      [1, 3, 2], [1, 4, 3], [1, 5, 4], [1, 2, 5]
+    ].map((f) => ({
+      indices: f,
+      avgZ: (verts[f[0]].z + verts[f[1]].z + verts[f[2]].z) / 3
+    })).sort((a, b) => b.avgZ - a.avgZ);
+
+    for (const f of faces) {
+      const p0 = verts[f.indices[0]];
+      const p1 = verts[f.indices[1]];
+      const p2 = verts[f.indices[2]];
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.closePath();
+      ctx.fillStyle = tier > 0 ? 'rgba(15, 32, 66, 0.82)' : 'rgba(15, 23, 42, 0.65)';
+      ctx.fill();
+      ctx.strokeStyle = tier > 0 ? primaryHex : 'rgba(148, 163, 184, 0.35)';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+    }
+  }
+  relicAnimId = requestAnimationFrame(renderRelic3DLoop);
+};
+
+watch(activeSection, (newVal) => {
+  if (newVal === 'trophies') {
+    nextTick(() => renderRelic3DLoop());
+  }
 });
 
-const totalXp = computed(() => {
-  const st = statsSummary.value;
-  return (st.totalNormalizedPoints * 10) + (st.totalGames * 25) + (totalTiersUnlocked.value * 100);
+onMounted(async () => {
+  renderRelic3DLoop();
+
+  const savedUser = localStorage.getItem('geolearn_user');
+  if (!savedUser) return;
+  try {
+    const parsed = JSON.parse(savedUser);
+    const uid = parsed.id || (parsed.user && parsed.user.id);
+    if (!uid) return;
+    isLoggedIn.value = true;
+    const res = await fetch(`${API_URL}/api/scores/${uid}`);
+    if (res.ok) {
+      const data = await res.json();
+      userScores.value = Array.isArray(data) ? data : [];
+    }
+  } catch (e) {}
 });
 
-const playerLevel = computed(() => {
-  const isFr = locale.value === 'fr';
-  const xp = totalXp.value;
-  const level = Math.max(1, Math.floor(xp / 500) + 1);
-  const currentLevelStartXp = (level - 1) * 500;
-  const nextLevelXp = level * 500;
-  const progressPercent = Math.min(100, Math.round(((xp - currentLevelStartXp) / 500) * 100));
-
-  let title = isFr ? 'Apprenti Voyageur' : 'Novice Traveler';
-  if (level >= 25) title = isFr ? 'Légende de GeoLearn' : 'GeoLearn Legend';
-  else if (level >= 15) title = isFr ? 'Maître Cartographe' : 'Master Cartographer';
-  else if (level >= 8) title = isFr ? 'Globe-Trotter Émérite' : 'Seasoned Globetrotter';
-  else if (level >= 3) title = isFr ? 'Explorateur Confirmé' : 'Skilled Explorer';
-
-  return { level, nextLevelXp, progressPercent, title };
+onUnmounted(() => {
+  if (relicAnimId) cancelAnimationFrame(relicAnimId);
 });
 </script>
+
+<style scoped>
+.holo-tilt-card {
+  transition: transform 0.18s ease-out, border-color 0.25s ease, box-shadow 0.25s ease;
+  will-change: transform;
+}
+
+.stage-morph-enter-active,
+.stage-morph-leave-active {
+  transition: opacity 0.24s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.stage-morph-enter-from,
+.stage-morph-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+</style>
