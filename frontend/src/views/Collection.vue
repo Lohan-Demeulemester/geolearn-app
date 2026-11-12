@@ -595,6 +595,7 @@ const buildBadgeObject = (cfg) => {
   return {
     ...cfg,
     currentTier,
+    accentHex: getTierHex(currentTier),
     nextThreshold,
     progressPct,
     unlocked: currentTier > 0
@@ -1066,6 +1067,20 @@ const onRelicPointerUp = () => {
   relicDragging = false;
 };
 
+// =========================================================
+// PALETTE OFFICIELLE PAR PALIER (INDÉPENDANTE DU MODE)
+// =========================================================
+const TIER_PALETTE = {
+  0: { name: 'LOCKED', primary: '#475569', secondary: '#1e293b', specular: '#94a3b8', glow: 'rgba(71, 85, 105, 0.22)' },
+  1: { name: 'BRONZE I', primary: '#d97706', secondary: '#78350f', specular: '#fcd34d', glow: 'rgba(217, 119, 6, 0.35)' },
+  2: { name: 'SILVER II', primary: '#cbd5e1', secondary: '#475569', specular: '#ffffff', glow: 'rgba(203, 213, 225, 0.38)' },
+  3: { name: 'GOLD III', primary: '#f59e0b', secondary: '#92400e', specular: '#fef08a', glow: 'rgba(245, 158, 11, 0.45)' },
+  4: { name: 'EMERALD IV', primary: '#10b981', secondary: '#065f46', specular: '#6ee7b7', glow: 'rgba(16, 185, 129, 0.45)' },
+  5: { name: 'DIAMOND V', primary: '#38bdf8', secondary: '#0369a1', specular: '#e0f2fe', glow: 'rgba(56, 189, 248, 0.52)' }
+};
+
+const getTierHex = (tier = 0) => (TIER_PALETTE[tier] || TIER_PALETTE[0]).primary;
+
 const renderRelic3DLoop = () => {
   const canvas = relicCanvasRef.value;
   if (canvas && activeSection.value === 'trophies') {
@@ -1073,96 +1088,203 @@ const renderRelic3DLoop = () => {
     const W = canvas.width;
     const H = canvas.height;
     const cx = W / 2;
-    const cy = H / 2;
+    const cy = H / 2 + 10;
     ctx.clearRect(0, 0, W, H);
 
     if (!relicDragging) {
       if (Math.abs(relicVelYaw) > 0.0005 || Math.abs(relicVelPitch) > 0.0005) {
         relicYaw += relicVelYaw;
-        relicPitch = Math.max(-0.9, Math.min(0.9, relicPitch + relicVelPitch));
+        relicPitch = Math.max(-0.65, Math.min(0.65, relicPitch + relicVelPitch));
         relicVelYaw *= 0.94;
         relicVelPitch *= 0.94;
       } else {
-        relicYaw += 0.012;
+        relicYaw += 0.014;
       }
     }
 
     const badge = selectedBadge.value;
-    const tier = badge.currentTier;
-    const primaryHex = badge.accentHex || '#38bdf8';
+    const tier = badge?.currentTier || 0;
+    const pal = TIER_PALETTE[tier] || TIER_PALETTE[0];
 
-    // Halo central
-    const glow = ctx.createRadialGradient(cx, cy, 4, cx, cy, 115);
-    glow.addColorStop(0, `${primaryHex}44`);
-    glow.addColorStop(1, 'transparent');
+    // 1. Halo lumineux d'arrière-plan indexé sur le Palier (I -> V)
+    const bgGlow = ctx.createRadialGradient(cx, cy - 10, 6, cx, cy - 10, 125);
+    bgGlow.addColorStop(0, pal.glow);
+    bgGlow.addColorStop(1, 'transparent');
     ctx.beginPath();
-    ctx.arc(cx, cy, 115, 0, Math.PI * 2);
-    ctx.fillStyle = glow;
+    ctx.arc(cx, cy - 10, 125, 0, Math.PI * 2);
+    ctx.fillStyle = bgGlow;
     ctx.fill();
 
     const cosY = Math.cos(relicYaw), sinY = Math.sin(relicYaw);
     const cosP = Math.cos(relicPitch), sinP = Math.sin(relicPitch);
 
-    const project = (x, y, z) => {
+    const project3D = (x, y, z) => {
       const x1 = x * cosY + z * sinY;
       const z1 = -x * sinY + z * cosY;
       const y2 = y * cosP - z1 * sinP;
       const z2 = y * sinP + z1 * cosP;
-      const scale = 340 / (340 + z2);
-      return { x: cx + x1 * scale, y: cy + y2 * scale, z: z2, s: scale };
+      const fov = 380;
+      const s = fov / (fov + z2 + 60);
+      return { x: cx + x1 * s, y: cy + y2 * s, z: z2, s };
     };
 
-    // Anneaux gyroscopiques 3D proportionnels au palier débloqué
-    const ringCount = Math.max(1, Math.min(3, tier + 1));
-    for (let r = 0; r < ringCount; r++) {
-      const rad = 78 + r * 16;
-      ctx.beginPath();
-      for (let a = 0; a <= Math.PI * 2; a += 0.1) {
-        const rx = rad * Math.cos(a);
-        const ry = r % 2 === 0 ? rad * Math.sin(a) * 0.35 : rad * Math.sin(a);
-        const rz = r % 2 === 0 ? rad * Math.sin(a) : rad * Math.sin(a) * 0.35;
-        const p = project(rx, ry, rz);
-        if (a === 0) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
+    // 2. Profil de révolution 3D de la Coupe de Trophée (du socle en bas jusqu'au calice en haut)
+    // Coordonnées Y : positif vers le bas, négatif vers le haut
+    const profileRings = [
+      { y: 78, r: 44, isBase: true },   // Base du socle
+      { y: 64, r: 42, isBase: true },   // Haut du socle noir
+      { y: 62, r: 34, isBase: false },  // Bague métallique inférieure
+      { y: 54, r: 28, isBase: false },  // Pied du trophée
+      { y: 30, r: 11, isBase: false },  // Tige fine
+      { y: 16, r: 17, isBase: false },  // Nœud annulaire central
+      { y: 4,  r: 12, isBase: false },  // Col sous la coupe
+      { y: -14, r: 34, isBase: false }, // Bas du calice évasé
+      { y: -42, r: 50, isBase: false }, // Milieu du calice
+      { y: -68, r: 56, isBase: false }, // Lèvre supérieure de la coupe
+      { y: -68, r: 49, isBase: true }   // Paroi interne de la coupe
+    ];
+
+    const segs = 20;
+    const ringVertices = profileRings.map((ring) => {
+      const pts = [];
+      for (let i = 0; i < segs; i++) {
+        const a = (i / segs) * Math.PI * 2;
+        const px = ring.r * Math.cos(a);
+        const pz = ring.r * Math.sin(a);
+        pts.push({
+          ...project3D(px, ring.y, pz),
+          nx: Math.cos(a) * cosY + Math.sin(a) * sinY,
+          nz: -Math.cos(a) * sinY + Math.sin(a) * cosY,
+          isBase: ring.isBase
+        });
       }
-      ctx.strokeStyle = r === 0 ? primaryHex : 'rgba(56, 189, 248, 0.35)';
-      ctx.lineWidth = r === 0 ? 1.8 : 1.1;
+      return pts;
+    });
+
+    const quads = [];
+    for (let r = 0; r < ringVertices.length - 1; r++) {
+      const rowA = ringVertices[r];
+      const rowB = ringVertices[r + 1];
+      const isBaseSection = profileRings[r].isBase && profileRings[r + 1].isBase;
+      for (let i = 0; i < segs; i++) {
+        const next = (i + 1) % segs;
+        const p0 = rowA[i];
+        const p1 = rowA[next];
+        const p2 = rowB[next];
+        const p3 = rowB[i];
+        const avgZ = (p0.z + p1.z + p2.z + p3.z) * 0.25;
+        const lightDot = Math.max(0, (p0.nx * 0.55 - p0.nz * 0.75));
+        quads.push({ p0, p1, p2, p3, avgZ, lightDot, isBaseSection });
+      }
+    }
+
+    // 3. Deux Anses 3D incurvées à gauche (-X) et à droite (+X) de la coupe
+    const handleCurve = [
+      { x: 32, y: -12 },
+      { x: 64, y: -18 },
+      { x: 76, y: -38 },
+      { x: 72, y: -58 },
+      { x: 53, y: -62 }
+    ];
+    const handleSegments = [];
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < handleCurve.length - 1; i++) {
+        const a = project3D(side * handleCurve[i].x, handleCurve[i].y, 0);
+        const b = project3D(side * handleCurve[i + 1].x, handleCurve[i + 1].y, 0);
+        handleSegments.push({ a, b, avgZ: (a.z + b.z) * 0.5 });
+      }
+    }
+
+    // Tri Z-Buffer (du plus éloigné au plus proche de la caméra)
+    quads.sort((a, b) => b.avgZ - a.avgZ);
+
+    // Dessin des anses situées à l'arrière-plan
+    for (const h of handleSegments.filter((s) => s.avgZ > 0)) {
+      ctx.beginPath();
+      ctx.moveTo(h.a.x, h.a.y);
+      ctx.lineTo(h.b.x, h.b.y);
+      ctx.strokeStyle = pal.secondary;
+      ctx.lineWidth = 7 * h.a.s;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(h.a.x, h.a.y);
+      ctx.lineTo(h.b.x, h.b.y);
+      ctx.strokeStyle = pal.primary;
+      ctx.lineWidth = 3.5 * h.a.s;
+      ctx.lineCap = 'round';
       ctx.stroke();
     }
 
-    // Sommets du cristal 3D central (Octaèdre / Diamant bipyramidal)
-    const R = 56;
-    const rawVerts = [
-      [0, -R * 1.25, 0], // Sommet Nord (0)
-      [0, R * 1.25, 0],  // Sommet Sud (1)
-      [-R, 0, -R],       // Équateur (2..5)
-      [R, 0, -R],
-      [R, 0, R],
-      [-R, 0, R]
-    ];
-    const verts = rawVerts.map(([vx, vy, vz]) => project(vx, vy, vz));
-
-    const faces = [
-      [0, 2, 3], [0, 3, 4], [0, 4, 5], [0, 5, 2],
-      [1, 3, 2], [1, 4, 3], [1, 5, 4], [1, 2, 5]
-    ].map((f) => ({
-      indices: f,
-      avgZ: (verts[f[0]].z + verts[f[1]].z + verts[f[2]].z) / 3
-    })).sort((a, b) => b.avgZ - a.avgZ);
-
-    for (const f of faces) {
-      const p0 = verts[f.indices[0]];
-      const p1 = verts[f.indices[1]];
-      const p2 = verts[f.indices[2]];
+    // Dessin des facettes 3D du Trophée avec éclairage spéculaire
+    for (const q of quads) {
       ctx.beginPath();
-      ctx.moveTo(p0.x, p0.y);
-      ctx.lineTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
+      ctx.moveTo(q.p0.x, q.p0.y);
+      ctx.lineTo(q.p1.x, q.p1.y);
+      ctx.lineTo(q.p2.x, q.p2.y);
+      ctx.lineTo(q.p3.x, q.p3.y);
       ctx.closePath();
-      ctx.fillStyle = tier > 0 ? 'rgba(15, 32, 66, 0.82)' : 'rgba(15, 23, 42, 0.65)';
+
+      if (q.isBaseSection) {
+        ctx.fillStyle = '#0b1120';
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+      } else if (q.lightDot > 0.62) {
+        ctx.fillStyle = pal.specular;
+        ctx.strokeStyle = pal.primary;
+      } else if (q.lightDot > 0.25) {
+        ctx.fillStyle = pal.primary;
+        ctx.strokeStyle = pal.secondary;
+      } else {
+        ctx.fillStyle = pal.secondary;
+        ctx.strokeStyle = '#090e1a';
+      }
+      ctx.lineWidth = 0.75;
       ctx.fill();
-      ctx.strokeStyle = tier > 0 ? primaryHex : 'rgba(148, 163, 184, 0.35)';
+      ctx.stroke();
+    }
+
+    // Dessin des anses situées au premier plan
+    for (const h of handleSegments.filter((s) => s.avgZ <= 0)) {
+      ctx.beginPath();
+      ctx.moveTo(h.a.x, h.a.y);
+      ctx.lineTo(h.b.x, h.b.y);
+      ctx.strokeStyle = pal.secondary;
+      ctx.lineWidth = 7 * h.a.s;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(h.a.x, h.a.y);
+      ctx.lineTo(h.b.x, h.b.y);
+      ctx.strokeStyle = pal.specular;
+      ctx.lineWidth = 3.2 * h.a.s;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // 4. Anneau Orbital & Étoile de Grade en lévitation au-dessus de la coupe
+    if (tier > 0) {
+      ctx.beginPath();
+      for (let a = 0; a <= Math.PI * 2; a += 0.12) {
+        const rx = 68 * Math.cos(a);
+        const ry = -68 + 14 * Math.sin(a);
+        const rz = 68 * Math.sin(a);
+        const p = project3D(rx, ry, rz);
+        if (a === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = pal.primary;
       ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      const crownCenter = project3D(0, -88, 0);
+      ctx.beginPath();
+      ctx.arc(crownCenter.x, crownCenter.y, 7 * crownCenter.s, 0, Math.PI * 2);
+      ctx.fillStyle = pal.specular;
+      ctx.fill();
+      ctx.strokeStyle = pal.primary;
+      ctx.lineWidth = 2;
       ctx.stroke();
     }
   }
