@@ -368,7 +368,7 @@
                     {{ formatModeLabel(item.mode) }}
                   </strong>
                   <span class="text-[11px] text-slate-400 block">
-                    {{ formatDate(item.created_at) }}
+                    {{ formatDate(item.played_at || item.created_at) }}
                   </span>
                 </div>
               </div>

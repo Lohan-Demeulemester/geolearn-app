@@ -1,52 +1,60 @@
 <template>
-  <div class="leaderboard-experience max-w-[1360px] mx-auto px-2 sm:px-6 pb-24 space-y-8 select-none">
+  <div class="leaderboard-experience max-w-[1380px] mx-auto px-2 sm:px-6 pb-24 space-y-8 select-none">
 
     <!-- ========================================================= -->
-    <!-- 1. EN-TÊTE : TITRE & BASCULE QCM (/15) VS TOUS LES MODES  -->
+    <!-- 1. EN-TÊTE : CLASSEMENT GÉNÉRAL BDD & HALL DES RECORDS    -->
     <!-- ========================================================= -->
     <header class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-xl space-y-5">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div class="space-y-1">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-600 dark:text-sky-400 font-mono text-[11px] font-bold uppercase tracking-wider">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>{{ locale === 'fr' ? 'BASE DE DONNÉES TEMPS RÉEL // CLASSEMENT OFFICIEL' : 'LIVE DATABASE // OFFICIAL STANDINGS' }}</span>
+            <span>{{ locale === 'fr' ? 'SYNCHRONISATION MYSQL // CLASSEMENT OFFICIEL' : 'MYSQL SYNC // OFFICIAL STANDINGS' }}</span>
           </div>
           <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            {{ locale === 'fr' ? 'Classement Général & Ligues' : 'Global Leaderboard & Leagues' }}
+            {{ locale === 'fr' ? 'Classement Mondial & Records' : 'World Leaderboard & Records' }}
           </h1>
           <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             {{ locale === 'fr'
-              ? 'Classement calculé exclusivement à partir des scores réels enregistrés dans la base de données.'
-              : 'Standings computed exclusively from real player scores recorded in the database.' }}
+              ? 'Données en direct issues des tables users et scores de la base de données.'
+              : 'Live standings computed directly from the users and scores database tables.' }}
           </p>
         </div>
 
-        <!-- Même sélecteur de barème que dans Scores.vue (QCM Classiques /15 vs Tous ramenés sur 15) -->
-        <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-slate-200/70 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 self-start lg:self-auto">
+        <!-- Bascule entre Classement Général (general) et Hall des 150 Records (records) -->
+        <div class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-full bg-slate-200/75 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 self-start lg:self-auto">
           <button
             type="button"
-            @click="scoreCalcMode = 'strict15'"
-            class="px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer"
-            :class="scoreCalcMode === 'strict15'
-              ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+            @click="activeBoardTab = 'general'"
+            class="px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
+            :class="activeBoardTab === 'general'
+              ? 'bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-black shadow-sm'
+              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
           >
-            {{ locale === 'fr' ? 'QCM Classiques (/15)' : 'Classic QCMs (/15)' }}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+              <path d="M4 22h16" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+            </svg>
+            <span>{{ locale === 'fr' ? `Classement Joueurs (${rankedPlayers.length})` : `Player Standings (${rankedPlayers.length})` }}</span>
           </button>
+
           <button
             type="button"
-            @click="scoreCalcMode = 'normalized15'"
-            class="px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer"
-            :class="scoreCalcMode === 'normalized15'
-              ? 'bg-sky-500 text-slate-950 font-black shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+            @click="activeBoardTab = 'records'"
+            class="px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
+            :class="activeBoardTab === 'records'
+              ? 'bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-black shadow-sm'
+              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'"
           >
-            {{ locale === 'fr' ? 'Tous ramenés sur 15' : 'All Normalized (/15)' }}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            <span>{{ locale === 'fr' ? `Top 150 Parties (${filteredRecords.length})` : `Top 150 Records (${filteredRecords.length})` }}</span>
           </button>
         </div>
       </div>
 
-      <!-- Filtres par Mode de jeu -->
+      <!-- Filtres par discipline + Bouton Actualiser -->
       <div class="pt-4 border-t border-slate-200/70 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-1.5">
           <button
@@ -65,20 +73,20 @@
 
         <button
           type="button"
-          @click="fetchRealDatabaseLeaderboard"
+          @click="loadLeaderboardFromBackend"
           class="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 font-mono text-[11px] font-bold text-slate-600 dark:text-slate-300 transition cursor-pointer flex items-center gap-1.5"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
             <polyline points="21 3 21 8 16 8" />
           </svg>
-          <span>{{ locale === 'fr' ? 'Actualiser BDD' : 'Refresh DB' }}</span>
+          <span>{{ locale === 'fr' ? 'Actualiser' : 'Refresh' }}</span>
         </button>
       </div>
     </header>
 
     <!-- ========================================================= -->
-    <!-- 2. 4 CARTES KPI DE LA BASE DE DONNÉES (STYLE SCORES.VUE)  -->
+    <!-- 2. 4 CARTES KPI DE LA BASE DE DONNÉES                     -->
     <!-- ========================================================= -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-5 flex items-center gap-4 shadow-lg">
@@ -95,7 +103,7 @@
             {{ locale === 'fr' ? 'Joueurs classés (BDD)' : 'Ranked Players (DB)' }}
           </span>
           <strong class="font-mono text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5 block">
-            {{ rankedOperators.length }}
+            {{ rankedPlayers.length }}
           </strong>
         </div>
       </div>
@@ -103,17 +111,15 @@
       <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-5 flex items-center gap-4 shadow-lg">
         <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center justify-center shrink-0">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="20" x2="18" y2="10" />
-            <line x1="12" y1="20" x2="12" y2="4" />
-            <line x1="6" y1="20" x2="6" y2="14" />
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
           </svg>
         </div>
         <div class="min-w-0">
           <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
-            {{ locale === 'fr' ? 'Moyenne globale (/15)' : 'Global Average (/15)' }}
+            {{ locale === 'fr' ? 'Parties totales jouées' : 'Total Games Played' }}
           </span>
-          <strong class="font-mono text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5 block">
-            {{ globalAverageOn15 }} <span class="text-sm font-bold text-slate-400">/ 15</span>
+          <strong class="font-mono text-2xl sm:text-3xl font-black text-emerald-500 dark:text-emerald-400 mt-0.5 block">
+            {{ totalGamesInDb.toLocaleString() }}
           </strong>
         </div>
       </div>
@@ -129,16 +135,16 @@
         </div>
         <div class="min-w-0">
           <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
-            {{ locale === 'fr' ? 'Meilleur score enregistré' : 'Highest Recorded Score' }}
+            {{ locale === 'fr' ? 'Leader XP Actuel' : 'Current XP Leader' }}
           </span>
-          <strong class="font-mono text-2xl sm:text-3xl font-black text-emerald-500 dark:text-emerald-400 mt-0.5 block">
-            {{ globalBestOn15 }} <span class="text-sm font-bold text-slate-400">/ 15</span>
+          <strong class="font-mono text-lg sm:text-xl font-black text-slate-900 dark:text-white truncate mt-0.5 block">
+            {{ rankedPlayers[0] ? rankedPlayers[0].username : '—' }}
           </strong>
         </div>
       </div>
 
       <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-5 flex items-center gap-4 shadow-lg">
-        <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/25 text-purple-400 flex items-center justify-center shrink-0">
+        <div class="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/25 text-sky-400 flex items-center justify-center shrink-0">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10" />
             <circle cx="12" cy="12" r="6" />
@@ -151,7 +157,7 @@
           </span>
           <strong class="font-mono text-2xl sm:text-3xl font-black text-sky-500 dark:text-sky-400 mt-0.5 block">
             {{ myEntry ? `#${myEntry.rank}` : '—' }}
-            <span v-if="myEntry" class="text-xs font-bold text-slate-400">({{ myEntry.avgOn15.toFixed(1) }}/15)</span>
+            <span v-if="myEntry" class="text-xs font-bold text-slate-400">({{ myEntry.totalXp.toLocaleString() }} XP)</span>
           </strong>
         </div>
       </div>
@@ -160,11 +166,14 @@
     <!-- ========================================================= -->
     <!-- 3. PODIUM 3D PLEINE LARGEUR + CARTES TOP 3 NON COMPRESSÉES-->
     <!-- ========================================================= -->
-    <section class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-8 shadow-xl space-y-6">
+    <section
+      v-if="activeBoardTab === 'general'"
+      class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-8 shadow-xl space-y-6"
+    >
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 dark:border-white/10 pb-4">
         <div>
           <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-sky-500 dark:text-sky-400 block">
-            PODIUM 3D INTERACTIF // TOP OPÉRATEURS BDD
+            PODIUM 3D INTERACTIF // TOP 03 MYSQL
           </span>
           <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white mt-0.5">
             {{ locale === 'fr' ? 'Podium Officiel des Joueurs' : 'Official Player Podium' }}
@@ -172,13 +181,11 @@
         </div>
 
         <span class="font-mono text-xs text-slate-400">
-          {{ locale === 'fr'
-            ? `${totalDatabaseGames} parties analysées en base`
-            : `${totalDatabaseGames} database sessions analyzed` }}
+          {{ locale === 'fr' ? 'Glissez horizontalement pour tourner le podium 3D' : 'Drag horizontally to rotate the 3D podium' }}
         </span>
       </div>
 
-      <!-- Canvas 3D du Podium (Toujours monté dans le DOM, grandes coupes 3D Or / Argent / Bronze) -->
+      <!-- Canvas 3D du Podium -->
       <div class="w-full rounded-2xl bg-slate-950/90 border border-white/[0.07] py-4 px-2 flex flex-col items-center justify-center">
         <canvas
           ref="podiumCanvasRef"
@@ -193,24 +200,23 @@
         ></canvas>
       </div>
 
-      <!-- Cartes du Top 3 sur toute la largeur (12 colonnes = aucun texte tronqué) -->
+      <!-- Cartes du Top 3 sur 3 grandes colonnes (aucun nom coupé) -->
       <div v-if="topThreePlayers.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <article
           v-for="(p, idx) in topThreePlayers"
-          :key="'top3-' + p.id"
+          :key="'top3-' + p.userId"
           @click="inspectedRival = p"
           class="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02] hover:border-sky-500/40 p-5 flex flex-col justify-between gap-5 transition-all cursor-pointer"
         >
           <div class="space-y-4">
-            <!-- Ligne supérieure : Rang + Ligue sur une seule ligne aérée -->
             <div class="flex items-center justify-between gap-2">
               <span
                 class="px-3 py-1 rounded-full font-mono text-xs font-black border"
                 :class="idx === 0
                   ? 'bg-yellow-400/15 text-yellow-300 border-yellow-400/40'
                   : idx === 1
-                    ? 'bg-slate-300/15 text-slate-200 border-slate-300/35'
-                    : 'bg-orange-700/20 text-orange-300 border-orange-500/40'"
+                    ? 'bg-slate-300/15 text-slate-200 border border-slate-300/35'
+                    : 'bg-orange-700/20 text-orange-300 border border-orange-500/40'"
               >
                 {{ locale === 'fr' ? `RANG #0${idx + 1}` : `RANK #0${idx + 1}` }}
               </span>
@@ -227,7 +233,6 @@
               </span>
             </div>
 
-            <!-- Identité complète du joueur (sans coupure) -->
             <div class="flex items-center gap-3.5">
               <div
                 class="w-12 h-12 rounded-2xl font-mono text-sm font-black flex items-center justify-center shrink-0 text-slate-950"
@@ -248,30 +253,30 @@
                   </span>
                 </div>
                 <span class="font-mono text-xs text-slate-400 block mt-0.5">
-                  {{ p.gamesCount }} {{ locale === 'fr' ? 'partie(s) enregistrée(s)' : 'recorded session(s)' }}
+                  {{ p.gamesPlayed }} {{ locale === 'fr' ? 'parties jouées' : 'games played' }} • {{ p.totalXp.toLocaleString() }} XP
                 </span>
               </div>
             </div>
           </div>
 
-          <!-- Statistiques claires et sobres -->
+          <!-- Records réels par discipline issus de generalSql -->
           <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-200/60 dark:border-white/[0.07] font-mono text-center">
             <div class="p-2.5 rounded-xl bg-white dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/[0.05]">
-              <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'MOYENNE' : 'AVG' }}</span>
+              <span class="text-[10px] text-slate-400 block">{{ locale === 'fr' ? 'MOY. /15' : 'AVG /15' }}</span>
               <strong class="text-sm font-black text-emerald-500 dark:text-emerald-400 mt-0.5 block">
                 {{ p.avgOn15.toFixed(1) }}/15
               </strong>
             </div>
             <div class="p-2.5 rounded-xl bg-white dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/[0.05]">
-              <span class="text-[10px] text-slate-400 block">RECORD</span>
+              <span class="text-[10px] text-slate-400 block">QCM MAX</span>
               <strong class="text-sm font-black text-slate-900 dark:text-white mt-0.5 block">
-                {{ p.bestOn15.toFixed(1) }}/15
+                {{ Math.max(p.bestCapitals, p.bestFlagsQcm, p.bestOn15) }}/15
               </strong>
             </div>
             <div class="p-2.5 rounded-xl bg-white dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/[0.05]">
-              <span class="text-[10px] text-slate-400 block">PRÉCISION</span>
+              <span class="text-[10px] text-slate-400 block">EUROPE</span>
               <strong class="text-sm font-black text-sky-500 dark:text-sky-400 mt-0.5 block">
-                {{ p.consistencyPct }}%
+                {{ p.bestEurope }}/47
               </strong>
             </div>
           </div>
@@ -280,14 +285,13 @@
     </section>
 
     <!-- ========================================================= -->
-    <!-- 4. TABLEAU COMPLET DES JOUEURS DE LA BDD & LIGUES         -->
+    <!-- 4. TABLEAU DU CLASSEMENT GÉNÉRAL OU DES 150 RECORDS       -->
     <!-- ========================================================= -->
     <section class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-xl space-y-5">
 
-      <!-- Filtres de Ligue + Recherche + Tri -->
+      <!-- Barre d'outils : Filtres de Ligue + Recherche + Tri -->
       <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-200/70 dark:border-white/10">
-        <!-- Filtres par Ligue -->
-        <div class="flex flex-wrap items-center gap-1.5">
+        <div v-if="activeBoardTab === 'general'" class="flex flex-wrap items-center gap-1.5">
           <button
             v-for="lg in leagueDivisions"
             :key="lg.id"
@@ -302,8 +306,10 @@
             <span class="opacity-70">({{ lg.count }})</span>
           </button>
         </div>
+        <div v-else class="font-mono text-xs font-bold text-sky-400 uppercase">
+          {{ locale === 'fr' ? 'TOP 150 PERFORMANCES INDIVIDUELLES ENREGISTRÉES EN BASE' : 'TOP 150 INDIVIDUAL PERFORMANCES RECORDED IN DB' }}
+        </div>
 
-        <!-- Recherche & Tri -->
         <div class="flex flex-wrap items-center gap-2.5">
           <div class="relative w-full sm:w-64">
             <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -312,7 +318,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              :placeholder="locale === 'fr' ? 'Chercher un joueur...' : 'Search a player...'"
+              :placeholder="locale === 'fr' ? 'Rechercher un joueur...' : 'Search a player...'"
               class="w-full pl-10 pr-8 py-2 rounded-full border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-sky-400"
             />
             <button
@@ -325,7 +331,10 @@
             </button>
           </div>
 
-          <div class="flex items-center gap-1 p-1 rounded-full bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
+          <div
+            v-if="activeBoardTab === 'general'"
+            class="flex items-center gap-1 p-1 rounded-full bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10"
+          >
             <button
               v-for="srt in sortOptions"
               :key="srt.id"
@@ -344,11 +353,11 @@
 
       <!-- État de chargement -->
       <div v-if="loading" class="py-12 text-center font-mono text-xs text-slate-400">
-        {{ locale === 'fr' ? 'CHARGEMENT DES DONNÉES DE LA BASE...' : 'LOADING DATABASE RECORDS...' }}
+        {{ locale === 'fr' ? 'CONNEXION À LA BASE MYSQL...' : 'QUERYING MYSQL DATABASE...' }}
       </div>
 
-      <!-- Tableau des vrais joueurs de la BDD -->
-      <div v-else-if="paginatedLeaderboard.length > 0" class="overflow-x-auto">
+      <!-- VUE A : TABLEAU DU CLASSEMENT GÉNÉRAL DES JOUEURS (generalRows) -->
+      <div v-else-if="activeBoardTab === 'general' && paginatedPlayers.length > 0" class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="border-b border-slate-200 dark:border-white/10 font-mono text-[11px] uppercase text-slate-400">
@@ -356,23 +365,24 @@
               <th class="py-3 px-3">{{ locale === 'fr' ? 'Joueur' : 'Player' }}</th>
               <th class="py-3 px-3">{{ locale === 'fr' ? 'Division' : 'Division' }}</th>
               <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Moyenne (/15)' : 'Avg (/15)' }}</th>
-              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Record (/15)' : 'Best (/15)' }}</th>
-              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Taux' : 'Accuracy' }}</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Capitales' : 'Capitals' }}</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Drapeaux' : 'Flags' }}</th>
+              <th class="py-3 px-3 text-right">Europe</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Monde' : 'World' }}</th>
               <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Parties' : 'Games' }}</th>
-              <th class="py-3 px-3 text-right">XP</th>
+              <th class="py-3 px-3 text-right">Total XP</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200/60 dark:divide-white/[0.06] text-xs sm:text-sm">
             <tr
-              v-for="row in paginatedLeaderboard"
-              :key="row.id"
+              v-for="row in paginatedPlayers"
+              :key="row.userId"
               @click="inspectedRival = row"
               class="transition-colors cursor-pointer"
               :class="row.isMe
-                ? 'bg-sky-500/[0.07] hover:bg-sky-500/[0.12]'
+                ? 'bg-sky-500/[0.08] hover:bg-sky-500/[0.14]'
                 : 'hover:bg-slate-100/70 dark:hover:bg-white/[0.03]'"
             >
-              <!-- Rang -->
               <td class="py-3.5 px-3 font-mono font-black whitespace-nowrap">
                 <span
                   class="inline-flex items-center justify-center w-8 h-7 rounded-lg text-xs"
@@ -388,7 +398,6 @@
                 </span>
               </td>
 
-              <!-- Joueur -->
               <td class="py-3.5 px-3">
                 <div class="flex items-center gap-3">
                   <div
@@ -413,7 +422,6 @@
                 </div>
               </td>
 
-              <!-- Ligue -->
               <td class="py-3.5 px-3 whitespace-nowrap">
                 <span
                   class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[10px] font-bold uppercase border"
@@ -428,67 +436,116 @@
                 </span>
               </td>
 
-              <!-- Moyenne /15 -->
               <td class="py-3.5 px-3 text-right font-mono font-black text-emerald-500 dark:text-emerald-400 whitespace-nowrap">
                 {{ row.avgOn15.toFixed(1) }} <span class="text-[11px] font-normal text-slate-400">/ 15</span>
               </td>
 
-              <!-- Record /15 -->
-              <td class="py-3.5 px-3 text-right font-mono font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-                {{ row.bestOn15.toFixed(1) }} <span class="text-[11px] font-normal text-slate-400">/ 15</span>
+              <td class="py-3.5 px-3 text-right font-mono text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                {{ row.bestCapitals }}/15
               </td>
 
-              <!-- Précision % -->
-              <td class="py-3.5 px-3 text-right font-mono text-xs text-slate-500 dark:text-slate-300 whitespace-nowrap">
-                {{ row.consistencyPct }}%
+              <td class="py-3.5 px-3 text-right font-mono text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                {{ row.bestFlagsQcm }}/15
               </td>
 
-              <!-- Parties jouées -->
+              <td class="py-3.5 px-3 text-right font-mono text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                {{ row.bestEurope }}/47
+              </td>
+
+              <td class="py-3.5 px-3 text-right font-mono text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                {{ row.bestWorld }}/196
+              </td>
+
               <td class="py-3.5 px-3 text-right font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                {{ row.gamesCount }}
+                {{ row.gamesPlayed }}
               </td>
 
-              <!-- XP -->
               <td class="py-3.5 px-3 text-right font-mono font-black text-sky-500 dark:text-sky-400 whitespace-nowrap">
-                {{ row.xp.toLocaleString() }} XP
+                {{ row.totalXp.toLocaleString() }} XP
               </td>
             </tr>
           </tbody>
         </table>
+      </div>
 
-        <!-- Pagination -->
-        <div
-          v-if="totalPages > 1"
-          class="flex items-center justify-between pt-4 mt-4 border-t border-slate-200/60 dark:border-white/10 font-mono text-xs"
-        >
-          <span class="text-slate-400">
-            {{ locale === 'fr' ? `Page ${currentPage} sur ${totalPages}` : `Page ${currentPage} of ${totalPages}` }}
-          </span>
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              :disabled="currentPage <= 1"
-              @click="currentPage--"
-              class="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/10 disabled:opacity-35 text-slate-800 dark:text-white font-bold cursor-pointer"
+      <!-- VUE B : TABLEAU DES 150 MEILLEURS RECORDS INDIVIDUELS (recordRows) -->
+      <div v-else-if="activeBoardTab === 'records' && filteredRecords.length > 0" class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-white/10 font-mono text-[11px] uppercase text-slate-400">
+              <th class="py-3 px-3">#</th>
+              <th class="py-3 px-3">{{ locale === 'fr' ? 'Joueur' : 'Player' }}</th>
+              <th class="py-3 px-3">Mode</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Note (/15)' : 'Normalized (/15)' }}</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Score Brut' : 'Raw Score' }}</th>
+              <th class="py-3 px-3 text-right">{{ locale === 'fr' ? 'Réussite' : 'Percentage' }}</th>
+              <th class="py-3 px-3 text-right">Date</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200/60 dark:divide-white/[0.06] text-xs sm:text-sm">
+            <tr
+              v-for="(rec, rIdx) in filteredRecords.slice(0, 60)"
+              :key="'rec-' + rec.id + '-' + rIdx"
+              class="hover:bg-slate-100/70 dark:hover:bg-white/[0.03]"
             >
-              ← {{ locale === 'fr' ? 'Précédent' : 'Prev' }}
-            </button>
-            <button
-              type="button"
-              :disabled="currentPage >= totalPages"
-              @click="currentPage++"
-              class="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/10 disabled:opacity-35 text-slate-800 dark:text-white font-bold cursor-pointer"
-            >
-              {{ locale === 'fr' ? 'Suivant' : 'Next' }} →
-            </button>
-          </div>
-        </div>
+              <td class="py-3 px-3 font-mono text-xs text-slate-400">
+                #{{ String(rIdx + 1).padStart(2, '0') }}
+              </td>
+              <td class="py-3 px-3 font-bold text-slate-900 dark:text-white">
+                {{ rec.username }}
+              </td>
+              <td class="py-3 px-3 font-mono text-xs text-sky-400">
+                {{ rec.mode }}
+              </td>
+              <td class="py-3 px-3 text-right font-mono font-black text-emerald-400">
+                {{ rec.scoreOn15.toFixed(1) }} / 15
+              </td>
+              <td class="py-3 px-3 text-right font-mono text-slate-300">
+                {{ rec.score }} / {{ rec.max_score }}
+              </td>
+              <td class="py-3 px-3 text-right font-mono text-xs text-sky-400">
+                {{ Math.min(100, Math.round(Number(rec.percentage) || 0)) }}%
+              </td>
+              <td class="py-3 px-3 text-right font-mono text-xs text-slate-400">
+                {{ formatDate(rec.played_at) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div v-else class="py-10 text-center font-mono text-xs text-slate-400">
         {{ locale === 'fr'
-          ? 'Aucune partie enregistrée dans la base de données pour cette catégorie.'
-          : 'No recorded sessions in the database for this category.' }}
+          ? 'Aucun résultat trouvé pour ce filtre.'
+          : 'No records found for this filter.' }}
+      </div>
+
+      <!-- Pagination -->
+      <div
+        v-if="activeBoardTab === 'general' && totalPages > 1"
+        class="flex items-center justify-between pt-4 mt-4 border-t border-slate-200/60 dark:border-white/10 font-mono text-xs"
+      >
+        <span class="text-slate-400">
+          {{ locale === 'fr' ? `Page ${currentPage} sur ${totalPages}` : `Page ${currentPage} of ${totalPages}` }}
+        </span>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            :disabled="currentPage <= 1"
+            @click="currentPage--"
+            class="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/10 disabled:opacity-35 text-slate-800 dark:text-white font-bold cursor-pointer"
+          >
+            ← {{ locale === 'fr' ? 'Précédent' : 'Prev' }}
+          </button>
+          <button
+            type="button"
+            :disabled="currentPage >= totalPages"
+            @click="currentPage++"
+            class="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/10 disabled:opacity-35 text-slate-800 dark:text-white font-bold cursor-pointer"
+          >
+            {{ locale === 'fr' ? 'Suivant' : 'Next' }} →
+          </button>
+        </div>
       </div>
 
     </section>
@@ -497,15 +554,15 @@
     <!-- 5. COMPARATEUR FACE-À-FACE (ENTRE 2 VRAIS JOUEURS BDD)    -->
     <!-- ========================================================= -->
     <section
-      v-if="comparisonTarget && myEntry && rankedOperators.length > 1"
+      v-if="comparisonTarget && myEntry && rankedPlayers.length > 1"
       class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-xl space-y-5"
     >
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 dark:border-white/10 pb-4">
         <span class="font-mono text-xs font-bold uppercase tracking-wider text-sky-500 dark:text-sky-400">
-          {{ locale === 'fr' ? 'COMPARAISON DIRECTE ENTRE JOUEURS' : 'DIRECT PLAYER COMPARISON' }}
+          {{ locale === 'fr' ? 'COMPARAISON DIRECTE ENTRE JOUEURS (BDD)' : 'DIRECT PLAYER COMPARISON (DB)' }}
         </span>
         <span class="font-mono text-[11px] text-slate-400">
-          {{ locale === 'fr' ? 'Cliquez sur une ligne du classement pour comparer vos scores' : 'Click any row in the table above to compare scores' }}
+          {{ locale === 'fr' ? 'Cliquez sur n\'importe quel joueur du tableau pour le comparer à votre profil' : 'Click any player in the table above to compare against your profile' }}
         </span>
       </div>
 
@@ -565,11 +622,11 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between">
               <strong class="text-sm font-black text-sky-400">{{ myEntry.username }} (#{{ myEntry.rank }})</strong>
-              <span class="font-mono text-xs font-bold text-slate-400">{{ myEntry.xp.toLocaleString() }} XP</span>
+              <span class="font-mono text-xs font-bold text-slate-400">{{ myEntry.totalXp.toLocaleString() }} XP</span>
             </div>
             <div class="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between">
               <strong class="text-sm font-black text-rose-400">{{ comparisonTarget.username }} (#{{ comparisonTarget.rank }})</strong>
-              <span class="font-mono text-xs font-bold text-slate-400">{{ comparisonTarget.xp.toLocaleString() }} XP</span>
+              <span class="font-mono text-xs font-bold text-slate-400">{{ comparisonTarget.totalXp.toLocaleString() }} XP</span>
             </div>
           </div>
 
@@ -607,35 +664,27 @@ const { locale } = useI18n();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 const loading = ref(true);
+const activeBoardTab = ref('general'); // 'general' | 'records'
 const searchQuery = ref('');
-// 'strict15' = QCM Classiques (/15) par défaut comme dans Scores.vue | 'normalized15' = Tous les modes ramenés sur 15
-const scoreCalcMode = ref('normalized15');
 const selectedModeFilter = ref('all');
 const selectedLeagueFilter = ref('all');
-const sortBy = ref('avg'); // Tri par Moyenne /15 par défaut pour valoriser la précision réelle
+const sortBy = ref('xp'); // 'xp' | 'avg' | 'games' | 'capitals'
 const currentPage = ref(1);
 const pageSize = 15;
 
 const inspectedRival = ref(null);
 const currentUser = ref(null);
 
-// Stocke les joueurs et leurs parties réelles récupérées depuis la BDD
-const dbPlayersList = ref([]);
-
-// =========================================================
-// NORMALISATION IDENTIQUE À SCORES.VUE (ZÉRO DONNÉE INVENTÉE)
-// =========================================================
-const isClassicQcm15 = (s) => {
-  const modeStr = (s.mode || '').toLowerCase();
-  const max = Number(s.max_score || 15);
-  return max === 15 && !modeStr.includes('flash') && !modeStr.includes('sprint');
-};
+// Données brutes renvoyées par GET /api/leaderboard (server.js)
+const generalRowsFromDb = ref([]);
+const recordRowsFromDb = ref([]);
+const myDetailedScores = ref([]);
 
 const normalizeScoreTo15 = (s) => {
   const raw = Math.max(0, Number(s.score) || 0);
   const max = Math.max(1, Number(s.max_score) || 15);
   const modeStr = (s.mode || '').toLowerCase();
-  if (isClassicQcm15(s)) {
+  if (max === 15 && !modeStr.includes('flash') && !modeStr.includes('sprint')) {
     return Math.min(15, Math.round(raw * 10) / 10);
   }
   if (modeStr.includes('flash') && max === 40) {
@@ -646,35 +695,36 @@ const normalizeScoreTo15 = (s) => {
 
 const getModeCategoryKey = (mode = '') => {
   const m = mode.toLowerCase();
+  if (m.includes('capitale') || m.includes('capital')) return 'capitals';
+  if (m.includes('drapeau') || m.includes('flag')) return 'flags';
+  if (m.includes('europe')) return 'europe';
+  if (m.includes('monde') || m.includes('196')) return 'world';
+  if (m.includes('geoguessr') || m.includes('pindrop')) return 'pindrop';
   if (m.includes('myst') || m.includes('worldle')) return 'worldle';
   if (m.includes('flash') || m.includes('sprint')) return 'sprint';
-  if (m.includes('enqu') || m.includes('indice') || m.includes('detective')) return 'detective';
-  if (m.includes('europe') || m.includes('monde') || m.includes('196') || m.includes('cliquez')) return 'chrono';
-  if (m.includes('geoguessr') || m.includes('pindrop')) return 'pindrop';
-  if (m.includes('duel')) return 'duel';
-  return 'qcm';
+  return 'other';
 };
 
 const modeTabs = computed(() => {
   const isFr = locale.value === 'fr';
   return [
     { id: 'all', label: isFr ? 'Tous les modes' : 'All Modes' },
-    { id: 'qcm', label: isFr ? 'QCM Classiques (/15)' : 'Classic QCMs (/15)' },
-    { id: 'worldle', label: 'Pays Mystère (Worldle)' },
-    { id: 'detective', label: isFr ? 'Enquête 5 Indices' : '5-Clue Detective' },
+    { id: 'capitals', label: isFr ? 'QCM Capitales' : 'Capitals Quiz' },
+    { id: 'flags', label: isFr ? 'QCM Drapeaux' : 'Flags Quiz' },
+    { id: 'europe', label: isFr ? 'Défi Europe (47)' : 'Europe Map (47)' },
+    { id: 'world', label: isFr ? 'Défi Monde (196)' : 'World Map (196)' },
+    { id: 'worldle', label: 'Worldle' },
     { id: 'sprint', label: 'Sprint 60s' },
-    { id: 'chrono', label: isFr ? 'Cartes (Europe / Monde)' : 'Map Challenges' },
-    { id: 'pindrop', label: 'PinDrop 25K' },
-    { id: 'duel', label: 'Duel 1v1' }
+    { id: 'pindrop', label: 'GeoGuessr / PinDrop' }
   ];
 });
 
 const sortOptions = computed(() => {
   const isFr = locale.value === 'fr';
   return [
+    { id: 'xp', label: 'Total XP' },
     { id: 'avg', label: isFr ? 'Moyenne /15' : 'Avg /15' },
-    { id: 'best', label: isFr ? 'Record /15' : 'Best /15' },
-    { id: 'xp', label: 'XP' },
+    { id: 'capitals', label: isFr ? 'Capitales' : 'Capitals' },
     { id: 'games', label: isFr ? 'Parties' : 'Games' }
   ];
 });
@@ -687,119 +737,148 @@ const getLeagueInfo = (xpVal = 0) => {
   if (xpVal >= 1200) {
     return { id: 'emerald', short: isFr ? 'Émeraude Maître' : 'Master Emerald', hex: '#10b981' };
   }
-  if (xpVal >= 550) {
+  if (xpVal >= 500) {
     return { id: 'gold', short: isFr ? 'Or Vanguard' : 'Vanguard Gold', hex: '#facc15' };
   }
   return { id: 'silver', short: isFr ? 'Argent Recon' : 'Recon Silver', hex: '#94a3b8' };
 };
 
 // =========================================================
-// CALCUL DYNAMIQUE DU CLASSEMENT À PARTIR DES VRAIS JOUEURS BDD
+// CONSTRUCTION DU CLASSEMENT À PARTIR DE generalRows & recordRows (server.js)
 // =========================================================
-const rankedOperators = computed(() => {
-  const results = [];
+const rankedPlayers = computed(() => {
+  const myUid = currentUser.value?.id || currentUser.value?.user?.id;
+  const myName = (
+    currentUser.value?.username ||
+    currentUser.value?.name ||
+    currentUser.value?.user?.username ||
+    ''
+  ).toLowerCase();
 
-  for (const player of dbPlayersList.value) {
-    // Si le joueur possède le détail de ses parties (`rawScores`), on applique le filtre exact (strict15 vs normalized15 et filtre de mode)
-    if (Array.isArray(player.rawScores) && player.rawScores.length > 0) {
-      let filteredScores = player.rawScores;
-
-      if (selectedModeFilter.value !== 'all') {
-        filteredScores = filteredScores.filter((s) => getModeCategoryKey(s.mode) === selectedModeFilter.value);
-      } else if (scoreCalcMode.value === 'strict15') {
-        const classicOnly = filteredScores.filter(isClassicQcm15);
-        if (classicOnly.length > 0) filteredScores = classicOnly;
-      }
-
-      if (filteredScores.length === 0) continue;
-
-      const vals15 = filteredScores.map(normalizeScoreTo15);
-      const gamesCount = vals15.length;
-      const bestOn15 = Math.max(...vals15);
-      const avgOn15 = Number((vals15.reduce((a, b) => a + b, 0) / gamesCount).toFixed(1));
-      const consistencyPct = Math.min(100, Math.round((avgOn15 / 15) * 100));
-      const xp = Math.round(avgOn15 * 85 + bestOn15 * 25 + player.rawScores.length * 35);
-
-      results.push({
-        id: player.id,
-        username: player.username,
-        isMe: player.isMe,
-        avgOn15,
-        bestOn15,
-        gamesCount,
-        totalDbGames: player.rawScores.length,
-        consistencyPct,
-        xp,
-        league: getLeagueInfo(xp),
-        radar: [
-          Math.min(1, avgOn15 / 15),
-          Math.min(1, bestOn15 / 15),
-          Math.min(1, consistencyPct / 100),
-          Math.min(1, Math.max(0.3, gamesCount / 20)),
-          Math.min(1, Math.max(0.3, player.rawScores.length / 40))
-        ]
-      });
-    } else if (player.avgOn15 !== undefined) {
-      // Joueur agrégé renvoyé directement par /api/leaderboard
-      const avgOn15 = Math.min(15, Math.max(0, Number(player.avgOn15) || 0));
-      const bestOn15 = Math.min(15, Math.max(avgOn15, Number(player.bestOn15) || avgOn15));
-      const gamesCount = Math.max(1, Number(player.gamesCount) || 1);
-      const consistencyPct = Math.min(100, Math.round((avgOn15 / 15) * 100));
-      const xp = Math.round(avgOn15 * 85 + bestOn15 * 25 + gamesCount * 35);
-
-      results.push({
-        id: player.id,
-        username: player.username,
-        isMe: player.isMe,
-        avgOn15,
-        bestOn15,
-        gamesCount,
-        totalDbGames: gamesCount,
-        consistencyPct,
-        xp,
-        league: getLeagueInfo(xp),
-        radar: [
-          Math.min(1, avgOn15 / 15),
-          Math.min(1, bestOn15 / 15),
-          Math.min(1, consistencyPct / 100),
-          Math.min(1, Math.max(0.3, gamesCount / 20)),
-          Math.min(1, Math.max(0.3, gamesCount / 40))
-        ]
-      });
-    }
+  // Regroupe les parties de data.records par user_id pour calculer la moyenne sur 15 de chaque joueur
+  const recordsByUser = new Map();
+  for (const r of recordRowsFromDb.value) {
+    const uid = String(r.user_id);
+    if (!recordsByUser.has(uid)) recordsByUser.set(uid, []);
+    recordsByUser.get(uid).push(r);
   }
 
-  results.sort((a, b) => {
-    if (sortBy.value === 'avg') return b.avgOn15 - a.avgOn15 || b.bestOn15 - a.bestOn15 || b.xp - a.xp;
-    if (sortBy.value === 'best') return b.bestOn15 - a.bestOn15 || b.avgOn15 - a.avgOn15;
-    if (sortBy.value === 'games') return b.gamesCount - a.gamesCount || b.avgOn15 - a.avgOn15;
-    return b.xp - a.xp;
+  const list = [];
+
+  for (const row of generalRowsFromDb.value) {
+    const uid = String(row.user_id);
+    const uname = row.username || `Joueur #${uid}`;
+    const isMe =
+      (myUid && uid === String(myUid)) ||
+      (myName && uname.toLowerCase() === myName);
+
+    const gamesPlayed = Math.max(1, Number(row.games_played) || 1);
+    const totalXp = Math.max(0, Number(row.total_xp) || 0);
+    const bestCapitals = Math.min(15, Math.max(0, Number(row.best_capitals) || 0));
+    const bestFlagsQcm = Math.min(15, Math.max(0, Number(row.best_flags_qcm) || 0));
+    const bestFlagGrid = Math.min(196, Math.max(0, Number(row.best_flag_grid) || 0));
+    const bestEurope = Math.min(47, Math.max(0, Number(row.best_europe) || 0));
+    const bestWorld = Math.min(196, Math.max(0, Number(row.best_world) || 0));
+
+    // Parties connues pour ce joueur (records globaux + historique complet si c'est l'utilisateur connecté)
+    const userRecords = isMe && myDetailedScores.value.length > 0
+      ? myDetailedScores.value
+      : (recordsByUser.get(uid) || []);
+
+    // Filtre par discipline si un onglet spécifique est actif
+    if (selectedModeFilter.value !== 'all') {
+      const mFilter = selectedModeFilter.value;
+      if (mFilter === 'capitals' && bestCapitals === 0 && !userRecords.some((s) => getModeCategoryKey(s.mode) === 'capitals')) continue;
+      if (mFilter === 'flags' && bestFlagsQcm === 0 && bestFlagGrid === 0 && !userRecords.some((s) => getModeCategoryKey(s.mode) === 'flags')) continue;
+      if (mFilter === 'europe' && bestEurope === 0 && !userRecords.some((s) => getModeCategoryKey(s.mode) === 'europe')) continue;
+      if (mFilter === 'world' && bestWorld === 0 && !userRecords.some((s) => getModeCategoryKey(s.mode) === 'world')) continue;
+      if (['worldle', 'sprint', 'pindrop'].includes(mFilter) && !userRecords.some((s) => getModeCategoryKey(s.mode) === mFilter)) continue;
+    }
+
+    let avgOn15 = 0;
+    let bestOn15 = Math.max(
+      bestCapitals,
+      bestFlagsQcm,
+      Math.round((bestEurope / 47) * 15 * 10) / 10,
+      Math.round((bestWorld / 196) * 15 * 10) / 10
+    );
+
+    if (userRecords.length > 0) {
+      const modeRecords = selectedModeFilter.value === 'all'
+        ? userRecords
+        : userRecords.filter((s) => getModeCategoryKey(s.mode) === selectedModeFilter.value);
+      const targetList = modeRecords.length > 0 ? modeRecords : userRecords;
+      const vals15 = targetList.map(normalizeScoreTo15);
+      avgOn15 = Number((vals15.reduce((a, b) => a + b, 0) / vals15.length).toFixed(1));
+      bestOn15 = Math.max(bestOn15, ...vals15);
+    } else {
+      // Estimation à partir du total_xp et games_played de generalSql si aucune ligne dans le top 150 records
+      const approx = ((totalXp - gamesPlayed * 25) / Math.max(1, gamesPlayed * 10));
+      avgOn15 = Math.min(15, Math.max(1, Number(approx.toFixed(1))));
+      if (bestOn15 < avgOn15) bestOn15 = avgOn15;
+    }
+
+    const consistencyPct = Math.min(100, Math.round((avgOn15 / 15) * 100));
+
+    list.push({
+      userId: uid,
+      username: uname,
+      isMe,
+      gamesPlayed,
+      totalXp,
+      avgOn15,
+      bestOn15: Number(bestOn15.toFixed(1)),
+      bestCapitals,
+      bestFlagsQcm,
+      bestEurope,
+      bestWorld,
+      consistencyPct,
+      league: getLeagueInfo(totalXp),
+      radar: [
+        Math.min(1, Math.max(0.2, avgOn15 / 15)),
+        Math.min(1, Math.max(0.2, bestCapitals / 15)),
+        Math.min(1, Math.max(0.2, bestFlagsQcm / 15)),
+        Math.min(1, Math.max(0.2, bestEurope / 47)),
+        Math.min(1, Math.max(0.2, gamesPlayed / 30))
+      ]
+    });
+  }
+
+  list.sort((a, b) => {
+    if (sortBy.value === 'avg') return b.avgOn15 - a.avgOn15 || b.totalXp - a.totalXp;
+    if (sortBy.value === 'capitals') return b.bestCapitals - a.bestCapitals || b.totalXp - a.totalXp;
+    if (sortBy.value === 'games') return b.gamesPlayed - a.gamesPlayed || b.totalXp - a.totalXp;
+    return b.totalXp - a.totalXp;
   });
 
-  return results.map((item, idx) => ({
+  return list.map((item, idx) => ({
     ...item,
     rank: idx + 1
   }));
 });
 
-const totalDatabaseGames = computed(() =>
-  rankedOperators.value.reduce((acc, p) => acc + (p.gamesCount || 0), 0)
+const filteredRecords = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  return recordRowsFromDb.value
+    .map((r) => ({
+      ...r,
+      scoreOn15: normalizeScoreTo15(r)
+    }))
+    .filter((r) => {
+      if (selectedModeFilter.value !== 'all' && getModeCategoryKey(r.mode) !== selectedModeFilter.value) return false;
+      if (q && !(r.username || '').toLowerCase().includes(q)) return false;
+      return true;
+    })
+    .sort((a, b) => b.scoreOn15 - a.scoreOn15 || Number(b.percentage || 0) - Number(a.percentage || 0));
+});
+
+const totalGamesInDb = computed(() =>
+  generalRowsFromDb.value.reduce((acc, r) => acc + (Number(r.games_played) || 0), 0)
 );
-
-const globalAverageOn15 = computed(() => {
-  if (!rankedOperators.value.length) return '0.0';
-  const sum = rankedOperators.value.reduce((acc, p) => acc + p.avgOn15, 0);
-  return (sum / rankedOperators.value.length).toFixed(1);
-});
-
-const globalBestOn15 = computed(() => {
-  if (!rankedOperators.value.length) return '0.0';
-  return Math.max(...rankedOperators.value.map((p) => p.bestOn15)).toFixed(1);
-});
 
 const leagueDivisions = computed(() => {
   const isFr = locale.value === 'fr';
-  const all = rankedOperators.value;
+  const all = rankedPlayers.value;
   return [
     { id: 'all', label: isFr ? 'Toutes les Ligues' : 'All Leagues', count: all.length },
     { id: 'diamond', label: isFr ? 'Diamant Orbital' : 'Orbital Diamond', count: all.filter((p) => p.league.id === 'diamond').length },
@@ -809,38 +888,38 @@ const leagueDivisions = computed(() => {
   ];
 });
 
-const displayedLeaderboard = computed(() => {
+const displayedPlayers = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
-  return rankedOperators.value.filter((p) => {
+  return rankedPlayers.value.filter((p) => {
     if (selectedLeagueFilter.value !== 'all' && p.league.id !== selectedLeagueFilter.value) return false;
     if (q && !p.username.toLowerCase().includes(q)) return false;
     return true;
   });
 });
 
-watch([searchQuery, selectedModeFilter, selectedLeagueFilter, scoreCalcMode], () => {
+watch([searchQuery, selectedModeFilter, selectedLeagueFilter], () => {
   currentPage.value = 1;
 });
 
-const totalPages = computed(() => Math.max(1, Math.ceil(displayedLeaderboard.value.length / pageSize)));
+const totalPages = computed(() => Math.max(1, Math.ceil(displayedPlayers.value.length / pageSize)));
 
-const paginatedLeaderboard = computed(() => {
+const paginatedPlayers = computed(() => {
   const start = (currentPage.value - 1) * pageSize;
-  return displayedLeaderboard.value.slice(start, start + pageSize);
+  return displayedPlayers.value.slice(start, start + pageSize);
 });
 
-const topThreePlayers = computed(() => rankedOperators.value.slice(0, 3));
+const topThreePlayers = computed(() => rankedPlayers.value.slice(0, 3));
 
-const myEntry = computed(() => rankedOperators.value.find((p) => p.isMe) || rankedOperators.value[0] || null);
+const myEntry = computed(() => rankedPlayers.value.find((p) => p.isMe) || rankedPlayers.value[0] || null);
 
 const comparisonTarget = computed(() => {
   if (inspectedRival.value) return inspectedRival.value;
-  return rankedOperators.value.find((p) => !p.isMe) || rankedOperators.value[0] || null;
+  return rankedPlayers.value.find((p) => !p.isMe) || rankedPlayers.value[0] || null;
 });
 
 const radarAxesLabels = computed(() => {
   const isFr = locale.value === 'fr';
-  return ['MOYENNE', 'RECORD', isFr ? 'PRÉCISION' : 'ACCURACY', isFr ? 'RÉGULARITÉ' : 'REGULARITY', 'VOLUME'];
+  return ['MOY /15', isFr ? 'CAPITALES' : 'CAPITALS', isFr ? 'DRAPEAUX' : 'FLAGS', 'EUROPE', 'VOLUME'];
 });
 
 const getAxisEndpoint = (axisIdx, ratio = 1) => {
@@ -864,10 +943,10 @@ const getRadarGridPolygon = (levelRatio) => {
 };
 
 const buildOperatorRadarPolygon = (op) => {
-  const values = op?.radar || [0.7, 0.7, 0.7, 0.7, 0.7];
+  const values = op?.radar || [0.5, 0.5, 0.5, 0.5, 0.5];
   return values
     .map((v, idx) => {
-      const clamped = Math.max(0.18, Math.min(1, Number(v) || 0.5));
+      const clamped = Math.max(0.18, Math.min(1, Number(v) || 0.3));
       const p = getAxisEndpoint(idx, clamped);
       return `${p.x},${p.y}`;
     })
@@ -892,28 +971,28 @@ const headToHeadMetrics = computed(() => {
       targetFormatted: `${tg.avgOn15.toFixed(1)} / 15`
     },
     {
-      id: 'best',
-      label: isFr ? 'Record (/15)' : 'Best (/15)',
-      myVal: me.bestOn15,
-      targetVal: tg.bestOn15,
-      myFormatted: `${me.bestOn15.toFixed(1)} / 15`,
-      targetFormatted: `${tg.bestOn15.toFixed(1)} / 15`
+      id: 'caps',
+      label: isFr ? 'Record Capitales' : 'Best Capitals',
+      myVal: me.bestCapitals,
+      targetVal: tg.bestCapitals,
+      myFormatted: `${me.bestCapitals} / 15`,
+      targetFormatted: `${tg.bestCapitals} / 15`
     },
     {
-      id: 'acc',
-      label: isFr ? 'Précision' : 'Accuracy',
-      myVal: me.consistencyPct,
-      targetVal: tg.consistencyPct,
-      myFormatted: `${me.consistencyPct}%`,
-      targetFormatted: `${tg.consistencyPct}%`
+      id: 'flags',
+      label: isFr ? 'Record Drapeaux' : 'Best Flags',
+      myVal: me.bestFlagsQcm,
+      targetVal: tg.bestFlagsQcm,
+      myFormatted: `${me.bestFlagsQcm} / 15`,
+      targetFormatted: `${tg.bestFlagsQcm} / 15`
     },
     {
       id: 'games',
-      label: isFr ? 'Parties jouées' : 'Sessions Played',
-      myVal: me.gamesCount,
-      targetVal: tg.gamesCount,
-      myFormatted: `${me.gamesCount}`,
-      targetFormatted: `${tg.gamesCount}`
+      label: isFr ? 'Parties jouées' : 'Games Played',
+      myVal: me.gamesPlayed,
+      targetVal: tg.gamesPlayed,
+      myFormatted: `${me.gamesPlayed}`,
+      targetFormatted: `${tg.gamesPlayed}`
     }
   ];
 });
@@ -929,6 +1008,16 @@ const getRatioPct = (valA, valB) => {
   const sum = Number(valA || 0) + Number(valB || 0);
   if (sum <= 0) return 50;
   return Math.max(12, Math.min(88, Math.round((Number(valA) / sum) * 100)));
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString(locale.value === 'fr' ? 'fr-FR' : 'en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
 };
 
 // =========================================================
@@ -955,7 +1044,6 @@ const onPodiumPointerMove = (e) => {
   if (!podDragging) return;
   const dx = e.clientX - podLastX;
   const dy = e.clientY - podLastY;
-  // Même sens naturel gauche/droite que dans Collection.vue
   podYaw -= dx * 0.01;
   podPitch = Math.max(-0.35, Math.min(0.48, podPitch + dy * 0.008));
   podVelYaw = -dx * 0.007;
@@ -967,7 +1055,6 @@ const onPodiumPointerUp = () => {
   podDragging = false;
 };
 
-// Dessine une vraie Coupe de Trophée 3D au-dessus d'une marche du podium
 const drawMini3DTrophyCup = (ctx, projectFn, offsetX, baseY, scaleCup, palette, rotAngle) => {
   const profile = [
     { y: 0,   r: 14 },
@@ -1017,7 +1104,7 @@ const drawMini3DTrophyCup = (ctx, projectFn, offsetX, baseY, scaleCup, palette, 
 
 const renderPodium3DLoop = () => {
   const canvas = podiumCanvasRef.value;
-  if (canvas) {
+  if (canvas && activeBoardTab.value === 'general') {
     const ctx = canvas.getContext('2d');
     const W = canvas.width;
     const H = canvas.height;
@@ -1047,7 +1134,6 @@ const renderPodium3DLoop = () => {
       return { x: cx + x1 * s, y: cy + y2 * s, z: z2, s };
     };
 
-    // Anneau orbital au sol
     ctx.beginPath();
     for (let a = 0; a <= Math.PI * 2; a += 0.08) {
       const p = project(275 * Math.cos(a), 56, 110 * Math.sin(a));
@@ -1128,7 +1214,6 @@ const renderPodium3DLoop = () => {
       drawFace(3, 2, 6, 7, '#0c1428', st.palette.main);
       drawFace(0, 1, 2, 3, '#111c36', st.palette.spec);
 
-      // Coupe 3D en rotation au-dessus du pilier
       const bob = Math.sin(podPhase * 1.5 + st.x) * 3;
       drawMini3DTrophyCup(
         ctx,
@@ -1140,7 +1225,6 @@ const renderPodium3DLoop = () => {
         podPhase * 0.9 + st.x
       );
 
-      // Rang sur la face avant du pilier
       const frontPt = project(st.x, (tY + bY) * 0.5, hz + 2);
       ctx.font = `900 ${Math.round(15 * frontPt.s)}px "JetBrains Mono", monospace`;
       ctx.textAlign = 'center';
@@ -1148,7 +1232,6 @@ const renderPodium3DLoop = () => {
       ctx.fillStyle = st.palette.main;
       ctx.fillText(st.rank, frontPt.x, frontPt.y);
 
-      // Nom du vrai joueur BDD au-dessus de sa coupe
       if (st.player) {
         const namePt = project(st.x, tY - 72 + bob, 0);
         ctx.font = `800 ${Math.round(12.5 * namePt.s)}px "Inter", sans-serif`;
@@ -1157,7 +1240,7 @@ const renderPodium3DLoop = () => {
 
         ctx.font = `700 ${Math.round(10.5 * namePt.s)}px "JetBrains Mono", monospace`;
         ctx.fillStyle = '#34d399';
-        ctx.fillText(`${st.player.avgOn15.toFixed(1)} / 15`, namePt.x, namePt.y + 15 * namePt.s);
+        ctx.fillText(`${st.player.totalXp.toLocaleString()} XP`, namePt.x, namePt.y + 15 * namePt.s);
       }
     }
   }
@@ -1165,187 +1248,44 @@ const renderPodium3DLoop = () => {
 };
 
 // =========================================================
-// SYNCHRONISATION MULTI-ENDPOINTS AVEC VOTRE VRAIE BDD
+// APPEL DIRECT À GET /api/leaderboard (data.general & data.records)
 // =========================================================
-const fetchRealDatabaseLeaderboard = async () => {
+const loadLeaderboardFromBackend = async () => {
   loading.value = true;
-  const playersByKey = new Map();
-
-  let myUid = null;
-  let myUsername = null;
-  let authHeaders = {};
 
   const savedUser = localStorage.getItem('geolearn_user');
-  const savedToken = localStorage.getItem('geolearn_token');
   if (savedUser) {
     try {
-      const parsed = JSON.parse(savedUser);
-      currentUser.value = parsed;
-      myUid = parsed.id || (parsed.user && parsed.user.id);
-      myUsername =
-        parsed.name ||
-        parsed.username ||
-        parsed.pseudo ||
-        (parsed.user && (parsed.user.name || parsed.user.username)) ||
-        null;
-      const tok = savedToken || parsed.token || (parsed.user && parsed.user.token);
-      if (tok) {
-        authHeaders = { Authorization: `Bearer ${tok}` };
-      }
+      currentUser.value = JSON.parse(savedUser);
     } catch (e) {}
   }
 
-  // Fonction d'ingestion universelle (accepte des lignes agrégées ou des scores individuels)
-  const ingestRows = (rows) => {
-    if (!Array.isArray(rows)) return;
-    for (const row of rows) {
-      const uid = row.user_id ?? row.utilisateur_id ?? row.userId ?? row.id;
-      const uname =
-        row.username ||
-        row.name ||
-        row.pseudo ||
-        row.nom ||
-        row.user_name ||
-        (row.user && (row.user.username || row.user.name || row.user.pseudo)) ||
-        (row.email ? row.email.split('@')[0] : null);
-
-      if (!uname && !uid) continue;
-      const displayUname = uname || `Joueur #${uid}`;
-      const key = uid ? `uid-${uid}` : `name-${displayUname.toLowerCase()}`;
-      const isMe =
-        (myUid && String(uid) === String(myUid)) ||
-        (myUsername && displayUname.toLowerCase() === myUsername.toLowerCase());
-
-      // Cas A : ligne de score individuel
-      if (row.score !== undefined && row.avg_score === undefined && row.moyenne === undefined && row.games_played === undefined && row.total_games === undefined) {
-        if (!playersByKey.has(key)) {
-          playersByKey.set(key, {
-            id: key,
-            uid,
-            username: displayUname,
-            isMe,
-            rawScores: []
-          });
-        }
-        playersByKey.get(key).rawScores.push({
-          mode: row.mode || 'QCM',
-          score: Number(row.score) || 0,
-          max_score: Number(row.max_score) || 15
-        });
-      } else if (row.avg_score !== undefined || row.moyenne !== undefined || row.best_score !== undefined || row.total_games !== undefined || row.games_played !== undefined) {
-        // Cas B : ligne déjà agrégée par SQL
-        const max = Number(row.max_score) || 15;
-        const rawAvg = Number(row.avg_score ?? row.moyenne ?? row.average_score ?? row.score ?? 0);
-        const rawBest = Number(row.best_score ?? row.meilleur_score ?? row.max ?? rawAvg);
-        const avg15 = max === 15 ? Math.min(15, rawAvg) : Math.min(15, (rawAvg / max) * 15);
-        const best15 = max === 15 ? Math.min(15, rawBest) : Math.min(15, (rawBest / max) * 15);
-        const count = Math.max(1, Number(row.games_played ?? row.total_games ?? row.parties_jouees ?? row.count ?? 1));
-
-        playersByKey.set(key, {
-          id: key,
-          uid,
-          username: displayUname,
-          isMe,
-          avgOn15: Number(avg15.toFixed(1)),
-          bestOn15: Number(best15.toFixed(1)),
-          gamesCount: count,
-          rawScores: Array.isArray(row.scores) ? row.scores : null
-        });
-      }
+  try {
+    const res = await fetch(`${API_URL}/api/leaderboard`);
+    if (res.ok) {
+      const data = await res.json();
+      generalRowsFromDb.value = Array.isArray(data?.general) ? data.general : [];
+      recordRowsFromDb.value = Array.isArray(data?.records) ? data.records : [];
     }
-  };
+  } catch (e) {}
 
-  // 1. Teste les routes de classement et de scores globaux du backend
-  const leaderboardEndpoints = [
-    `${API_URL}/api/leaderboard`,
-    `${API_URL}/api/classement`,
-    `${API_URL}/api/scores`,
-    `${API_URL}/api/admin/scores`
-  ];
-
-  for (const endpoint of leaderboardEndpoints) {
+  const myUid = currentUser.value?.id || currentUser.value?.user?.id;
+  if (myUid) {
     try {
-      const res = await fetch(endpoint, { headers: authHeaders });
-      if (res.ok) {
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : (data?.leaderboard || data?.scores || data?.data || []);
-        if (list.length > 0) ingestRows(list);
+      const resMy = await fetch(`${API_URL}/api/scores/${myUid}`);
+      if (resMy.ok) {
+        const mySc = await resMy.json();
+        myDetailedScores.value = Array.isArray(mySc) ? mySc : [];
       }
     } catch (e) {}
   }
 
-  // 2. Récupère la liste des utilisateurs inscrits (/api/admin/users ou /api/users) et leurs scores
-  const userEndpoints = [`${API_URL}/api/admin/users`, `${API_URL}/api/users`];
-  for (const uEndpoint of userEndpoints) {
-    try {
-      const resU = await fetch(uEndpoint, { headers: authHeaders });
-      if (resU.ok) {
-        const uData = await resU.json();
-        const usersList = Array.isArray(uData) ? uData : (uData?.users || uData?.data || []);
-        if (usersList.length > 0) {
-          await Promise.all(
-            usersList.slice(0, 50).map(async (u) => {
-              const uid = u.id || u.user_id;
-              const uname = u.name || u.username || u.pseudo || (u.email ? u.email.split('@')[0] : null);
-              if (!uid || !uname) return;
-              const key = `uid-${uid}`;
-              const isMe =
-                (myUid && String(uid) === String(myUid)) ||
-                (myUsername && uname.toLowerCase() === myUsername.toLowerCase());
-              try {
-                const rSc = await fetch(`${API_URL}/api/scores/${uid}`, { headers: authHeaders });
-                if (rSc.ok) {
-                  const scList = await rSc.json();
-                  if (Array.isArray(scList) && scList.length > 0) {
-                    playersByKey.set(key, {
-                      id: key,
-                      uid,
-                      username: uname,
-                      isMe,
-                      rawScores: scList
-                    });
-                  }
-                }
-              } catch (err) {}
-            })
-          );
-          break;
-        }
-      }
-    } catch (e) {}
-  }
-
-  // 3. Charge toujours l'historique complet de l'opérateur connecté
-  if (myUid && myUsername) {
-    try {
-      const resMyScores = await fetch(`${API_URL}/api/scores/${myUid}`, { headers: authHeaders });
-      if (resMyScores.ok) {
-        const myScores = await resMyScores.json();
-        if (Array.isArray(myScores) && myScores.length > 0) {
-          for (const [k, v] of playersByKey.entries()) {
-            if (v.username.toLowerCase() === myUsername.toLowerCase()) {
-              playersByKey.delete(k);
-            }
-          }
-          playersByKey.set(`uid-${myUid}`, {
-            id: `uid-${myUid}`,
-            uid: myUid,
-            username: myUsername,
-            isMe: true,
-            rawScores: myScores
-          });
-        }
-      }
-    } catch (e) {}
-  }
-
-  dbPlayersList.value = [...playersByKey.values()];
   loading.value = false;
 };
 
 onMounted(() => {
   renderPodium3DLoop();
-  fetchRealDatabaseLeaderboard();
+  loadLeaderboardFromBackend();
 });
 
 onUnmounted(() => {
