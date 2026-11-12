@@ -11,10 +11,12 @@
           <span>{{ locale === 'fr' ? 'TÉLÉMÉTRIE & PERFORMANCES' : 'TELEMETRY & PERFORMANCE' }}</span>
         </div>
         <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-          {{ t('scores.title') }}
+          {{ locale === 'fr' ? 'Mes Statistiques & Scores' : 'My Statistics & Scores' }}
         </h1>
         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-          {{ t('scores.subtitle') }}
+          {{ locale === 'fr'
+            ? 'Suivez votre progression et analysez vos performances sur une échelle unifiée sur 15.'
+            : 'Track your progress and analyze your performance on a unified 15-point scale.' }}
         </p>
       </div>
 
@@ -60,16 +62,18 @@
         </svg>
       </div>
       <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-        {{ t('scores.login_required') }}
+        {{ locale === 'fr' ? 'Connexion requise' : 'Login Required' }}
       </h2>
       <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-        {{ t('scores.login_desc') }}
+        {{ locale === 'fr'
+          ? 'Connectez-vous à votre compte pour enregistrer vos scores et visualiser votre courbe de progression.'
+          : 'Sign in to your account to save your scores and visualize your progression curve.' }}
       </p>
       <router-link
         to="/profil"
         class="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs sm:text-sm transition shadow-lg shadow-sky-500/20"
       >
-        <span>{{ t('scores.login_btn') }}</span>
+        <span>{{ locale === 'fr' ? 'Se connecter / Créer un compte' : 'Sign In / Create Account' }}</span>
         <span>→</span>
       </router-link>
     </div>
@@ -81,7 +85,7 @@
       v-else-if="loading"
       class="rounded-3xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-[#090E1A]/80 p-12 text-center font-mono text-xs text-slate-400"
     >
-      {{ t('scores.loading') }}
+      {{ locale === 'fr' ? 'Chargement de vos statistiques...' : 'Loading your statistics...' }}
     </div>
 
     <!-- ========================================================= -->
@@ -89,7 +93,7 @@
     <!-- ========================================================= -->
     <template v-else>
 
-      <!-- A. 4 CARTES KPI PRINCIPALES (GARANTIES SUR /15) -->
+      <!-- A. 4 CARTES KPI PRINCIPALES (ZÉRO CLÉ I18N MANQUANTE) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Parties jouées -->
         <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-5 flex items-center gap-4 shadow-lg">
@@ -100,7 +104,9 @@
           </div>
           <div class="min-w-0">
             <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
-              {{ t('scores.kpi_games') }}
+              {{ scoreCalcMode === 'strict15'
+                ? (locale === 'fr' ? 'QCM Classiques joués' : 'Classic QCMs Played')
+                : (locale === 'fr' ? 'Total des parties' : 'Total Games Played') }}
             </span>
             <div class="flex items-baseline gap-2 mt-0.5">
               <strong class="font-mono text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
@@ -124,7 +130,9 @@
           </div>
           <div class="min-w-0">
             <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
-              {{ scoreCalcMode === 'strict15' ? t('scores.kpi_avg') : (locale === 'fr' ? 'Moyenne globale (/15)' : 'Global Avg (/15)') }}
+              {{ scoreCalcMode === 'strict15'
+                ? (locale === 'fr' ? 'Score moyen (QCM)' : 'Average Score (QCM)')
+                : (locale === 'fr' ? 'Moyenne globale (/15)' : 'Global Avg (/15)') }}
             </span>
             <strong class="font-mono text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5 block">
               {{ averageScoreOn15 }} <span class="text-sm font-bold text-slate-400">/ 15</span>
@@ -132,7 +140,7 @@
           </div>
         </div>
 
-        <!-- Meilleur Score (/15 - Corrigé : ne dépasse jamais 15/15) -->
+        <!-- Meilleur Score (/15) -->
         <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-5 flex items-center gap-4 shadow-lg">
           <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-400 flex items-center justify-center shrink-0">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -144,7 +152,9 @@
           </div>
           <div class="min-w-0">
             <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
-              {{ scoreCalcMode === 'strict15' ? t('scores.kpi_best') : (locale === 'fr' ? 'Meilleur score (/15)' : 'Best Score (/15)') }}
+              {{ scoreCalcMode === 'strict15'
+                ? (locale === 'fr' ? 'Meilleur score (QCM)' : 'Best Score (QCM)')
+                : (locale === 'fr' ? 'Record absolu (/15)' : 'Best Overall (/15)') }}
             </span>
             <strong class="font-mono text-2xl sm:text-3xl font-black text-emerald-500 dark:text-emerald-400 mt-0.5 block">
               {{ bestScoreOn15 }} <span class="text-sm font-bold text-slate-400">/ 15</span>
@@ -152,7 +162,7 @@
           </div>
         </div>
 
-        <!-- Précision moyenne (%) -->
+        <!-- Taux de réussite (%) -->
         <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-5 flex items-center gap-4 shadow-lg">
           <div class="w-12 h-12 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/25 text-fuchsia-400 flex items-center justify-center shrink-0">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -181,8 +191,8 @@
             <div>
               <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
                 {{ scoreCalcMode === 'strict15'
-                  ? t('scores.chart_title')
-                  : (locale === 'fr' ? 'Évolution des scores (ramenés sur 15)' : 'Score Progression (normalized /15)') }}
+                  ? (locale === 'fr' ? 'Évolution des scores QCM' : 'QCM Score Evolution')
+                  : (locale === 'fr' ? 'Évolution globale (ramenée sur 15)' : 'Global Progression (normalized /15)') }}
               </h2>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {{ scoreCalcMode === 'strict15'
@@ -191,8 +201,8 @@
               </p>
             </div>
 
-            <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] font-mono text-xs font-bold text-slate-600 dark:text-slate-300">
-              {{ chartPoints.length }} {{ t('scores.last_games') }}
+            <span class="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06] font-mono text-xs font-bold text-slate-600 dark:text-slate-300">
+              {{ chartPoints.length }} {{ locale === 'fr' ? 'dernières parties' : 'last games' }}
             </span>
           </div>
 
@@ -280,10 +290,10 @@
             v-else
             class="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-10 text-center text-xs text-slate-400"
           >
-            {{ t('scores.no_qcm_chart') }}
+            {{ locale === 'fr' ? 'Aucune partie QCM enregistrée pour le moment.' : 'No QCM sessions recorded yet.' }}
           </div>
 
-          <!-- Synthèse par type de jeu (ramenée sur 15) -->
+          <!-- Synthèse par type de jeu (ramenée sur 15, sans doublons) -->
           <div v-if="modeBreakdown.length > 0" class="pt-4 border-t border-slate-200/70 dark:border-white/10 space-y-3">
             <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-slate-400">
               {{ locale === 'fr' ? 'MOYENNE PAR MODE (RAMENÉE SUR 15)' : 'AVERAGE BY MODE (NORMALIZED /15)' }}
@@ -291,12 +301,12 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div
                 v-for="m in modeBreakdown"
-                :key="m.mode"
+                :key="m.canonicalKey"
                 class="p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.06] space-y-1.5"
               >
-                <div class="flex items-center justify-between text-xs">
-                  <strong class="font-bold text-slate-800 dark:text-slate-200 truncate">{{ m.mode }}</strong>
-                  <span class="font-mono font-black text-sky-500">{{ m.avgOn15 }} / 15</span>
+                <div class="flex items-center justify-between text-xs gap-2">
+                  <strong class="font-bold text-slate-800 dark:text-slate-200 truncate">{{ m.label }}</strong>
+                  <span class="font-mono font-black text-sky-500 shrink-0">{{ m.avgOn15 }} / 15</span>
                 </div>
                 <div class="h-1.5 w-full rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
                   <div
@@ -313,18 +323,18 @@
           </div>
         </section>
 
-        <!-- Colonne Droite (5 cols) : Historique récent avec filtre -->
+        <!-- Colonne Droite (5 cols) : Historique récent avec titre bilingue propre -->
         <section class="lg:col-span-5 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-xl space-y-5">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
-              {{ t('scores.recent_title') }}
+              {{ locale === 'fr' ? 'Historique récent' : 'Recent History' }}
             </h2>
 
             <div class="flex items-center gap-1 p-1 rounded-full bg-slate-100 dark:bg-white/[0.05]">
               <button
                 type="button"
                 @click="historyFilter = 'all'"
-                class="px-2.5 py-1 rounded-full text-[11px] font-bold transition cursor-pointer"
+                class="px-3 py-1 rounded-full text-[11px] font-bold transition cursor-pointer"
                 :class="historyFilter === 'all' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950' : 'text-slate-500'"
               >
                 {{ locale === 'fr' ? 'Tous' : 'All' }}
@@ -332,7 +342,7 @@
               <button
                 type="button"
                 @click="historyFilter = 'qcm15'"
-                class="px-2.5 py-1 rounded-full text-[11px] font-bold transition cursor-pointer"
+                class="px-3 py-1 rounded-full text-[11px] font-bold transition cursor-pointer"
                 :class="historyFilter === 'qcm15' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950' : 'text-slate-500'"
               >
                 QCM /15
@@ -382,7 +392,7 @@
           </div>
 
           <div v-else class="p-8 text-center text-xs text-slate-400">
-            {{ t('scores.empty_history') }}
+            {{ locale === 'fr' ? 'Aucune partie enregistrée dans cette catégorie.' : 'No recorded games in this category.' }}
           </div>
         </section>
 
@@ -397,25 +407,24 @@
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const { t, locale } = useI18n();
+const { locale } = useI18n();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 const isLoggedIn = ref(false);
 const loading = ref(true);
 const rawScores = ref([]);
 
-// 'strict15' = uniquement les QCM basiques sur 15 | 'normalized15' = tous les modes ramenés sur 15
 const scoreCalcMode = ref('strict15');
 const historyFilter = ref('all');
 
-// Détecte si une partie est un vrai QCM classique sur 15 (exclut "QCM Flash 60s")
+// Détecte si une partie est un vrai QCM classique sur 15 (exclut "QCM Flash 60s" et "Sprint 60s")
 const isClassicQcm15 = (s) => {
   const modeStr = (s.mode || '').toLowerCase();
   const max = Number(s.max_score);
-  return max === 15 && !modeStr.includes('flash');
+  return max === 15 && !modeStr.includes('flash') && !modeStr.includes('sprint');
 };
 
-// Convertit n'importe quel score (Worldle /6, Enquête /25, Sprint 60s, Carte /47, PinDrop /25000) sur 15 (plafonné à 15)
+// Ramène n'importe quel score sur 15 (plafonné strictement à 15)
 const normalizeScoreTo15 = (s) => {
   const raw = Math.max(0, Number(s.score) || 0);
   const max = Math.max(1, Number(s.max_score) || 15);
@@ -426,6 +435,42 @@ const normalizeScoreTo15 = (s) => {
   return Math.min(15, Math.round(scaled * 10) / 10);
 };
 
+// Unifie les noms de modes (ex: "Pays Mystère" et "Pays Mystère (Worldle)") et les traduit en FR / EN
+const getCanonicalModeKey = (mode = '') => {
+  const m = mode.toLowerCase();
+  if (m.includes('myst') || m.includes('worldle')) return 'mystery';
+  if (m.includes('flash') || m.includes('sprint')) return 'flash60';
+  if (m.includes('enqu') || m.includes('indice') || m.includes('detective')) return 'detective';
+  if (m.includes('capitale') || m.includes('capital')) return 'qcm_capitals';
+  if (m.includes('drapeau') || m.includes('flag')) return 'qcm_flags';
+  if (m.includes('culture')) return 'qcm_culture';
+  if (m.includes('europe')) return 'map_europe';
+  if (m.includes('monde') || m.includes('196')) return 'map_world';
+  if (m.includes('cliquez') || m.includes('click')) return 'map_click';
+  if (m.includes('geoguessr') || m.includes('pindrop')) return 'pindrop';
+  if (m.includes('duel')) return 'duel';
+  return mode || 'other';
+};
+
+const formatModeLabel = (mode = '') => {
+  const key = getCanonicalModeKey(mode);
+  const isFr = locale.value === 'fr';
+  const labels = {
+    mystery: isFr ? 'Pays Mystère (Worldle)' : 'Mystery Country (Worldle)',
+    flash60: isFr ? 'Sprint 60s (Flash)' : '60s Flash Sprint',
+    detective: isFr ? 'Enquête aux 5 Indices' : '5-Clue Detective',
+    qcm_capitals: isFr ? 'QCM Capitales' : 'Capitals Quiz',
+    qcm_flags: isFr ? 'QCM Drapeaux' : 'Flags Quiz',
+    qcm_culture: isFr ? 'QCM Culture & Démo' : 'Culture & Demo Quiz',
+    map_europe: isFr ? 'Défi Europe (47 pays)' : 'Europe Map Challenge (47)',
+    map_world: isFr ? 'Défi Monde (196 pays)' : 'World Map Challenge (196)',
+    map_click: isFr ? 'Cliquez sur la Carte' : 'Blank Map Click',
+    pindrop: 'GeoLearn PinDrop',
+    duel: isFr ? 'Duel 1v1' : '1v1 Duel'
+  };
+  return labels[key] || mode;
+};
+
 const enrichedScores = computed(() =>
   rawScores.value.map((s) => ({
     ...s,
@@ -434,7 +479,6 @@ const enrichedScores = computed(() =>
   }))
 );
 
-// Jeu de données actif selon le bouton choisi en haut
 const activeDatasetOn15 = computed(() => {
   if (scoreCalcMode.value === 'strict15') {
     return enrichedScores.value.filter((s) => s.isClassic15);
@@ -495,22 +539,29 @@ const areaPath = computed(() => {
 });
 
 // =========================================================
-// SYNTHÈSE PAR MODE & HISTORIQUE FILTRÉ
+// SYNTHÈSE PAR MODE (SANS DOUBLONS) & HISTORIQUE FILTRÉ
 // =========================================================
 const modeBreakdown = computed(() => {
   const groups = new Map();
   for (const s of enrichedScores.value) {
-    const key = formatModeLabel(s.mode);
-    if (!groups.has(key)) {
-      groups.set(key, { mode: key, count: 0, sum15: 0, bestOn15: 0 });
+    const canonicalKey = getCanonicalModeKey(s.mode);
+    if (!groups.has(canonicalKey)) {
+      groups.set(canonicalKey, {
+        canonicalKey,
+        rawMode: s.mode,
+        count: 0,
+        sum15: 0,
+        bestOn15: 0
+      });
     }
-    const g = groups.get(key);
+    const g = groups.get(canonicalKey);
     g.count++;
     g.sum15 += s.scoreOn15;
     if (s.scoreOn15 > g.bestOn15) g.bestOn15 = s.scoreOn15;
   }
   return [...groups.values()].map((g) => ({
     ...g,
+    label: formatModeLabel(g.rawMode),
     avgOn15: Number((g.sum15 / g.count).toFixed(1))
   }));
 });
@@ -522,13 +573,6 @@ const filteredHistory = computed(() => {
   }
   return base;
 });
-
-const formatModeLabel = (mode = '') => {
-  if (mode === 'QCM Flash 60s') {
-    return locale.value === 'fr' ? 'Sprint 60s (Flash)' : '60s Flash Sprint';
-  }
-  return mode;
-};
 
 const formatRawScore = (item) => {
   const m = (item.mode || '').toLowerCase();

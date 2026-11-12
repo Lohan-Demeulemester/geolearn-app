@@ -2,9 +2,12 @@
   <div class="quiz-experience max-w-[1400px] mx-auto px-2 sm:px-6 pb-24 space-y-8">
 
     <!-- ========================================================= -->
-    <!-- 1. BARRE SUPÉRIEURE FLOTTANTE : TITRE, AUDIO & RETOUR     -->
+    <!-- 1. BARRE SUPÉRIEURE COMPACTE (AFFICHE EN COURS DE PARTIE) -->
     <!-- ========================================================= -->
-    <header class="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-[#090E1A]/85 backdrop-blur-2xl p-5 sm:p-7 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <header
+      v-if="currentMode !== 'menu'"
+      class="relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-[#090E1A]/85 backdrop-blur-2xl p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+    >
       <div class="space-y-1">
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-600 dark:text-sky-400 font-mono text-[11px] font-bold uppercase tracking-wider">
           <span class="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
@@ -13,12 +16,8 @@
         <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
           {{ activeModeTitle }}
         </h1>
-        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-          {{ t('quiz.subtitle') }}
-        </p>
       </div>
 
-      <!-- Contrôles Audio & Retour aux modes (whitespace-nowrap garanti sur mobile) -->
       <div class="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto justify-between sm:justify-end shrink-0">
         <button
           type="button"
@@ -42,7 +41,6 @@
         </button>
 
         <button
-          v-if="currentMode !== 'menu'"
           type="button"
           @click="retourMenu"
           class="px-4 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:opacity-90 text-xs font-black transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 shadow-md"
@@ -54,81 +52,321 @@
     </header>
 
     <!-- ========================================================= -->
-    <!-- TRANSITION SPATIALE ENTRE LES MODES DE JEU                -->
+    <!-- TRANSITION SPATIALE ENTRE LE HUB 3D ET LES MODES DE JEU   -->
     <!-- ========================================================= -->
     <transition name="stage-morph" mode="out-in">
 
       <!-- ======================================================= -->
-      <!-- MENU PRINCIPAL : RÉPERTOIRE DES 11 EXPÉRIENCES          -->
+      <!-- MENU PRINCIPAL : HUB 3D AVEC MANETTE INTERACTIVE        -->
       <!-- ======================================================= -->
       <div v-if="currentMode === 'menu'" key="quiz-menu" class="space-y-8">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-slate-200/70 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
+
+        <!-- 1. HERO INTERACTIF : ACCROCHE + MANETTE 3D ROTATIVE À 360° -->
+        <section class="quiz-hero-stage relative overflow-hidden rounded-[2rem] border border-slate-200/80 dark:border-indigo-500/20 bg-white dark:bg-[#070A17] px-6 sm:px-10 lg:px-14 py-8 sm:py-10 shadow-2xl">
+          <!-- Halos néon violets / cyan d'arrière-plan -->
+          <div class="pointer-events-none absolute -top-24 right-1/4 w-96 h-96 rounded-full bg-indigo-600/20 blur-[110px]"></div>
+          <div class="pointer-events-none absolute -bottom-24 right-10 w-80 h-80 rounded-full bg-sky-500/15 blur-[100px]"></div>
+
+          <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <!-- Colonne Gauche : Typographie & Actions -->
+            <div class="lg:col-span-7 space-y-5 text-left">
+              <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 dark:text-amber-300 text-xs font-bold">
+                <span>★</span>
+                <span>{{ locale === 'fr' ? 'Découvrir • Apprendre • Jouer' : 'Discover • Learn • Play' }}</span>
+              </div>
+
+              <h1 class="text-3xl sm:text-5xl lg:text-[3.25rem] font-black tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+                {{ locale === 'fr' ? 'Boostez vos connaissances avec nos' : 'Boost your knowledge with interactive' }}
+                <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-sky-400 bg-clip-text text-transparent pb-1">
+                  {{ locale === 'fr' ? 'quiz interactifs' : 'quizzes' }}
+                </span>
+              </h1>
+
+              <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300/85 max-w-xl leading-relaxed">
+                {{ locale === 'fr'
+                  ? 'Relevez des défis géographiques immersifs en 3D, testez votre rapidité et explorez les 196 États du monde à travers 11 modes de jeu.'
+                  : 'Challenge yourself with engaging 3D geography games and explore all 196 sovereign states across 11 interactive modes.' }}
+              </p>
+
+              <div class="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  @click="scrollToGamesGrid"
+                  class="px-6 py-3.5 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-sky-500 hover:opacity-95 text-white font-black text-xs sm:text-sm shadow-xl shadow-indigo-500/25 hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <span>{{ locale === 'fr' ? 'Explorer les jeux' : 'Browse Games' }}</span>
+                  <span>→</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="launchRandomGame"
+                  class="px-5 py-3.5 rounded-full bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.12] border border-slate-200 dark:border-white/15 text-slate-800 dark:text-white font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <span class="text-indigo-400">▶</span>
+                  <span>{{ locale === 'fr' ? 'Partie aléatoire' : 'Random Game' }}</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="toggleSound"
+                  class="px-4 py-3.5 rounded-full bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-xs font-bold transition cursor-pointer"
+                >
+                  {{ soundEnabled ? (locale === 'fr' ? '🔊 Audio ON' : '🔊 Sound ON') : (locale === 'fr' ? '🔇 Muet' : '🔇 Muted') }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Colonne Droite : Manette 3D Interactive & Cubes Flottants (Glisser pour tourner en 3D) -->
+            <div class="lg:col-span-5 flex flex-col items-center justify-center relative">
+              <div class="relative flex items-center justify-center select-none">
+                <canvas
+                  ref="gamepadCanvasRef"
+                  class="w-[300px] h-[250px] sm:w-[380px] sm:h-[300px] cursor-grab active:cursor-grabbing"
+                  @pointerdown="onGamepadPointerDown"
+                  @pointermove="onGamepadPointerMove"
+                  @pointerup="onGamepadPointerUp"
+                  @pointerleave="onGamepadPointerUp"
+                ></canvas>
+
+                <span class="pointer-events-none absolute bottom-1 px-3 py-1 rounded-full bg-slate-900/80 dark:bg-white/[0.06] border border-white/10 font-mono text-[10px] text-indigo-300 backdrop-blur-md">
+                  {{ locale === 'fr' ? '↻ GLISSER POUR TOURNER LA MANETTE 3D' : '↻ DRAG TO ROTATE 3D CONTROLLER' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. BARRE DE FILTRES, RECHERCHE & TRI (COMME SUR L'IMAGE DE RÉFÉRENCE) -->
+        <div ref="gamesGridRef" class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pt-2">
+          <!-- Pilules de catégories avec icônes -->
+          <div class="flex flex-wrap items-center gap-2">
             <button
               v-for="cat in menuCategories"
               :key="cat.id"
               type="button"
               @click="selectedMenuCat = cat.id"
-              class="px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer"
+              class="px-4 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border"
               :class="selectedMenuCat === cat.id
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+                ? 'bg-gradient-to-r from-indigo-600 to-sky-500 text-white border-indigo-400/50 shadow-lg shadow-indigo-500/25 scale-[1.02]'
+                : 'bg-white/80 dark:bg-[#0D1326] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-indigo-400/50'"
             >
-              {{ cat.label }}
+              <span>{{ cat.icon }}</span>
+              <span>{{ cat.label }}</span>
             </button>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <router-link
-              to="/geoguessr"
-              class="px-4 py-2 rounded-full bg-sky-500/15 border border-sky-500/35 text-sky-600 dark:text-sky-300 text-xs font-bold hover:bg-sky-500 hover:text-slate-950 transition flex items-center gap-2"
+          <!-- Recherche d'un jeu + Sélecteur de Tri -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="relative flex-1 sm:flex-initial">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                v-model="menuSearchQuery"
+                type="text"
+                :placeholder="locale === 'fr' ? 'Rechercher un mode de jeu...' : 'Search for a game...'"
+                class="w-full sm:w-56 pl-9 pr-8 py-2.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0D1326] text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-400"
+              />
+              <button
+                v-if="menuSearchQuery"
+                type="button"
+                @click="menuSearchQuery = ''"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            <select
+              v-model="menuSortBy"
+              class="px-4 py-2.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0D1326] text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
             >
-              <span>GeoLearn PinDrop (25 000 pts)</span>
-              <span>→</span>
+              <option value="popular">{{ locale === 'fr' ? 'Trier : Popularité' : 'Sort by: Popularity' }}</option>
+              <option value="fast">{{ locale === 'fr' ? 'Trier : Plus rapide' : 'Sort by: Shortest' }}</option>
+              <option value="name">{{ locale === 'fr' ? 'Trier : Nom (A-Z)' : 'Sort by: Name (A-Z)' }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 3. TITRE DE SECTION -->
+        <div class="flex items-center justify-between">
+          <div class="space-y-1">
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              {{ locale === 'fr' ? 'Modes de Jeu & Défis Interactifs' : 'Featured Games' }}
+            </h2>
+            <div class="h-1 w-14 rounded-full bg-gradient-to-r from-indigo-500 to-sky-400"></div>
+          </div>
+
+          <div class="flex items-center gap-3 text-xs font-bold">
+            <router-link to="/geoguessr" class="text-sky-500 hover:underline">
+              PinDrop 25K →
             </router-link>
-            <router-link
-              to="/duel"
-              class="px-4 py-2 rounded-full bg-rose-500/15 border border-rose-500/35 text-rose-600 dark:text-rose-300 text-xs font-bold hover:bg-rose-500 hover:text-white transition flex items-center gap-2"
-            >
-              <span>{{ locale === 'fr' ? 'Arène Duel 1v1' : '1v1 Duel Arena' }}</span>
-              <span>→</span>
+            <router-link to="/duel" class="text-rose-500 hover:underline">
+              {{ locale === 'fr' ? 'Duel 1v1 →' : '1v1 Duel →' }}
             </router-link>
           </div>
         </div>
 
+        <!-- 4. GRILLE DES CARTES DE JEUX ILLUSTRÉES (STYLE IMAGE DE RÉFÉRENCE) -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          <button
+          <article
             v-for="card in filteredMenuCards"
             :key="card.id"
-            type="button"
             @click="card.action()"
-            class="group text-left rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/60 hover:shadow-2xl cursor-pointer"
+            class="game-showcase-card group relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0B1022] p-6 flex items-stretch justify-between gap-4 cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:border-indigo-400/50 hover:shadow-[0_22px_50px_-12px_rgba(79,70,229,0.28)]"
           >
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-4">
-                <span class="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border" :class="card.badgeClass">
-                  {{ card.tag }}
+            <!-- Halo radial propre à chaque carte -->
+            <div
+              class="pointer-events-none absolute -right-10 -bottom-10 w-44 h-44 rounded-full blur-3xl opacity-30 group-hover:opacity-60 transition-opacity"
+              :style="{ background: card.glowColor }"
+            ></div>
+
+            <!-- Partie Gauche : Pilule, Titre, Description, Bouton ▶ Play + Durée -->
+            <div class="relative z-10 flex flex-col justify-between flex-1 min-w-0">
+              <div class="space-y-2.5">
+                <span
+                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border"
+                  :class="card.badgeClass"
+                >
+                  <span>{{ card.badgeIcon }}</span>
+                  <span>{{ card.tag }}</span>
                 </span>
-                <span class="font-mono text-xs text-slate-400">
-                  {{ card.metric }}
-                </span>
+
+                <h3 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white group-hover:text-sky-400 transition-colors leading-snug">
+                  {{ card.title }}
+                </h3>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
+                  {{ card.desc }}
+                </p>
               </div>
 
-              <h3 class="text-xl font-black text-slate-900 dark:text-white group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors mb-2">
-                {{ card.title }}
-              </h3>
-
-              <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                {{ card.desc }}
-              </p>
+              <div class="pt-5 mt-3 flex items-center gap-3">
+                <span class="px-4 py-2 rounded-full bg-slate-900 dark:bg-white/[0.08] group-hover:bg-indigo-500 text-white text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                  <span class="text-[10px]">▶</span>
+                  <span>{{ card.cta }}</span>
+                </span>
+                <span class="font-mono text-[11px] text-slate-400 flex items-center gap-1 whitespace-nowrap">
+                  <span>🕒</span>
+                  <span>{{ card.duration }}</span>
+                </span>
+              </div>
             </div>
 
-            <div class="mt-6 pt-4 border-t border-slate-100 dark:border-white/[0.06] w-full flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-500 dark:group-hover:text-sky-400">
-              <span>{{ card.cta }}</span>
-              <span class="w-7 h-7 rounded-full bg-slate-100 dark:bg-white/5 group-hover:bg-sky-500 group-hover:text-white flex items-center justify-center transition-all">→</span>
+            <!-- Partie Droite : Emblème Visuel 3D Animé -->
+            <div class="relative z-10 w-28 sm:w-32 shrink-0 flex items-center justify-center">
+              <!-- Illustration 1 : Globe 3D + Pin (Worldle) -->
+              <div v-if="card.art === 'worldle'" class="art-emblem group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
+                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(56,189,248,0.35)]">
+                  <defs>
+                    <radialGradient id="gWorldle" cx="35%" cy="30%" r="70%">
+                      <stop offset="0%" stop-color="#38bdf8" />
+                      <stop offset="55%" stop-color="#1d4ed8" />
+                      <stop offset="100%" stop-color="#0f172a" />
+                    </radialGradient>
+                  </defs>
+                  <ellipse cx="60" cy="104" rx="38" ry="8" fill="rgba(56,189,248,0.22)" />
+                  <circle cx="58" cy="58" r="38" fill="url(#gWorldle)" stroke="#7dd3fc" stroke-width="1.5" />
+                  <path d="M36 45 Q48 34 62 42 T82 55 Q72 72 52 68 Z" fill="#34d399" opacity="0.85" />
+                  <ellipse cx="58" cy="58" rx="48" ry="16" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="5 3" transform="rotate(-22 58 58)" />
+                  <!-- Pin 3D Rouge -->
+                  <path d="M76 18 C68 18 62 24 62 32 C62 42 76 54 76 54 C76 54 90 42 90 32 C90 24 84 18 76 18 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="1.5" />
+                  <circle cx="76" cy="31" r="4.5" fill="#ffffff" />
+                </svg>
+              </div>
+
+              <!-- Illustration 2 : Globe Orbital sur Socle (Chrono 3D) -->
+              <div v-else-if="card.art === 'chrono'" class="art-emblem group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(16,185,129,0.35)]">
+                  <defs>
+                    <radialGradient id="gChrono" cx="35%" cy="30%" r="70%">
+                      <stop offset="0%" stop-color="#34d399" />
+                      <stop offset="60%" stop-color="#0284c7" />
+                      <stop offset="100%" stop-color="#090d16" />
+                    </radialGradient>
+                  </defs>
+                  <ellipse cx="60" cy="105" rx="34" ry="7" fill="rgba(16,185,129,0.25)" />
+                  <circle cx="60" cy="54" r="35" fill="url(#gChrono)" stroke="#6ee7b7" stroke-width="1.5" />
+                  <path d="M42 38 Q58 32 72 44 T74 68 Q54 74 42 58 Z" fill="#fde047" opacity="0.8" />
+                  <path d="M84 24 A44 44 0 0 1 60 98" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" />
+                  <rect x="46" y="96" width="28" height="7" rx="3.5" fill="#38bdf8" />
+                </svg>
+              </div>
+
+              <!-- Illustration 3 : Chronomètre + Drapeau à damier (Sprint 60s) -->
+              <div v-else-if="card.art === 'sprint'" class="art-emblem group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
+                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(245,158,11,0.35)]">
+                  <ellipse cx="62" cy="104" rx="36" ry="7" fill="rgba(245,158,11,0.25)" />
+                  <!-- Drapeau damier -->
+                  <line x1="26" y1="22" x2="38" y2="96" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
+                  <path d="M27 24 Q46 18 64 28 L60 52 Q42 42 31 48 Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" />
+                  <path d="M27 24 L45 22 L43 35 L29 36 Z" fill="#0f172a" />
+                  <path d="M45 35 L62 40 L60 52 L43 47 Z" fill="#0f172a" />
+                  <!-- Chronomètre 3D -->
+                  <rect x="68" y="26" width="12" height="6" rx="2" fill="#fbbf24" />
+                  <circle cx="74" cy="64" r="30" fill="#0f172a" stroke="#fbbf24" stroke-width="4" />
+                  <circle cx="74" cy="64" r="23" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 4" />
+                  <line x1="74" y1="64" x2="74" y2="47" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" />
+                  <line x1="74" y1="64" x2="88" y2="64" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+              </div>
+
+              <!-- Illustration 4 : Loupe Néon & Dossier (Detective 5 Indices) -->
+              <div v-else-if="card.art === 'detective'" class="art-emblem group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(168,85,247,0.38)]">
+                  <ellipse cx="60" cy="104" rx="36" ry="7" fill="rgba(168,85,247,0.25)" />
+                  <!-- Cartes indices 3D -->
+                  <rect x="44" y="28" width="44" height="58" rx="8" transform="rotate(8 66 57)" fill="#1e1b4b" stroke="#a855f7" stroke-width="2" />
+                  <!-- Loupe lumineuse -->
+                  <circle cx="48" cy="58" r="22" fill="rgba(56,189,248,0.18)" stroke="#38bdf8" stroke-width="4" />
+                  <line x1="33" y1="74" x2="18" y2="90" stroke="#c084fc" stroke-width="6" stroke-linecap="round" />
+                  <circle cx="42" cy="52" r="5" fill="rgba(255,255,255,0.45)" />
+                </svg>
+              </div>
+
+              <!-- Illustration 5 : Monument Panthéon 3D (Capitales) -->
+              <div v-else-if="card.art === 'capitals'" class="art-emblem group-hover:scale-110 transition-transform duration-500">
+                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(56,189,248,0.32)]">
+                  <ellipse cx="60" cy="104" rx="38" ry="7" fill="rgba(56,189,248,0.22)" />
+                  <polygon points="60,22 22,44 98,44" fill="#60a5fa" stroke="#bae6fd" stroke-width="1.5" />
+                  <rect x="26" y="44" width="68" height="6" rx="2" fill="#3b82f6" />
+                  <rect x="32" y="50" width="8" height="36" rx="2" fill="#e2e8f0" />
+                  <rect x="48" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
+                  <rect x="64" y="50" width="8" height="36" rx="2" fill="#cbd5e1" />
+                  <rect x="80" y="50" width="8" height="36" rx="2" fill="#94a3b8" />
+                  <rect x="20" y="86" width="80" height="10" rx="3" fill="#38bdf8" />
+                </svg>
+              </div>
+
+              <!-- Illustration 6 : Drapeau 3D Flottant sur Socle (Drapeaux) -->
+              <div v-else-if="card.art === 'flags'" class="art-emblem group-hover:scale-110 group-hover:-rotate-2 transition-transform duration-500">
+                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(99,102,241,0.38)]">
+                  <ellipse cx="56" cy="104" rx="34" ry="7" fill="rgba(99,102,241,0.28)" />
+                  <line x1="34" y1="20" x2="34" y2="98" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" />
+                  <circle cx="34" cy="18" r="4.5" fill="#fbbf24" />
+                  <path d="M36 24 Q58 16 78 26 T98 24 L98 66 Q78 74 58 64 T36 68 Z" fill="#3b82f6" stroke="#93c5fd" stroke-width="1.5" />
+                  <path d="M36 38 Q58 30 78 40 T98 38 L98 52 Q78 60 58 50 T36 54 Z" fill="#f8fafc" />
+                </svg>
+              </div>
+
+              <!-- Illustration 7 : Cible Radar 3D (Map-Click / Culture / Autres) -->
+              <div v-else class="art-emblem group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
+                <svg viewBox="0 0 120 120" class="w-28 h-28 drop-shadow-[0_12px_20px_rgba(236,72,153,0.32)]">
+                  <ellipse cx="60" cy="104" rx="34" ry="7" fill="rgba(236,72,153,0.22)" />
+                  <circle cx="60" cy="56" r="34" fill="#1e1b4b" stroke="#f472b6" stroke-width="2.5" />
+                  <circle cx="60" cy="56" r="22" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 4" />
+                  <circle cx="60" cy="56" r="9" fill="#10b981" />
+                  <line x1="60" y1="14" x2="60" y2="30" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round" />
+                  <line x1="60" y1="82" x2="60" y2="98" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round" />
+                  <line x1="18" y1="56" x2="34" y2="56" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round" />
+                  <line x1="86" y1="56" x2="102" y2="56" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+              </div>
             </div>
-          </button>
+          </article>
         </div>
+
       </div>
 
       <!-- ======================================================= -->
@@ -142,7 +380,6 @@
             :key="'qcm-q-' + qcmIndex"
             class="rounded-3xl border border-slate-200/90 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-6 sm:p-10 shadow-2xl space-y-7"
           >
-            <!-- Barre de progression segmentée (15 questions) + Série active -->
             <div class="space-y-3">
               <div class="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
                 <div class="flex items-center gap-2.5">
@@ -177,7 +414,6 @@
               </div>
             </div>
 
-            <!-- Visuel central de la question -->
             <div class="py-3 text-center space-y-4">
               <template v-if="qcmCurrentType === 'flag'">
                 <div class="inline-block p-3 rounded-2xl bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 shadow-lg">
@@ -231,7 +467,6 @@
               </template>
             </div>
 
-            <!-- 4 Options de réponse (Pilotables à la souris ou touches 1, 2, 3, 4) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <button
                 v-for="(opt, idx) in qcmOptions"
@@ -253,7 +488,6 @@
               </button>
             </div>
 
-            <!-- Note culturelle instantanée après réponse -->
             <transition name="fade-slide">
               <div
                 v-if="qcmIsAnswered && currentQcmQuestion.fact"
@@ -267,7 +501,7 @@
             </transition>
           </div>
 
-          <!-- ÉCRAN DE FIN DE QCM + BILAN COMPLET DES 15 QUESTIONS -->
+          <!-- ÉCRAN DE FIN DE QCM + BILAN DES 15 QUESTIONS -->
           <div
             v-else
             key="qcm-result"
@@ -314,7 +548,6 @@
               </div>
             </div>
 
-            <!-- Récapitulatif détaillé des 15 réponses (Correction) -->
             <div v-if="qcmHistoryLog.length > 0" class="space-y-3 pt-6 border-t border-slate-200 dark:border-white/10">
               <h4 class="font-mono text-xs font-bold uppercase tracking-wider text-slate-400">
                 {{ locale === 'fr' ? 'DÉTAIL DE VOS 15 RÉPONSES' : 'YOUR 15 ANSWERS BREAKDOWN' }}
@@ -357,7 +590,6 @@
           v-if="!flashFinished && currentFlashQuestion"
           class="rounded-3xl border border-amber-500/30 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-6 sm:p-10 shadow-2xl space-y-6"
         >
-          <!-- Jauge circulaire SVG 60s + Multiplicateur de Combo -->
           <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
             <div class="flex items-center gap-3.5">
               <div class="relative w-14 h-14 flex items-center justify-center">
@@ -448,8 +680,8 @@
           </h3>
           <p class="text-sm text-slate-500 dark:text-slate-400">
             {{ locale === 'fr'
-              ? `${flashCorrectCount} bonnes réponses • Meilleure série : ${flashBestStreak}`
-              : `${flashCorrectCount} correct answers • Best streak: ${flashBestStreak}` }}
+              ? `${flashCorrectCount} bonnes réponses • Meilleure série : ${flashBestStreak} • Note enregistrée : ${Math.min(15, Math.round((flashScore / 30) * 15))}/15`
+              : `${flashCorrectCount} correct answers • Best streak: ${flashBestStreak} • Normalized score: ${Math.min(15, Math.round((flashScore / 30) * 15))}/15` }}
           </p>
           <button
             type="button"
@@ -507,7 +739,6 @@
                 </button>
               </div>
 
-              <!-- Suggestions cliquables pendant la frappe -->
               <div v-if="mysterySuggestions.length > 0" class="flex flex-wrap gap-2 pt-1">
                 <button
                   v-for="sug in mysterySuggestions"
@@ -522,7 +753,7 @@
               </div>
             </div>
 
-            <!-- Grille des 6 tentatives (Nom complet du pays jamais tronqué en Fr...) -->
+            <!-- Grille des 6 tentatives (Nom complet toujours visible) -->
             <div class="space-y-2.5">
               <div
                 v-for="slot in 6"
@@ -566,7 +797,6 @@
               </div>
             </div>
 
-            <!-- Bilan final du Pays Mystère -->
             <div
               v-if="mysteryFinished && mysteryTarget"
               class="p-5 sm:p-6 rounded-2xl border text-center space-y-4"
@@ -605,7 +835,7 @@
             </div>
           </div>
 
-          <!-- Colonne Droite (5 cols) : Globe Radar 3D de Triangulation Thermique -->
+          <!-- Colonne Droite (5 cols) : Globe Radar 3D de Triangulation -->
           <div class="lg:col-span-5 rounded-3xl border border-slate-200/90 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 shadow-2xl flex flex-col items-center space-y-4">
             <div class="w-full flex items-center justify-between text-xs font-mono text-slate-400 border-b border-slate-200 dark:border-white/10 pb-3">
               <span class="text-sky-400 font-bold">
@@ -650,7 +880,6 @@
             </span>
           </div>
 
-          <!-- 5 Vraies Cartes d'Indices 3D Recto-Verso -->
           <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
             <div
               v-for="(clue, idx) in currentDetectiveClues"
@@ -659,7 +888,6 @@
               @click="idx === detectiveCluesRevealed && !detectiveRoundAnswered ? detectiveCluesRevealed++ : null"
             >
               <div class="clue-3d-inner" :class="{ 'is-flipped': idx < detectiveCluesRevealed }">
-                <!-- Dos verrouillé de l'indice -->
                 <div class="clue-3d-face clue-3d-front rounded-2xl border border-dashed border-slate-300 dark:border-white/15 bg-slate-100/60 dark:bg-white/[0.03] p-4 flex flex-col items-center justify-between text-center">
                   <span class="font-mono text-[10px] font-bold uppercase text-slate-400">
                     {{ locale === 'fr' ? `INDICE #${idx + 1}` : `CLUE #${idx + 1}` }}
@@ -672,7 +900,6 @@
                   </span>
                 </div>
 
-                <!-- Face révélée en 3D de l'indice -->
                 <div class="clue-3d-face clue-3d-back rounded-2xl border border-sky-500/40 bg-sky-500/[0.08] p-3.5 flex flex-col justify-between">
                   <span class="font-mono text-[10px] font-bold uppercase text-sky-400">
                     {{ locale === 'fr' ? `INDICE #${idx + 1}` : `CLUE #${idx + 1}` }}
@@ -708,7 +935,6 @@
             </span>
           </div>
 
-          <!-- Saisie de la réponse d'enquête -->
           <div v-if="!detectiveRoundAnswered" class="space-y-2.5">
             <div class="flex flex-col sm:flex-row gap-2.5">
               <input
@@ -789,12 +1015,11 @@
       </div>
 
       <!-- ======================================================= -->
-      <!-- MODE 5 : DÉFIS CHRONO (AVEC GLOBE 3D INTERACTIF + 2D)   -->
+      <!-- MODE 5 : DÉFIS CHRONO (GLOBE 3D + CARTE 2D 100% MUETTE) -->
       <!-- ======================================================= -->
       <div v-else-if="currentMode === 'chrono'" key="quiz-chrono" class="space-y-6">
         <div class="rounded-3xl border border-slate-200 dark:border-white/12 bg-white/90 dark:bg-[#090E1A]/90 backdrop-blur-2xl p-5 sm:p-7 shadow-2xl space-y-5">
 
-          <!-- Barre de contrôle : Europe (47) / Monde (196) + Bascule Globe 3D / Carte 2D + Temps -->
           <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
             <div class="flex flex-wrap items-center gap-2">
               <button
@@ -816,7 +1041,6 @@
 
               <div class="h-5 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
 
-              <!-- Sélecteur de Vue : Globe 3D Interactif vs Carte Muette 2D -->
               <div class="flex items-center p-1 rounded-full bg-slate-100 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10">
                 <button
                   type="button"
@@ -832,7 +1056,7 @@
                   class="px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer"
                   :class="chronoViewMode === 'map2d' ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-500 dark:text-slate-300'"
                 >
-                  {{ locale === 'fr' ? 'Planisphère 2D' : '2D World Map' }}
+                  {{ locale === 'fr' ? 'Carte Muette 2D' : '2D Blank Map' }}
                 </button>
               </div>
 
@@ -852,7 +1076,6 @@
               </button>
             </div>
 
-            <!-- Compteur & Progression -->
             <div class="flex items-center gap-2.5 font-mono">
               <span class="px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-black">
                 {{ chronoFoundIds.length }} / {{ chronoTargetCountries.length }} ({{ Math.round((chronoFoundIds.length / chronoTargetCountries.length) * 100) }}%)
@@ -863,7 +1086,6 @@
             </div>
           </div>
 
-          <!-- Barre de saisie + Feedback Dernier Pays Trouvé ou Doublon -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
             <div class="lg:col-span-7 flex flex-col sm:flex-row items-center sm:items-stretch gap-2.5">
               <input
@@ -896,7 +1118,6 @@
               </button>
             </div>
 
-            <!-- Toast du dernier pays validé ou alerte doublon -->
             <div class="lg:col-span-5 flex items-center justify-end">
               <div
                 v-if="chronoDuplicateMsg"
@@ -917,7 +1138,7 @@
             </div>
           </div>
 
-          <!-- VUE 1 : GLOBE 3D INTERACTIF AVEC ROTATION AUTOMATIQUE SUR LE DERNIER PAYS TROUVÉ -->
+          <!-- VUE 1 : GLOBE 3D INTERACTIF -->
           <div
             v-if="chronoViewMode === 'globe3d'"
             class="relative rounded-3xl border border-slate-200 dark:border-white/10 bg-[#050811] py-6 px-4 flex flex-col items-center justify-center overflow-hidden min-h-[430px]"
@@ -945,11 +1166,31 @@
             </div>
           </div>
 
-          <!-- VUE 2 : PLANISPHÈRE MUET 2D LEAFLET -->
+          <!-- VUE 2 : PLANISPHÈRE 2D 100 % MUET (ZÉRO NOM DE PAYS + FRONTIÈRES VECTORIELLES) -->
           <div
             v-else
-            class="h-[390px] sm:h-[450px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative z-0"
+            class="quiz-mute-map h-[390px] sm:h-[450px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative z-0"
+            :class="{ 'is-dark-mute': blankMapStyle === 'physical' }"
           >
+            <div class="absolute top-3 right-3 z-[400] flex items-center gap-1 p-1 rounded-full bg-slate-900/85 backdrop-blur-md border border-white/15 text-[11px] font-bold text-white">
+              <button
+                type="button"
+                @click="blankMapStyle = 'physical'"
+                class="px-3 py-1 rounded-full transition cursor-pointer"
+                :class="blankMapStyle === 'physical' ? 'bg-sky-500 text-slate-950 font-black' : 'text-slate-300'"
+              >
+                {{ locale === 'fr' ? 'Carte Muette' : 'Blank Map' }}
+              </button>
+              <button
+                type="button"
+                @click="blankMapStyle = 'satellite'"
+                class="px-3 py-1 rounded-full transition cursor-pointer"
+                :class="blankMapStyle === 'satellite' ? 'bg-sky-500 text-slate-950 font-black' : 'text-slate-300'"
+              >
+                Satellite
+              </button>
+            </div>
+
             <l-map
               v-model:zoom="chronoMapZoom"
               v-model:center="chronoMapCenter"
@@ -957,7 +1198,18 @@
               :max-zoom="6"
               :use-global-leaflet="false"
             >
-              <l-tile-layer :url="blankTileUrl" :no-wrap="false"></l-tile-layer>
+              <l-tile-layer :key="blankMapStyle" :url="blankTileUrl" :no-wrap="false"></l-tile-layer>
+
+              <!-- Frontières vectorielles muettes (sans aucun texte) -->
+              <l-polyline
+                v-for="(ring, rIdx) in leafletWorldRings"
+                :key="'chr-border-' + rIdx"
+                :lat-lngs="ring"
+                :color="'#38bdf8'"
+                :weight="0.85"
+                :options="{ opacity: 0.35, interactive: false }"
+              ></l-polyline>
+
               <l-circle-marker
                 v-for="country in chronoTargetCountries"
                 :key="'chr-m-' + country.id"
@@ -1055,7 +1307,29 @@
             </span>
           </div>
 
-          <div class="h-[440px] sm:h-[500px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative z-0">
+          <div
+            class="quiz-mute-map h-[440px] sm:h-[500px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 relative z-0"
+            :class="{ 'is-dark-mute': blankMapStyle === 'physical' }"
+          >
+            <div class="absolute top-3 right-3 z-[400] flex items-center gap-1 p-1 rounded-full bg-slate-900/85 backdrop-blur-md border border-white/15 text-[11px] font-bold text-white">
+              <button
+                type="button"
+                @click="blankMapStyle = 'physical'"
+                class="px-3 py-1 rounded-full transition cursor-pointer"
+                :class="blankMapStyle === 'physical' ? 'bg-sky-500 text-slate-950 font-black' : 'text-slate-300'"
+              >
+                {{ locale === 'fr' ? 'Carte Muette' : 'Blank Map' }}
+              </button>
+              <button
+                type="button"
+                @click="blankMapStyle = 'satellite'"
+                class="px-3 py-1 rounded-full transition cursor-pointer"
+                :class="blankMapStyle === 'satellite' ? 'bg-sky-500 text-slate-950 font-black' : 'text-slate-300'"
+              >
+                Satellite
+              </button>
+            </div>
+
             <l-map
               v-model:zoom="mapClickZoom"
               v-model:center="mapClickCenter"
@@ -1063,7 +1337,18 @@
               :max-zoom="7"
               :use-global-leaflet="false"
             >
-              <l-tile-layer :url="blankTileUrl" :no-wrap="false"></l-tile-layer>
+              <l-tile-layer :key="blankMapStyle" :url="blankTileUrl" :no-wrap="false"></l-tile-layer>
+
+              <!-- Frontières vectorielles muettes -->
+              <l-polyline
+                v-for="(ring, rIdx) in leafletWorldRings"
+                :key="'mc-border-' + rIdx"
+                :lat-lngs="ring"
+                :color="'#38bdf8'"
+                :weight="0.85"
+                :options="{ opacity: 0.35, interactive: false }"
+              ></l-polyline>
+
               <l-circle-marker
                 v-for="country in mapClickPool"
                 :key="'mc-' + country.id"
@@ -1118,14 +1403,12 @@
           </div>
         </div>
 
-        <!-- Scène 3D de la Flashcard -->
         <div
           v-if="currentFlashcard"
           class="flash-3d-scene"
           @click="isFlipped = !isFlipped"
         >
           <div class="flash-3d-inner" :class="{ 'is-flipped': isFlipped }">
-            <!-- Recto -->
             <div class="flash-3d-face flash-3d-front rounded-3xl border border-slate-200 dark:border-white/15 bg-white dark:bg-[#090E1A] p-8 flex flex-col items-center justify-between text-center shadow-2xl">
               <div class="w-full flex items-center justify-between text-xs font-bold text-slate-400">
                 <span>{{ currentFlashcard.subregion }}</span>
@@ -1148,7 +1431,6 @@
               </span>
             </div>
 
-            <!-- Verso -->
             <div class="flash-3d-face flash-3d-back rounded-3xl border border-sky-500/40 bg-slate-900 text-white p-8 flex flex-col justify-between shadow-2xl">
               <div class="flex items-center justify-between pb-4 border-b border-white/10">
                 <div class="flex items-center gap-3">
@@ -1184,7 +1466,6 @@
           </div>
         </div>
 
-        <!-- Contrôles Précédent / Retourner / Acquis / Suivant -->
         <div class="flex flex-wrap items-center justify-center gap-3">
           <button
             type="button"
@@ -1362,7 +1643,7 @@ import { useI18n } from 'vue-i18n';
 import ALL_COUNTRIES from '../data/countries.js';
 
 import "leaflet/dist/leaflet.css";
-import { LMap, LTileLayer, LPopup, LCircleMarker } from "@vue-leaflet/vue-leaflet";
+import { LMap, LTileLayer, LPopup, LCircleMarker, LPolyline } from "@vue-leaflet/vue-leaflet";
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -1370,7 +1651,7 @@ const router = useRouter();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 // =========================================================
-// DICTIONNAIRE D'ALIAS POUR SAISIE NATURELLE (CHRONO & GRILLE)
+// DICTIONNAIRE D'ALIAS POUR SAISIE NATURELLE
 // =========================================================
 const COUNTRY_ALIASES = {
   usa: 'us', 'etats unis': 'us', 'united states': 'us', 'united states of america': 'us',
@@ -1391,7 +1672,7 @@ const COUNTRY_ALIASES = {
   'coree du nord': 'kp', 'north korea': 'kp',
   macedoine: 'mk', 'macedoine du nord': 'mk',
   bosnie: 'ba', 'bosnie herzegovine': 'ba',
-   Centrafrique: 'cf', 'republique centrafricaine': 'cf', 'central african republic': 'cf'
+  centrafrique: 'cf', 'republique centrafricaine': 'cf', 'central african republic': 'cf'
 };
 
 // =========================================================
@@ -1488,12 +1769,316 @@ const normalizeString = (str = '') =>
     .replace(/\s+/g, ' ')
     .trim();
 
+// =========================================================
+// FONDS DE CARTE 2D 100 % MUETS (ZÉRO NOM DE PAYS)
+// =========================================================
+const blankMapStyle = ref('physical'); // 'physical' | 'satellite'
+const leafletWorldRings = ref([]);
+
 const blankTileUrl = computed(() => {
-  const isDark = document.documentElement.classList.contains('dark');
-  return isDark
-    ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
-    : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+  if (blankMapStyle.value === 'satellite') {
+    return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+  }
+  return 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}';
 });
+
+// =========================================================
+// MOTEUR 3D INTERACTIF DE LA MANETTE DANS LE HERO (360° DRAG)
+// =========================================================
+const gamepadCanvasRef = ref(null);
+let gpYaw = -0.38;
+let gpPitch = 0.28;
+let gpVelYaw = 0;
+let gpVelPitch = 0;
+let gpDragging = false;
+let gpLastX = 0;
+let gpLastY = 0;
+let gpFloatPhase = 0;
+
+const onGamepadPointerDown = (e) => {
+  gpDragging = true;
+  gpVelYaw = 0;
+  gpVelPitch = 0;
+  gpLastX = e.clientX;
+  gpLastY = e.clientY;
+};
+
+const onGamepadPointerMove = (e) => {
+  if (!gpDragging) return;
+  const dx = e.clientX - gpLastX;
+  const dy = e.clientY - gpLastY;
+  const dY = dx * 0.012;
+  const dP = Math.max(-0.85, Math.min(0.85, gpPitch + dy * 0.01)) - gpPitch;
+  gpYaw += dY;
+  gpPitch += dP;
+  gpVelYaw = dY * 0.85;
+  gpVelPitch = dP * 0.85;
+  gpLastX = e.clientX;
+  gpLastY = e.clientY;
+};
+
+const onGamepadPointerUp = () => {
+  gpDragging = false;
+};
+
+const renderInteractive3DGamepad = () => {
+  const canvas = gamepadCanvasRef.value;
+  if (!canvas || currentMode.value !== 'menu') return;
+
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = rect.width || 360;
+  const H = rect.height || 280;
+  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+  }
+
+  const ctx = canvas.getContext('2d');
+  ctx.save();
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  gpFloatPhase += 0.03;
+
+  if (!gpDragging) {
+    if (Math.abs(gpVelYaw) > 0.0005 || Math.abs(gpVelPitch) > 0.0005) {
+      gpYaw += gpVelYaw;
+      gpPitch = Math.max(-0.85, Math.min(0.85, gpPitch + gpVelPitch));
+      gpVelYaw *= 0.93;
+      gpVelPitch *= 0.93;
+    } else {
+      gpYaw += 0.008;
+    }
+  }
+
+  const cx = W / 2;
+  const cy = H / 2 - 6 + Math.sin(gpFloatPhase) * 5;
+
+  // 1. Socle holographique lumineux sous la manette (Style image_891a3f.jpg)
+  const pedY = H - 34;
+  const pedGrad = ctx.createRadialGradient(cx, pedY, 6, cx, pedY, 115);
+  pedGrad.addColorStop(0, 'rgba(99, 102, 241, 0.55)');
+  pedGrad.addColorStop(0.55, 'rgba(56, 189, 248, 0.22)');
+  pedGrad.addColorStop(1, 'rgba(99, 102, 241, 0)');
+  ctx.beginPath();
+  ctx.ellipse(cx, pedY, 110, 22, 0, 0, Math.PI * 2);
+  ctx.fillStyle = pedGrad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.ellipse(cx, pedY, 76, 13, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(129, 140, 248, 0.65)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.ellipse(cx, pedY, 52, 8, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.8)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Projection 3D (Rotation Yaw + Pitch + Roll léger)
+  const cosY = Math.cos(gpYaw), sinY = Math.sin(gpYaw);
+  const cosP = Math.cos(gpPitch), sinP = Math.sin(gpPitch);
+  const roll = -0.18;
+  const cosR = Math.cos(roll), sinR = Math.sin(roll);
+
+  const project3D = (x, y, z) => {
+    // Roll
+    const xr = x * cosR - y * sinR;
+    const yr = x * sinR + y * cosR;
+    // Yaw
+    const x1 = xr * cosY + z * sinY;
+    const z1 = -xr * sinY + z * cosY;
+    // Pitch
+    const y2 = yr * cosP - z1 * sinP;
+    const z2 = yr * sinP + z1 * cosP;
+    const fov = 360;
+    const scale = fov / (fov + z2 + 120);
+    return {
+      x: cx + x1 * scale,
+      y: cy + y2 * scale,
+      z: z2,
+      s: scale
+    };
+  };
+
+  // 2. Cubes 3D flottants en orbite autour de la manette
+  const orbitCubes = [
+    { ox: -115, oy: -48, oz: -25, label: '🌍', color: '#38bdf8' },
+    { ox: -98, oy: 36, oz: 20, label: '📖', color: '#818cf8' },
+    { ox: 112, oy: -42, oz: 15, label: '🏆', color: '#c084fc' },
+    { ox: 102, oy: 38, oz: -20, label: '🧭', color: '#34d399' }
+  ];
+
+  for (let i = 0; i < orbitCubes.length; i++) {
+    const c = orbitCubes[i];
+    const bob = Math.sin(gpFloatPhase + i * 1.4) * 6;
+    const p = project3D(c.ox, c.oy + bob, c.oz);
+    const sz = 16 * p.s;
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(Math.sin(gpFloatPhase * 0.7 + i) * 0.18);
+    ctx.fillStyle = 'rgba(30, 27, 75, 0.78)';
+    ctx.strokeStyle = c.color;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.roundRect(-sz, -sz, sz * 2, sz * 2, 7);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = `${Math.round(13 * p.s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(c.label, 0, 1);
+    ctx.restore();
+  }
+
+  // 3. Rendu 3D Volumétrique de la Manette (Multi-couches Z pour donner une vraie épaisseur 3D)
+  const layers = [-14, -10, -6, -2, 2, 6, 10, 14];
+  for (let lIdx = 0; lIdx < layers.length; lIdx++) {
+    const zSlice = layers[lIdx];
+    const isTop = lIdx === layers.length - 1;
+
+    const pCenter = project3D(0, -6, zSlice);
+    const pLeftShoulder = project3D(-46, -24, zSlice);
+    const pLeftGripBottom = project3D(-62, 42, zSlice - 6);
+    const pLeftGripInner = project3D(-24, 16, zSlice);
+    const pRightGripInner = project3D(24, 16, zSlice);
+    const pRightGripBottom = project3D(62, 42, zSlice - 6);
+    const pRightShoulder = project3D(46, -24, zSlice);
+
+    ctx.beginPath();
+    ctx.moveTo(pLeftShoulder.x, pLeftShoulder.y);
+    ctx.quadraticCurveTo(
+      project3D(-76, 4, zSlice).x,
+      project3D(-76, 4, zSlice).y,
+      pLeftGripBottom.x,
+      pLeftGripBottom.y
+    );
+    ctx.quadraticCurveTo(
+      project3D(-42, 48, zSlice).x,
+      project3D(-42, 48, zSlice).y,
+      pLeftGripInner.x,
+      pLeftGripInner.y
+    );
+    ctx.lineTo(pRightGripInner.x, pRightGripInner.y);
+    ctx.quadraticCurveTo(
+      project3D(42, 48, zSlice).x,
+      project3D(42, 48, zSlice).y,
+      pRightGripBottom.x,
+      pRightGripBottom.y
+    );
+    ctx.quadraticCurveTo(
+      project3D(76, 4, zSlice).x,
+      project3D(76, 4, zSlice).y,
+      pRightShoulder.x,
+      pRightShoulder.y
+    );
+    ctx.quadraticCurveTo(pCenter.x, pCenter.y - 22 * pCenter.s, pLeftShoulder.x, pLeftShoulder.y);
+    ctx.closePath();
+
+    if (isTop) {
+      const bodyGrad = ctx.createLinearGradient(
+        pLeftShoulder.x,
+        pLeftShoulder.y,
+        pRightGripBottom.x,
+        pRightGripBottom.y
+      );
+      bodyGrad.addColorStop(0, '#312e81');
+      bodyGrad.addColorStop(0.5, '#1e1b4b');
+      bodyGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = bodyGrad;
+      ctx.fill();
+      ctx.strokeStyle = '#818cf8';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#0f1329';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(99, 102, 241, 0.22)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  // 4. Éléments en relief sur la face avant de la manette (Pavé tactile, D-Pad, Joysticks 3D, Boutons Néon)
+  const zFront = 16;
+
+  // Pavé central lumineux
+  const tpTL = project3D(-20, -22, zFront);
+  const tpTR = project3D(20, -22, zFront);
+  const tpBR = project3D(18, -2, zFront);
+  const tpBL = project3D(-18, -2, zFront);
+  ctx.beginPath();
+  ctx.moveTo(tpTL.x, tpTL.y);
+  ctx.lineTo(tpTR.x, tpTR.y);
+  ctx.lineTo(tpBR.x, tpBR.y);
+  ctx.lineTo(tpBL.x, tpBL.y);
+  ctx.closePath();
+  ctx.fillStyle = '#090d1a';
+  ctx.fill();
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+
+  // Croix directionnelle (D-Pad à gauche)
+  const dpadCenter = project3D(-42, -6, zFront + 2);
+  const dSz = 7 * dpadCenter.s;
+  ctx.fillStyle = '#38bdf8';
+  ctx.beginPath();
+  ctx.roundRect(dpadCenter.x - dSz * 0.45, dpadCenter.y - dSz * 1.35, dSz * 0.9, dSz * 2.7, 2);
+  ctx.roundRect(dpadCenter.x - dSz * 1.35, dpadCenter.y - dSz * 0.45, dSz * 2.7, dSz * 0.9, 2);
+  ctx.fill();
+
+  // Joysticks 3D Gauche et Droit (avec tige + chapeau en relief Z=24)
+  const sticks = [
+    { x: -22, y: 10 },
+    { x: 22, y: 10 }
+  ];
+  for (const st of sticks) {
+    const base = project3D(st.x, st.y, zFront);
+    const cap = project3D(st.x, st.y, zFront + 9);
+    ctx.beginPath();
+    ctx.arc(base.x, base.y, 11 * base.s, 0, Math.PI * 2);
+    ctx.fillStyle = '#090d16';
+    ctx.fill();
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cap.x, cap.y, 8.5 * cap.s, 0, Math.PI * 2);
+    ctx.fillStyle = '#1e293b';
+    ctx.fill();
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+  }
+
+  // 4 Boutons d'action lumineux à droite
+  const actionBtns = [
+    { x: 42, y: -15, color: '#fbbf24' },
+    { x: 51, y: -6, color: '#f43f5e' },
+    { x: 42, y: 3, color: '#10b981' },
+    { x: 33, y: -6, color: '#38bdf8' }
+  ];
+  for (const btn of actionBtns) {
+    const bp = project3D(btn.x, btn.y, zFront + 2);
+    ctx.beginPath();
+    ctx.arc(bp.x, bp.y, 4.2 * bp.s, 0, Math.PI * 2);
+    ctx.fillStyle = btn.color;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  ctx.restore();
+};
 
 // =========================================================
 // MOTEUR GLOBE 3D VECTORIEL PARTAGÉ (POUR CHRONO & WORLDLE)
@@ -1554,6 +2139,7 @@ const loadQuizVectorBorders = async () => {
     if (res.ok) {
       const topo = await res.json();
       worldRings = extractRingsFromTopoJSON(topo);
+      leafletWorldRings.value = worldRings.map((ring) => ring.map(([lon, lat]) => [lat, lon]));
     }
   } catch (e) {}
 };
@@ -1595,7 +2181,11 @@ const onQuizGlobePointerUp = () => {
   qIsDragging = false;
 };
 
-const renderActiveQuizGlobe = () => {
+const renderMainLoop = () => {
+  if (currentMode.value === 'menu') {
+    renderInteractive3DGamepad();
+  }
+
   const canvas =
     currentMode.value === 'chrono' && chronoViewMode.value === 'globe3d'
       ? chronoGlobeCanvasRef.value
@@ -1643,7 +2233,6 @@ const renderActiveQuizGlobe = () => {
 
     qPulse = (qPulse + 0.02) % 1;
 
-    // Sphère océanique
     const oceanGrad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.08, cx, cy, R);
     oceanGrad.addColorStop(0, '#0f2342');
     oceanGrad.addColorStop(0.7, '#061022');
@@ -1679,7 +2268,6 @@ const renderActiveQuizGlobe = () => {
       };
     };
 
-    // Frontières vectorielles
     if (worldRings.length > 0) {
       ctx.fillStyle = 'rgba(20, 48, 86, 0.78)';
       ctx.strokeStyle = 'rgba(56, 189, 248, 0.42)';
@@ -1705,7 +2293,6 @@ const renderActiveQuizGlobe = () => {
       }
     }
 
-    // Rendu spécifique : Défi Chrono sur Globe 3D
     if (currentMode.value === 'chrono') {
       for (const c of chronoTargetCountries.value) {
         const p = projectPt(c.lat, c.lng);
@@ -1732,7 +2319,6 @@ const renderActiveQuizGlobe = () => {
       }
     }
 
-    // Rendu spécifique : Triangulation Worldle sur Globe 3D
     if (currentMode.value === 'mystery') {
       for (const g of mysteryGuesses.value) {
         const cObj = localizedCountries.value.find((c) => c.id === g.id);
@@ -1769,7 +2355,7 @@ const renderActiveQuizGlobe = () => {
     ctx.restore();
   }
 
-  globeAnimId = requestAnimationFrame(renderActiveQuizGlobe);
+  globeAnimId = requestAnimationFrame(renderMainLoop);
 };
 
 // =========================================================
@@ -1777,6 +2363,28 @@ const renderActiveQuizGlobe = () => {
 // =========================================================
 const currentMode = ref('menu');
 const selectedMenuCat = ref('all');
+const menuSearchQuery = ref('');
+const menuSortBy = ref('popular');
+const gamesGridRef = ref(null);
+
+const scrollToGamesGrid = () => {
+  if (gamesGridRef.value) {
+    gamesGridRef.value.scrollIntoView({ behavior: 'smooth' });
+  }
+};
+
+const launchRandomGame = () => {
+  const actions = [
+    () => initDailyMystery(),
+    () => demarrerChrono(),
+    () => startFlash60(),
+    () => initDetective(),
+    () => initQcm('capital'),
+    () => initQcm('flag')
+  ];
+  const pick = actions[Math.floor(Math.random() * actions.length)];
+  pick();
+};
 
 const activeModeBadge = computed(() => {
   const isFr = locale.value === 'fr';
@@ -1992,7 +2600,7 @@ const copyQcmDuelLink = async () => {
 };
 
 // =========================================================
-// MODE 2 : SPRINT 60 SECONDES (FLASH 60)
+// MODE 2 : SPRINT 60 SECONDES (SAUVEGARDÉ SUR /15)
 // =========================================================
 const flashTimeLeft = ref(60);
 const flashScore = ref(0);
@@ -2287,10 +2895,10 @@ const nextDetectiveRound = () => {
 };
 
 // =========================================================
-// MODE 5 : DÉFIS CHRONO (AVEC GLOBE 3D INTERACTIF & ALIAS)
+// MODE 5 : DÉFIS CHRONO (AVEC GLOBE 3D & CARTE 2D MUETTE)
 // =========================================================
 const chronoScope = ref('europe');
-const chronoViewMode = ref('globe3d'); // 'globe3d' | 'map2d'
+const chronoViewMode = ref('globe3d');
 const chronoDuration = ref(300);
 const chronoTimeLeft = ref(300);
 const chronoInput = ref('');
@@ -2411,7 +3019,6 @@ const verifierSaisieChrono = (forceEnter = false) => {
 
   const aliasIso = COUNTRY_ALIASES[typed];
 
-  // Vérifie d'abord si le pays est déjà trouvé (pour afficher le message de doublon)
   const alreadyFound = chronoTargetCountries.value.find(
     (c) =>
       chronoFoundSet.value.has(c.id) &&
@@ -2540,13 +3147,10 @@ const flashKnownIds = ref(new Set());
 const flashShuffleSeed = ref(0);
 
 const filteredFlashcards = computed(() => {
-  // Dépendance réactive sur flashShuffleSeed pour mélanger
   void flashShuffleSeed.value;
-  const base =
-    selectedFlashContinent.value === 'all'
-      ? [...localizedCountries.value]
-      : localizedCountries.value.filter((c) => c.continent === selectedFlashContinent.value);
-  return base;
+  return selectedFlashContinent.value === 'all'
+    ? [...localizedCountries.value]
+    : localizedCountries.value.filter((c) => c.continent === selectedFlashContinent.value);
 });
 
 const currentFlashcard = computed(() => filteredFlashcards.value[flashIndex.value] || null);
@@ -2585,7 +3189,7 @@ const cartePrecedente = () => {
 };
 
 // =========================================================
-// MODE 8 : GRILLE MONDIALE DES 196 DRAPEAUX (AVEC AUTO-FOCUS)
+// MODE 8 : GRILLE MONDIALE DES 196 DRAPEAUX (AUTO-FOCUS)
 // =========================================================
 const flagGridContinent = ref('all');
 const flagGridInputs = ref({});
@@ -2613,7 +3217,6 @@ const checkFlagGridItem = (country, idx) => {
     flagGridSolvedSet.value = next;
     playSound('correct');
 
-    // Auto-focus fluide sur le champ suivant non résolu
     nextTick(() => {
       for (let nextIdx = idx + 1; nextIdx < filteredFlagGridCountries.value.length; nextIdx++) {
         const nextCountry = filteredFlagGridCountries.value[nextIdx];
@@ -2671,15 +3274,15 @@ const launchCustomBuiltQuiz = () => {
 };
 
 // =========================================================
-// CATALOGUE DU MENU QUIZ & ROUTAGE PAR QUERY
+// CATALOGUE DU HUB 3D (INSPIRÉ DE IMAGE_891A3F.JPG)
 // =========================================================
 const menuCategories = computed(() => {
   const isFr = locale.value === 'fr';
   return [
-    { id: 'all', label: isFr ? 'Tous les modes (11)' : 'All Modes (11)' },
-    { id: 'featured', label: isFr ? 'Défis Phares 3D' : '3D Featured' },
-    { id: 'classics', label: isFr ? 'QCM & Chrono' : 'QCM & Timed' },
-    { id: 'study', label: isFr ? 'Révision & Sur-mesure' : 'Study & Custom' }
+    { id: 'all', icon: '⊞', label: isFr ? 'Tous les modes' : 'All Modes' },
+    { id: 'featured', icon: '🧊', label: isFr ? 'Défis 3D Phares' : '3D Featured' },
+    { id: 'classics', icon: '💡', label: isFr ? 'QCM & Connaissances' : 'Quiz & Knowledge' },
+    { id: 'study', icon: '🎓', label: isFr ? 'Étude & Sur-mesure' : 'Study & Learn' }
   ];
 });
 
@@ -2689,148 +3292,222 @@ const allMenuCards = computed(() => {
     {
       id: 'mystery',
       cat: 'featured',
-      tag: 'WORLDLE + RADAR 3D',
-      metric: '6 ESSAIS',
+      art: 'worldle',
+      badgeIcon: '★',
+      tag: isFr ? 'Mystère' : 'Mystery',
+      duration: '~2 min',
+      durationMin: 2,
+      popularity: 1,
       title: isFr ? 'Le Pays Mystère (Worldle)' : 'Mystery Country (Worldle)',
       desc: isFr
-        ? 'Devinez le pays secret en 6 tentatives grâce à la distance en kilomètres, la boussole et le Globe Radar 3D de triangulation.'
-        : 'Guess the secret country in 6 tries using distance in km, compass bearing, and the 3D Triangulation Globe.',
-      cta: isFr ? 'Lancer le Pays Mystère' : 'Play Mystery Country',
-      badgeClass: 'bg-amber-500/10 text-amber-500 border-amber-500/30',
+        ? 'Devinez le pays secret en 6 essais grâce à la distance en kilomètres et au radar Globe 3D.'
+        : 'Guess the secret country in 6 tries using distance in km and the 3D Globe radar.',
+      cta: isFr ? 'Jouer' : 'Play Game',
+      badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/35',
+      glowColor: '#a855f7',
       action: () => initDailyMystery()
     },
     {
       id: 'chrono',
       cat: 'featured',
-      tag: 'GLOBE 3D + JETPUNK',
-      metric: '47 / 196',
-      title: isFr ? 'Défis Chrono (Globe 3D & Carte)' : 'Timed Challenge (3D Globe & Map)',
+      art: 'chrono',
+      badgeIcon: '⚡',
+      tag: isFr ? 'Défi 3D' : 'Challenge',
+      duration: '~3 min',
+      durationMin: 3,
+      popularity: 2,
+      title: isFr ? 'Défi Chrono (Globe 3D & Carte)' : 'Timed Challenge (3D Globe & Map)',
       desc: isFr
-        ? 'Saisissez au clavier les 47 pays d\'Europe ou les 196 pays du Monde et regardez le Globe 3D tourner et s\'illuminer à chaque pays trouvé.'
-        : 'Type all 47 European countries or all 196 World countries as the 3D Globe spins and lights up on every hit.',
-      cta: isFr ? 'Lancer le Défi Chrono 3D' : 'Start 3D Timed Challenge',
-      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+        ? 'Saisissez les 47 pays d\'Europe ou les 196 pays du Monde sur le Globe 3D interactif.'
+        : 'Type all 47 European countries or all 196 World countries on the 3D Globe.',
+      cta: isFr ? 'Démarrer' : 'Start Challenge',
+      badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35',
+      glowColor: '#10b981',
       action: () => demarrerChrono()
     },
     {
       id: 'flash60',
       cat: 'featured',
-      tag: 'SPRINT 60S',
-      metric: 'COMBO X4',
-      title: isFr ? 'Contre-la-montre 60 secondes' : '60-Second Flash Sprint',
+      art: 'sprint',
+      badgeIcon: '🏆',
+      tag: 'Arcade',
+      duration: '~1 min',
+      durationMin: 1,
+      popularity: 3,
+      title: isFr ? 'Sprint Flash 60 Secondes' : '60-Second Flash Sprint',
       desc: isFr
-        ? 'Enchaînez un maximum de capitales et drapeaux en 60 secondes avec multiplicateur de combo et bonus de +2s.'
-        : 'Chain as many capitals and flags as possible in 60 seconds with combo multipliers and +2s bonuses.',
-      cta: isFr ? 'Démarrer le Sprint 60s' : 'Start 60s Sprint',
-      badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+        ? 'Enchaînez un maximum de capitales et de drapeaux en 60 secondes avec combo x4.'
+        : 'Chain as many capitals and flags as possible in 60 seconds with x4 combo.',
+      cta: isFr ? 'Lancer Sprint' : 'Start Sprint',
+      badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/35',
+      glowColor: '#f59e0b',
       action: () => startFlash60()
     },
     {
       id: 'detective',
       cat: 'featured',
-      tag: 'CARTES 3D',
-      metric: '25 PTS MAX',
+      art: 'detective',
+      badgeIcon: '🧩',
+      tag: isFr ? 'Logique' : 'Logic',
+      duration: '~3 min',
+      durationMin: 3,
+      popularity: 4,
       title: isFr ? 'Enquête aux 5 Indices 3D' : '5-Clue 3D Detective',
       desc: isFr
-        ? 'Retournez les cartes d\'indices en 3D une par une (superficie, monnaie, anecdote, capitale, drapeau) pour démasquer l\'État.'
-        : 'Flip 3D clue cards one by one to unmask the target sovereign state with maximum points.',
-      cta: isFr ? 'Ouvrir le dossier' : 'Start Investigation',
-      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+        ? 'Retournez les cartes d\'indices en 3D une par une pour démasquer le pays cible.'
+        : 'Flip 3D clue cards one by one to unmask the target sovereign state.',
+      cta: isFr ? 'Enquêter' : 'Start Investigation',
+      badgeClass: 'bg-teal-500/15 text-teal-300 border-teal-500/35',
+      glowColor: '#14b8a6',
       action: () => initDetective()
     },
     {
       id: 'qcm-cap',
       cat: 'classics',
-      tag: 'CAPITALES',
-      metric: '15 QUESTIONS',
+      art: 'capitals',
+      badgeIcon: '🏛️',
+      tag: isFr ? 'Connaissances' : 'Knowledge',
+      duration: '~4 min',
+      durationMin: 4,
+      popularity: 5,
       title: t('home.mode_caps_title'),
       desc: t('home.mode_caps_desc'),
-      cta: isFr ? 'Lancer les 15 questions' : 'Start 15 Questions',
-      badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+      cta: isFr ? '15 Questions' : 'Start 15 Questions',
+      badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/35',
+      glowColor: '#38bdf8',
       action: () => initQcm('capital')
     },
     {
       id: 'qcm-flag',
       cat: 'classics',
-      tag: 'DRAPEAUX',
-      metric: '15 QUESTIONS',
+      art: 'flags',
+      badgeIcon: '🚩',
+      tag: isFr ? 'Drapeaux' : 'Flag',
+      duration: '~4 min',
+      durationMin: 4,
+      popularity: 6,
       title: t('home.mode_flags_title'),
       desc: t('home.mode_flags_desc'),
-      cta: isFr ? 'Lancer les 15 questions' : 'Start 15 Questions',
-      badgeClass: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+      cta: isFr ? '15 Questions' : 'Start 15 Questions',
+      badgeClass: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/35',
+      glowColor: '#6366f1',
       action: () => initQcm('flag')
     },
     {
       id: 'qcm-culture',
       cat: 'classics',
-      tag: 'CULTURE & DÉMO',
-      metric: '15 QUESTIONS',
+      art: 'radar',
+      badgeIcon: '🌐',
+      tag: 'Culture',
+      duration: '~4 min',
+      durationMin: 4,
+      popularity: 7,
       title: isFr ? 'Population, Langues & Devises' : 'Population, Languages & Currencies',
       desc: isFr
-        ? 'Comparez les ordres de grandeur démographiques et identifiez les langues officielles et les monnaies.'
-        : 'Compare population magnitudes and identify official languages and national currencies.',
-      cta: isFr ? 'Lancer le quiz culture' : 'Start Culture Quiz',
-      badgeClass: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30',
+        ? 'Comparez les populations et identifiez les langues officielles et les monnaies.'
+        : 'Compare populations and identify official languages and national currencies.',
+      cta: isFr ? '15 Questions' : 'Start 15 Questions',
+      badgeClass: 'bg-pink-500/15 text-pink-300 border-pink-500/35',
+      glowColor: '#ec4899',
       action: () => initQcm('culture')
     },
     {
       id: 'map-click',
       cat: 'classics',
-      tag: 'SETERRA',
-      metric: 'SANS CLAVIER',
+      art: 'radar',
+      badgeIcon: '🎯',
+      tag: 'Seterra',
+      duration: '~3 min',
+      durationMin: 3,
+      popularity: 8,
       title: isFr ? 'Cliquez sur la Carte Muette' : 'Click on the Blank Map',
       desc: isFr
-        ? 'Pointez directement chaque État demandé sur la carte muette sans aucune saisie clavier.'
+        ? 'Pointez directement chaque État demandé sur la carte muette sans saisie clavier.'
         : 'Click directly on each requested country on the blank map with zero typing.',
-      cta: isFr ? 'Tester ma précision' : 'Test Map Accuracy',
-      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      cta: isFr ? 'Jouer' : 'Play Map Click',
+      badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35',
+      glowColor: '#10b981',
       action: () => initMapClick('europe')
     },
     {
       id: 'flashcards',
       cat: 'study',
-      tag: 'ÉTUDE 3D',
-      metric: '196 FICHES',
+      art: 'detective',
+      badgeIcon: '🎓',
+      tag: isFr ? 'Étude 3D' : '3D Study',
+      duration: '∞ Libre',
+      durationMin: 10,
+      popularity: 9,
       title: t('home.mode_flash_title'),
       desc: isFr
-        ? 'Révisez sans pression avec les cartes mémoire 3D recto-verso filtrables par continent.'
-        : 'Study with zero pressure using 3D flip flashcards filterable by continent.',
-      cta: isFr ? 'Ouvrir les Flashcards 3D' : 'Open 3D Flashcards',
-      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+        ? 'Révisez à votre rythme avec les 196 cartes mémoire 3D recto-verso.'
+        : 'Study at your own pace with all 196 double-sided 3D memory cards.',
+      cta: isFr ? 'Réviser' : 'Open Flashcards',
+      badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/35',
+      glowColor: '#38bdf8',
       action: () => { currentMode.value = 'flashcards'; }
     },
     {
       id: 'flag-grid',
       cat: 'study',
-      tag: '196 DRAPEAUX',
-      metric: 'AUTO-FOCUS',
+      art: 'flags',
+      badgeIcon: '🏳️',
+      tag: '196 Flags',
+      duration: '~8 min',
+      durationMin: 8,
+      popularity: 10,
       title: isFr ? 'Grille Mondiale des Drapeaux' : 'World Flag Matrix',
       desc: isFr
-        ? 'Visualisez simultanément tous les drapeaux d\'un continent ou du monde avec passage automatique au drapeau suivant.'
-        : 'View all flags from a continent or the world simultaneously with auto-focusing inputs.',
-      cta: isFr ? 'Ouvrir la Grille' : 'Open Flag Matrix',
-      badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+        ? 'Identifiez simultanément tous les drapeaux d\'un continent avec auto-focus.'
+        : 'Identify all flags from a continent simultaneously with auto-focus.',
+      cta: isFr ? 'Ouvrir Grille' : 'Open Matrix',
+      badgeClass: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/35',
+      glowColor: '#6366f1',
       action: () => { currentMode.value = 'flag-grid'; }
     },
     {
       id: 'custom-builder',
       cat: 'study',
-      tag: 'SUR-MESURE',
-      metric: '5 À 15 PAYS',
-      title: isFr ? 'Créateur de Défis Personnalisés' : 'Custom Challenge Builder',
+      art: 'worldle',
+      badgeIcon: '🔗',
+      tag: 'Custom',
+      duration: '~2 min',
+      durationMin: 2,
+      popularity: 11,
+      title: isFr ? 'Créateur de Défis sur-mesure' : 'Custom Challenge Builder',
       desc: isFr
-        ? 'Sélectionnez de 5 à 15 pays précis pour générer un lien de défi sur-mesure à envoyer à vos amis.'
-        : 'Select 5 to 15 specific countries to generate a shareable custom challenge link.',
-      cta: isFr ? 'Créer un défi' : 'Build Challenge',
-      badgeClass: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30',
+        ? 'Sélectionnez de 5 à 15 pays précis pour générer un lien de défi partageable.'
+        : 'Select 5 to 15 specific countries to generate a shareable challenge link.',
+      cta: isFr ? 'Créer Défi' : 'Build Challenge',
+      badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/35',
+      glowColor: '#a855f7',
       action: () => { currentMode.value = 'custom-builder'; }
     }
   ];
 });
 
 const filteredMenuCards = computed(() => {
-  if (selectedMenuCat.value === 'all') return allMenuCards.value;
-  return allMenuCards.value.filter((c) => c.cat === selectedMenuCat.value);
+  const q = normalizeString(menuSearchQuery.value);
+  let list = allMenuCards.value.filter((c) => {
+    if (selectedMenuCat.value !== 'all' && c.cat !== selectedMenuCat.value) return false;
+    if (q) {
+      return (
+        normalizeString(c.title).includes(q) ||
+        normalizeString(c.desc).includes(q) ||
+        normalizeString(c.tag).includes(q)
+      );
+    }
+    return true;
+  });
+
+  if (menuSortBy.value === 'fast') {
+    list = [...list].sort((a, b) => a.durationMin - b.durationMin);
+  } else if (menuSortBy.value === 'name') {
+    list = [...list].sort((a, b) => a.title.localeCompare(b.title));
+  } else {
+    list = [...list].sort((a, b) => a.popularity - b.popularity);
+  }
+  return list;
 });
 
 const retourMenu = () => {
@@ -2868,7 +3545,6 @@ const applyRouteQuery = (q) => {
   }
 };
 
-// Raccourcis clavier universels (Flèches/Espace en Flashcards, Touches 1-4 en QCM & Sprint 60s)
 const handleKeydown = (e) => {
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
 
@@ -2901,7 +3577,7 @@ watch(
 
 onMounted(() => {
   loadQuizVectorBorders();
-  renderActiveQuizGlobe();
+  renderMainLoop();
   applyRouteQuery(route.query);
   window.addEventListener('keydown', handleKeydown);
 });
@@ -2917,6 +3593,11 @@ onUnmounted(() => {
 <style scoped>
 .grid-cols-15 {
   grid-template-columns: repeat(15, minmax(0, 1fr));
+}
+
+/* Transforme le fond physique muet en carte tactique sombre sans aucun texte */
+.quiz-mute-map.is-dark-mute :deep(.leaflet-tile-pane) {
+  filter: invert(100%) hue-rotate(190deg) brightness(78%) contrast(125%) saturate(60%);
 }
 
 /* Transitions spatiales entre les modes et questions */
