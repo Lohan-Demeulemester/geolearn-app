@@ -1,1253 +1,1533 @@
 <template>
-  <div class="max-w-6xl mx-auto space-y-6 pb-12">
-
-    <!-- EN-TÊTE -->
-    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-      <div>
-        <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
-          📍 {{ locale === 'fr' ? 'Exploration Géolocalisée Vérifiée' : 'Verified Geotagged Exploration' }}
-        </span>
-        <h2 class="text-3xl font-black text-gray-900 dark:text-white">
-          GeoLearn PinDrop (Satellite & Photo)
-        </h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400">
-          {{ locale === 'fr'
-            ? 'Observez le lieu depuis l\'espace ou en photo, placez votre épingle sur la carte mondiale et visez les 25 000 points en 5 manches !'
-            : 'Observe the location from space or via photo, drop your pin on the world map, and aim for 25,000 points across 5 rounds!' }}
-        </p>
-      </div>
-
-      <button
-        v-if="gameState !== 'menu'"
-        type="button"
-        @click="returnToMenu"
-        class="self-start sm:self-auto px-5 py-2.5 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-sm font-bold transition cursor-pointer flex items-center gap-2"
-      >
-        ← {{ locale === 'fr' ? 'Changer de mode' : 'Change mode' }}
-      </button>
-    </div>
+  <div class="pindrop-experience relative w-full h-[calc(100vh-58px)] overflow-hidden bg-[#04070F] text-slate-100 select-none">
 
     <!-- ========================================================= -->
-    <!-- ÉCRAN 1 : MENU DE SÉLECTION DU MODE & DU CHRONOMÈTRE      -->
+    <!-- 1. VIEWPORT PRINCIPAL : SATELLITE ORBITAL OU PHOTO SOL    -->
     <!-- ========================================================= -->
-    <div v-if="gameState === 'menu'" class="space-y-8 mt-4">
-      
-      <!-- Bandeau si un ami nous a envoyé un lien de Défi -->
+    <div class="absolute inset-0 z-0 w-full h-full">
+
+      <!-- A. FLUX SATELLITE ORBITAL PLEIN ÉCRAN (SANS ÉTIQUETTES) -->
       <div
-        v-if="sharedChallengeRounds"
-        class="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-3xl p-6 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4"
+        v-show="playMode !== 'visual' || visualFallbackActive"
+        class="w-full h-full relative"
       >
-        <div class="flex items-center gap-4">
-          <div class="text-4xl">⚔️</div>
-          <div>
-            <span class="text-xs font-extrabold uppercase tracking-wider bg-black/20 px-2.5 py-0.5 rounded-full">
-              {{ locale === 'fr' ? 'Défi d\'un ami détecté !' : 'Friend Challenge Detected!' }}
-            </span>
-            <h3 class="text-xl font-black mt-1">
-              {{ sharedChallengerName
-                ? (locale === 'fr' ? `${sharedChallengerName} vous défie (${sharedTargetScore} / 25 000 pts) !` : `${sharedChallengerName} challenged you (${sharedTargetScore} / 25,000 pts)!`)
-                : (locale === 'fr' ? 'Relevez ce défi sur les 5 mêmes lieux !' : 'Take on this challenge on the exact same 5 locations!') }}
-            </h3>
-          </div>
-        </div>
-        <button
-          type="button"
-          @click="startSharedChallenge"
-          class="px-6 py-3 rounded-xl bg-white text-orange-600 font-black text-sm hover:bg-orange-50 transition shadow cursor-pointer shrink-0"
+        <l-map
+          ref="satMapRef"
+          v-model:zoom="satZoom"
+          v-model:center="satCenter"
+          :min-zoom="noMoveLock ? satLockedZoom : 4"
+          :max-zoom="noMoveLock ? satLockedZoom : 14"
+          :options="{
+            zoomControl: false,
+            attributionControl: false,
+            dragging: !noMoveLock,
+            scrollWheelZoom: !noMoveLock,
+            doubleClickZoom: !noMoveLock,
+            touchZoom: !noMoveLock
+          }"
+          :use-global-leaflet="false"
+          @move="onSatMapMove"
         >
-          🚀 {{ locale === 'fr' ? 'Lancer le Duel' : 'Start Duel' }}
-        </button>
+          <l-tile-layer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            :no-wrap="false"
+          ></l-tile-layer>
+        </l-map>
       </div>
 
-      <!-- Choix du Chronomètre par manche -->
-      <div class="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <h3 class="font-bold text-gray-900 dark:text-white text-base">
-            ⏱️ {{ locale === 'fr' ? 'Temps imparti par manche' : 'Time limit per round' }}
-          </h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400">
-            {{ locale === 'fr' ? 'Choisissez votre rythme avant de lancer les 5 manches.' : 'Choose your pace before starting the 5 rounds.' }}
-          </p>
-        </div>
+      <!-- B. INSPECTEUR PHOTOGRAPHIQUE AU SOL (MODE VISUAL RECON) -->
+      <div
+        v-if="playMode === 'visual' && !visualFallbackActive"
+        class="w-full h-full relative bg-[#03060C] flex items-center justify-center overflow-hidden"
+        @pointerdown="onPhotoPanStart"
+        @pointermove="onPhotoPanMove"
+        @pointerup="onPhotoPanEnd"
+        @pointerleave="onPhotoPanEnd"
+        @wheel.prevent="onPhotoWheel"
+      >
+        <!-- Fond flouté atmosphérique -->
+        <img
+          v-if="visualImageUrl"
+          :src="visualImageUrl"
+          alt=""
+          class="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-25 blur-3xl scale-110"
+        />
 
-        <div class="flex items-center gap-2">
-          <button
-            v-for="opt in timerOptions"
-            :key="opt.value"
-            type="button"
-            @click="selectedTimeLimit = opt.value"
-            class="px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer border"
-            :class="selectedTimeLimit === opt.value
-              ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-              : 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400'"
-          >
-            {{ opt.label }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Les 2 grands modes GeoGuessr -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- MODE A : SATELLITE ESPION (VUE DU CIEL INTERACTIVE) -->
+        <!-- Image haute résolution manipulable (Zoom + Pan) -->
         <div
-          @click="startNewGame('satellite')"
-          class="group bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-8 shadow-xl border-2 border-blue-500/30 hover:border-cyan-400 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden"
-        >
-          <div class="pointer-events-none absolute -top-20 -right-20 w-64 h-64 rounded-full bg-cyan-400/15 blur-3xl"></div>
-          <div>
-            <div class="flex items-center justify-between mb-6">
-              <div class="w-16 h-16 rounded-2xl bg-cyan-400/20 border border-cyan-400/30 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
-                🛰️
-              </div>
-              <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-                Vue Orbitale • Sans Texte
-              </span>
-            </div>
-
-            <h3 class="text-2xl font-black mb-2">
-              {{ locale === 'fr' ? 'Mode Satellite Espion (Vue du Ciel)' : 'Spy Satellite Mode (Aerial View)' }}
-            </h3>
-            <p class="text-sm text-slate-300 leading-relaxed mb-6">
-              {{ locale === 'fr'
-                ? 'Parachuté en vue satellite haute définition au-dessus d\'une ville, d\'un port ou d\'une merveille naturelle sans aucun nom affiché. Analysez l\'urbanisme, les toits, le climat et les côtes pour localiser la cible !'
-                : 'Dropped into a high-resolution satellite view above a city, harbor, or natural wonder with zero labels. Analyze urban grids, roofs, climate, and coastlines to pinpoint the target!' }}
-            </p>
-          </div>
-
-          <div class="pt-4 border-t border-white/10 flex items-center justify-between text-sm font-extrabold text-cyan-300">
-            <span>5 {{ locale === 'fr' ? 'zones satellites • 25 000 pts max' : 'satellite zones • 25,000 pts max' }}</span>
-            <span class="group-hover:translate-x-1 transition-transform">{{ locale === 'fr' ? 'Lancer le Satellite →' : 'Launch Satellite →' }}</span>
-          </div>
-        </div>
-
-        <!-- MODE B : PHOTO-LOCALISATION MONDIALE -->
-        <div
-          @click="startNewGame('photo')"
-          class="group bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border-2 border-emerald-500/30 hover:border-emerald-500 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden"
-        >
-          <div>
-            <div class="flex items-center justify-between mb-6">
-              <div class="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
-                📸
-              </div>
-              <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
-                GPS Vérifié • HD
-              </span>
-            </div>
-
-            <h3 class="text-2xl font-black text-gray-900 dark:text-white mb-2">
-              {{ locale === 'fr' ? 'Mode Photo-Localisation' : 'Photo-Location Mode' }}
-            </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
-              {{ locale === 'fr'
-                ? 'De vraies photographies extérieures géolocalisées (rues, architectures, côtes, reliefs) avec coordonnées GPS certifiées. Trouvez où la photo a été prise !'
-                : 'Real outdoor geotagged photographs (streets, architecture, coastlines, mountains) with verified GPS coordinates. Pinpoint where it was taken!' }}
-            </p>
-          </div>
-
-          <div class="pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-            <span>5 {{ locale === 'fr' ? 'lieux uniques • 25 000 pts max' : 'unique locations • 25,000 pts max' }}</span>
-            <span class="group-hover:translate-x-1 transition-transform">{{ locale === 'fr' ? 'Jouer en Photo →' : 'Play Photo →' }}</span>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- ÉCRAN 2 : EN COURS DE PARTIE (MANCHE 1 À 5)               -->
-    <!-- ========================================================= -->
-    <div v-else-if="gameState === 'playing'" class="space-y-5">
-
-      <!-- BARRE DE STATUT DE LA MANCHE -->
-      <div class="bg-white dark:bg-gray-800 px-5 py-3.5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-          <span class="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-black text-sm">
-            {{ locale === 'fr' ? `Manche ${currentRound} / 5` : `Round ${currentRound} / 5` }}
-          </span>
-          <span class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400">
-            {{ activeMode === 'satellite'
-              ? (locale === 'fr' ? '🛰️ Satellite Espion (Périmètre Verrouillé)' : '🛰️ Spy Satellite (Locked Perimeter)')
-              : (locale === 'fr' ? '📸 Photo-Localisation' : '📸 Photo-Location') }}
-          </span>
-        </div>
-
-        <div
-          v-if="selectedTimeLimit > 0 && !roundConfirmed"
-          class="px-4 py-1.5 rounded-xl font-black text-base flex items-center gap-2"
-          :class="roundTimeLeft <= 10 ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'"
-        >
-          <span>⏱️</span>
-          <span>{{ formatTime(roundTimeLeft) }}</span>
-        </div>
-
-        <div class="flex items-baseline gap-1.5">
-          <span class="text-xs font-bold uppercase text-gray-400">Score :</span>
-          <strong class="text-xl font-black text-blue-600 dark:text-blue-400">
-            {{ totalScore.toLocaleString() }}
-          </strong>
-          <span class="text-xs font-bold text-gray-400">/ 25 000</span>
-        </div>
-      </div>
-
-      <!-- ZONE PRINCIPALE : VUE SATELLITE OU PHOTO + MINI-CARTE DE VOTE -->
-      <div v-if="!roundConfirmed" class="relative h-[560px] w-full rounded-3xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-slate-950">
-
-        <!-- Écran de chargement -->
-        <div
-          v-if="isLoadingLocation"
-          class="absolute inset-0 z-30 bg-slate-900/95 flex flex-col items-center justify-center text-white p-6 text-center space-y-4"
-        >
-          <div class="w-14 h-14 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-          <h3 class="text-xl font-black">
-            {{ activeMode === 'satellite'
-              ? (locale === 'fr' ? 'Acquisition du signal satellite orbital...' : 'Acquiring orbital satellite signal...')
-              : (locale === 'fr' ? 'Chargement d\'un lieu mystère vérifié...' : 'Loading a verified mystery location...') }}
-          </h3>
-        </div>
-
-        <!-- VUE 1 : MODE SATELLITE ESPION INTERACTIF (ESRI WORLD IMAGERY SANS TEXTE) -->
-        <div
-          v-if="activeMode === 'satellite' && currentLocation"
-          class="w-full h-full relative"
-        >
-          <l-map
-            ref="satMapRef"
-            v-model:zoom="satZoom"
-            v-model:center="satCenter"
-            :min-zoom="13"
-            :max-zoom="17"
-            :max-bounds="satBounds"
-            :max-bounds-viscosity="1.0"
-            :use-global-leaflet="false"
-            class="w-full h-full"
-          >
-            <l-tile-layer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              :no-wrap="true"
-            ></l-tile-layer>
-
-            <!-- Cible radar sur le point exact à deviner -->
-            <l-circle-marker
-              :lat-lng="[currentLocation.lat, currentLocation.lng]"
-              :radius="12"
-              :color="'#22d3ee'"
-              :weight="3"
-              :fill-color="'#06b6d4'"
-              :fill-opacity="0.25"
-            >
-              <l-popup>
-                <strong>🎯 {{ locale === 'fr' ? 'Cible Satellite à localiser' : 'Satellite Target to locate' }}</strong>
-              </l-popup>
-            </l-circle-marker>
-          </l-map>
-
-          <!-- Bandeau HUD Satellite en bas à gauche -->
-          <div class="pointer-events-none absolute bottom-4 left-4 z-20 hidden sm:flex items-center gap-3 px-3.5 py-2 rounded-xl bg-slate-950/80 border border-cyan-400/30 text-cyan-300 text-xs font-mono backdrop-blur-md">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-            <span>SAT-ZOOM: {{ satZoom }}x (MAX 17x)</span>
-            <span class="text-slate-400">|</span>
-            <span>{{ locale === 'fr' ? 'Déplacez la vue pour inspecter les alentours' : 'Pan around to inspect surroundings' }}</span>
-          </div>
-        </div>
-
-        <!-- VUE 2 : PHOTO-LOCALISATION HAUTE DÉFINITION AVEC ZOOM -->
-        <div
-          v-else-if="activeMode === 'photo' && currentLocation"
-          class="w-full h-full flex items-center justify-center bg-slate-950 relative overflow-hidden"
+          v-if="visualImageUrl && !visualLoading"
+          class="relative z-10 transition-transform duration-75 ease-out cursor-grab active:cursor-grabbing"
+          :style="{
+            transform: `translate3d(${photoPanX}px, ${photoPanY}px, 0) scale(${photoZoom})`
+          }"
         >
           <img
-            :src="currentLocation.imageUrl"
-            alt=""
-            class="absolute inset-0 w-full h-full object-cover blur-2xl opacity-35 scale-110 pointer-events-none"
-          />
-          <img
-            :src="currentLocation.imageUrl"
-            :alt="locale === 'fr' ? 'Lieu mystère' : 'Mystery location'"
-            class="relative z-10 max-w-full max-h-full object-contain transition-transform duration-300 select-none"
-            :class="photoZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'"
-            @click="photoZoomed = !photoZoomed"
-            @error="skipBrokenLocation"
+            :src="visualImageUrl"
+            alt="Reconnaissance visuelle"
+            class="max-w-[92vw] max-h-[82vh] rounded-2xl border border-white/15 shadow-[0_30px_90px_rgba(0,0,0,0.85)] object-contain select-none"
+            draggable="false"
           />
         </div>
 
-        <!-- BARRE D'OUTILS FLOTTANTE EN HAUT À GAUCHE -->
-        <div class="absolute top-4 left-14 z-20 flex flex-wrap items-center gap-2">
-          <button
-            v-if="!hintUsed"
-            type="button"
-            :disabled="isLoadingLocation || !currentLocation"
-            @click="useHint"
-            class="px-3.5 py-2 rounded-xl bg-slate-900/85 hover:bg-amber-500 text-white text-xs font-bold backdrop-blur-md border border-white/15 transition cursor-pointer flex items-center gap-1.5 shadow-md disabled:opacity-50"
-          >
-            💡 {{ locale === 'fr' ? 'Indice Continent (Points ÷ 2)' : 'Continent Hint (Points ÷ 2)' }}
-          </button>
-
-          <span
-            v-else-if="currentLocation"
-            class="px-3.5 py-2 rounded-xl bg-amber-500/95 text-slate-950 text-xs font-black shadow-md"
-          >
-            🧭 {{ currentLocation.continent }}{{ currentLocation.subregion ? ` — ${currentLocation.subregion}` : '' }} (Score ÷ 2)
-          </span>
-
-          <!-- Bouton spécifique au mode Satellite pour revenir sur la cible -->
-          <button
-            v-if="activeMode === 'satellite' && currentLocation"
-            type="button"
-            @click="recenterSatelliteTarget"
-            class="px-3 py-2 rounded-xl bg-cyan-950/90 hover:bg-cyan-800 text-cyan-200 text-xs font-bold backdrop-blur-md border border-cyan-400/30 transition cursor-pointer shadow-md"
-          >
-            🎯 {{ locale === 'fr' ? 'Recentrer cible' : 'Recenter target' }}
-          </button>
-
-          <button
-            type="button"
-            @click="skipBrokenLocation"
-            :disabled="isLoadingLocation"
-            class="px-3 py-2 rounded-xl bg-slate-900/75 hover:bg-slate-800 text-slate-200 text-xs font-semibold backdrop-blur-md border border-white/10 transition cursor-pointer"
-          >
-            🔄 {{ locale === 'fr' ? 'Autre vue' : 'Skip view' }}
-          </button>
+        <!-- État de synchronisation de l'archive visuelle -->
+        <div
+          v-if="visualLoading"
+          class="relative z-10 px-6 py-4 rounded-2xl bg-slate-950/90 border border-sky-500/30 font-mono text-xs text-sky-400 flex items-center gap-3"
+        >
+          <span class="w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping"></span>
+          <span>{{ locale === 'fr' ? 'SYNCHRONISATION DU CAPTEUR OPTIQUE...' : 'SYNCING OPTICAL SENSOR FEED...' }}</span>
         </div>
 
-        <!-- MINI-CARTE DE VOTE FLOTTANTE EN BAS À DROITE -->
-        <div
-          class="absolute bottom-4 right-4 z-20 transition-all duration-300 flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-2 border-white/80 dark:border-gray-700 overflow-hidden"
-          :class="miniMapExpanded
-            ? 'w-[92%] sm:w-[540px] h-[360px] sm:h-[400px]'
-            : 'w-64 sm:w-80 h-48 sm:h-56 hover:w-72 sm:hover:w-96 hover:h-56 sm:hover:h-64'"
-        >
-          <div class="bg-slate-900 text-white px-3 py-1.5 flex items-center justify-between text-xs font-bold">
-            <span>📍 {{ guessLatLng ? (locale === 'fr' ? 'Épingle placée !' : 'Pin placed!') : (locale === 'fr' ? 'Cliquez sur la carte' : 'Click on the map') }}</span>
+        <!-- Contrôles du capteur optique en bas à gauche -->
+        <div class="absolute bottom-5 left-4 sm:left-6 z-20 flex items-center gap-2">
+          <div class="flex items-center gap-1 p-1 rounded-full bg-slate-950/88 backdrop-blur-2xl border border-white/12 text-xs font-mono">
             <button
               type="button"
-              @click="toggleMiniMapSize"
-              class="px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 text-white cursor-pointer"
+              @click="adjustPhotoZoom(0.25)"
+              class="w-8 h-8 rounded-full hover:bg-white/10 text-white font-bold cursor-pointer flex items-center justify-center"
             >
-              {{ miniMapExpanded ? (locale === 'fr' ? 'Réduire ↙' : 'Shrink ↙') : (locale === 'fr' ? 'Agrandir ↗' : 'Expand ↗') }}
+              +
+            </button>
+            <span class="px-2 text-[11px] text-sky-400 font-bold">{{ photoZoom.toFixed(2) }}x</span>
+            <button
+              type="button"
+              @click="adjustPhotoZoom(-0.25)"
+              class="w-8 h-8 rounded-full hover:bg-white/10 text-white font-bold cursor-pointer flex items-center justify-center"
+            >
+              -
+            </button>
+            <button
+              type="button"
+              @click="resetPhotoOptics"
+              class="px-3 h-8 rounded-full hover:bg-white/10 text-slate-300 text-[11px] font-bold cursor-pointer"
+            >
+              Reset
             </button>
           </div>
 
-          <div class="flex-1 w-full relative">
-            <l-map
-              ref="guessMapRef"
-              v-model:zoom="guessZoom"
-              v-model:center="guessCenter"
-              :min-zoom="1"
-              :max-zoom="12"
-              :use-global-leaflet="false"
-              @click="onGuessMapClick"
-            >
-              <l-tile-layer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                :no-wrap="true"
-              ></l-tile-layer>
-
-              <l-marker v-if="guessLatLng" :lat-lng="guessLatLng"></l-marker>
-            </l-map>
-          </div>
-
           <button
             type="button"
-            :disabled="!guessLatLng || isLoadingLocation"
-            @click="confirmGuess"
-            class="w-full py-2.5 font-black text-xs sm:text-sm uppercase tracking-wider transition cursor-pointer"
-            :class="guessLatLng
-              ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'"
+            @click="visualFallbackActive = !visualFallbackActive"
+            class="px-4 py-2 rounded-full bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 font-mono text-xs font-bold text-sky-300 backdrop-blur-2xl cursor-pointer transition"
           >
-            {{ guessLatLng
-              ? (locale === 'fr' ? '✓ Valider ma position' : '✓ Confirm Guess')
-              : (locale === 'fr' ? 'Placez une épingle...' : 'Place a pin...') }}
+            {{ locale === 'fr' ? 'Basculer Vue Satellite' : 'Switch to Satellite' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- OVERLAY HUD TÉLÉMÉTRIQUE ORBITAL (RÉTICULE & CADRES)    -->
+      <!-- ======================================================= -->
+      <div class="pointer-events-none absolute inset-0 sat-vignette"></div>
+
+      <!-- Réticule télémétrique central SVG -->
+      <div v-if="showHudReticle" class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-45">
+        <svg width="160" height="160" viewBox="0 0 160 160" fill="none">
+          <circle cx="80" cy="80" r="36" stroke="#38bdf8" stroke-width="1" stroke-dasharray="4 4" />
+          <circle cx="80" cy="80" r="3" fill="#38bdf8" />
+          <path d="M80 28V40M80 120V132M28 80H40M120 80H132" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" />
+          <path d="M40 50V40H50M110 40H120V50M120 110V120H110M50 120H40V110" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </div>
+
+      <!-- Lecture d'altitude orbitale & statut capteur en bas à gauche (Mode Satellite) -->
+      <div
+        v-if="playMode !== 'visual' || visualFallbackActive"
+        class="pointer-events-none absolute bottom-5 left-4 sm:left-6 z-10 hidden sm:flex items-center gap-3 px-4 py-2 rounded-full bg-slate-950/80 backdrop-blur-xl border border-white/10 font-mono text-[11px] text-slate-300"
+      >
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>ALTITUDE : <strong class="text-sky-400">{{ orbitalAltitudeKm }} KM</strong></span>
+        <span class="text-white/20">|</span>
+        <span>OPTICS : <strong class="text-white">ZOOM {{ satZoom.toFixed(1) }}</strong></span>
+        <span v-if="noMoveLock" class="px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[10px] font-bold">
+          LOCKED
+        </span>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 2. BARRE SUPÉRIEURE DE COMMANDEMENT                       -->
+    <!-- ========================================================= -->
+    <header class="relative z-20 w-full max-w-[1760px] mx-auto px-3 sm:px-6 pt-3.5 flex flex-col gap-2.5 pointer-events-none">
+
+      <!-- Ligne 1 : Modes de jeu, Progression, Chronomètre & Score -->
+      <div class="flex flex-wrap items-center justify-between gap-2.5">
+
+        <!-- Gauche : Sélecteur des 3 modes (Satellite, Photo Sol, Série) + Manche -->
+        <div class="flex flex-wrap items-center gap-2 pointer-events-auto">
+          <div class="flex items-center p-1 rounded-full bg-slate-950/88 backdrop-blur-2xl border border-white/12 shadow-2xl">
+            <button
+              v-for="m in gameModes"
+              :key="m.id"
+              type="button"
+              @click="switchPlayMode(m.id)"
+              class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+              :class="playMode === m.id
+                ? 'bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-black shadow-sm'
+                : 'text-slate-300 hover:text-white'"
+            >
+              <svg v-if="m.id === 'orbital'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg v-else-if="m.id === 'visual'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
+              </svg>
+              <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              <span>{{ m.label }}</span>
+            </button>
+          </div>
+
+          <!-- Progression des 5 manches ou Série active -->
+          <div class="px-4 py-2 rounded-full bg-slate-950/88 backdrop-blur-2xl border border-white/12 flex items-center gap-3 shadow-xl">
+            <template v-if="playMode !== 'streak'">
+              <span class="font-mono text-xs font-black text-white">
+                {{ locale === 'fr' ? `MANCHE ${roundIndex + 1} / 5` : `ROUND ${roundIndex + 1} / 5` }}
+              </span>
+              <div class="hidden sm:flex items-center gap-1.5">
+                <span
+                  v-for="r in 5"
+                  :key="'step-dot-' + r"
+                  class="h-2 rounded-full transition-all duration-300"
+                  :class="r - 1 < roundHistory.length
+                    ? 'w-5 bg-emerald-400'
+                    : r - 1 === roundIndex
+                      ? 'w-7 bg-sky-400 animate-pulse'
+                      : 'w-2 bg-white/20'"
+                ></span>
+              </div>
+            </template>
+            <template v-else>
+              <span class="font-mono text-xs font-black text-emerald-400">
+                {{ locale === 'fr' ? `SÉRIE ACTIVE : ${currentStreak}` : `ACTIVE STREAK: ${currentStreak}` }}
+              </span>
+              <span class="text-white/20">|</span>
+              <span class="font-mono text-xs text-sky-400 font-bold">
+                MAX : {{ bestStreak }}
+              </span>
+            </template>
+          </div>
+
+          <!-- Score cumulé (/ 25 000 pts) -->
+          <div
+            v-if="playMode !== 'streak'"
+            class="px-4 py-2 rounded-full bg-slate-950/88 backdrop-blur-2xl border border-emerald-500/35 font-mono text-xs font-black text-emerald-400 shadow-xl"
+          >
+            {{ totalScore.toLocaleString() }} <span class="text-slate-400 font-normal">/ 25 000 PTS</span>
+          </div>
+        </div>
+
+        <!-- Droite : Chronomètre circulaire + Secteur + Contrôles tactiques -->
+        <div class="flex flex-wrap items-center gap-2 pointer-events-auto">
+
+          <!-- Chronomètre actif avec jauge circulaire SVG -->
+          <div
+            v-if="selectedTimerSec > 0 && !roundSubmitted && !gameFinished"
+            class="px-3.5 py-1.5 rounded-full bg-slate-950/90 backdrop-blur-2xl border flex items-center gap-2 shadow-xl"
+            :class="roundTimeLeft <= 5 ? 'border-rose-500 text-rose-400 animate-pulse' : 'border-sky-500/40 text-sky-300'"
+          >
+            <svg class="w-5 h-5 -rotate-90" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2.5" />
+              <circle
+                cx="12"
+                cy="12"
+                r="9"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                :stroke-dasharray="56.5"
+                :stroke-dashoffset="56.5 - (roundTimeLeft / selectedTimerSec) * 56.5"
+              />
+            </svg>
+            <span class="font-mono text-xs font-black">{{ roundTimeLeft }}s</span>
+          </div>
+
+          <!-- Sélecteur de Secteur Continental -->
+          <select
+            v-model="selectedScope"
+            @change="changeScope(selectedScope)"
+            class="px-3.5 py-2 rounded-full bg-slate-950/88 backdrop-blur-2xl border border-white/12 font-mono text-xs font-bold text-white focus:outline-none focus:border-sky-400 cursor-pointer shadow-xl"
+          >
+            <option v-for="sc in scopeOptions" :key="sc.id" :value="sc.id" class="bg-slate-950 text-white">
+              {{ sc.label }}
+            </option>
+          </select>
+
+          <!-- Sélecteur de Chronomètre -->
+          <select
+            v-model.number="selectedTimerSec"
+            @change="onTimerPresetChange"
+            class="px-3.5 py-2 rounded-full bg-slate-950/88 backdrop-blur-2xl border border-white/12 font-mono text-xs font-bold text-sky-300 focus:outline-none focus:border-sky-400 cursor-pointer shadow-xl"
+          >
+            <option :value="0" class="bg-slate-950 text-white">{{ locale === 'fr' ? 'Chrono : Illimité' : 'Timer: Untimed' }}</option>
+            <option :value="60" class="bg-slate-950 text-white">Chrono : 60s</option>
+            <option :value="30" class="bg-slate-950 text-white">Chrono : 30s</option>
+            <option :value="15" class="bg-slate-950 text-white">Blitz : 15s</option>
+          </select>
+
+          <!-- Verrouillage No-Move -->
+          <button
+            type="button"
+            @click="toggleNoMoveLock"
+            class="px-3.5 py-2 rounded-full border font-mono text-xs font-bold backdrop-blur-2xl transition cursor-pointer shadow-xl"
+            :class="noMoveLock
+              ? 'bg-rose-500/20 border-rose-500/45 text-rose-300'
+              : 'bg-slate-950/88 border-white/12 text-slate-300 hover:text-white'"
+            :title="locale === 'fr' ? 'Verrouiller la caméra (mode sans déplacement)' : 'Lock camera movement (No-Move mode)'"
+          >
+            {{ noMoveLock ? (locale === 'fr' ? 'Caméra Fixe' : 'No-Move ON') : (locale === 'fr' ? 'Caméra Libre' : 'Free Pan') }}
+          </button>
+
+          <!-- Recentrer Caméra -->
+          <button
+            type="button"
+            @click="recenterSatellite"
+            class="px-3.5 py-2 rounded-full bg-slate-950/88 hover:bg-slate-900 text-slate-200 border border-white/12 font-mono text-xs font-bold backdrop-blur-2xl transition cursor-pointer flex items-center gap-1.5 shadow-xl"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+            </svg>
+            <span class="hidden md:inline">{{ locale === 'fr' ? 'Recentrer' : 'Recenter' }}</span>
+          </button>
+
+          <!-- Tiroir d'Indices Télémétriques -->
+          <button
+            v-if="!roundSubmitted && !gameFinished"
+            type="button"
+            @click="clueDrawerOpen = !clueDrawerOpen"
+            class="px-3.5 py-2 rounded-full border font-mono text-xs font-bold backdrop-blur-2xl transition cursor-pointer flex items-center gap-1.5 shadow-xl"
+            :class="cluesUnlockedCount > 0 || clueDrawerOpen
+              ? 'bg-sky-500/20 border-sky-400/50 text-sky-300'
+              : 'bg-slate-950/88 border-white/12 text-slate-200 hover:border-sky-400/40'"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span>{{ locale === 'fr' ? `Indices (${cluesUnlockedCount}/3)` : `Intel (${cluesUnlockedCount}/3)` }}</span>
+          </button>
+
+          <!-- Audio -->
+          <button
+            type="button"
+            @click="toggleSound"
+            class="w-9 h-9 rounded-full bg-slate-950/88 border border-white/12 text-slate-200 flex items-center justify-center cursor-pointer shadow-xl"
+            :aria-label="soundEnabled ? 'Mute' : 'Unmute'"
+          >
+            <svg v-if="soundEnabled" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            </svg>
+            <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <line x1="23" y1="9" x2="17" y2="15" />
+              <line x1="17" y1="9" x2="23" y2="15" />
+            </svg>
           </button>
         </div>
 
       </div>
 
-      <!-- ========================================================= -->
-      <!-- RÉSULTAT DE LA MANCHE : CARTE AVEC TRAIT EN POINTILLÉS    -->
-      <!-- ========================================================= -->
-      <div v-else class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-md border border-gray-100 dark:border-gray-700 space-y-6">
-        
-        <div class="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <div class="flex items-center gap-4">
+      <!-- Ligne 2 optionnelle : Panneau déroulant des 3 Indices Télémétriques -->
+      <transition name="fade-up">
+        <div
+          v-if="clueDrawerOpen && !roundSubmitted && !gameFinished"
+          class="pointer-events-auto self-end w-full max-w-xl rounded-3xl bg-slate-950/92 backdrop-blur-2xl border border-sky-500/35 p-4 shadow-2xl space-y-3"
+        >
+          <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <span class="font-mono text-[11px] font-bold uppercase tracking-wider text-sky-400">
+              {{ locale === 'fr' ? 'CONSOLE D\'INDICES SATELLITAIRES (COÛT : -250 PTS / INDICE)' : 'SATELLITE INTEL CONSOLE (COST: -250 PTS / CLUE)' }}
+            </span>
+            <button
+              type="button"
+              @click="clueDrawerOpen = false"
+              class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 text-xs font-bold text-white cursor-pointer"
+            >
+              ×
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <button
+              v-for="(clue, cIdx) in availableRoundClues"
+              :key="clue.id"
+              type="button"
+              @click="unlockClue(cIdx)"
+              class="p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between min-h-[82px]"
+              :class="unlockedClues[cIdx]
+                ? 'bg-sky-500/15 border-sky-400/50 text-white'
+                : 'bg-white/[0.03] border-white/10 hover:border-sky-400/40 text-slate-400'"
+            >
+              <span class="font-mono text-[10px] font-bold uppercase text-sky-400">
+                0{{ cIdx + 1 }} // {{ clue.title }}
+              </span>
+              <strong v-if="unlockedClues[cIdx]" class="text-xs font-black text-white mt-1.5 block leading-snug">
+                {{ clue.value }}
+              </strong>
+              <span v-else class="font-mono text-[11px] text-amber-400 font-bold mt-1.5 block">
+                [{{ locale === 'fr' ? 'Déverrouiller (-250 pts)' : 'Unlock (-250 pts)' }}]
+              </span>
+            </button>
+          </div>
+        </div>
+      </transition>
+
+    </header>
+
+    <!-- ========================================================= -->
+    <!-- 3. MODALE DE DÉBRIEFING DE MANCHE AVEC GLOBE 3D ROTATIF   -->
+    <!-- ========================================================= -->
+    <transition name="fade-up">
+      <aside
+        v-if="roundSubmitted && !gameFinished"
+        class="absolute top-20 left-4 sm:left-6 z-20 w-[calc(100vw-2rem)] max-w-md rounded-3xl bg-slate-950/92 backdrop-blur-2xl border border-white/15 p-5 text-white shadow-[0_28px_80px_rgba(0,0,0,0.85)] space-y-4"
+      >
+        <div class="flex items-start justify-between gap-3 border-b border-white/10 pb-3.5">
+          <div class="flex items-center gap-3 min-w-0">
             <img
-              v-if="currentLocation?.iso"
-              :src="`https://flagcdn.com/w80/${currentLocation.iso}.png`"
-              class="h-12 w-auto rounded-lg shadow-sm border border-gray-200 dark:border-gray-700"
+              :src="`https://flagcdn.com/w160/${currentTarget.iso}.png`"
+              class="h-9 w-auto rounded border border-white/15 shadow shrink-0"
               alt=""
             />
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                  {{ currentLocation?.countryName }} ({{ currentLocation?.continent }})
-                </span>
-                <span
-                  v-if="hintUsed"
-                  class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300"
-                >
-                  💡 {{ locale === 'fr' ? 'Indice utilisé (Score ÷ 2)' : 'Hint used (Score ÷ 2)' }}
-                </span>
-              </div>
-              <h3 class="text-2xl font-black text-gray-900 dark:text-white">
-                {{ currentLocation?.title }}
+            <div class="min-w-0">
+              <span class="font-mono text-[10px] font-bold uppercase text-sky-400 block truncate">
+                {{ currentTarget.subregion }} // ISO {{ currentTarget.iso.toUpperCase() }}
+              </span>
+              <h3 class="text-lg font-black truncate leading-tight">
+                {{ currentTarget.name }} ({{ currentTarget.capital }})
               </h3>
             </div>
           </div>
 
-          <div class="flex items-center gap-4">
-            <div class="bg-gray-50 dark:bg-gray-900 px-4 py-2.5 rounded-2xl border border-gray-100 dark:border-gray-700 text-center">
-              <span class="text-[11px] font-bold uppercase text-gray-400 block">
-                📏 {{ locale === 'fr' ? 'Distance' : 'Distance' }}
-              </span>
-              <strong class="text-lg font-black text-gray-900 dark:text-white">
-                {{ lastRoundDistanceDisplay }}
-              </strong>
-            </div>
-
-            <div class="bg-emerald-50 dark:bg-emerald-950/50 px-5 py-2.5 rounded-2xl border border-emerald-200 dark:border-emerald-800 text-center">
-              <span class="text-[11px] font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
-                🏆 {{ locale === 'fr' ? 'Score Manche' : 'Round Score' }}
-              </span>
-              <strong class="text-xl font-black text-emerald-600 dark:text-emerald-400">
-                +{{ lastRoundScore.toLocaleString() }} <span class="text-xs font-bold">/ 5 000</span>
-              </strong>
-            </div>
-          </div>
-        </div>
-
-        <div class="h-3 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-          <div
-            class="h-full bg-gradient-to-r from-blue-600 via-cyan-400 to-emerald-500 transition-all duration-500 rounded-full"
-            :style="{ width: `${(lastRoundScore / 5000) * 100}%` }"
-          ></div>
-        </div>
-
-        <div class="h-[400px] w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 relative z-0">
-          <l-map
-            ref="resultMapRef"
-            v-model:zoom="resultZoom"
-            v-model:center="resultCenter"
-            :min-zoom="1"
-            :max-zoom="12"
-            :use-global-leaflet="false"
+          <span
+            class="px-3 py-1 rounded-full font-mono text-xs font-black border shrink-0"
+            :class="lastRoundPoints >= 3500
+              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+              : lastRoundPoints >= 1500
+                ? 'bg-sky-500/15 border-sky-500/40 text-sky-400'
+                : 'bg-amber-500/15 border-amber-500/40 text-amber-400'"
           >
-            <l-tile-layer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              :no-wrap="true"
-            ></l-tile-layer>
-
-            <l-polyline
-              v-if="guessLatLng && currentLocation"
-              :lat-lngs="[guessLatLng, [currentLocation.lat, currentLocation.lng]]"
-              :color="'#ef4444'"
-              :weight="3"
-              :options="{ dashArray: '8, 8' }"
-            ></l-polyline>
-
-            <l-circle-marker
-              v-if="guessLatLng"
-              :lat-lng="guessLatLng"
-              :radius="9"
-              :color="'#ffffff'"
-              :weight="2.5"
-              :fill-color="'#2563eb'"
-              :fill-opacity="1"
-            >
-              <l-popup>
-                <strong>📍 {{ locale === 'fr' ? 'Votre estimation' : 'Your guess' }}</strong>
-              </l-popup>
-            </l-circle-marker>
-
-            <l-circle-marker
-              v-if="currentLocation"
-              :lat-lng="[currentLocation.lat, currentLocation.lng]"
-              :radius="10"
-              :color="'#ffffff'"
-              :weight="2.5"
-              :fill-color="'#10b981'"
-              :fill-opacity="1"
-            >
-              <l-popup>
-                <div class="text-center">
-                  <strong>🎯 {{ currentLocation.title }}</strong><br />
-                  <span class="text-xs">{{ currentLocation.countryName }}</span>
-                </div>
-              </l-popup>
-            </l-circle-marker>
-          </l-map>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-between gap-4 pt-2">
-          <div class="flex items-center gap-4 text-xs font-bold text-gray-500 dark:text-gray-400">
-            <span class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span>
-              {{ locale === 'fr' ? 'Votre épingle' : 'Your pin' }}
-            </span>
-            <span class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-              {{ locale === 'fr' ? 'Position réelle' : 'Actual location' }}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            @click="nextRound"
-            class="px-8 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm transition shadow-md cursor-pointer"
-          >
-            {{ currentRound < 5
-              ? (locale === 'fr' ? `Manche suivante (${currentRound + 1}/5) →` : `Next Round (${currentRound + 1}/5) →`)
-              : (locale === 'fr' ? 'Voir mon score final (/ 25 000) 🏆' : 'See Final Score (/ 25,000) 🏆') }}
-          </button>
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- ÉCRAN 3 : BILAN FINAL DES 5 MANCHES SUR 25 000 POINTS     -->
-    <!-- ========================================================= -->
-    <div v-else-if="gameState === 'summary'" class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-10 shadow-md border border-gray-100 dark:border-gray-700 space-y-8">
-      
-      <div class="text-center space-y-2">
-        <div class="text-5xl mb-2">🏆</div>
-        <span class="px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-300">
-          {{ activeMode === 'satellite' ? 'GeoGuessr Satellite Espion' : 'GeoGuessr Photo' }}
-        </span>
-        <h3 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">
-          {{ totalScore.toLocaleString() }} <span class="text-xl text-gray-400">/ 25 000 pts</span>
-        </h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          {{ locale === 'fr'
-            ? 'Retrouvez ci-dessous la carte globale de vos 5 manches et défiez vos amis sur cette même partie !'
-            : 'Check out the global map of your 5 rounds below and challenge your friends on this exact same seed!' }}
-        </p>
-      </div>
-
-      <div class="h-[380px] w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 relative z-0">
-        <l-map
-          :zoom="2"
-          :center="[20, 10]"
-          :min-zoom="1"
-          :max-zoom="10"
-          :use-global-leaflet="false"
-        >
-          <l-tile-layer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            :no-wrap="true"
-          ></l-tile-layer>
-
-          <template v-for="(item, idx) in roundHistory" :key="'sum-' + idx">
-            <l-polyline
-              v-if="item.guessLatLng"
-              :lat-lngs="[item.guessLatLng, [item.actual.lat, item.actual.lng]]"
-              :color="'#ef4444'"
-              :weight="2.5"
-              :options="{ dashArray: '6, 6' }"
-            ></l-polyline>
-
-            <l-circle-marker
-              v-if="item.guessLatLng"
-              :lat-lng="item.guessLatLng"
-              :radius="7"
-              :color="'#ffffff'"
-              :weight="2"
-              :fill-color="'#2563eb'"
-              :fill-opacity="1"
-            ></l-circle-marker>
-
-            <l-circle-marker
-              :lat-lng="[item.actual.lat, item.actual.lng]"
-              :radius="8"
-              :color="'#ffffff'"
-              :weight="2"
-              :fill-color="'#10b981'"
-              :fill-opacity="1"
-            >
-              <l-popup>
-                <strong>#{{ idx + 1 }} — {{ item.actual.title }}</strong> ({{ item.actual.countryName }})<br />
-                <span>{{ item.distanceDisplay }} • +{{ item.score }} pts</span>
-              </l-popup>
-            </l-circle-marker>
-          </template>
-        </l-map>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
-        <div
-          v-for="(item, idx) in roundHistory"
-          :key="'card-sum-' + idx"
-          class="bg-gray-50 dark:bg-gray-900/70 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 text-center space-y-1.5"
-        >
-          <span class="text-xs font-extrabold text-gray-400 block">
-            {{ locale === 'fr' ? `Manche ${idx + 1}` : `Round ${idx + 1}` }}
+            <template v-if="playMode !== 'streak'">
+              +{{ lastRoundPoints.toLocaleString() }} PTS
+            </template>
+            <template v-else>
+              {{ lastStreakHit ? (locale === 'fr' ? 'VALIDÉ' : 'VERIFIED') : (locale === 'fr' ? 'ÉCHEC' : 'MISSED') }}
+            </template>
           </span>
-          <div class="flex items-center justify-center gap-1.5">
-            <img
-              v-if="item.actual.iso"
-              :src="`https://flagcdn.com/w20/${item.actual.iso}.png`"
-              class="h-3.5 w-auto rounded-2xs shadow-2xs shrink-0"
-              alt=""
-            />
-            <strong class="text-sm font-bold text-gray-900 dark:text-white truncate" :title="item.actual.countryName">
-              {{ item.actual.countryName }}
-            </strong>
+        </div>
+
+        <!-- Globe 3D Orthographique Interactif (Glisser pour tourner l'arc 3D) -->
+        <div class="flex items-center gap-4">
+          <div class="relative shrink-0">
+            <canvas
+              ref="debriefGlobeCanvasRef"
+              width="148"
+              height="148"
+              class="w-[132px] h-[132px] rounded-full border border-sky-500/35 bg-[#050914] cursor-grab active:cursor-grabbing"
+              @pointerdown="onDebriefGlobeDown"
+              @pointermove="onDebriefGlobeMove"
+              @pointerup="onDebriefGlobeUp"
+              @pointerleave="onDebriefGlobeUp"
+            ></canvas>
+            <span class="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-slate-950/85 font-mono text-[9px] text-sky-400 whitespace-nowrap">
+              3D ARC
+            </span>
           </div>
-          <span class="text-[11px] text-gray-400 block truncate" :title="item.actual.title">{{ item.actual.title }}</span>
-          <span class="text-xs text-gray-500 block">{{ item.distanceDisplay }}</span>
-          <strong class="text-base font-black text-emerald-600 dark:text-emerald-400 block">
-            +{{ item.score.toLocaleString() }} pts
-          </strong>
+
+          <div class="space-y-2.5 text-xs flex-1 min-w-0">
+            <div class="grid grid-cols-2 gap-2">
+              <div class="p-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
+                <span class="font-mono text-[9px] text-slate-400 uppercase block">
+                  {{ locale === 'fr' ? 'ÉCART GÉODÉSIQUE' : 'METRIC OFFSET' }}
+                </span>
+                <strong class="font-mono text-sm font-black text-sky-400 block mt-0.5">
+                  {{ lastRoundDistanceKm.toLocaleString() }} km
+                </strong>
+              </div>
+              <div class="p-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
+                <span class="font-mono text-[9px] text-slate-400 uppercase block">
+                  {{ locale === 'fr' ? 'PRÉCISION' : 'ACCURACY' }}
+                </span>
+                <strong class="font-mono text-sm font-black text-emerald-400 block mt-0.5">
+                  {{ lastRoundAccuracyPct }}%
+                </strong>
+              </div>
+            </div>
+
+            <!-- Jauge de précision linéaire -->
+            <div class="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+              <div
+                class="h-full rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 transition-all duration-500"
+                :style="{ width: `${lastRoundAccuracyPct}%` }"
+              ></div>
+            </div>
+
+            <p class="text-[11px] text-slate-300 leading-relaxed line-clamp-3">
+              {{ currentTarget.fact }}
+            </p>
+          </div>
+        </div>
+      </aside>
+    </transition>
+
+    <!-- ========================================================= -->
+    <!-- 4. DOCK RADAR DE POINTAGE 100 % MUET (EN BAS À DROITE)    -->
+    <!-- ========================================================= -->
+    <div
+      v-if="!gameFinished"
+      class="absolute bottom-5 right-4 sm:right-6 z-20 flex flex-col items-end pointer-events-none max-w-[calc(100vw-2rem)]"
+    >
+      <!-- Capsule réduite quand l'opérateur clique sur le bouton "-" -->
+      <transition name="fade-up" mode="out-in">
+        <button
+          v-if="radarMinimized"
+          key="radar-pill"
+          type="button"
+          @click="radarMinimized = false"
+          class="pointer-events-auto px-4 py-2.5 rounded-full bg-slate-950/92 backdrop-blur-2xl border border-sky-500/45 shadow-2xl flex items-center gap-3 hover:scale-105 transition cursor-pointer"
+        >
+          <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+          <span class="font-mono text-xs font-bold text-white">
+            {{ locale === 'fr' ? 'Ouvrir le Radar de Pointage' : 'Open PinDrop Radar' }}
+          </span>
+          <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-300 flex items-center justify-center font-mono text-xs font-black">
+            +
+          </span>
+        </button>
+
+        <!-- Fenêtre complète du Radar de Pointage -->
+        <div
+          v-else
+          key="radar-window"
+          class="radar-dock pointer-events-auto rounded-3xl bg-slate-950/92 backdrop-blur-2xl border border-white/15 shadow-[0_25px_75px_rgba(0,0,0,0.88)] overflow-hidden transition-all duration-300 flex flex-col"
+          :class="radarExpanded
+            ? 'w-[92vw] sm:w-[560px] h-[400px] sm:h-[440px]'
+            : 'w-[320px] sm:w-[375px] h-[265px] sm:h-[285px]'"
+        >
+          <!-- En-tête du Radar avec coordonnées, Agrandir et Réduire "-" -->
+          <div class="px-4 py-2.5 border-b border-white/10 flex items-center justify-between gap-2 bg-slate-900/85">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-2 h-2 rounded-full shrink-0" :class="guessLatLng ? 'bg-emerald-400' : 'bg-amber-400 animate-ping'"></span>
+              <span class="font-mono text-[11px] font-bold text-slate-200 truncate">
+                <template v-if="guessLatLng">
+                  {{ formatCoord(guessLatLng.lat, 'N', 'S') }}, {{ formatCoord(guessLatLng.lng, 'E', 'W') }}
+                  <span v-if="nearestGuessedCountry" class="text-sky-400 ml-1">[{{ nearestGuessedCountry.name }}]</span>
+                </template>
+                <template v-else>
+                  {{ locale === 'fr' ? 'CLIQUEZ SUR LE RADAR MUET' : 'CLICK BLANK RADAR TO PIN' }}
+                </template>
+              </span>
+            </div>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                @click="radarExpanded = !radarExpanded"
+                class="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 font-mono text-[10px] font-bold text-sky-300 transition cursor-pointer"
+              >
+                {{ radarExpanded ? (locale === 'fr' ? 'Compact' : 'Compact') : (locale === 'fr' ? 'Agrandir' : 'Expand') }}
+              </button>
+              <button
+                type="button"
+                @click="radarMinimized = true"
+                class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 font-mono text-xs font-black flex items-center justify-center transition cursor-pointer"
+                :title="locale === 'fr' ? 'Réduire le radar' : 'Minimize radar'"
+              >
+                -
+              </button>
+            </div>
+          </div>
+
+          <!-- Carte 2D 100 % Muette (Zéro nom de pays ou de ville) -->
+          <div class="flex-1 w-full relative z-0 radar-mute-map">
+            <l-map
+              ref="guessMapRef"
+              v-model:zoom="guessZoom"
+              v-model:center="guessCenter"
+              :min-zoom="1.5"
+              :max-zoom="7"
+              :options="{ zoomControl: false, attributionControl: false, worldCopyJump: true }"
+              :use-global-leaflet="false"
+              @click="onGuessMapClick"
+            >
+              <l-tile-layer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}"
+                :no-wrap="false"
+              ></l-tile-layer>
+
+              <!-- Frontières vectorielles muettes (world-atlas TopoJSON) -->
+              <l-polyline
+                v-for="(ring, rIdx) in leafletWorldRings"
+                :key="'pin-border-' + rIdx"
+                :lat-lngs="ring"
+                :color="'#38bdf8'"
+                :weight="0.8"
+                :options="{ opacity: 0.36, interactive: false }"
+              ></l-polyline>
+
+              <!-- Ligne géodésique entre le Pin du joueur et la Cible après validation -->
+              <l-polyline
+                v-if="roundSubmitted && guessLatLng"
+                :lat-lngs="[[guessLatLng.lat, guessLatLng.lng], [currentTarget.lat, currentTarget.lng]]"
+                :color="'#f43f5e'"
+                :weight="2.5"
+                :options="{ dashArray: '6, 6' }"
+              ></l-polyline>
+
+              <!-- Marqueur posé par le joueur -->
+              <l-circle-marker
+                v-if="guessLatLng"
+                :lat-lng="[guessLatLng.lat, guessLatLng.lng]"
+                :radius="7"
+                :color="'#ffffff'"
+                :weight="2.5"
+                :fill-color="'#0ea5e9'"
+                :fill-opacity="1"
+              ></l-circle-marker>
+
+              <!-- Marqueur de la cible réelle (révélé après validation) -->
+              <l-circle-marker
+                v-if="roundSubmitted"
+                :lat-lng="[currentTarget.lat, currentTarget.lng]"
+                :radius="8"
+                :color="'#ffffff'"
+                :weight="2.5"
+                :fill-color="'#10b981'"
+                :fill-opacity="1"
+              ></l-circle-marker>
+            </l-map>
+          </div>
+
+          <!-- Barre d'action inférieure du Radar -->
+          <div class="p-3 bg-slate-900/95 border-t border-white/10 flex items-center justify-between gap-2">
+            <button
+              v-if="!roundSubmitted"
+              type="button"
+              :disabled="!guessLatLng"
+              @click="submitPinGuess(false)"
+              class="w-full py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider transition cursor-pointer"
+              :class="guessLatLng
+                ? 'bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 shadow-lg shadow-sky-500/25 hover:opacity-95'
+                : 'bg-white/10 text-slate-500 cursor-not-allowed'"
+            >
+              {{ guessLatLng
+                ? (playMode === 'streak' && nearestGuessedCountry
+                    ? (locale === 'fr' ? `Valider : ${nearestGuessedCountry.name}` : `Confirm: ${nearestGuessedCountry.name}`)
+                    : (locale === 'fr' ? 'Valider ces coordonnées' : 'Confirm Coordinates'))
+                : (locale === 'fr' ? 'Placez votre épingle sur le radar' : 'Drop a pin on the radar') }}
+            </button>
+
+            <button
+              v-else
+              type="button"
+              @click="nextRound"
+              class="w-full py-2.5 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs uppercase tracking-wider transition cursor-pointer"
+            >
+              <template v-if="playMode === 'streak'">
+                {{ lastStreakHit
+                  ? (locale === 'fr' ? 'Pays suivant (Continuer la série)' : 'Next Country (Continue Streak)')
+                  : (locale === 'fr' ? 'Voir le bilan de la série' : 'View Streak Summary') }}
+              </template>
+              <template v-else>
+                {{ roundIndex < 4
+                  ? (locale === 'fr' ? 'Manche suivante' : 'Next Round')
+                  : (locale === 'fr' ? 'Afficher le rapport final' : 'View Final Report') }}
+              </template>
+            </button>
+          </div>
+        </div>
+      </transition>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 5. RAPPORT FINAL DE MISSION AVEC GLOBE 3D MULTI-ARCS      -->
+    <!-- ========================================================= -->
+    <transition name="fade-up">
+      <div
+        v-if="gameFinished"
+        class="absolute inset-0 z-30 bg-slate-950/88 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto"
+      >
+        <div class="w-full max-w-4xl rounded-3xl bg-[#080D1A] border border-white/15 p-6 sm:p-9 text-white shadow-2xl space-y-6 my-auto">
+
+          <!-- En-tête du Bilan & Actions -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-5">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <span class="font-mono text-xs font-bold uppercase tracking-widest text-sky-400">
+                  {{ playMode === 'streak' ? 'COUNTRY STREAK REPORT' : 'ORBITAL MISSION DEBRIEF // 5 ROUNDS' }}
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 font-mono text-[11px] font-bold text-emerald-400">
+                  {{ missionRankLabel }}
+                </span>
+              </div>
+
+              <h2 class="text-3xl sm:text-4xl font-black mt-1">
+                <template v-if="playMode === 'streak'">
+                  {{ currentStreak }} {{ locale === 'fr' ? 'États identifiés d\'affilée' : 'Consecutive States Identified' }}
+                </template>
+                <template v-else>
+                  {{ totalScore.toLocaleString() }} <span class="text-lg font-normal text-slate-400">/ 25 000 PTS</span>
+                </template>
+              </h2>
+
+              <p class="font-mono text-xs text-slate-400 mt-1">
+                {{ locale === 'fr'
+                  ? `Note unifiée enregistrée : ${normalizedScoreOn15} / 15 • Écart moyen : ${averageOffsetKm.toLocaleString()} km`
+                  : `Unified score saved: ${normalizedScoreOn15} / 15 • Avg offset: ${averageOffsetKm.toLocaleString()} km` }}
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                @click="copyChallengeSeedLink"
+                class="px-4 py-2.5 rounded-full bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/35 text-xs font-black transition cursor-pointer"
+              >
+                {{ seedCopied ? (locale === 'fr' ? 'Lien copié' : 'Seed Link Copied') : (locale === 'fr' ? 'Défier un ami (Même Seed)' : 'Challenge Friend (Same Seed)') }}
+              </button>
+              <button
+                type="button"
+                @click="startNewMission()"
+                class="px-6 py-2.5 rounded-full bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 text-xs font-black transition cursor-pointer shadow-lg shadow-sky-500/20"
+              >
+                {{ locale === 'fr' ? 'Nouvelle Mission' : 'New Mission' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Grille Centrale : Globe 3D récapitulatif des trajectoires + Liste des manches -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+
+            <!-- Gauche (5 cols) : Globe 3D Interactif traçant toutes les manches -->
+            <div class="lg:col-span-5 flex flex-col items-center justify-center p-4 rounded-3xl bg-white/[0.02] border border-white/10">
+              <canvas
+                ref="summaryGlobeCanvasRef"
+                width="250"
+                height="250"
+                class="w-[230px] h-[230px] cursor-grab active:cursor-grabbing"
+                @pointerdown="onDebriefGlobeDown"
+                @pointermove="onDebriefGlobeMove"
+                @pointerup="onDebriefGlobeUp"
+                @pointerleave="onDebriefGlobeUp"
+              ></canvas>
+              <span class="font-mono text-[10px] text-slate-400 uppercase mt-2">
+                {{ locale === 'fr' ? 'TRAJECTOIRES GÉODÉSIQUES DES MANCHES (GLISSER)' : 'MISSION GEODESIC ARCS (DRAG TO ROTATE)' }}
+              </span>
+            </div>
+
+            <!-- Droite (7 cols) : Journal détaillé des manches -->
+            <div class="lg:col-span-7 space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+              <div
+                v-for="(item, idx) in roundHistory"
+                :key="'hist-' + idx"
+                class="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-3 text-xs"
+              >
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="font-mono text-slate-400 font-bold">#0{{ idx + 1 }}</span>
+                  <img :src="`https://flagcdn.com/w40/${item.iso}.png`" class="h-4 w-auto rounded-2xs shrink-0" alt="" />
+                  <div class="min-w-0">
+                    <strong class="text-white block truncate">{{ item.name }} ({{ item.capital }})</strong>
+                    <span class="font-mono text-[11px] text-slate-400">
+                      {{ locale === 'fr' ? 'Écart :' : 'Offset:' }} {{ item.distanceKm.toLocaleString() }} km • {{ item.elapsedSec }}s
+                    </span>
+                  </div>
+                </div>
+
+                <span class="font-mono text-sm font-black text-emerald-400 shrink-0">
+                  {{ item.points.toLocaleString() }} pts
+                </span>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </div>
-
-      <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
-        <button
-          type="button"
-          @click="copyChallengeLink"
-          class="px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-sm transition shadow cursor-pointer flex items-center gap-2"
-        >
-          <span>⚔️</span>
-          <span>{{ challengeLinkCopied ? (locale === 'fr' ? 'Lien copié ! Envoyez-le à un ami' : 'Link copied! Send it to a friend') : (locale === 'fr' ? 'Défier un ami sur ces 5 lieux' : 'Challenge a friend on these 5 locations') }}</span>
-        </button>
-
-        <button
-          type="button"
-          @click="startNewGame(activeMode)"
-          class="px-8 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm transition shadow-md cursor-pointer"
-        >
-          ↻ {{ locale === 'fr' ? 'Nouvelle partie (5 nouveaux lieux)' : 'Play Again (5 new locations)' }}
-        </button>
-      </div>
-
-    </div>
+    </transition>
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import ALL_COUNTRIES from '../data/countries.js';
 
 import "leaflet/dist/leaflet.css";
-import { LMap, LTileLayer, LMarker, LPopup, LPolyline, LCircleMarker } from "@vue-leaflet/vue-leaflet";
-import L from 'leaflet';
+import { LMap, LTileLayer, LCircleMarker, LPolyline } from "@vue-leaflet/vue-leaflet";
 
 const { locale } = useI18n();
 const route = useRoute();
 const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+// =========================================================
+// SYNTHÉTISEUR AUDIO WEB AUDIO API
+// =========================================================
+const soundEnabled = ref(localStorage.getItem('geolearn_sound') !== 'off');
+let audioCtx = null;
+
+const toggleSound = () => {
+  soundEnabled.value = !soundEnabled.value;
+  localStorage.setItem('geolearn_sound', soundEnabled.value ? 'on' : 'off');
+};
+
+const playSound = (type) => {
+  if (!soundEnabled.value || typeof window === 'undefined') return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    if (type === 'hit') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.18);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    } else if (type === 'miss') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(145, now + 0.22);
+      gain.gain.setValueAtTime(0.13, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    }
+  } catch (e) {}
+};
+
+// =========================================================
+// BASE DES 196 ÉTATS & FRONTIÈRES VECTORIELLES MUETTES
+// =========================================================
+const localizedCountries = computed(() => {
+  const isEn = locale.value === 'en';
+  return ALL_COUNTRIES.map((c, idx) => ({
+    ...c,
+    id: c.id || c.iso || idx + 1,
+    name: isEn ? c.name_en : c.name_fr,
+    capital: isEn ? c.capital_en : c.capital_fr,
+    continent: c.continent_en,
+    subregion: isEn ? c.subregion_en : c.subregion_fr,
+    population: isEn ? c.population_en : c.population_fr,
+    lang: isEn ? c.lang_en : c.lang_fr,
+    fact: isEn ? c.fact_en : c.fact_fr
+  }));
 });
 
-const gameState = ref('menu');
-const activeMode = ref('photo');
-const selectedTimeLimit = ref(0);
+const leafletWorldRings = ref([]);
+
+const extractRingsFromTopoJSON = (topology) => {
+  const rings = [];
+  if (!topology || !topology.objects || !topology.arcs) return rings;
+  const { scale, translate } = topology.transform || { scale: [1, 1], translate: [0, 0] };
+  const decodedArcs = topology.arcs.map((arc) => {
+    let x = 0, y = 0;
+    return arc.map(([dx, dy]) => {
+      x += dx; y += dy;
+      return [x * scale[0] + translate[0], y * scale[1] + translate[1]];
+    });
+  });
+  const stitchArcs = (arcIndices) => {
+    const coords = [];
+    for (const idx of arcIndices) {
+      const arc = idx >= 0 ? decodedArcs[idx] : [...decodedArcs[~idx]].reverse();
+      if (arc) coords.push(...arc);
+    }
+    return coords;
+  };
+  const objKey = Object.keys(topology.objects)[0];
+  const geometries = topology.objects[objKey]?.geometries || [];
+  for (const geom of geometries) {
+    if (geom.type === 'Polygon') {
+      for (const r of geom.arcs) rings.push(stitchArcs(r));
+    } else if (geom.type === 'MultiPolygon') {
+      for (const poly of geom.arcs) {
+        for (const r of poly) rings.push(stitchArcs(r));
+      }
+    }
+  }
+  return rings;
+};
+
+const loadVectorBorders = async () => {
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+    if (res.ok) {
+      const topo = await res.json();
+      const rings = extractRingsFromTopoJSON(topo);
+      leafletWorldRings.value = rings.map((r) => r.map(([lon, lat]) => [lat, lon]));
+    }
+  } catch (e) {}
+};
+
+// =========================================================
+// MODES DE JEU, CHRONOMÈTRE, CAMÉRA & INDICES
+// =========================================================
+const playMode = ref('orbital'); // 'orbital' | 'visual' | 'streak'
+const selectedScope = ref('world');
+const selectedTimerSec = ref(0);
 const roundTimeLeft = ref(0);
-let roundTimerInterval = null;
+const noMoveLock = ref(false);
+const satLockedZoom = ref(10);
+const showHudReticle = ref(true);
 
-const timerOptions = computed(() => [
-  { value: 0, label: locale.value === 'fr' ? '∞ Sans limite' : '∞ No limit' },
-  { value: 60, label: '⏱️ 60 sec' },
-  { value: 30, label: '⚡ 30 sec' }
-]);
+const gameModes = computed(() => {
+  const isFr = locale.value === 'fr';
+  return [
+    { id: 'orbital', label: isFr ? 'Satellite Orbital' : 'Orbital Sat' },
+    { id: 'visual', label: isFr ? 'Photo Géolocalisée' : 'Visual Recon' },
+    { id: 'streak', label: isFr ? 'Série de Pays' : 'Country Streak' }
+  ];
+});
 
-const currentRound = ref(1);
+const scopeOptions = computed(() => {
+  const isFr = locale.value === 'fr';
+  return [
+    { id: 'world', label: isFr ? 'Secteur : Monde (196)' : 'Sector: World (196)' },
+    { id: 'Europe', label: 'Secteur : Europe (47)' },
+    { id: 'Asia', label: isFr ? 'Secteur : Asie (46)' : 'Sector: Asia (46)' },
+    { id: 'Africa', label: isFr ? 'Secteur : Afrique (54)' : 'Sector: Africa (54)' },
+    { id: 'Americas', label: isFr ? 'Secteur : Amériques (35)' : 'Sector: Americas (35)' },
+    { id: 'Oceania', label: isFr ? 'Secteur : Océanie (14)' : 'Sector: Oceania (14)' }
+  ];
+});
+
+const missionTargets = ref([]);
+const roundIndex = ref(0);
 const totalScore = ref(0);
-const isLoadingLocation = ref(false);
-const roundConfirmed = ref(false);
-const currentLocation = ref(null);
 const roundHistory = ref([]);
-
-const satMapRef = ref(null);
-const guessMapRef = ref(null);
-const resultMapRef = ref(null);
-const miniMapExpanded = ref(false);
-const photoZoomed = ref(false);
-const hintUsed = ref(false);
-
-// Paramètres de la caméra Satellite Espion
-const satZoom = ref(15);
-const satCenter = ref([20, 0]);
-const satBounds = ref([[-90, -180], [90, 180]]);
-
-const guessZoom = ref(1);
-const guessCenter = ref([20, 0]);
 const guessLatLng = ref(null);
+const roundSubmitted = ref(false);
+const gameFinished = ref(false);
+const radarExpanded = ref(false);
+const radarMinimized = ref(false);
+const seedCopied = ref(false);
 
-const resultZoom = ref(2);
-const resultCenter = ref([20, 0]);
-const lastRoundScore = ref(0);
+// Mode Série de Pays (Country Streak)
+const currentStreak = ref(0);
+const bestStreak = ref(Number(localStorage.getItem('geolearn_pindrop_streak') || 0));
+const lastStreakHit = ref(true);
+
+// Mode Visual Recon (Photo au sol Wikimedia REST API)
+const visualImageUrl = ref('');
+const visualLoading = ref(false);
+const visualFallbackActive = ref(false);
+const photoZoom = ref(1);
+const photoPanX = ref(0);
+const photoPanY = ref(0);
+let photoDragging = false;
+let photoLastX = 0;
+let photoLastY = 0;
+
+// Indices progressifs
+const clueDrawerOpen = ref(false);
+const unlockedClues = ref([false, false, false]);
+
 const lastRoundDistanceKm = ref(0);
+const lastRoundPoints = ref(0);
+const lastRoundAccuracyPct = ref(0);
 
-// ============================================================================
-// 1A. BASE DÉDIÉE AU MODE SATELLITE ESPION (55 ZONES AÉRIENNES DISTINCTIVES)
-// ============================================================================
-const VERIFIED_SATELLITE_LOCATIONS = [
-  { title: 'Palm Jumeirah, Dubaï', country_fr: 'Émirats arabes unis', country_en: 'United Arab Emirates', continent: 'Asia', subregion: 'Asie de l\'Ouest', iso: 'ae', lat: 25.1124, lng: 55.1390 },
-  { title: 'Quartier de l\'Eixample, Barcelone', country_fr: 'Espagne', country_en: 'Spain', continent: 'Europe', subregion: 'Europe du Sud', iso: 'es', lat: 41.3954, lng: 2.1660 },
-  { title: 'Place de l\'Étoile & Arc de Triomphe, Paris', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 48.8738, lng: 2.2950 },
-  { title: 'Lagune & Place Saint-Marc, Venise', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 45.4342, lng: 12.3385 },
-  { title: 'Ceinture des Canaux (Grachtengordel), Amsterdam', country_fr: 'Pays-Bas', country_en: 'Netherlands', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'nl', lat: 52.3667, lng: 4.8860 },
-  { title: 'Pyramides de Gizeh, Le Caire', country_fr: 'Égypte', country_en: 'Egypt', continent: 'Africa', subregion: 'Afrique du Nord', iso: 'eg', lat: 29.9792, lng: 31.1342 },
-  { title: 'Central Park & Manhattan, New York', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 40.7711, lng: -73.9742 },
-  { title: 'Pentagone & Potomac, Washington D.C.', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 38.8719, lng: -77.0563 },
-  { title: 'Golden Gate & Baie de San Francisco', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 37.8199, lng: -122.4783 },
-  { title: 'Hoover Dam & Lac Mead, Nevada', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 36.0161, lng: -114.7377 },
-  { title: 'Chutes du Niagara, Ontario', country_fr: 'Canada', country_en: 'Canada', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'ca', lat: 43.0799, lng: -79.0747 },
-  { title: 'Vieux-Québec & Fleuve Saint-Laurent', country_fr: 'Canada', country_en: 'Canada', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'ca', lat: 46.8123, lng: -71.2045 },
-  { title: 'Écluses de Miraflores, Canal de Panama', country_fr: 'Panama', country_en: 'Panama', continent: 'Americas', subregion: 'Amérique Centrale', iso: 'pa', lat: 8.9967, lng: -79.5911 },
-  { title: 'Plano Piloto (Ville-Avion), Brasília', country_fr: 'Brésil', country_en: 'Brazil', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'br', lat: -15.7998, lng: -47.8645 },
-  { title: 'Plage de Copacabana & Pain de Sucre, Rio', country_fr: 'Brésil', country_en: 'Brazil', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'br', lat: -22.9688, lng: -43.1786 },
-  { title: 'Chutes d\'Iguazú, Misiones', country_fr: 'Argentine', country_en: 'Argentina', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'ar', lat: -25.6953, lng: -54.4367 },
-  { title: 'Puerto Madero & Avenue 9 de Julio, Buenos Aires', country_fr: 'Argentine', country_en: 'Argentina', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'ar', lat: -34.6061, lng: -58.3635 },
-  { title: 'Citadelle Inca de Machu Picchu, Andes', country_fr: 'Pérou', country_en: 'Peru', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'pe', lat: -13.1631, lng: -72.5450 },
-  { title: 'Falaises de Miraflores, Lima', country_fr: 'Pérou', country_en: 'Peru', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'pe', lat: -12.1319, lng: -77.0305 },
-  { title: 'Teotihuacán (Pyramides du Soleil et de la Lune)', country_fr: 'Mexique', country_en: 'Mexico', continent: 'Americas', subregion: 'Amérique Centrale', iso: 'mx', lat: 19.6925, lng: -98.8438 },
-  { title: 'Cité Interdite, Pékin (Beijing)', country_fr: 'Chine', country_en: 'China', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'cn', lat: 39.9163, lng: 116.3972 },
-  { title: 'Lujiazui & Bund, Shanghai', country_fr: 'Chine', country_en: 'China', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'cn', lat: 31.2397, lng: 121.4998 },
-  { title: 'Victoria Harbour & Kowloon, Hong Kong', country_fr: 'Chine', country_en: 'China', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'cn', lat: 22.2855, lng: 114.1577 },
-  { title: 'Palais Impérial de Tokyo, Chiyoda', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 35.6852, lng: 139.7528 },
-  { title: 'Cratère du Mont Fuji, Honshū', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 35.3606, lng: 138.7274 },
-  { title: 'Château d\'Osaka & Douves', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 34.6873, lng: 135.5262 },
-  { title: 'Marina Bay & Gardens by the Bay, Singapour', country_fr: 'Singapour', country_en: 'Singapore', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'sg', lat: 1.2816, lng: 103.8636 },
-  { title: 'Temples d\'Angkor Wat, Siem Reap', country_fr: 'Cambodge', country_en: 'Cambodia', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'kh', lat: 13.4125, lng: 103.8670 },
-  { title: 'Taj Mahal & Rivière Yamuna, Agra', country_fr: 'Inde', country_en: 'India', continent: 'Asia', subregion: 'Asie du Sud', iso: 'in', lat: 27.1751, lng: 78.0421 },
-  { title: 'Connaught Place (Cercle de New Delhi)', country_fr: 'Inde', country_en: 'India', continent: 'Asia', subregion: 'Asie du Sud', iso: 'in', lat: 28.6315, lng: 77.2167 },
-  { title: 'Fleuve Chao Phraya & Grand Palais, Bangkok', country_fr: 'Thaïlande', country_en: 'Thailand', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'th', lat: 13.7500, lng: 100.4913 },
-  { title: 'Tours Petronas & Parc KLCC, Kuala Lumpur', country_fr: 'Malaisie', country_en: 'Malaysia', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'my', lat: 3.1579, lng: 101.7116 },
-  { title: 'Corne d\'Or & Détroit du Bosphore, Istanbul', country_fr: 'Turquie', country_en: 'Turkey', continent: 'Asia', subregion: 'Asie de l\'Ouest', iso: 'tr', lat: 41.0082, lng: 28.9784 },
-  { title: 'Opéra de Sydney & Circular Quay', country_fr: 'Australie', country_en: 'Australia', continent: 'Oceania', subregion: 'Australie et Nouvelle-Zélande', iso: 'au', lat: -33.8568, lng: 151.2153 },
-  { title: 'Rocher d\'Uluru (Ayers Rock), Territoire du Nord', country_fr: 'Australie', country_en: 'Australia', continent: 'Oceania', subregion: 'Australie et Nouvelle-Zélande', iso: 'au', lat: -25.3444, lng: 131.0369 },
-  { title: 'Port d\'Auckland & Pont du Harbour', country_fr: 'Nouvelle-Zélande', country_en: 'New Zealand', continent: 'Oceania', subregion: 'Australie et Nouvelle-Zélande', iso: 'nz', lat: -36.8406, lng: 174.7645 },
-  { title: 'Victoria & Alfred Waterfront, Le Cap', country_fr: 'Afrique du Sud', country_en: 'South Africa', continent: 'Africa', subregion: 'Afrique Australe', iso: 'za', lat: -33.9036, lng: 18.4205 },
-  { title: 'Mosquée Hassan II & Corniche, Casablanca', country_fr: 'Maroc', country_en: 'Morocco', continent: 'Africa', subregion: 'Afrique du Nord', iso: 'ma', lat: 33.6084, lng: -7.6326 },
-  { title: 'Médina & Place Jemaa el-Fna, Marrakech', country_fr: 'Maroc', country_en: 'Morocco', continent: 'Africa', subregion: 'Afrique du Nord', iso: 'ma', lat: 31.6258, lng: -7.9891 },
-  { title: 'Île de Gorée & Port de Dakar', country_fr: 'Sénégal', country_en: 'Senegal', continent: 'Africa', subregion: 'Afrique de l\'Ouest', iso: 'sn', lat: 14.6669, lng: -17.3986 },
-  { title: 'Chutes Victoria (Fleuve Zambèze)', country_fr: 'Zambie', country_en: 'Zambia', continent: 'Africa', subregion: 'Afrique de l\'Est', iso: 'zm', lat: -17.9243, lng: 25.8572 },
-  { title: 'Cité du Vatican & Place Saint-Pierre, Rome', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 41.9022, lng: 12.4568 },
-  { title: 'Cratère du Vésuve, Baie de Naples', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 40.8224, lng: 14.4289 },
-  { title: 'Rocher & Port Hercule, Monaco', country_fr: 'Monaco', country_en: 'Monaco', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'mc', lat: 43.7347, lng: 7.4206 },
-  { title: 'Baie du Mont-Saint-Michel, Normandie', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 48.6360, lng: -1.5115 },
-  { title: 'Vieux-Port & Notre-Dame de la Garde, Marseille', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 43.2951, lng: 5.3744 },
-  { title: 'Tamise, Tower Bridge & City, Londres', country_fr: 'Royaume-Uni', country_en: 'United Kingdom', continent: 'Europe', subregion: 'Europe du Nord', iso: 'gb', lat: 51.5055, lng: -0.0754 },
-  { title: 'Acropole & Parthénon, Athènes', country_fr: 'Grèce', country_en: 'Greece', continent: 'Europe', subregion: 'Europe du Sud', iso: 'gr', lat: 37.9715, lng: 23.7257 },
-  { title: 'Remparts & Vieille Ville de Dubrovnik', country_fr: 'Croatie', country_en: 'Croatia', continent: 'Europe', subregion: 'Europe du Sud', iso: 'hr', lat: 42.6403, lng: 18.1083 },
-  { title: 'Citadelle Kastellet (Étoile), Copenhague', country_fr: 'Danemark', country_en: 'Denmark', continent: 'Europe', subregion: 'Europe du Nord', iso: 'dk', lat: 55.6914, lng: 12.5942 },
-  { title: 'Île de Gamla Stan, Stockholm', country_fr: 'Suède', country_en: 'Sweden', continent: 'Europe', subregion: 'Europe du Nord', iso: 'se', lat: 59.3251, lng: 18.0708 },
-  { title: 'Forteresse maritime de Suomenlinna, Helsinki', country_fr: 'Finlande', country_en: 'Finland', continent: 'Europe', subregion: 'Europe du Nord', iso: 'fi', lat: 60.1454, lng: 24.9881 },
-  { title: 'Place du Commerce & Tage, Lisbonne', country_fr: 'Portugal', country_en: 'Portugal', continent: 'Europe', subregion: 'Europe du Sud', iso: 'pt', lat: 38.7075, lng: -9.1364 },
-  { title: 'Île Marguerite & Parlement sur le Danube, Budapest', country_fr: 'Hongrie', country_en: 'Hungary', continent: 'Europe', subregion: 'Europe de l\'Est', iso: 'hu', lat: 47.5071, lng: 19.0457 },
-  { title: 'Kremlin & Place Rouge, Moscou', country_fr: 'Russie', country_en: 'Russia', continent: 'Europe', subregion: 'Europe de l\'Est', iso: 'ru', lat: 55.7520, lng: 37.6175 }
-];
+const satZoom = ref(10);
+const satCenter = ref([48.8566, 2.3522]);
+const guessZoom = ref(2);
+const guessCenter = ref([24, 12]);
 
-// ============================================================================
-// 1B. BASE DÉDIÉE AU MODE PHOTO-LOCALISATION (MONUMENTS & PAYSAGES VÉRIFIÉS)
-// ============================================================================
-const VERIFIED_PHOTO_LOCATIONS = [
-  { title: 'Pont de Bir-Hakeim, Paris', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 48.8556, lng: 2.2876, wikiFile: 'File:Tour_Eiffel_seen_from_Pont_de_Bir-Hakeim.jpg' },
-  { title: 'Mont Saint-Michel, Normandie', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 48.6360, lng: -1.5115, wikiFile: 'File:Mont-Saint-Michel_vu_du_ciel.jpg' },
-  { title: 'Vieux-Port de Marseille', country_fr: 'France', country_en: 'France', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'fr', lat: 43.2951, lng: 5.3744, wikiFile: 'File:Marseille_-_Vieux-Port_2.jpg' },
-  { title: 'Westminster & Big Ben, Londres', country_fr: 'Royaume-Uni', country_en: 'United Kingdom', continent: 'Europe', subregion: 'Europe du Nord', iso: 'gb', lat: 51.5007, lng: -0.1246, wikiFile: 'File: Palace_of_Westminster_from_the_dome_on_Methodist_Central_Hall.jpg' },
-  { title: 'Calton Hill, Édimbourg', country_fr: 'Royaume-Uni', country_en: 'United Kingdom', continent: 'Europe', subregion: 'Europe du Nord', iso: 'gb', lat: 55.9548, lng: -3.1824, wikiFile: 'File:Edinburgh_from_Calton_Hill.jpg' },
-  { title: 'Colisée & Forum Romain, Rome', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 41.8902, lng: 12.4922, wikiFile: 'File:Colosseo_2020.jpg' },
-  { title: 'Grand Canal, Venise', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 45.4310, lng: 12.3325, wikiFile: 'File:Canale_Grande_Chiesa_della_Salute_e_Dogana_dal_ponte_dell_Accademia.jpg' },
-  { title: 'Manarola, Cinque Terre', country_fr: 'Italie', country_en: 'Italy', continent: 'Europe', subregion: 'Europe du Sud', iso: 'it', lat: 44.1068, lng: 9.7276, wikiFile: 'File:Manarola_Cinque_Terre_Italy.jpg' },
-  { title: 'Plaza de España, Séville', country_fr: 'Espagne', country_en: 'Spain', continent: 'Europe', subregion: 'Europe du Sud', iso: 'es', lat: 37.3772, lng: -5.9869, wikiFile: 'File:Plaza_de_Espa%C3%B1a_(Sevilla)_-_01.jpg' },
-  { title: 'Parc Güell, Barcelone', country_fr: 'Espagne', country_en: 'Spain', continent: 'Europe', subregion: 'Europe du Sud', iso: 'es', lat: 41.4145, lng: 2.1527, wikiFile: 'File:Parc_G%C3%BCell,_Barcelona.jpg' },
-  { title: 'Tour de Belém, Lisbonne', country_fr: 'Portugal', country_en: 'Portugal', continent: 'Europe', subregion: 'Europe du Sud', iso: 'pt', lat: 38.6916, lng: -9.2160, wikiFile: 'File:Torre_de_Bel%C3%A9m_(Lisboa)_2013.jpg' },
-  { title: 'Porte de Brandebourg, Berlin', country_fr: 'Allemagne', country_en: 'Germany', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'de', lat: 52.5163, lng: 13.3777, wikiFile: 'File:Brandenburger_Tor_abends.jpg' },
-  { title: 'Château de Neuschwanstein, Bavière', country_fr: 'Allemagne', country_en: 'Germany', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'de', lat: 47.5576, lng: 10.7498, wikiFile: 'File:Castle_Neuschwanstein.jpg' },
-  { title: 'Canaux d\'Amsterdam', country_fr: 'Pays-Bas', country_en: 'Netherlands', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'nl', lat: 52.3676, lng: 4.8945, wikiFile: 'File:Amsterdam_Canals_-_July_2006.jpg' },
-  { title: 'Grand-Place de Bruxelles', country_fr: 'Belgique', country_en: 'Belgium', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'be', lat: 50.8467, lng: 4.3525, wikiFile: 'File:Brussels_Grand-Place_at_night_2.jpg' },
-  { title: 'Cervin (Matterhorn), Zermatt', country_fr: 'Suisse', country_en: 'Switzerland', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'ch', lat: 45.9766, lng: 7.6585, wikiFile: 'File:Matterhorn_from_Domh%C3%BCtte_-_2.jpg' },
-  { title: 'Hallstatt, Haute-Autriche', country_fr: 'Autriche', country_en: 'Austria', continent: 'Europe', subregion: 'Europe de l\'Ouest', iso: 'at', lat: 47.5622, lng: 13.6493, wikiFile: 'File:Hallstatt_300.jpg' },
-  { title: 'Pont Charles, Prague', country_fr: 'Tchéquie', country_en: 'Czechia', continent: 'Europe', subregion: 'Europe de l\'Est', iso: 'cz', lat: 50.0865, lng: 14.4114, wikiFile: 'File:Prague_07-2016_View_from_Old_Town_Bridge_Tower_img2.jpg' },
-  { title: 'Parlement Hongrois, Budapest', country_fr: 'Hongrie', country_en: 'Hungary', continent: 'Europe', subregion: 'Europe de l\'Est', iso: 'hu', lat: 47.5071, lng: 19.0457, wikiFile: 'File:Hungarian_Parliament_Building_from_across_the_Danube.jpg' },
-  { title: 'Acropole d\'Athènes', country_fr: 'Grèce', country_en: 'Greece', continent: 'Europe', subregion: 'Europe du Sud', iso: 'gr', lat: 37.9715, lng: 23.7257, wikiFile: 'File:The_Parthenon_in_Athens.jpg' },
-  { title: 'Oia, Île de Santorin', country_fr: 'Grèce', country_en: 'Greece', continent: 'Europe', subregion: 'Europe du Sud', iso: 'gr', lat: 36.4618, lng: 25.3753, wikiFile: 'File:Santorini-Oia-2007-10-16.jpg' },
-  { title: 'Vieille Ville de Dubrovnik', country_fr: 'Croatie', country_en: 'Croatia', continent: 'Europe', subregion: 'Europe du Sud', iso: 'hr', lat: 42.6403, lng: 18.1083, wikiFile: 'File:Dubrovnik_Old_Town_from_above.jpg' },
-  { title: 'Lac de Bled', country_fr: 'Slovénie', country_en: 'Slovenia', continent: 'Europe', subregion: 'Europe du Sud', iso: 'si', lat: 46.3625, lng: 14.0900, wikiFile: 'File:Bled_Lake_with_Island.jpg' },
-  { title: 'Bryggen, Bergen', country_fr: 'Norvège', country_en: 'Norway', continent: 'Europe', subregion: 'Europe du Nord', iso: 'no', lat: 60.3976, lng: 5.3245, wikiFile: 'File:Bryggen_i_Bergen.jpg' },
-  { title: 'Reine, Îles Lofoten', country_fr: 'Norvège', country_en: 'Norway', continent: 'Europe', subregion: 'Europe du Nord', iso: 'no', lat: 67.9324, lng: 13.0886, wikiFile: 'File:Reine_Lofoten_2009.jpg' },
-  { title: 'Gamla Stan, Stockholm', country_fr: 'Suède', country_en: 'Sweden', continent: 'Europe', subregion: 'Europe du Nord', iso: 'se', lat: 59.3251, lng: 18.0708, wikiFile: 'File:Stockholm_Gamla_stan_2016.jpg' },
-  { title: 'Nyhavn, Copenhague', country_fr: 'Danemark', country_en: 'Denmark', continent: 'Europe', subregion: 'Europe du Nord', iso: 'dk', lat: 55.6798, lng: 12.5914, wikiFile: 'File:Nyhavn,_Copenhagen.jpg' },
-  { title: 'Kirkjufell, Snæfellsnes', country_fr: 'Islande', country_en: 'Iceland', continent: 'Europe', subregion: 'Europe du Nord', iso: 'is', lat: 64.9244, lng: -23.3122, wikiFile: 'File:Kirkjufell_mountain_and_Kirkjufellsfoss_waterfall.jpg' },
-  { title: 'Mosquée Bleue & Sainte-Sophie, Istanbul', country_fr: 'Turquie', country_en: 'Turkey', continent: 'Asia', subregion: 'Asie de l\'Ouest', iso: 'tr', lat: 41.0054, lng: 28.9768, wikiFile: 'File:Sultan_Ahmed_Mosque_Istanbul_Turkey_retouched.jpg' },
-  { title: 'Pont de Brooklyn & Manhattan, New York', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 40.7061, lng: -73.9969, wikiFile: 'File:Brooklyn_Bridge_Manhattan.jpg' },
-  { title: 'Golden Gate Bridge, San Francisco', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 37.8199, lng: -122.4783, wikiFile: 'File:GoldenGateBridge-001.jpg' },
-  { title: 'Grand Canyon, Arizona', country_fr: 'États-Unis', country_en: 'United States', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'us', lat: 36.0544, lng: -112.1401, wikiFile: 'File:Grand_Canyon_view_from_Pima_Point_2010.jpg' },
-  { title: 'Lac Moraine, Parc National de Banff', country_fr: 'Canada', country_en: 'Canada', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'ca', lat: 51.3217, lng: -116.1860, wikiFile: 'File:Moraine_Lake_17092005.jpg' },
-  { title: 'Château Frontenac, Québec', country_fr: 'Canada', country_en: 'Canada', continent: 'Americas', subregion: 'Amérique du Nord', iso: 'ca', lat: 46.8119, lng: -71.2052, wikiFile: 'File:Chateau_Frontenac_Quebec.jpg' },
-  { title: 'Chichén Itzá, Yucatán', country_fr: 'Mexique', country_en: 'Mexico', continent: 'Americas', subregion: 'Amérique Centrale', iso: 'mx', lat: 20.6843, lng: -88.5678, wikiFile: 'File:Chichen_Itza_3.jpg' },
-  { title: 'Machu Picchu, Cusco', country_fr: 'Pérou', country_en: 'Peru', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'pe', lat: -13.1631, lng: -72.5450, wikiFile: 'File:Machu_Picchu,_Peru.jpg' },
-  { title: 'Baie de Rio & Pain de Sucre, Rio de Janeiro', country_fr: 'Brésil', country_en: 'Brazil', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'br', lat: -22.9486, lng: -43.1566, wikiFile: 'File:Rio_de_Janeiro_from_Christ_the_Redeemer.jpg' },
-  { title: 'Puerto Madero & Obélisque, Buenos Aires', country_fr: 'Argentine', country_en: 'Argentina', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'ar', lat: -34.6037, lng: -58.3816, wikiFile: 'File:Obelisco_BA_2015.jpg' },
-  { title: 'Parc National Torres del Paine, Patagonie', country_fr: 'Chili', country_en: 'Chile', continent: 'Americas', subregion: 'Amérique du Sud', iso: 'cl', lat: -51.0411, lng: -72.9856, wikiFile: 'File:Cuernos_del_Paine_from_Lake_Peho%C3%A9.jpg' },
-  { title: 'Pagode Chureito & Mont Fuji', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 35.5012, lng: 138.8014, wikiFile: 'File:Chureito_Pagoda_and_Mount_Fuji.jpg' },
-  { title: 'Sanctuaire Fushimi Inari, Kyoto', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 34.9671, lng: 135.7727, wikiFile: 'File:Kiyomizu-dera_in_Kyoto-r.jpg' },
-  { title: 'Carrefour de Shibuya, Tokyo', country_fr: 'Japon', country_en: 'Japan', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'jp', lat: 35.6595, lng: 139.7004, wikiFile: 'File:Shibuya_Crossing_at_night.jpg' },
-  { title: 'Grande Muraille de Chine, Jinshanling', country_fr: 'Chine', country_en: 'China', continent: 'Asia', subregion: 'Asie de l\'Est', iso: 'cn', lat: 40.6769, lng: 117.2319, wikiFile: 'File:The_Great_Wall_of_China_at_Jinshanling-edit.jpg' },
-  { title: 'Marina Bay, Singapour', country_fr: 'Singapour', country_en: 'Singapore', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'sg', lat: 1.2834, lng: 103.8607, wikiFile: 'File:Marina_Bay_Sands_in_the_evening_-_20101120.jpg' },
-  { title: 'Baie d\'Along (Hạ Long)', country_fr: 'Viêt Nam', country_en: 'Vietnam', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'vn', lat: 20.9101, lng: 107.1839, wikiFile: 'File:Ha_Long_Bay_in_Vietnam.jpg' },
-  { title: 'Wat Arun, Bangkok', country_fr: 'Thaïlande', country_en: 'Thailand', continent: 'Asia', subregion: 'Asie du Sud-Est', iso: 'th', lat: 13.7437, lng: 100.4889, wikiFile: 'File:Wat_Arun_Bangkok.jpg' },
-  { title: 'Taj Mahal, Agra', country_fr: 'Inde', country_en: 'India', continent: 'Asia', subregion: 'Asie du Sud', iso: 'in', lat: 27.1751, lng: 78.0421, wikiFile: 'File:Taj_Mahal_in_March_2004.jpg' },
-  { title: 'Pétra (Al-Khazneh)', country_fr: 'Jordanie', country_en: 'Jordan', continent: 'Asia', subregion: 'Asie de l\'Ouest', iso: 'jo', lat: 30.3222, lng: 35.4517, wikiFile: 'File:Al_Khazneh_Petra_edit_2.jpg' },
-  { title: 'Pyramides de Gizeh, Le Caire', country_fr: 'Égypte', country_en: 'Egypt', continent: 'Africa', subregion: 'Afrique du Nord', iso: 'eg', lat: 29.9792, lng: 31.1342, wikiFile: 'File:All_Gizah_Pyramids.jpg' },
-  { title: 'Koutoubia & Médina, Marrakech', country_fr: 'Maroc', country_en: 'Morocco', continent: 'Africa', subregion: 'Afrique du Nord', iso: 'ma', lat: 31.6241, lng: -7.9934, wikiFile: 'File:Koutoubia_Mosque_Marrakesh.jpg' },
-  { title: 'Montagne de la Table, Le Cap', country_fr: 'Afrique du Sud', country_en: 'South Africa', continent: 'Africa', subregion: 'Afrique Australe', iso: 'za', lat: -33.9249, lng: 18.4241, wikiFile: 'File:Cape_Town_and_Table_Mountain.jpg' },
-  { title: 'Opéra & Harbour Bridge, Sydney', country_fr: 'Australie', country_en: 'Australia', continent: 'Oceania', subregion: 'Australie et Nouvelle-Zélande', iso: 'au', lat: -33.8568, lng: 151.2153, wikiFile: 'File:Sydney_Opera_House_and_Harbour_Bridge_Dusk_(2)_2019-06-21.jpg' },
-  { title: 'Milford Sound, Île du Sud', country_fr: 'Nouvelle-Zélande', country_en: 'New Zealand', continent: 'Oceania', subregion: 'Australie et Nouvelle-Zélande', iso: 'nz', lat: -44.6414, lng: 167.8974, wikiFile: 'File:Milford_Sound_(New_Zealand).JPG' }
-];
+let roundTimerInterval = null;
+let roundStartTimestamp = Date.now();
 
-// ============================================================================
-// 2. SYSTÈME ANTI-DOUBLON STRICT + CALCUL DE DISTANCE ET SCORE
-// ============================================================================
-const seenKeys = new Set(JSON.parse(sessionStorage.getItem('geolearn_seen_keys_v7') || '[]'));
-const seenCoords = JSON.parse(sessionStorage.getItem('geolearn_seen_coords_v7') || '[]');
+const currentTarget = computed(
+  () => missionTargets.value[roundIndex.value] || localizedCountries.value[0]
+);
 
-const computeDistanceKm = (lat1, lon1, lat2, lon2) => {
-  const toRad = d => (d * Math.PI) / 180;
+const orbitalAltitudeKm = computed(() => {
+  const z = Number(satZoom.value || 10);
+  return Math.max(2, Math.round(38000 / Math.pow(2, z - 3)));
+});
+
+const cluesUnlockedCount = computed(() => unlockedClues.value.filter(Boolean).length);
+
+const availableRoundClues = computed(() => {
+  const c = currentTarget.value;
+  const isFr = locale.value === 'fr';
+  if (!c) return [];
+  const hemisphere = c.lat >= 0
+    ? (isFr ? 'Hémisphère Nord' : 'Northern Hemisphere')
+    : (isFr ? 'Hémisphère Sud' : 'Southern Hemisphere');
+  const latBand = Math.abs(c.lat) < 23.5
+    ? (isFr ? 'Zone Intertropicale' : 'Tropical Belt')
+    : Math.abs(c.lat) < 55
+      ? (isFr ? 'Zone Tempérée' : 'Temperate Zone')
+      : (isFr ? 'Haute Latitude' : 'High Latitude');
+
+  return [
+    {
+      id: 'hemisphere',
+      title: isFr ? 'Latitude & Climat' : 'Latitude & Climate',
+      value: `${hemisphere} • ${latBand}`
+    },
+    {
+      id: 'economy',
+      title: isFr ? 'Monnaie & Langue' : 'Currency & Language',
+      value: `${c.currency} • ${c.lang}`
+    },
+    {
+      id: 'subregion',
+      title: isFr ? 'Sous-région & Surface' : 'Subregion & Area',
+      value: `${c.subregion} • ${c.area}`
+    }
+  ];
+});
+
+const unlockClue = (idx) => {
+  unlockedClues.value[idx] = true;
+};
+
+const computeHaversineKm = (lat1, lon1, lat2, lon2) => {
+  const toRad = (d) => (d * Math.PI) / 180;
   const R = 6371;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+  return Math.round(2 * R * Math.asin(Math.min(1, Math.sqrt(a))));
 };
 
-const computeGeoScore = (distanceKm) => {
-  if (distanceKm <= 0.05) return 5000;
-  const score = Math.round(5000 * Math.exp(-distanceKm / 2000));
-  return Math.max(0, Math.min(5000, score));
-};
-
-const lastRoundDistanceDisplay = computed(() => {
-  const d = lastRoundDistanceKm.value;
-  if (d < 1) return `${Math.round(d * 1000)} m`;
-  return `${Math.round(d).toLocaleString()} km`;
+// Identifie le pays le plus proche de l'épingle posée par le joueur (utile pour le mode Country Streak)
+const nearestGuessedCountry = computed(() => {
+  if (!guessLatLng.value) return null;
+  let best = null;
+  let minD = Infinity;
+  for (const c of localizedCountries.value) {
+    const d = computeHaversineKm(guessLatLng.value.lat, guessLatLng.value.lng, c.lat, c.lng);
+    if (d < minD) {
+      minD = d;
+      best = c;
+    }
+  }
+  return best;
 });
 
-const isLocationAlreadyUsed = (keyStr, lat, lng) => {
-  if (keyStr && seenKeys.has(keyStr)) return true;
-
-  for (const r of roundHistory.value) {
-    if (r.actual && computeDistanceKm(lat, lng, r.actual.lat, r.actual.lng) < 40) {
-      return true;
-    }
-  }
-
-  for (const c of seenCoords) {
-    if (computeDistanceKm(lat, lng, c.lat, c.lng) < 20) {
-      return true;
-    }
-  }
-  return false;
+const formatCoord = (val, posDir, negDir) => {
+  const num = Number(val || 0);
+  const dir = num >= 0 ? posDir : negDir;
+  return `${Math.abs(num).toFixed(2)}° ${dir}`;
 };
 
-const markLocationAsUsed = (keyStr, lat, lng) => {
-  if (keyStr) seenKeys.add(keyStr);
-  seenCoords.push({ lat, lng });
-  sessionStorage.setItem('geolearn_seen_keys_v7', JSON.stringify([...seenKeys].slice(-300)));
-  sessionStorage.setItem('geolearn_seen_coords_v7', JSON.stringify(seenCoords.slice(-120)));
-};
+// Chargement d'une photographie réelle via l'API REST Wikipedia pour le mode Visual Recon
+const fetchVisualReconImage = async (country) => {
+  if (!country) return;
+  visualLoading.value = true;
+  visualFallbackActive.value = false;
+  photoZoom.value = 1;
+  photoPanX.value = 0;
+  photoPanY.value = 0;
 
-// ============================================================================
-// 3. SÉLECTION D'UNE CIBLE SATELLITE OU D'UN LIEU PHOTO VÉRIFIÉ
-// ============================================================================
-const pickVerifiedSatelliteZone = () => {
-  let pool = VERIFIED_SATELLITE_LOCATIONS.filter(
-    loc => !isLocationAlreadyUsed(`sat:${loc.title}`, loc.lat, loc.lng)
-  );
-  if (pool.length === 0) {
-    seenCoords.length = 0;
-    pool = [...VERIFIED_SATELLITE_LOCATIONS];
-  }
-  const chosen = pool[Math.floor(Math.random() * pool.length)];
-  markLocationAsUsed(`sat:${chosen.title}`, chosen.lat, chosen.lng);
-
-  return {
-    mode: 'satellite',
-    lat: chosen.lat,
-    lng: chosen.lng,
-    imageUrl: '',
-    title: chosen.title,
-    countryName: locale.value === 'en' ? chosen.country_en : chosen.country_fr,
-    continent: chosen.continent,
-    subregion: chosen.subregion,
-    iso: chosen.iso
-  };
-};
-
-const inspectAndPreloadImage = (url) => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const timer = setTimeout(() => resolve({ ok: false }), 2500);
-    img.onload = () => {
-      clearTimeout(timer);
-      const w = img.naturalWidth || 0;
-      const h = img.naturalHeight || 1;
-      resolve({ ok: w >= 700 && h >= 350 });
-    };
-    img.onerror = () => {
-      clearTimeout(timer);
-      resolve({ ok: false });
-    };
-    img.src = url;
-  });
-};
-
-const fetchVerifiedPhoto = async () => {
-  let pool = VERIFIED_PHOTO_LOCATIONS.filter(
-    loc => !isLocationAlreadyUsed(loc.wikiFile, loc.lat, loc.lng)
-  );
-  if (pool.length === 0) {
-    seenCoords.length = 0;
-    pool = [...VERIFIED_PHOTO_LOCATIONS];
-  }
-  pool.sort(() => 0.5 - Math.random());
-
-  for (const loc of pool.slice(0, 6)) {
+  const queries = [country.capital_en, country.name_en];
+  for (const q of queries) {
     try {
-      const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(loc.wikiFile)}&prop=imageinfo&iiprop=url&iiurlwidth=1280&format=json&origin=*`;
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      const pages = Object.values(data?.query?.pages || {});
-      const info = pages[0]?.imageinfo?.[0];
-      const imgUrl = info?.thumburl || info?.url;
-
-      if (imgUrl) {
-        const check = await inspectAndPreloadImage(imgUrl);
-        if (check.ok) {
-          markLocationAsUsed(loc.wikiFile, loc.lat, loc.lng);
-          markLocationAsUsed(imgUrl, loc.lat, loc.lng);
-          return {
-            mode: 'photo',
-            lat: loc.lat,
-            lng: loc.lng,
-            imageUrl: imgUrl,
-            title: loc.title,
-            countryName: locale.value === 'en' ? loc.country_en : loc.country_fr,
-            continent: loc.continent,
-            subregion: loc.subregion,
-            iso: loc.iso
-          };
+      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const img = data?.originalimage?.source || data?.thumbnail?.source;
+        if (img && !img.toLowerCase().includes('flag') && !img.toLowerCase().includes('coat_of_arms') && !img.toLowerCase().includes('map')) {
+          visualImageUrl.value = img;
+          visualLoading.value = false;
+          return;
         }
       }
     } catch (e) {}
   }
 
-  const fallbackLoc = pool[0];
-  markLocationAsUsed(fallbackLoc.wikiFile, fallbackLoc.lat, fallbackLoc.lng);
-  return {
-    mode: 'photo',
-    lat: fallbackLoc.lat,
-    lng: fallbackLoc.lng,
-    imageUrl: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fallbackLoc.wikiFile.replace(/^File:/i, ''))}?width=1280`,
-    title: fallbackLoc.title,
-    countryName: locale.value === 'en' ? fallbackLoc.country_en : fallbackLoc.country_fr,
-    continent: fallbackLoc.continent,
-    subregion: fallbackLoc.subregion,
-    iso: fallbackLoc.iso
-  };
+  // Fallback sur le flux satellite si aucune photo optique n'est disponible
+  visualFallbackActive.value = true;
+  visualLoading.value = false;
 };
 
-// ============================================================================
-// 4. GESTION DES MANCHES, CAMÉRA SATELLITE, INDICE (SCORE ÷ 2) & CHRONOMÈTRE
-// ============================================================================
-const preloadedSharedRounds = ref(null);
+const adjustPhotoZoom = (delta) => {
+  photoZoom.value = Math.max(1, Math.min(3.5, Number((photoZoom.value + delta).toFixed(2))));
+};
 
-const stopRoundTimer = () => {
-  if (roundTimerInterval) {
-    clearInterval(roundTimerInterval);
-    roundTimerInterval = null;
-  }
+const resetPhotoOptics = () => {
+  photoZoom.value = 1;
+  photoPanX.value = 0;
+  photoPanY.value = 0;
+};
+
+const onPhotoPanStart = (e) => {
+  photoDragging = true;
+  photoLastX = e.clientX;
+  photoLastY = e.clientY;
+};
+
+const onPhotoPanMove = (e) => {
+  if (!photoDragging) return;
+  photoPanX.value += e.clientX - photoLastX;
+  photoPanY.value += e.clientY - photoLastY;
+  photoLastX = e.clientX;
+  photoLastY = e.clientY;
+};
+
+const onPhotoPanEnd = () => {
+  photoDragging = false;
+};
+
+const onPhotoWheel = (e) => {
+  adjustPhotoZoom(e.deltaY < 0 ? 0.15 : -0.15);
 };
 
 const startRoundTimer = () => {
-  stopRoundTimer();
-  if (selectedTimeLimit.value <= 0) return;
-  roundTimeLeft.value = selectedTimeLimit.value;
+  if (roundTimerInterval) clearInterval(roundTimerInterval);
+  roundStartTimestamp = Date.now();
+  if (selectedTimerSec.value <= 0) return;
+
+  roundTimeLeft.value = selectedTimerSec.value;
   roundTimerInterval = setInterval(() => {
-    if (roundTimeLeft.value > 0) {
+    if (roundTimeLeft.value > 1) {
       roundTimeLeft.value--;
     } else {
-      stopRoundTimer();
-      confirmGuess();
+      roundTimeLeft.value = 0;
+      clearInterval(roundTimerInterval);
+      // Si le temps expire, valide l'épingle posée ou inflige 0 pt
+      submitPinGuess(true);
     }
   }, 1000);
 };
 
-const configureSatelliteViewport = async (lat, lng) => {
-  const delta = 0.085; // Verrouille le périmètre à ~9 km autour de la cible
-  satBounds.value = [
-    [lat - delta, lng - delta],
-    [lat + delta, lng + delta]
-  ];
-  satCenter.value = [lat, lng];
-  satZoom.value = 15;
-
-  await nextTick();
-  setTimeout(() => {
-    if (satMapRef.value && satMapRef.value.leafletObject) {
-      satMapRef.value.leafletObject.invalidateSize();
-      satMapRef.value.leafletObject.setView([lat, lng], 15);
-    }
-  }, 120);
-};
-
-const recenterSatelliteTarget = () => {
-  if (!currentLocation.value) return;
-  const { lat, lng } = currentLocation.value;
-  satCenter.value = [lat, lng];
-  satZoom.value = 15;
-  if (satMapRef.value && satMapRef.value.leafletObject) {
-    satMapRef.value.leafletObject.setView([lat, lng], 15);
-  }
-};
-
-const loadRoundLocation = async () => {
-  isLoadingLocation.value = true;
-  roundConfirmed.value = false;
+const setupRoundCamera = () => {
+  const t = currentTarget.value;
+  if (!t) return;
+  satCenter.value = [t.lat, t.lng];
+  satZoom.value = 10;
+  satLockedZoom.value = 10;
   guessLatLng.value = null;
-  photoZoomed.value = false;
-  hintUsed.value = false;
-  miniMapExpanded.value = false;
-  guessZoom.value = 1;
-  guessCenter.value = [20, 0];
+  roundSubmitted.value = false;
+  clueDrawerOpen.value = false;
+  unlockedClues.value = [false, false, false];
+  guessCenter.value = [24, 12];
+  guessZoom.value = 2;
 
-  if (preloadedSharedRounds.value && preloadedSharedRounds.value[currentRound.value - 1]) {
-    currentLocation.value = preloadedSharedRounds.value[currentRound.value - 1];
-  } else {
-    currentLocation.value =
-      activeMode.value === 'satellite'
-        ? pickVerifiedSatelliteZone()
-        : await fetchVerifiedPhoto();
+  if (playMode.value === 'visual') {
+    fetchVisualReconImage(t);
   }
-
-  isLoadingLocation.value = false;
-
-  if (activeMode.value === 'satellite' && currentLocation.value) {
-    await configureSatelliteViewport(currentLocation.value.lat, currentLocation.value.lng);
-  }
-
-  await nextTick();
-  if (guessMapRef.value && guessMapRef.value.leafletObject) {
-    guessMapRef.value.leafletObject.invalidateSize();
-  }
-
   startRoundTimer();
 };
 
-const startNewGame = (mode) => {
-  preloadedSharedRounds.value = null;
-  activeMode.value = mode === '360' ? 'satellite' : mode;
-  currentRound.value = 1;
-  totalScore.value = 0;
-  roundHistory.value = [];
-  gameState.value = 'playing';
-  loadRoundLocation();
+const recenterSatellite = () => {
+  const t = currentTarget.value;
+  if (!t) return;
+  satCenter.value = [t.lat, t.lng];
+  satZoom.value = 10;
 };
 
-const skipBrokenLocation = () => {
-  stopRoundTimer();
-  loadRoundLocation();
+const onSatMapMove = () => {
+  if (noMoveLock.value && currentTarget.value) {
+    satCenter.value = [currentTarget.value.lat, currentTarget.value.lng];
+  }
 };
 
-const useHint = () => {
-  hintUsed.value = true;
+const toggleNoMoveLock = () => {
+  noMoveLock.value = !noMoveLock.value;
+  if (noMoveLock.value) recenterSatellite();
 };
 
-const toggleMiniMapSize = async () => {
-  miniMapExpanded.value = !miniMapExpanded.value;
-  await nextTick();
-  setTimeout(() => {
-    if (guessMapRef.value && guessMapRef.value.leafletObject) {
-      guessMapRef.value.leafletObject.invalidateSize();
+const onTimerPresetChange = () => {
+  if (!roundSubmitted.value && !gameFinished.value) {
+    startRoundTimer();
+  }
+};
+
+const getFilteredPool = () => {
+  let pool = localizedCountries.value;
+  if (selectedScope.value === 'Europe') pool = pool.filter((c) => c.continent === 'Europe');
+  else if (selectedScope.value === 'Asia') pool = pool.filter((c) => c.continent === 'Asia');
+  else if (selectedScope.value === 'Africa') pool = pool.filter((c) => c.continent === 'Africa');
+  else if (selectedScope.value === 'Oceania') pool = pool.filter((c) => c.continent === 'Oceania');
+  else if (selectedScope.value === 'Americas') {
+    pool = pool.filter((c) => c.continent === 'North America' || c.continent === 'South America');
+  }
+  return pool;
+};
+
+const startNewMission = (customIsos = null) => {
+  const pool = getFilteredPool();
+  const targetCount = playMode.value === 'streak' ? 50 : 5;
+
+  if (Array.isArray(customIsos) && customIsos.length >= 5) {
+    const picked = customIsos
+      .map((iso) => localizedCountries.value.find((c) => c.iso === iso.toLowerCase()))
+      .filter(Boolean);
+    if (picked.length >= 5) {
+      missionTargets.value = picked.slice(0, 5);
     }
-  }, 250);
+  }
+
+  if (!missionTargets.value.length || !customIsos) {
+    missionTargets.value = [...pool].sort(() => 0.5 - Math.random()).slice(0, targetCount);
+  }
+
+  roundIndex.value = 0;
+  totalScore.value = 0;
+  currentStreak.value = 0;
+  roundHistory.value = [];
+  gameFinished.value = false;
+  seedCopied.value = false;
+  setupRoundCamera();
+};
+
+const switchPlayMode = (modeId) => {
+  playMode.value = modeId;
+  startNewMission();
+};
+
+const changeScope = (scopeId) => {
+  selectedScope.value = scopeId;
+  startNewMission();
 };
 
 const onGuessMapClick = (e) => {
-  if (e && e.latlng) {
-    guessLatLng.value = [e.latlng.lat, e.latlng.lng];
+  if (roundSubmitted.value || !e?.latlng) return;
+  guessLatLng.value = { lat: e.latlng.lat, lng: e.latlng.lng };
+};
+
+// =========================================================
+// MOTEUR GLOBE 3D ORTHOGRAPHIQUE DE DÉBRIEFING (MANCHE & BILAN)
+// =========================================================
+const debriefGlobeCanvasRef = ref(null);
+const summaryGlobeCanvasRef = ref(null);
+let debriefRotLon = 0;
+let debriefRotLat = 20;
+let debriefDragging = false;
+let debriefLastX = 0;
+let debriefLastY = 0;
+
+const onDebriefGlobeDown = (e) => {
+  debriefDragging = true;
+  debriefLastX = e.clientX;
+  debriefLastY = e.clientY;
+};
+
+const onDebriefGlobeMove = (e) => {
+  if (!debriefDragging) return;
+  debriefRotLon -= (e.clientX - debriefLastX) * 0.45;
+  debriefRotLat = Math.max(-70, Math.min(70, debriefRotLat + (e.clientY - debriefLastY) * 0.4));
+  debriefLastX = e.clientX;
+  debriefLastY = e.clientY;
+  if (gameFinished.value) renderSummaryGlobe();
+  else renderDebriefGlobe();
+};
+
+const onDebriefGlobeUp = () => {
+  debriefDragging = false;
+};
+
+const drawGlobeWithArcs = (canvas, arcsList) => {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  const cx = W / 2;
+  const cy = H / 2;
+  const R = W * 0.44;
+  ctx.clearRect(0, 0, W, H);
+
+  const toRad = (d) => (d * Math.PI) / 180;
+  const phi0 = toRad(debriefRotLat);
+  const lam0 = toRad(debriefRotLon);
+  const sinPhi0 = Math.sin(phi0);
+  const cosPhi0 = Math.cos(phi0);
+
+  const project = (lat, lon) => {
+    const phi = toRad(lat);
+    const lam = toRad(lon);
+    const dLam = lam - lam0;
+    const cosC = sinPhi0 * Math.sin(phi) + cosPhi0 * Math.cos(phi) * Math.cos(dLam);
+    if (cosC < 0) return null;
+    return {
+      x: cx + R * Math.cos(phi) * Math.sin(dLam),
+      y: cy - R * (cosPhi0 * Math.sin(phi) - sinPhi0 * Math.cos(phi) * Math.cos(dLam))
+    };
+  };
+
+  // Sphère océanique
+  const grad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
+  grad.addColorStop(0, '#0f2342');
+  grad.addColorStop(1, '#040812');
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+
+  // Frontières vectorielles
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
+  ctx.fillStyle = 'rgba(20, 48, 86, 0.65)';
+  ctx.lineWidth = 0.65;
+  for (const ring of leafletWorldRings.value) {
+    ctx.beginPath();
+    let vis = 0;
+    let prev = null;
+    for (const [lat, lon] of ring) {
+      const p = project(lat, lon);
+      if (p) {
+        if (!prev || Math.hypot(p.x - prev.x, p.y - prev.y) > R * 0.35) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+        prev = p;
+        vis++;
+      } else prev = null;
+    }
+    if (vis > 2) {
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  // Tracé des arcs géodésiques (Pin -> Cible)
+  for (const arc of arcsList) {
+    if (!arc.guess || !arc.target) continue;
+    const pG = project(arc.guess.lat, arc.guess.lng);
+    const pT = project(arc.target.lat, arc.target.lng);
+    if (pG && pT) {
+      ctx.beginPath();
+      ctx.moveTo(pG.x, pG.y);
+      ctx.quadraticCurveTo(cx, cy - 12, pT.x, pT.y);
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(pG.x, pG.y, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(pT.x, pT.y, 4.2, 0, Math.PI * 2);
+      ctx.fillStyle = '#10b981';
+      ctx.fill();
+    }
   }
 };
 
-const confirmGuess = async () => {
-  if (roundConfirmed.value || !currentLocation.value) return;
-  stopRoundTimer();
-  roundConfirmed.value = true;
+const renderDebriefGlobe = () => {
+  drawGlobeWithArcs(debriefGlobeCanvasRef.value, [
+    { guess: guessLatLng.value, target: currentTarget.value }
+  ]);
+};
 
-  if (!guessLatLng.value) {
-    lastRoundDistanceKm.value = 20000;
-    lastRoundScore.value = 0;
-  } else {
-    const dKm = computeDistanceKm(
-      guessLatLng.value[0],
-      guessLatLng.value[1],
-      currentLocation.value.lat,
-      currentLocation.value.lng
+const renderSummaryGlobe = () => {
+  const arcs = roundHistory.value.map((r) => ({
+    guess: r.guessCoords,
+    target: { lat: r.targetLat, lng: r.targetLng }
+  }));
+  drawGlobeWithArcs(summaryGlobeCanvasRef.value, arcs);
+};
+
+// =========================================================
+// VALIDATION DU POINTAGE & CALCUL DES SCORES
+// =========================================================
+const submitPinGuess = (timedOut = false) => {
+  if (roundSubmitted.value) return;
+  if (roundTimerInterval) clearInterval(roundTimerInterval);
+
+  if (!guessLatLng.value && !timedOut) return;
+  roundSubmitted.value = true;
+  radarMinimized.value = false;
+  radarExpanded.value = true;
+  clueDrawerOpen.value = false;
+
+  const elapsedSec = Math.max(1, Math.round((Date.now() - roundStartTimestamp) / 1000));
+
+  let distKm = 20000;
+  if (guessLatLng.value) {
+    distKm = computeHaversineKm(
+      guessLatLng.value.lat,
+      guessLatLng.value.lng,
+      currentTarget.value.lat,
+      currentTarget.value.lng
     );
-    lastRoundDistanceKm.value = dKm;
-    const rawScore = computeGeoScore(dKm);
-    lastRoundScore.value = hintUsed.value ? Math.round(rawScore / 2) : rawScore;
   }
+  lastRoundDistanceKm.value = distKm;
+  lastRoundAccuracyPct.value = Math.max(0, Math.min(100, Math.round((1 - distKm / 12000) * 100)));
 
-  totalScore.value += lastRoundScore.value;
+  let pts = guessLatLng.value ? Math.round(5000 * Math.exp(-distKm / 2000)) : 0;
+  if (distKm <= 35 && guessLatLng.value) pts = 5000;
+  const penalty = cluesUnlockedCount.value * 250;
+  pts = Math.max(0, pts - penalty);
+
+  lastRoundPoints.value = pts;
+  totalScore.value += pts;
+
+  // Vérification en mode Country Streak
+  if (playMode.value === 'streak') {
+    const hitCountry =
+      nearestGuessedCountry.value &&
+      nearestGuessedCountry.value.iso === currentTarget.value.iso;
+    lastStreakHit.value = Boolean(hitCountry);
+    if (hitCountry) {
+      currentStreak.value++;
+      if (currentStreak.value > bestStreak.value) {
+        bestStreak.value = currentStreak.value;
+        localStorage.setItem('geolearn_pindrop_streak', String(bestStreak.value));
+      }
+      playSound('hit');
+    } else {
+      playSound('miss');
+    }
+  } else {
+    playSound(pts >= 2000 ? 'hit' : 'miss');
+  }
 
   roundHistory.value.push({
-    actual: { ...currentLocation.value },
-    guessLatLng: guessLatLng.value ? [...guessLatLng.value] : null,
-    distanceKm: lastRoundDistanceKm.value,
-    distanceDisplay: lastRoundDistanceDisplay.value,
-    score: lastRoundScore.value,
-    hintUsed: hintUsed.value
+    iso: currentTarget.value.iso,
+    name: currentTarget.value.name,
+    capital: currentTarget.value.capital,
+    distanceKm: distKm,
+    points: pts,
+    elapsedSec,
+    guessCoords: guessLatLng.value ? { ...guessLatLng.value } : null,
+    targetLat: currentTarget.value.lat,
+    targetLng: currentTarget.value.lng
   });
 
-  await nextTick();
-  if (resultMapRef.value && resultMapRef.value.leafletObject && guessLatLng.value) {
-    const bounds = L.latLngBounds([
-      guessLatLng.value,
-      [currentLocation.value.lat, currentLocation.value.lng]
-    ]);
-    resultMapRef.value.leafletObject.invalidateSize();
-    resultMapRef.value.leafletObject.fitBounds(bounds, { padding: [50, 50], maxZoom: 6 });
-  } else if (currentLocation.value) {
-    resultCenter.value = [currentLocation.value.lat, currentLocation.value.lng];
-    resultZoom.value = 4;
+  if (guessLatLng.value) {
+    debriefRotLat = (guessLatLng.value.lat + currentTarget.value.lat) / 2;
+    debriefRotLon = (guessLatLng.value.lng + currentTarget.value.lng) / 2;
+  } else {
+    debriefRotLat = currentTarget.value.lat;
+    debriefRotLon = currentTarget.value.lng;
   }
+
+  nextTick(() => {
+    renderDebriefGlobe();
+  });
 };
 
-const saveFinalGeoScore = async () => {
+const normalizedScoreOn15 = computed(() => {
+  if (playMode.value === 'streak') {
+    return Math.min(15, Number(((currentStreak.value / 10) * 15).toFixed(1)));
+  }
+  return Math.min(15, Number(((totalScore.value / 25000) * 15).toFixed(1)));
+});
+
+const averageOffsetKm = computed(() => {
+  if (!roundHistory.value.length) return 0;
+  const sum = roundHistory.value.reduce((acc, r) => acc + r.distanceKm, 0);
+  return Math.round(sum / roundHistory.value.length);
+});
+
+const missionRankLabel = computed(() => {
+  if (totalScore.value >= 22000) return 'ORBITAL MASTER // S-RANK';
+  if (totalScore.value >= 18000) return 'GEODESIC ACE // A-RANK';
+  if (totalScore.value >= 12000) return 'FIELD NAVIGATOR // B-RANK';
+  return 'RECON CADET // C-RANK';
+});
+
+const saveFinalPinDropScore = async () => {
   const savedUser = localStorage.getItem('geolearn_user');
   if (!savedUser) return;
   try {
     const parsed = JSON.parse(savedUser);
-    const userId = parsed.id || (parsed.user && parsed.user.id);
-    if (!userId) return;
-    const modeLabel = activeMode.value === 'satellite' ? 'GeoGuessr Satellite' : 'GeoGuessr Photo';
+    const uid = parsed.id || (parsed.user && parsed.user.id);
+    if (!uid) return;
     await fetch(`${API_URL}/api/scores`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        user_id: userId,
-        mode: modeLabel,
+        user_id: uid,
+        mode: 'GeoGuessr',
         score: totalScore.value,
         max_score: 25000
       })
     });
-  } catch (e) {
-    console.error('Erreur sauvegarde score GeoGuessr:', e);
-  }
-};
-
-const nextRound = () => {
-  if (currentRound.value < 5) {
-    currentRound.value++;
-    loadRoundLocation();
-  } else {
-    gameState.value = 'summary';
-    saveFinalGeoScore();
-  }
-};
-
-const returnToMenu = () => {
-  stopRoundTimer();
-  gameState.value = 'menu';
-};
-
-const formatTime = (sec) => {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-};
-
-// ============================================================================
-// 5. PARTAGE D'UN DÉFI ENTRE AMIS
-// ============================================================================
-const challengeLinkCopied = ref(false);
-const sharedChallengeRounds = ref(null);
-const sharedChallengerName = ref('');
-const sharedTargetScore = ref(0);
-
-const copyChallengeLink = async () => {
-  try {
-    const savedUser = localStorage.getItem('geolearn_user');
-    let myName = 'Joueur';
-    if (savedUser) {
-      const p = JSON.parse(savedUser);
-      myName = p.username || p.name || p.pseudo || 'Joueur';
-    }
-    const payload = {
-      m: activeMode.value,
-      from: myName,
-      s: totalScore.value,
-      r: roundHistory.value.map(h => ({
-        lat: h.actual.lat,
-        lng: h.actual.lng,
-        imageUrl: h.actual.imageUrl,
-        title: h.actual.title,
-        countryName: h.actual.countryName,
-        continent: h.actual.continent,
-        subregion: h.actual.subregion,
-        iso: h.actual.iso
-      }))
-    };
-    const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
-    const link = `${window.location.origin}/geoguessr?seed=${encoded}`;
-    await navigator.clipboard.writeText(link);
-    challengeLinkCopied.value = true;
-    setTimeout(() => { challengeLinkCopied.value = false; }, 4000);
   } catch (e) {}
 };
 
-const startSharedChallenge = () => {
-  if (!sharedChallengeRounds.value) return;
-  preloadedSharedRounds.value = sharedChallengeRounds.value;
-  const rawMode = sharedChallengeRounds.value[0]?.mode || 'photo';
-  activeMode.value = rawMode === '360' ? 'satellite' : rawMode;
-  currentRound.value = 1;
-  totalScore.value = 0;
-  roundHistory.value = [];
-  gameState.value = 'playing';
-  loadRoundLocation();
+const nextRound = () => {
+  if (playMode.value === 'streak') {
+    if (!lastStreakHit.value || roundIndex.value >= missionTargets.value.length - 1) {
+      gameFinished.value = true;
+      nextTick(() => renderSummaryGlobe());
+      return;
+    }
+    roundIndex.value++;
+    radarExpanded.value = false;
+    setupRoundCamera();
+    return;
+  }
+
+  if (roundIndex.value < 4) {
+    roundIndex.value++;
+    radarExpanded.value = false;
+    setupRoundCamera();
+  } else {
+    gameFinished.value = true;
+    saveFinalPinDropScore();
+    nextTick(() => renderSummaryGlobe());
+  }
+};
+
+const copyChallengeSeedLink = async () => {
+  const seedStr = missionTargets.value.slice(0, 5).map((t) => t.iso).join(',');
+  const url = `${window.location.origin}/geoguessr?seed=${seedStr}&mode=${playMode.value}&timer=${selectedTimerSec.value}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    seedCopied.value = true;
+  } catch (e) {}
 };
 
 onMounted(() => {
-  if (route.query.seed) {
-    try {
-      const decoded = JSON.parse(decodeURIComponent(atob(route.query.seed)));
-      if (decoded && Array.isArray(decoded.r) && decoded.r.length === 5) {
-        const m = decoded.m === '360' ? 'satellite' : (decoded.m || 'photo');
-        sharedChallengeRounds.value = decoded.r.map(item => ({ ...item, mode: m }));
-        sharedChallengerName.value = decoded.from || '';
-        sharedTargetScore.value = Number(decoded.s || 0);
-      }
-    } catch (e) {}
+  loadVectorBorders();
+  if (route.query?.mode && ['orbital', 'visual', 'streak'].includes(String(route.query.mode))) {
+    playMode.value = String(route.query.mode);
+  }
+  if (route.query?.timer) {
+    selectedTimerSec.value = Number(route.query.timer) || 0;
+  }
+  const seedParam = route.query?.seed;
+  if (typeof seedParam === 'string' && seedParam.includes(',')) {
+    startNewMission(seedParam.split(','));
+  } else {
+    startNewMission();
   }
 });
 
 onUnmounted(() => {
-  stopRoundTimer();
+  if (roundTimerInterval) clearInterval(roundTimerInterval);
 });
 </script>
 
 <style scoped>
-.leaflet-container {
-  z-index: 10;
-  background-color: #0f172a !important;
-  cursor: grab !important;
+.sat-vignette {
+  background: radial-gradient(circle at 50% 50%, transparent 58%, rgba(4, 7, 15, 0.72) 100%);
 }
-.leaflet-container:active {
-  cursor: grabbing !important;
+
+/* Transforme le fond océanique muet en radar tactique sombre sans aucun nom de pays */
+.radar-mute-map :deep(.leaflet-tile-pane) {
+  filter: invert(100%) hue-rotate(190deg) brightness(78%) contrast(125%) saturate(60%);
+}
+
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition: opacity 0.24s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fade-up-enter-from,
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>
