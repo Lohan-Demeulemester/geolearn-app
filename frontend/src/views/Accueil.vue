@@ -1507,4 +1507,29 @@ onUnmounted(() => {
   opacity: 0;
   transform: translateY(-6px) scale(0.98);
 }
+
+@media (max-width: 1023px) {
+  .orbital-stage {
+    min-height: auto;
+    padding-bottom: 1.5rem;
+  }
+
+  /* Place le Globe 3D proprement entre le texte d'accroche et la fiche pays sur mobile */
+  .globe-centerpiece {
+    position: relative !important;
+    inset: auto !important;
+    margin: 0.5rem auto;
+    order: 2;
+  }
+
+  .globe-canvas {
+    width: min(88vw, 340px);
+    height: min(88vw, 340px);
+  }
+
+  .watermark-display {
+    font-size: 18vw;
+    top: 38%;
+  }
+}
 </style>

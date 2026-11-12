@@ -853,9 +853,41 @@ body.dark-mode textarea {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  /* Verrouille la largeur de l'écran pour empêcher tout décalage horizontal */
+  html,
+  body,
+  .app-shell,
+  .top-nav {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
   .top-nav-inner {
-    padding: 0.6rem 1rem;
+    padding: 0.55rem 0.9rem;
+    gap: 0.5rem;
+  }
+
+  /* Masque le texte "GeoLearn / 196 ÉTATS" sur mobile : garde uniquement le logo Globe */
+  .top-nav .brand-text-group {
+    display: none !important;
+  }
+
+  /* Masque le nom complet "Lohan Demeulemester" sur mobile : garde uniquement le badge rond "LD" / avatar */
+  .user-cta-label {
+    display: none !important;
+  }
+
+  .user-cta {
+    width: 36px;
+    height: 36px;
+    padding: 0 !important;
+    border-radius: 50%;
+    justify-content: center;
+  }
+
+  .nav-controls {
+    gap: 0.4rem;
   }
 
   .viewport-main:not(.viewport-home-bleed) {

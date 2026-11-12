@@ -2039,7 +2039,7 @@ const startFlash60 = () => {
       flashFinished.value = true;
       clearInterval(flashTimer);
       playSound('victory');
-      sauvegarderScore('QCM Flash 60s', flashScore.value, 40);
+      sauvegarderScore('Sprint 60s', Math.min(15, Math.round((flashScore.value / 30) * 15)), 15);
     }
   }, 1000);
 };
