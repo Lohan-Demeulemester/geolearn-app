@@ -453,7 +453,8 @@ app.get('/api/leaderboard', (req, res) => {
 const ADMIN_EMAILS = [
   'lohan.dtr@gmail.com',
   'lohan.dtr.muscu@gmail.com',
-  'lohan.demeulemester@efrei.net'
+  'lohan.demeulemester@efrei.net',
+  'juretraxel@gmail.com'
 ];
 
 db.query(

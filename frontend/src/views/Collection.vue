@@ -102,7 +102,7 @@
             <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
               {{ locale === 'fr' ? 'Grade d\'Opérateur' : 'Operator Rank' }}
             </span>
-            <strong class="font-mono text-lg sm:text-xl font-black text-slate-900 dark:text-white truncate block mt-0.5">
+            <strong class="font-mono text-base sm:text-lg font-black text-slate-900 dark:text-white block leading-snug mt-0.5">
               {{ operatorRankTitle }}
             </strong>
           </div>
@@ -153,7 +153,7 @@
               {{ locale === 'fr' ? 'Couverture Passeport' : 'Passport Coverage' }}
             </span>
             <strong class="font-mono text-2xl font-black text-sky-500 dark:text-sky-400 block mt-0.5">
-              {{ Math.round((stampedCountriesCount / 196) * 100) }}% <span class="text-xs font-bold text-slate-400">({{ stampedCountriesCount }}/196)</span>
+              {{ passportCoveragePct }}% <span class="text-xs font-bold text-slate-400">({{ stampedCountriesCount }}/196)</span>
             </strong>
           </div>
         </div>
@@ -297,7 +297,7 @@
             </span>
           </div>
 
-          <!-- GRILLE DES 12 CARTES DE TROPHÉES AVEC EFFET 3D TILT & REFLET HOLOGRAPHIQUE -->
+          <!-- GRILLE DES 12 CARTES DE TROPHÉES AVEC EFFET 3D TILT -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <article
               v-for="badge in filteredBadges"
@@ -315,7 +315,6 @@
               ]"
               :style="getCardTiltStyle(badge.id)"
             >
-              <!-- Reflet spéculaire holographique suivant le curseur -->
               <div
                 class="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 :style="getCardGlareStyle(badge.id, badge.accentHex)"
@@ -345,7 +344,6 @@
                     </p>
                   </div>
 
-                  <!-- Emblème vectoriel géométrique -->
                   <div
                     class="w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center border transition-transform group-hover:scale-110"
                     :style="{
@@ -404,7 +402,6 @@
         <!-- ======================================================= -->
         <div v-else key="view-passport" class="space-y-6">
 
-          <!-- Barre de contrôle du Passeport : Continents + Recherche -->
           <div class="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-[#090E1A]/90 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xl">
             <div class="flex flex-wrap items-center gap-1.5">
               <button
@@ -434,7 +431,6 @@
             </div>
           </div>
 
-          <!-- Grille des 196 Tampons Nationaux -->
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
             <div
               v-for="c in filteredPassportCountries"
@@ -490,13 +486,36 @@ const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 
 const isLoggedIn = ref(false);
 const userScores = ref([]);
-const activeSection = ref('trophies'); // 'trophies' | 'passport'
+const activeSection = ref('trophies');
 const selectedFilter = ref('all');
 const selectedBadgeId = ref('veteran');
 const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
 
 // =========================================================
-// CALCUL DES MÉTRIQUES DU JOUEUR DEPUIS SON HISTORIQUE
+// PALETTE OFFICIELLE PAR PALIER (BRONZE CUIVRÉ VS OR JAUNE)
+// =========================================================
+const TIER_PALETTE = {
+  0: { name: 'LOCKED', primary: '#475569', secondary: '#1e293b', specular: '#94a3b8', glow: 'rgba(71, 85, 105, 0.22)' },
+  1: { name: 'BRONZE I', primary: '#b85d38', secondary: '#5c2410', specular: '#f0a686', glow: 'rgba(184, 93, 56, 0.40)' },
+  2: { name: 'SILVER II', primary: '#cbd5e1', secondary: '#475569', specular: '#ffffff', glow: 'rgba(203, 213, 225, 0.38)' },
+  3: { name: 'GOLD III', primary: '#facc15', secondary: '#854d0e', specular: '#fef9c3', glow: 'rgba(250, 204, 21, 0.48)' },
+  4: { name: 'EMERALD IV', primary: '#10b981', secondary: '#065f46', specular: '#6ee7b7', glow: 'rgba(16, 185, 129, 0.45)' },
+  5: { name: 'DIAMOND V', primary: '#38bdf8', secondary: '#0369a1', specular: '#e0f2fe', glow: 'rgba(56, 189, 248, 0.52)' }
+};
+
+const getTierHex = (tier = 0) => (TIER_PALETTE[tier] || TIER_PALETTE[0]).primary;
+
+const getTierBadgeClass = (tier) => {
+  if (tier >= 5) return 'bg-sky-500/20 text-sky-300 border-sky-400/50';
+  if (tier === 4) return 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50';
+  if (tier === 3) return 'bg-yellow-400/20 text-yellow-300 border-yellow-400/55';
+  if (tier === 2) return 'bg-slate-300/20 text-slate-200 border-slate-300/45';
+  if (tier === 1) return 'bg-orange-800/30 text-orange-300 border-orange-600/50';
+  return 'bg-slate-100 dark:bg-white/[0.03] text-slate-400 border-slate-200 dark:border-white/10';
+};
+
+// =========================================================
+// CALCUL DES MÉTRIQUES DU JOUEUR DEPUIS SON HISTORIQUE BDD
 // =========================================================
 const metrics = computed(() => {
   const scores = userScores.value;
@@ -609,7 +628,6 @@ const allBadges = computed(() => {
       cat: 'general',
       categoryLabel: isFr ? 'Carrière Globale' : 'Global Career',
       shape: 'octa',
-      accentHex: '#38bdf8',
       title: isFr ? 'Opérateur Orbital' : 'Orbital Operator',
       desc: isFr
         ? 'Complétez des sessions d\'évaluation tous modes confondus pour élever votre grade.'
@@ -631,7 +649,6 @@ const allBadges = computed(() => {
       cat: 'qcm',
       categoryLabel: 'QCM /15',
       shape: 'star',
-      accentHex: '#10b981',
       title: isFr ? 'Chirurgien du QCM' : 'QCM Precision Ace',
       desc: isFr
         ? 'Obtenez un score d\'excellence (14/15 ou 15/15) dans les QCM classiques.'
@@ -653,7 +670,6 @@ const allBadges = computed(() => {
       cat: 'qcm',
       categoryLabel: isFr ? 'Capitales' : 'Capitals',
       shape: 'shield',
-      accentHex: '#0ea5e9',
       title: isFr ? 'Maître des Capitales' : 'Capitals Sovereign',
       desc: isFr
         ? 'Atteignez le score maximal sur une série de 15 questions de Capitales.'
@@ -675,7 +691,6 @@ const allBadges = computed(() => {
       cat: 'qcm',
       categoryLabel: isFr ? 'Drapeaux' : 'Flags',
       shape: 'octa',
-      accentHex: '#38bdf8',
       title: isFr ? 'Expert Vexillologue' : 'Vexillology Specialist',
       desc: isFr
         ? 'Identifiez les drapeaux nationaux sans erreur sur une série de 15 questions.'
@@ -697,7 +712,6 @@ const allBadges = computed(() => {
       cat: 'qcm',
       categoryLabel: 'Culture & Pop',
       shape: 'globe',
-      accentHex: '#10b981',
       title: isFr ? 'Analyste Géopolitique' : 'Geopolitical Analyst',
       desc: isFr
         ? 'Maîtrisez les monnaies, les langues officielles et les ordres de grandeur démographiques.'
@@ -719,7 +733,6 @@ const allBadges = computed(() => {
       cat: '3d',
       categoryLabel: 'Arcade 60s',
       shape: 'star',
-      accentHex: '#f59e0b',
       title: isFr ? 'Vélocité Supersonique' : 'Supersonic Velocity',
       desc: isFr
         ? 'Enchaînez les combos x4 dans le Sprint 60 secondes (note ramenée sur 15).'
@@ -741,7 +754,6 @@ const allBadges = computed(() => {
       cat: '3d',
       categoryLabel: 'Worldle 3D',
       shape: 'globe',
-      accentHex: '#0ea5e9',
       title: isFr ? 'Triangulateur Haversine' : 'Haversine Triangulator',
       desc: isFr
         ? 'Démasquez le Pays Mystère en moins de 6 essais grâce au radar 3D.'
@@ -763,7 +775,6 @@ const allBadges = computed(() => {
       cat: '3d',
       categoryLabel: isFr ? 'Enquête 3D' : '3D Detective',
       shape: 'shield',
-      accentHex: '#10b981',
       title: isFr ? 'Agent de Renseignement' : 'Intelligence Operative',
       desc: isFr
         ? 'Identifiez les 5 dossiers d\'enquête en retournant un minimum de cartes 3D.'
@@ -785,7 +796,6 @@ const allBadges = computed(() => {
       cat: 'map',
       categoryLabel: 'Atlas Europe',
       shape: 'globe',
-      accentHex: '#38bdf8',
       title: isFr ? 'Souverain d\'Europe' : 'Europe Sovereign',
       desc: isFr
         ? 'Nommez au clavier les 47 États d\'Europe sur le Globe 3D et la carte muette.'
@@ -807,7 +817,6 @@ const allBadges = computed(() => {
       cat: 'map',
       categoryLabel: 'Atlas 196',
       shape: 'globe',
-      accentHex: '#10b981',
       title: isFr ? 'Atlas Vivant (196 États)' : 'Living World Atlas (196)',
       desc: isFr
         ? 'Saisissez les 196 États souverains du monde lors du grand Défi Chrono.'
@@ -829,7 +838,6 @@ const allBadges = computed(() => {
       cat: 'map',
       categoryLabel: 'PinDrop 25K',
       shape: 'octa',
-      accentHex: '#0ea5e9',
       title: isFr ? 'Œil Orbital Géodésique' : 'Orbital Geodesic Eye',
       desc: isFr
         ? 'Cumulez un score de haute précision sur 5 manches dans GeoLearn PinDrop.'
@@ -847,11 +855,10 @@ const allBadges = computed(() => {
     },
     {
       id: 'duel',
-      code: ' PVP-12 // 1V1 ARENA',
+      code: 'PVP-12 // 1V1 ARENA',
       cat: '3d',
       categoryLabel: 'Duel 1v1',
       shape: 'shield',
-      accentHex: '#f43f5e',
       title: isFr ? 'Gladiateur Télémétrique' : 'Telemetry Gladiator',
       desc: isFr
         ? 'Remportez des victoires décisives dans l\'Arène Duel 1v1.'
@@ -910,31 +917,111 @@ const operatorRankTitle = computed(() => {
   if (t >= 30) return isFr ? 'Stratège Géodésique IV' : 'Geodesic Strategist IV';
   if (t >= 18) return isFr ? 'Cartographe Principal III' : 'Lead Cartographer III';
   if (t >= 8) return isFr ? 'Analyste de Terrain II' : 'Field Analyst II';
-  return isFr ? 'Opérateur de Reconnaissance I' : 'Recon Operator I';
+  return isFr ? 'Opérateur Recon I' : 'Recon Operator I';
 });
 
-const getTierBadgeClass = (tier) => {
-  if (tier >= 5) return 'bg-sky-500/20 text-sky-300 border-sky-400/50';
-  if (tier === 4) return 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50';
-  if (tier === 3) return 'bg-yellow-400/20 text-yellow-300 border-yellow-400/55';
-  if (tier === 2) return 'bg-slate-300/20 text-slate-200 border-slate-300/45';
-  if (tier === 1) return 'bg-orange-800/30 text-orange-300 border-orange-600/50';
-  return 'bg-slate-100 dark:bg-white/[0.03] text-slate-400 border-slate-200 dark:border-white/10';
-};
+// =========================================================
+// PASSEPORT GÉODÉSIQUE DES 196 ÉTATS (ZÉRO UNDEFINED / NAN)
+// =========================================================
+const passportContinent = ref('all');
+const passportQuery = ref('');
+
+const stampedCountriesCount = computed(() => {
+  const m = metrics.value;
+  const raw = Math.max(
+    Number(m.worldBest) || 0,
+    (Number(m.europeBest) || 0) + (Number(m.totalGames) || 0) * 3 + (Number(totalTiersEarned.value) || 0) * 2
+  );
+  return Math.min(196, Math.max(0, raw));
+});
+
+const passportCoveragePct = computed(() =>
+  Math.round((stampedCountriesCount.value / 196) * 100)
+);
+
+const localizedPassportCountries = computed(() => {
+  const isEn = locale.value === 'en';
+  const limit = stampedCountriesCount.value;
+  return ALL_COUNTRIES.map((c, idx) => ({
+    ...c,
+    name: isEn ? c.name_en : c.name_fr,
+    capital: isEn ? c.capital_en : c.capital_fr,
+    continent: c.continent_en,
+    isStamped: idx < limit
+  }));
+});
+
+const passportContinents = computed(() => {
+  const isFr = locale.value === 'fr';
+  const list = localizedPassportCountries.value;
+  const groups = [
+    { id: 'all', label: isFr ? 'Monde' : 'World' },
+    { id: 'Europe', label: 'Europe' },
+    { id: 'Asia', label: isFr ? 'Asie' : 'Asia' },
+    { id: 'Africa', label: isFr ? 'Afrique' : 'Africa' },
+    { id: 'North America', label: isFr ? 'Am. Nord' : 'N. America' },
+    { id: 'South America', label: isFr ? 'Am. Sud' : 'S. America' },
+    { id: 'Oceania', label: isFr ? 'Océanie' : 'Oceania' }
+  ];
+
+  return groups.map((g) => {
+    const sub = g.id === 'all' ? list : list.filter((c) => c.continent === g.id);
+    return {
+      ...g,
+      total: sub.length,
+      stamped: sub.filter((c) => c.isStamped).length
+    };
+  });
+});
+
+const filteredPassportCountries = computed(() => {
+  const q = passportQuery.value.trim().toLowerCase();
+  return localizedPassportCountries.value.filter((c) => {
+    if (passportContinent.value !== 'all' && c.continent !== passportContinent.value) return false;
+    if (q) {
+      return c.name.toLowerCase().includes(q) || c.capital.toLowerCase().includes(q) || c.iso.toLowerCase() === q;
+    }
+    return true;
+  });
+});
 
 // =========================================================
-// PALETTE OFFICIELLE PAR PALIER (BRONZE CUIVRÉ VS OR JAUNE)
+// CARTES HOLOGRAPHIQUES 3D TILT & REFLET SPÉCULAIRE
 // =========================================================
-const TIER_PALETTE = {
-  0: { name: 'LOCKED', primary: '#475569', secondary: '#1e293b', specular: '#94a3b8', glow: 'rgba(71, 85, 105, 0.22)' },
-  1: { name: 'BRONZE I', primary: '#b85d38', secondary: '#5c2410', specular: '#f0a686', glow: 'rgba(184, 93, 56, 0.40)' },
-  2: { name: 'SILVER II', primary: '#cbd5e1', secondary: '#475569', specular: '#ffffff', glow: 'rgba(203, 213, 225, 0.38)' },
-  3: { name: 'GOLD III', primary: '#facc15', secondary: '#854d0e', specular: '#fef9c3', glow: 'rgba(250, 204, 21, 0.48)' },
-  4: { name: 'EMERALD IV', primary: '#10b981', secondary: '#065f46', specular: '#6ee7b7', glow: 'rgba(16, 185, 129, 0.45)' },
-  5: { name: 'DIAMOND V', primary: '#38bdf8', secondary: '#0369a1', specular: '#e0f2fe', glow: 'rgba(56, 189, 248, 0.52)' }
+const cardTilts = ref({});
+
+const onCardPointerMove = (e, id) => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width;
+  const py = (e.clientY - rect.top) / rect.height;
+  cardTilts.value[id] = {
+    rx: Number(((0.5 - py) * 10).toFixed(2)),
+    ry: Number(((px - 0.5) * 12).toFixed(2)),
+    gx: Math.round(px * 100),
+    gy: Math.round(py * 100)
+  };
 };
 
-const getTierHex = (tier = 0) => (TIER_PALETTE[tier] || TIER_PALETTE[0]).primary;
+const onCardPointerLeave = (id) => {
+  cardTilts.value[id] = { rx: 0, ry: 0, gx: 50, gy: 50 };
+};
+
+const getCardTiltStyle = (id) => {
+  const t = cardTilts.value[id];
+  if (!t || (t.rx === 0 && t.ry === 0)) {
+    return { transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg)' };
+  }
+  return {
+    transform: `perspective(1000px) rotateX(${t.rx}deg) rotateY(${t.ry}deg) translateY(-4px)`
+  };
+};
+
+const getCardGlareStyle = (id, hex) => {
+  const t = cardTilts.value[id] || { gx: 50, gy: 50 };
+  return {
+    background: `radial-gradient(circle at ${t.gx}% ${t.gy}%, ${hex}26 0%, transparent 65%)`
+  };
+};
 
 // =========================================================
 // MOTEUR 3D DU TROPHÉE (AGRANDI + AXE GAUCHE/DROITE INVERSÉ)
@@ -966,7 +1053,7 @@ const onRelicPointerMove = (e) => {
   if (!relicDragging) return;
   const dx = e.clientX - relicLastX;
   const dy = e.clientY - relicLastY;
-  // Axe horizontal (gauche/droite) inversé (-= dx), axe vertical (haut/bas) conservé (+= dy)
+  // Axe horizontal inversé (-= dx), axe vertical conservé (+= dy)
   relicYaw -= dx * 0.012;
   relicPitch = Math.max(-0.65, Math.min(0.65, relicPitch + dy * 0.012));
   relicVelYaw = -dx * 0.009;
@@ -1004,7 +1091,6 @@ const renderRelic3DLoop = () => {
     const tier = badge?.currentTier || 0;
     const pal = TIER_PALETTE[tier] || TIER_PALETTE[0];
 
-    // 1. Halo lumineux agrandi
     const bgGlow = ctx.createRadialGradient(cx, cy - 12, 8, cx, cy - 12, 165);
     bgGlow.addColorStop(0, pal.glow);
     bgGlow.addColorStop(1, 'transparent');
@@ -1015,8 +1101,6 @@ const renderRelic3DLoop = () => {
 
     const cosY = Math.cos(relicYaw), sinY = Math.sin(relicYaw);
     const cosP = Math.cos(relicPitch), sinP = Math.sin(relicPitch);
-
-    // Facteur d'échelle 1.36x pour rendre le trophée nettement plus grand
     const trophyScale = 1.36;
 
     const project3D = (rawX, rawY, rawZ) => {
@@ -1032,7 +1116,6 @@ const renderRelic3DLoop = () => {
       return { x: cx + x1 * s, y: cy + y2 * s, z: z2, s: s * trophyScale };
     };
 
-    // 2. Profil de révolution 3D de la Coupe de Trophée
     const profileRings = [
       { y: 78, r: 44, isBase: true },
       { y: 64, r: 42, isBase: true },
@@ -1081,7 +1164,6 @@ const renderRelic3DLoop = () => {
       }
     }
 
-    // 3. Deux Anses 3D incurvées
     const handleCurve = [
       { x: 32, y: -12 },
       { x: 64, y: -18 },
@@ -1162,7 +1244,6 @@ const renderRelic3DLoop = () => {
       ctx.stroke();
     }
 
-    // 4. Anneau Orbital & Sphère de Couronnement
     if (tier > 0) {
       ctx.beginPath();
       for (let a = 0; a <= Math.PI * 2; a += 0.12) {

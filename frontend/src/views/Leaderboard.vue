@@ -609,7 +609,7 @@ const API_URL = 'https://geolearn-backend-bj65.onrender.com';
 const loading = ref(true);
 const searchQuery = ref('');
 // 'strict15' = QCM Classiques (/15) par défaut comme dans Scores.vue | 'normalized15' = Tous les modes ramenés sur 15
-const scoreCalcMode = ref('strict15');
+const scoreCalcMode = ref('normalized15');
 const selectedModeFilter = ref('all');
 const selectedLeagueFilter = ref('all');
 const sortBy = ref('avg'); // Tri par Moyenne /15 par défaut pour valoriser la précision réelle
@@ -1173,7 +1173,10 @@ const fetchRealDatabaseLeaderboard = async () => {
 
   let myUid = null;
   let myUsername = null;
+  let authHeaders = {};
+
   const savedUser = localStorage.getItem('geolearn_user');
+  const savedToken = localStorage.getItem('geolearn_token');
   if (savedUser) {
     try {
       const parsed = JSON.parse(savedUser);
@@ -1185,117 +1188,140 @@ const fetchRealDatabaseLeaderboard = async () => {
         parsed.pseudo ||
         (parsed.user && (parsed.user.name || parsed.user.username)) ||
         null;
+      const tok = savedToken || parsed.token || (parsed.user && parsed.user.token);
+      if (tok) {
+        authHeaders = { Authorization: `Bearer ${tok}` };
+      }
     } catch (e) {}
   }
 
-  // 1. Interroge /api/leaderboard (supporte toutes les structures SQL : agrégée ou liste de parties)
-  try {
-    const resLb = await fetch(`${API_URL}/api/leaderboard`);
-    if (resLb.ok) {
-      const lbData = await resLb.json();
-      const rows = Array.isArray(lbData) ? lbData : (lbData?.leaderboard || lbData?.data || []);
+  // Fonction d'ingestion universelle (accepte des lignes agrégées ou des scores individuels)
+  const ingestRows = (rows) => {
+    if (!Array.isArray(rows)) return;
+    for (const row of rows) {
+      const uid = row.user_id ?? row.utilisateur_id ?? row.userId ?? row.id;
+      const uname =
+        row.username ||
+        row.name ||
+        row.pseudo ||
+        row.nom ||
+        row.user_name ||
+        (row.user && (row.user.username || row.user.name || row.user.pseudo)) ||
+        (row.email ? row.email.split('@')[0] : null);
 
-      for (const row of rows) {
-        const uid = row.user_id || row.id || row.utilisateur_id;
-        const uname =
-          row.username ||
-          row.name ||
-          row.pseudo ||
-          row.nom ||
-          (row.email ? row.email.split('@')[0] : null);
-        if (!uname) continue;
+      if (!uname && !uid) continue;
+      const displayUname = uname || `Joueur #${uid}`;
+      const key = uid ? `uid-${uid}` : `name-${displayUname.toLowerCase()}`;
+      const isMe =
+        (myUid && String(uid) === String(myUid)) ||
+        (myUsername && displayUname.toLowerCase() === myUsername.toLowerCase());
 
-        const key = uid ? `uid-${uid}` : `name-${uname.toLowerCase()}`;
-        const isMe =
-          (myUid && String(uid) === String(myUid)) ||
-          (myUsername && uname.toLowerCase() === myUsername.toLowerCase());
-
-        // Si la ligne est une partie individuelle (score + max_score)
-        if (row.score !== undefined && row.avg_score === undefined && row.moyenne === undefined && row.games_played === undefined) {
-          if (!playersByKey.has(key)) {
-            playersByKey.set(key, {
-              id: key,
-              uid,
-              username: uname,
-              isMe,
-              rawScores: []
-            });
-          }
-          playersByKey.get(key).rawScores.push({
-            mode: row.mode || 'QCM',
-            score: Number(row.score) || 0,
-            max_score: Number(row.max_score) || 15
-          });
-        } else {
-          // Si la ligne est déjà agrégée par SQL (avg_score / moyenne / best_score / total_games)
-          const max = Number(row.max_score) || 15;
-          const rawAvg = Number(row.avg_score ?? row.moyenne ?? row.average_score ?? row.score ?? 0);
-          const rawBest = Number(row.best_score ?? row.meilleur_score ?? row.max ?? rawAvg);
-          const avg15 = max === 15 ? Math.min(15, rawAvg) : Math.min(15, (rawAvg / max) * 15);
-          const best15 = max === 15 ? Math.min(15, rawBest) : Math.min(15, (rawBest / max) * 15);
-          const count = Math.max(1, Number(row.games_played ?? row.total_games ?? row.parties_jouees ?? row.count ?? 1));
-
+      // Cas A : ligne de score individuel
+      if (row.score !== undefined && row.avg_score === undefined && row.moyenne === undefined && row.games_played === undefined && row.total_games === undefined) {
+        if (!playersByKey.has(key)) {
           playersByKey.set(key, {
             id: key,
             uid,
-            username: uname,
+            username: displayUname,
             isMe,
-            avgOn15: Number(avg15.toFixed(1)),
-            bestOn15: Number(best15.toFixed(1)),
-            gamesCount: count,
-            rawScores: Array.isArray(row.scores) ? row.scores : null
+            rawScores: []
           });
         }
+        playersByKey.get(key).rawScores.push({
+          mode: row.mode || 'QCM',
+          score: Number(row.score) || 0,
+          max_score: Number(row.max_score) || 15
+        });
+      } else if (row.avg_score !== undefined || row.moyenne !== undefined || row.best_score !== undefined || row.total_games !== undefined || row.games_played !== undefined) {
+        // Cas B : ligne déjà agrégée par SQL
+        const max = Number(row.max_score) || 15;
+        const rawAvg = Number(row.avg_score ?? row.moyenne ?? row.average_score ?? row.score ?? 0);
+        const rawBest = Number(row.best_score ?? row.meilleur_score ?? row.max ?? rawAvg);
+        const avg15 = max === 15 ? Math.min(15, rawAvg) : Math.min(15, (rawAvg / max) * 15);
+        const best15 = max === 15 ? Math.min(15, rawBest) : Math.min(15, (rawBest / max) * 15);
+        const count = Math.max(1, Number(row.games_played ?? row.total_games ?? row.parties_jouees ?? row.count ?? 1));
+
+        playersByKey.set(key, {
+          id: key,
+          uid,
+          username: displayUname,
+          isMe,
+          avgOn15: Number(avg15.toFixed(1)),
+          bestOn15: Number(best15.toFixed(1)),
+          gamesCount: count,
+          rawScores: Array.isArray(row.scores) ? row.scores : null
+        });
       }
     }
-  } catch (e) {}
+  };
 
-  // 2. Interroge /api/users (si disponible) pour récupérer tous les comptes inscrits et leurs scores réels
-  try {
-    const resUsers = await fetch(`${API_URL}/api/users`);
-    if (resUsers.ok) {
-      const usersData = await resUsers.json();
-      const usersList = Array.isArray(usersData) ? usersData : (usersData?.users || []);
+  // 1. Teste les routes de classement et de scores globaux du backend
+  const leaderboardEndpoints = [
+    `${API_URL}/api/leaderboard`,
+    `${API_URL}/api/classement`,
+    `${API_URL}/api/scores`,
+    `${API_URL}/api/admin/scores`
+  ];
 
-      await Promise.all(
-        usersList.slice(0, 40).map(async (u) => {
-          const uid = u.id || u.user_id;
-          const uname = u.name || u.username || u.pseudo || (u.email ? u.email.split('@')[0] : null);
-          if (!uid || !uname) return;
+  for (const endpoint of leaderboardEndpoints) {
+    try {
+      const res = await fetch(endpoint, { headers: authHeaders });
+      if (res.ok) {
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data?.leaderboard || data?.scores || data?.data || []);
+        if (list.length > 0) ingestRows(list);
+      }
+    } catch (e) {}
+  }
 
-          const key = `uid-${uid}`;
-          const isMe =
-            (myUid && String(uid) === String(myUid)) ||
-            (myUsername && uname.toLowerCase() === myUsername.toLowerCase());
+  // 2. Récupère la liste des utilisateurs inscrits (/api/admin/users ou /api/users) et leurs scores
+  const userEndpoints = [`${API_URL}/api/admin/users`, `${API_URL}/api/users`];
+  for (const uEndpoint of userEndpoints) {
+    try {
+      const resU = await fetch(uEndpoint, { headers: authHeaders });
+      if (resU.ok) {
+        const uData = await resU.json();
+        const usersList = Array.isArray(uData) ? uData : (uData?.users || uData?.data || []);
+        if (usersList.length > 0) {
+          await Promise.all(
+            usersList.slice(0, 50).map(async (u) => {
+              const uid = u.id || u.user_id;
+              const uname = u.name || u.username || u.pseudo || (u.email ? u.email.split('@')[0] : null);
+              if (!uid || !uname) return;
+              const key = `uid-${uid}`;
+              const isMe =
+                (myUid && String(uid) === String(myUid)) ||
+                (myUsername && uname.toLowerCase() === myUsername.toLowerCase());
+              try {
+                const rSc = await fetch(`${API_URL}/api/scores/${uid}`, { headers: authHeaders });
+                if (rSc.ok) {
+                  const scList = await rSc.json();
+                  if (Array.isArray(scList) && scList.length > 0) {
+                    playersByKey.set(key, {
+                      id: key,
+                      uid,
+                      username: uname,
+                      isMe,
+                      rawScores: scList
+                    });
+                  }
+                }
+              } catch (err) {}
+            })
+          );
+          break;
+        }
+      }
+    } catch (e) {}
+  }
 
-          try {
-            const rSc = await fetch(`${API_URL}/api/scores/${uid}`);
-            if (rSc.ok) {
-              const scList = await rSc.json();
-              if (Array.isArray(scList) && scList.length > 0) {
-                playersByKey.set(key, {
-                  id: key,
-                  uid,
-                  username: uname,
-                  isMe,
-                  rawScores: scList
-                });
-              }
-            }
-          } catch (err) {}
-        })
-      );
-    }
-  } catch (e) {}
-
-  // 3. Charge toujours l'historique exact de l'utilisateur connecté (/api/scores/:myUid)
+  // 3. Charge toujours l'historique complet de l'opérateur connecté
   if (myUid && myUsername) {
     try {
-      const resMyScores = await fetch(`${API_URL}/api/scores/${myUid}`);
+      const resMyScores = await fetch(`${API_URL}/api/scores/${myUid}`, { headers: authHeaders });
       if (resMyScores.ok) {
         const myScores = await resMyScores.json();
         if (Array.isArray(myScores) && myScores.length > 0) {
-          // Supprime d'éventuels doublons sous une autre clé pour ce même utilisateur
           for (const [k, v] of playersByKey.entries()) {
             if (v.username.toLowerCase() === myUsername.toLowerCase()) {
               playersByKey.delete(k);
