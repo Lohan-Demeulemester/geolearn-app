@@ -1,11 +1,11 @@
 <template>
   <div :class="['app-shell', { 'dark-mode': isDarkMode, 'dark': isDarkMode }]">
     <!-- ========================================================= -->
-    <!-- FLOATING FULL-WIDTH NAVIGATION BAR                        -->
+    <!-- BARRE DE NAVIGATION SUPÉRIEURE                            -->
     <!-- ========================================================= -->
     <header class="top-nav" role="banner">
       <div class="top-nav-inner">
-        <!-- GAUCHE : Logo GeoLearn -->
+        <!-- GAUCHE : Logo GeoLearn (Icône seule sur mobile, Texte + Icône sur PC) -->
         <router-link to="/" class="brand-mark" @click="mobileMenuOpen = false">
           <div class="brand-icon-box" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -20,7 +20,7 @@
           </div>
         </router-link>
 
-        <!-- CENTRE : Pilule de navigation fluide -->
+        <!-- CENTRE : Pilule de navigation PC / Menu déroulant fixe sur Mobile -->
         <nav :class="['primary-nav', { 'is-open': mobileMenuOpen }]" aria-label="Main Navigation">
           <router-link to="/" class="nav-link" @click="mobileMenuOpen = false">
             <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -102,7 +102,7 @@
           </router-link>
         </nav>
 
-        <!-- DROITE : Thème, Langue & Profil complet non coupé -->
+        <!-- DROITE : Thème, Langue, Profil & Bouton Menu Mobile -->
         <div class="nav-controls">
           <button
             type="button"
@@ -140,16 +140,16 @@
           <button
             type="button"
             class="mobile-toggle-btn"
-            @click="mobileMenuOpen = !mobileMenuOpen"
+            @click.stop="mobileMenuOpen = !mobileMenuOpen"
             :aria-expanded="mobileMenuOpen"
             aria-label="Menu"
           >
-            <svg v-if="!mobileMenuOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <svg v-if="!mobileMenuOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
               <line x1="4" y1="7" x2="20" y2="7" />
               <line x1="4" y1="12" x2="20" y2="12" />
               <line x1="4" y1="17" x2="20" y2="17" />
             </svg>
-            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -158,8 +158,15 @@
       </div>
     </header>
 
+    <!-- Voile tactile de fermeture quand le menu mobile est ouvert -->
+    <div
+      v-if="mobileMenuOpen"
+      class="mobile-nav-backdrop"
+      @click="mobileMenuOpen = false"
+    ></div>
+
     <!-- ========================================================= -->
-    <!-- CONTENU : PLEIN ÉCRAN SUR L'ACCUEIL, CENTRÉ AILLEURS      -->
+    <!-- CONTENU : PLEIN ÉCRAN SUR ACCUEIL / EXPLORER / QUIZ       -->
     <!-- ========================================================= -->
     <main :class="['viewport-main', { 'viewport-home-bleed': isHomePage }]">
       <router-view />
@@ -240,7 +247,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 
@@ -251,7 +258,15 @@ const mobileMenuOpen = ref(false);
 const currentUser = ref(null);
 const isDarkMode = ref(true);
 
-const isHomePage = computed(() => route.path === '/' || route.path === '/explorer' || route.path === '/quiz');
+const isHomePage = computed(() => ['/', '/explorer', '/quiz'].includes(route.path));
+
+// Ferme automatiquement le menu mobile dès qu'on change de page
+watch(
+  () => route.fullPath,
+  () => {
+    mobileMenuOpen.value = false;
+  }
+);
 
 const ADMIN_EMAILS = [
   'lohan.dtr@gmail.com',
@@ -338,14 +353,11 @@ onUnmounted(() => {
 </script>
 
 <style>
-/* ========================================================= */
-/* PALETTE SPATIALE & ÉDITORIALE                             */
-/* ========================================================= */
 :root {
   --bg-main: #f4f6f9;
   --bg-elevated: #ffffff;
   --bg-subtle: #e9eef5;
-  --bg-nav: rgba(244, 246, 249, 0.82);
+  --bg-nav: rgba(244, 246, 249, 0.85);
   --card-bg: #ffffff;
   --card-hover: #f1f5f9;
   --text-main: #0b1120;
@@ -359,7 +371,7 @@ onUnmounted(() => {
   --accent-rose: #e11d48;
   --input-bg: #f8fafc;
   --shadow-sm: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
-  --shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, 0.12);
+  --shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, 0.18);
 }
 
 body.dark-mode,
@@ -368,7 +380,7 @@ body.dark,
   --bg-main: #04070f;
   --bg-elevated: #090e1a;
   --bg-subtle: #101829;
-  --bg-nav: rgba(4, 7, 15, 0.78);
+  --bg-nav: rgba(4, 7, 15, 0.85);
   --card-bg: #090e1a;
   --card-hover: #131c2e;
   --text-main: #f8fafc;
@@ -382,7 +394,7 @@ body.dark,
   --accent-rose: #fb7185;
   --input-bg: #060a14;
   --shadow-sm: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 28px 60px -12px rgba(0, 0, 0, 0.75);
+  --shadow-lg: 0 28px 60px -12px rgba(0, 0, 0, 0.85);
 }
 
 html {
@@ -406,7 +418,6 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Suppression des scrollbars blanches disgracieuses */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
@@ -452,7 +463,6 @@ body.dark-mode textarea {
   flex-direction: column;
 }
 
-/* Conteneur standard pour les pages internes */
 .viewport-main {
   flex: 1;
   width: 100%;
@@ -461,7 +471,6 @@ body.dark-mode textarea {
   padding: 2.25rem 1.75rem 4rem;
 }
 
-/* Plein écran total (zéro marge autour du Globe) sur la page d'accueil */
 .viewport-home-bleed {
   max-width: 100% !important;
   width: 100% !important;
@@ -470,7 +479,7 @@ body.dark-mode textarea {
 }
 
 /* ========================================================= */
-/* BARRE DE NAVIGATION FLOTTANTE (NOM COMPLET GARANTI)       */
+/* BARRE DE NAVIGATION (SANS OVERFLOW CLIPPING SUR LE MENU)  */
 /* ========================================================= */
 .top-nav {
   position: sticky;
@@ -481,6 +490,7 @@ body.dark-mode textarea {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
+  overflow: visible !important;
 }
 
 .top-nav-inner {
@@ -544,7 +554,6 @@ body.dark-mode textarea {
   margin-top: 2px;
 }
 
-/* Pilule centrale de navigation */
 .primary-nav {
   display: flex;
   align-items: center;
@@ -571,9 +580,9 @@ body.dark-mode textarea {
 }
 
 .nav-svg {
-  width: 14px;
-  height: 14px;
-  opacity: 0.75;
+  width: 15px;
+  height: 15px;
+  opacity: 0.8;
   flex-shrink: 0;
 }
 
@@ -606,7 +615,6 @@ body.dark-mode textarea {
   color: #f59e0b;
 }
 
-/* Contrôles à droite : aucune troncature sur le nom de l'utilisateur */
 .nav-controls {
   display: flex;
   align-items: center;
@@ -632,12 +640,6 @@ body.dark-mode textarea {
   transition: all 0.2s ease;
 }
 
-.control-pill:hover {
-  border-color: var(--border-strong);
-  color: var(--text-main);
-  transform: translateY(-1px);
-}
-
 .user-cta {
   height: 36px;
   padding: 0.25rem 1rem 0.25rem 0.4rem;
@@ -654,11 +656,6 @@ body.dark-mode textarea {
   flex-shrink: 0;
   max-width: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.user-cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.25);
 }
 
 .user-avatar {
@@ -685,8 +682,6 @@ body.dark-mode textarea {
 
 .user-cta-label {
   display: inline-block;
-  overflow: visible;
-  text-overflow: clip;
   white-space: nowrap;
 }
 
@@ -695,13 +690,21 @@ body.dark-mode textarea {
   width: 36px;
   height: 36px;
   border-radius: 9999px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid var(--border-strong);
   color: var(--text-main);
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+.mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 990;
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(4px);
 }
 
 /* ========================================================= */
@@ -812,7 +815,7 @@ body.dark-mode textarea {
 }
 
 /* ========================================================= */
-/* RESPONSIVE                                                */
+/* RESPONSIVE MOBILE & TABLETTE (MENU FIXE GARANTI VISIBLE)  */
 /* ========================================================= */
 @media (max-width: 1220px) {
   .mobile-toggle-btn {
@@ -821,29 +824,31 @@ body.dark-mode textarea {
 
   .primary-nav {
     display: none;
-    position: absolute;
-    top: 100%;
-    left: 1rem;
-    right: 1rem;
-    margin-top: 0.5rem;
-    border-radius: 1.25rem;
+    position: fixed;
+    top: 58px;
+    left: 0.75rem;
+    right: 0.75rem;
+    z-index: 9999;
+    border-radius: 1.5rem;
     background: var(--card-bg);
     border: 1px solid var(--border-strong);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.85);
     flex-direction: column;
     align-items: stretch;
-    padding: 0.75rem;
-    gap: 0.25rem;
+    padding: 0.85rem;
+    gap: 0.35rem;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
   }
 
   .primary-nav.is-open {
-    display: flex;
+    display: flex !important;
   }
 
   .nav-link {
-    padding: 0.65rem 1rem;
-    border-radius: 0.75rem;
-    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.9rem;
+    font-size: 0.92rem;
   }
 }
 
@@ -854,11 +859,9 @@ body.dark-mode textarea {
 }
 
 @media (max-width: 768px) {
-  /* Verrouille la largeur de l'écran pour empêcher tout décalage horizontal */
   html,
   body,
-  .app-shell,
-  .top-nav {
+  .app-shell {
     max-width: 100vw !important;
     overflow-x: hidden !important;
   }
@@ -868,12 +871,12 @@ body.dark-mode textarea {
     gap: 0.5rem;
   }
 
-  /* Masque le texte "GeoLearn / 196 ÉTATS" sur mobile : garde uniquement le logo Globe */
+  /* Garde uniquement le logo sur mobile */
   .top-nav .brand-text-group {
     display: none !important;
   }
 
-  /* Masque le nom complet "Lohan Demeulemester" sur mobile : garde uniquement le badge rond "LD" / avatar */
+  /* Garde uniquement le badge initiales/avatar sur mobile */
   .user-cta-label {
     display: none !important;
   }
