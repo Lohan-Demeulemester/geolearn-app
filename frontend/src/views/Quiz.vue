@@ -128,7 +128,7 @@
                 @click="launchRandomGame"
                 class="px-4 py-2 rounded-full bg-indigo-500/15 hover:bg-indigo-500 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition cursor-pointer shadow-lg backdrop-blur-xl"
               >
-                🎲 {{ locale === 'fr' ? 'Aléatoire' : 'Random' }}
+                ⚂ {{ locale === 'fr' ? 'Aléatoire' : 'Random' }}
               </button>
 
               <button
@@ -136,7 +136,7 @@
                 @click="toggleSound"
                 class="px-3.5 py-2 rounded-full bg-white/85 dark:bg-[#0B1023]/80 border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-lg backdrop-blur-xl"
               >
-                {{ soundEnabled ? '🔊 ON' : '🔇 OFF' }}
+                {{ soundEnabled ? '🕪 ON' : '🔇︎ OFF' }}
               </button>
 
               <button
@@ -192,7 +192,7 @@
                     </button>
 
                     <div class="px-4 py-3 rounded-full bg-white/80 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 font-mono text-xs font-bold text-slate-700 dark:text-slate-200 backdrop-blur-xl">
-                      🕒 {{ activeShowcaseCard.duration }} • {{ activeShowcaseCard.metric }}
+                      🕒︎ {{ activeShowcaseCard.duration }} • {{ activeShowcaseCard.metric }}
                     </div>
                   </div>
                 </div>
@@ -407,7 +407,7 @@
                     <span>{{ card.cta }}</span>
                   </span>
                   <span class="font-mono text-[11px] text-slate-400 flex items-center gap-1 whitespace-nowrap">
-                    <span>🕒</span>
+                    <span>🕒︎</span>
                     <span>{{ card.duration }}</span>
                   </span>
                 </div>
