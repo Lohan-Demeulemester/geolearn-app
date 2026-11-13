@@ -100,7 +100,7 @@
         </div>
         <div class="min-w-0">
           <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block truncate">
-            {{ locale === 'fr' ? 'Joueurs classés (BDD)' : 'Ranked Players (DB)' }}
+            {{ locale === 'fr' ? 'Joueurs classés' : 'Ranked Players' }}
           </span>
           <strong class="font-mono text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5 block">
             {{ rankedPlayers.length }}
