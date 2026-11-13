@@ -9,7 +9,7 @@
         <div class="space-y-1">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-600 dark:text-sky-400 font-mono text-[11px] font-bold uppercase tracking-wider">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>{{ locale === 'fr' ? 'SYNCHRONISATION MYSQL // CLASSEMENT OFFICIEL' : 'MYSQL SYNC // OFFICIAL STANDINGS' }}</span>
+            <span>{{ locale === 'fr' ? 'CLASSEMENT OFFICIEL' : 'OFFICIAL STANDINGS' }}</span>
           </div>
           <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             {{ locale === 'fr' ? 'Classement Mondial & Records' : 'World Leaderboard & Records' }}
