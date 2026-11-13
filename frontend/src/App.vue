@@ -908,4 +908,80 @@ body.dark-mode textarea {
     text-align: center;
   }
 }
+
+
+/* ========================================================= */
+/* MODE CLAIR AUTOMATIQUE POUR GEOGUESSR.VUE & DUEL.VUE      */
+/* ========================================================= */
+body:not(.dark-mode) .pindrop-experience,
+body:not(.dark-mode) .duel-arena-experience {
+  background-color: var(--bg-main) !important;
+  color: var(--text-main) !important;
+}
+
+/* Panneaux principaux, modales de briefing et docks flottants */
+body:not(.dark-mode) .pindrop-experience [class*="bg-[#080D1A]"],
+body:not(.dark-mode) .duel-arena-experience [class*="bg-[#080D1A]"],
+body:not(.dark-mode) .pindrop-experience [class*="bg-slate-950"],
+body:not(.dark-mode) .duel-arena-experience [class*="bg-slate-950"],
+body:not(.dark-mode) .pindrop-experience [class*="bg-slate-900"],
+body:not(.dark-mode) .duel-arena-experience [class*="bg-slate-900"] {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  color: #0b1120 !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.12) !important;
+}
+
+/* Sous-cartes d'options (Moteurs de combat, Protocoles, Indices) */
+body:not(.dark-mode) .pindrop-experience [class*="bg-white/[0.02]"],
+body:not(.dark-mode) .pindrop-experience [class*="bg-white/[0.03]"],
+body:not(.dark-mode) .pindrop-experience [class*="bg-white/[0.04]"],
+body:not(.dark-mode) .duel-arena-experience [class*="bg-white/[0.02]"],
+body:not(.dark-mode) .duel-arena-experience [class*="bg-white/[0.03]"],
+body:not(.dark-mode) .duel-arena-experience [class*="bg-white/[0.04]"] {
+  background-color: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  color: #1e293b !important;
+}
+
+/* Champs de saisie et menus déroulants (Select / Input) */
+body:not(.dark-mode) .pindrop-experience select,
+body:not(.dark-mode) .pindrop-experience input,
+body:not(.dark-mode) .duel-arena-experience select,
+body:not(.dark-mode) .duel-arena-experience input {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(15, 23, 42, 0.15) !important;
+  color: #0f172a !important;
+}
+
+/* Bordures internes et séparateurs */
+body:not(.dark-mode) .pindrop-experience [class*="border-white/"],
+body:not(.dark-mode) .duel-arena-experience [class*="border-white/"] {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+/* Titres et textes principaux (sauf à l'intérieur des boutons colorés) */
+body:not(.dark-mode) .pindrop-experience h1,
+body:not(.dark-mode) .pindrop-experience h2,
+body:not(.dark-mode) .pindrop-experience h3,
+body:not(.dark-mode) .pindrop-experience strong:not([class*="text-sky-"]):not([class*="text-emerald-"]):not([class*="text-rose-"]):not([class*="text-amber-"]),
+body:not(.dark-mode) .duel-arena-experience h1,
+body:not(.dark-mode) .duel-arena-experience h2,
+body:not(.dark-mode) .duel-arena-experience h3,
+body:not(.dark-mode) .duel-arena-experience strong:not([class*="text-sky-"]):not([class*="text-emerald-"]):not([class*="text-rose-"]):not([class*="text-amber-"]) {
+  color: #0b1120 !important;
+}
+
+body:not(.dark-mode) .pindrop-experience .text-slate-200,
+body:not(.dark-mode) .pindrop-experience .text-slate-300,
+body:not(.dark-mode) .duel-arena-experience .text-slate-200,
+body:not(.dark-mode) .duel-arena-experience .text-slate-300 {
+  color: #334155 !important;
+}
+
+/* Désactive le filtre d'inversion sombre sur les cartes muettes 2D en mode clair */
+body:not(.dark-mode) .radar-mute-map .leaflet-tile-pane,
+body:not(.dark-mode) .sniper-mute-map .leaflet-tile-pane {
+  filter: none !important;
+}
 </style>
